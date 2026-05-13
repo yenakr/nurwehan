@@ -52,6 +52,11 @@ export default async function AdminPage() {
                 <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)', marginBottom: '24px', flex: 1 }}>학부 공지사항을 등록/수정합니다.</p>
                 <Link href="/admin/notices" className="btn-outline" style={{ width: '100%', textAlign: 'center' }}>관리하기</Link>
              </div>
+             <div className="card" style={{ border: '1px solid var(--border)', textAlign: 'center', display: 'flex', flexDirection: 'column' }}>
+                <h3 style={{ fontSize: '1rem', marginBottom: '8px', fontWeight: '700' }}>운영시간 관리</h3>
+                <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)', marginBottom: '24px', flex: 1 }}>학년별 OPEN LAB 운영 시간을 설정합니다.</p>
+                <Link href="/admin/schedules" className="btn-outline" style={{ width: '100%', textAlign: 'center' }}>관리하기</Link>
+             </div>
           </div>
         </div>
       </div>

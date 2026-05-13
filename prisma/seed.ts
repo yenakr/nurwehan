@@ -33,12 +33,54 @@ async function main() {
   });
   console.log('Super Admin created: admin / admin1234');
 
-  // 2. Create Initial Skills
-  const skills = [
-    { name: '간헐적 위관영양', description: 'Nasogastric Tube Feeding' },
-    { name: '단순도뇨', description: 'Simple Catheterization' },
-    { name: '유치도뇨', description: 'Indwelling Catheterization' },
-    { name: '정맥수액주입', description: 'Intravenous Fluid Infusion' },
+  // 2. Create Skills and Supplies
+  const skillsData = [
+    { 
+      name: '간헐적 위관영양', 
+      description: 'Nasogastric Tube Feeding',
+      supplies: [
+        { supplyName: '처방된 위관영양액 (200-500mL)', quantity: 1, unit: '개' },
+        { supplyName: '50mL 세정용 주사기', quantity: 1, unit: '개' },
+        { supplyName: '영양액 주입백', quantity: 1, unit: '개' },
+        { supplyName: '위관영양백 걸대', quantity: 1, unit: '개' },
+        { supplyName: '알코올 솜', quantity: 2, unit: '개' },
+        { supplyName: '일회용 장갑', quantity: 1, unit: '켤레' },
+      ]
+    },
+    { 
+      name: '단순도뇨', 
+      description: 'Simple Catheterization',
+      supplies: [
+        { supplyName: '단순도뇨 세트 (멸균)', quantity: 1, unit: '개' },
+        { supplyName: '도뇨관 (넬라톤)', quantity: 1, unit: '개' },
+        { supplyName: '멸균 윤활제', quantity: 1, unit: '개' },
+        { supplyName: '곡반', quantity: 1, unit: '개' },
+        { supplyName: '소독솜', quantity: 5, unit: '개' },
+      ]
+    },
+    { 
+      name: '유치도뇨', 
+      description: 'Indwelling Catheterization',
+      supplies: [
+        { supplyName: '유치도뇨 세트 (멸균)', quantity: 1, unit: '개' },
+        { supplyName: '유치도뇨관 (폴리)', quantity: 1, unit: '개' },
+        { supplyName: '멸균 증류수 (10mL 주사기 포함)', quantity: 1, unit: '개' },
+        { supplyName: '소변 수집백', quantity: 1, unit: '개' },
+      ]
+    },
+    { 
+      name: '정맥수액주입', 
+      description: 'Intravenous Fluid Infusion',
+      supplies: [
+        { supplyName: '수액백', quantity: 1, unit: '개' },
+        { supplyName: '수액세트', quantity: 1, unit: '개' },
+        { supplyName: '정맥카테터 (22G/24G)', quantity: 1, unit: '개' },
+        { supplyName: '토니켓', quantity: 1, unit: '개' },
+        { supplyName: '알코올 솜', quantity: 3, unit: '개' },
+        { supplyName: '테가덤 (드레싱)', quantity: 1, unit: '개' },
+        { supplyName: '수액 걸대', quantity: 1, unit: '개' },
+      ]
+    },
     { name: '피내주사', description: 'Intradermal Injection' },
     { name: '피하주사', description: 'Subcutaneous Injection' },
     { name: '근육주사', description: 'Intramuscular Injection' },
@@ -49,19 +91,29 @@ async function main() {
     { name: '배출관장', description: 'Evacuation Enema' },
   ];
 
-  for (const skill of skills) {
-    await prisma.skill.upsert({
-      where: { name: skill.name },
+  for (const item of skillsData) {
+    const { supplies, ...skillInfo } = item;
+    const skill = await prisma.skill.upsert({
+      where: { name: skillInfo.name },
       update: {},
-      create: skill,
+      create: skillInfo,
     });
+
+    if (supplies) {
+      for (const supply of supplies) {
+        await prisma.skillSupply.create({
+          data: {
+            ...supply,
+            skillId: skill.id
+          }
+        });
+      }
+    }
   }
-  console.log('Skills seeded');
+  console.log('Skills and supplies seeded');
 
   // 3. Create Official Notice
-  // Clear existing notices first to remove dummy data
   await prisma.notice.deleteMany({});
-  
   const noticeTitle = 'OPEN LAB 이용 안내';
   const noticeContent = `
 ### 3. 신청 방법
@@ -97,14 +149,8 @@ async function main() {
 - 뚜껑이 있는 생수 또는 밀폐되는 텀블러를 제외한 음료는 실습실 내 반입 및 섭취를 금지합니다.
   `;
 
-  await prisma.notice.upsert({
-    where: { id: 'official-guide' },
-    update: {
-      title: noticeTitle,
-      content: noticeContent,
-      isPinned: true,
-    },
-    create: {
+  await prisma.notice.create({
+    data: {
       id: 'official-guide',
       title: noticeTitle,
       content: noticeContent,
@@ -114,7 +160,7 @@ async function main() {
   });
   console.log('Official notice seeded');
 
-  // 4. Create Sample Semester & Slots
+  // 4. Create Semester and Grade Rules
   const semester = await prisma.semester.upsert({
     where: { id: 'sem-2026-1' },
     update: { isActive: true },
@@ -127,34 +173,60 @@ async function main() {
     },
   });
 
-  const slotsData = [
-    {
-      date: new Date('2026-05-20'),
-      startTime: '13:00',
-      endTime: '15:00',
-      room: '임상수기실습실 5층',
-      maxCapacity: 20,
-      allowedGrade: 2,
-    },
-    {
-      date: new Date('2026-05-21'),
-      startTime: '10:00',
-      endTime: '12:00',
-      room: '시뮬레이션실습실 6층',
-      maxCapacity: 15,
-      allowedGrade: 3,
-    },
+  const gradeRules = [
+    // 2nd Year
+    { grade: 2, dayOfWeek: 1, startTime: '09:00', endTime: '10:00', room: '임상수기실습실 5층', maxCapacity: 16 },
+    { grade: 2, dayOfWeek: 1, startTime: '10:00', endTime: '11:00', room: '임상수기실습실 5층', maxCapacity: 16 },
+    { grade: 2, dayOfWeek: 4, startTime: '09:00', endTime: '10:00', room: '임상수기실습실 5층', maxCapacity: 16 },
+    { grade: 2, dayOfWeek: 4, startTime: '10:00', endTime: '11:00', room: '임상수기실습실 5층', maxCapacity: 16 },
+    // 3rd Year
+    { grade: 3, dayOfWeek: 2, startTime: '09:00', endTime: '10:00', room: '시뮬레이션실습실 6층', maxCapacity: 16 },
+    { grade: 3, dayOfWeek: 2, startTime: '10:00', endTime: '11:00', room: '시뮬레이션실습실 6층', maxCapacity: 16 },
+    { grade: 3, dayOfWeek: 3, startTime: '09:00', endTime: '10:00', room: '시뮬레이션실습실 6층', maxCapacity: 16 },
+    { grade: 3, dayOfWeek: 3, startTime: '10:00', endTime: '11:00', room: '시뮬레이션실습실 6층', maxCapacity: 16 },
+    // 4th Year
+    { grade: 4, dayOfWeek: 1, startTime: '11:00', endTime: '12:00', room: '임상수기실습실 5층', maxCapacity: 16 },
+    { grade: 4, dayOfWeek: 2, startTime: '11:00', endTime: '12:00', room: '시뮬레이션실습실 6층', maxCapacity: 16 },
+    { grade: 4, dayOfWeek: 4, startTime: '11:00', endTime: '12:00', room: '임상수기실습실 5층', maxCapacity: 16 },
   ];
 
-  for (const slot of slotsData) {
-    await prisma.openLabSlot.create({
+  await prisma.openLabGradeRule.deleteMany({ where: { semesterId: semester.id } });
+  for (const rule of gradeRules) {
+    await prisma.openLabGradeRule.create({
       data: {
-        ...slot,
-        semesterId: semester.id,
+        ...rule,
+        semesterId: semester.id
       }
     });
   }
-  console.log('Sample slots seeded');
+  console.log('Grade rules seeded');
+
+  // Create some initial slots for next week to test
+  // (In production, a background job or admin action might generate these)
+  const nextWeekStart = new Date();
+  nextWeekStart.setDate(nextWeekStart.getDate() + (7 - nextWeekStart.getDay()) + 1); // Next Monday
+  
+  for (let i = 0; i < 5; i++) {
+    const currentDate = new Date(nextWeekStart);
+    currentDate.setDate(nextWeekStart.getDate() + i);
+    const day = currentDate.getDay();
+
+    const rulesForDay = gradeRules.filter(r => r.dayOfWeek === day);
+    for (const rule of rulesForDay) {
+      await prisma.openLabSlot.create({
+        data: {
+          semesterId: semester.id,
+          allowedGrade: rule.grade,
+          date: currentDate,
+          startTime: rule.startTime,
+          endTime: rule.endTime,
+          room: rule.room,
+          maxCapacity: rule.maxCapacity,
+        }
+      });
+    }
+  }
+  console.log('Initial slots for next week generated');
 
   console.log('Seeding completed successfully.');
 }

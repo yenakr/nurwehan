@@ -107,6 +107,7 @@ model Application {
   representativeUserId String
   representativeUser   User              @relation("RepresentedApplications", fields: [representativeUserId], references: [id])
   status               ApplicationStatus @default(PENDING)
+  selectedGrade        Int?              // 신청 시 선택한 학년 구분
   additionalRequest    String?
   rejectedReason       String?
   submittedAt          DateTime          @default(now())

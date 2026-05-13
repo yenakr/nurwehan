@@ -2,6 +2,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { isAdminRole } from '@/lib/auth-core';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 
 export default async function AdminApplicationsPage() {
   const user = await getCurrentUser();
@@ -61,7 +62,9 @@ export default async function AdminApplicationsPage() {
                     </span>
                   </td>
                   <td style={{ padding: '12px', textAlign: 'center' }}>
-                    <button className="btn-outline" style={{ padding: '4px 8px', fontSize: '0.75rem' }}>상세보기</button>
+                    <Link href={`/admin/applications/${app.id}`} className="btn-outline" style={{ padding: '4px 8px', fontSize: '0.75rem', textDecoration: 'none', display: 'inline-block' }}>
+                      상세보기
+                    </Link>
                   </td>
                 </tr>
               )) : (
