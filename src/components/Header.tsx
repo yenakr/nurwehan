@@ -1,10 +1,12 @@
 import Link from 'next/link';
 import Logo from './Logo';
+import { getSession } from '@/lib/auth';
 
-export default function Header() {
-  // TODO: 실제 인증 상태 연동
-  const isLoggedIn = false; 
-  const isAdmin = false;
+export default async function Header() {
+  const session = await getSession();
+  const isLoggedIn = !!session?.user;
+  const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN';
+  const userName = session?.user?.name || '';
 
   return (
     <header style={{
@@ -22,9 +24,10 @@ export default function Header() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
           <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            {/* Small text logo instead of broken image if preferred, but user said Logo left small */}
             <Logo width={150} />
             <span style={{ 
-              fontSize: '1.25rem', 
+              fontSize: '1.125rem', 
               fontWeight: '800', 
               color: 'var(--primary)',
               letterSpacing: '-0.02em',
@@ -35,35 +38,13 @@ export default function Header() {
             </span>
           </Link>
           
-          <nav>
+          <nav className="desktop-nav">
             <ul style={{ display: 'flex', gap: '20px' }}>
-              <li>
-                <Link href="/open-lab" style={{ fontSize: '0.9375rem', fontWeight: '600', color: 'var(--text)' }}>
-                  OPEN LAB 신청
-                </Link>
-              </li>
-              <li>
-                <Link href="/history" style={{ fontSize: '0.9375rem', fontWeight: '500', color: 'var(--sub-text)' }}>
-                  신청 내역
-                </Link>
-              </li>
-              <li>
-                <Link href="/notices" style={{ fontSize: '0.9375rem', fontWeight: '500', color: 'var(--sub-text)' }}>
-                  공지사항
-                </Link>
-              </li>
-              <li>
-                <Link href="/mypage" style={{ fontSize: '0.9375rem', fontWeight: '500', color: 'var(--sub-text)' }}>
-                  마이페이지
-                </Link>
-              </li>
-              {isAdmin && (
-                <li>
-                  <Link href="/admin" style={{ fontSize: '0.9375rem', fontWeight: '600', color: 'var(--primary)' }}>
-                    관리자
-                  </Link>
-                </li>
-              )}
+              <li><Link href="/open-lab">OPEN LAB 신청</Link></li>
+              <li><Link href="/history">신청 내역</Link></li>
+              <li><Link href="/notices">공지사항</Link></li>
+              <li><Link href="/mypage">마이페이지</Link></li>
+              {isAdmin && <li><Link href="/admin" style={{ fontWeight: '700', color: 'var(--primary)' }}>관리자</Link></li>}
             </ul>
           </nav>
         </div>
@@ -71,8 +52,10 @@ export default function Header() {
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           {isLoggedIn ? (
             <>
-              <span style={{ fontSize: '0.875rem', fontWeight: '500' }}>홍길동 학생님</span>
-              <button className="btn-outline" style={{ padding: '6px 12px', fontSize: '0.8125rem' }}>로그아웃</button>
+              <span className="user-greeting" style={{ fontSize: '0.875rem', fontWeight: '500' }}>{userName}님</span>
+              <form action="/api/logout" method="POST">
+                <button type="submit" className="btn-outline" style={{ padding: '6px 12px', fontSize: '0.8125rem' }}>로그아웃</button>
+              </form>
             </>
           ) : (
             <Link href="/login" className="btn-primary" style={{ padding: '6px 16px', fontSize: '0.875rem' }}>
@@ -81,6 +64,21 @@ export default function Header() {
           )}
         </div>
       </div>
+      
+      <style jsx>{`
+        nav ul li a {
+          font-size: 0.9375rem;
+          font-weight: 500;
+          color: var(--sub-text);
+        }
+        nav ul li a:hover {
+          color: var(--primary);
+        }
+        @media (max-width: 768px) {
+          .desktop-nav { display: none; }
+          .user-greeting { display: none; }
+        }
+      `}</style>
     </header>
   );
 }

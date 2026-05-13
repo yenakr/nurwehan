@@ -1,0 +1,39 @@
+import { NextRequest, NextResponse } from 'next/server';
+import { decrypt } from './lib/auth';
+
+const protectedRoutes = ['/open-lab', '/history', '/mypage', '/admin'];
+
+export async function middleware(req: NextRequest) {
+  const path = req.nextUrl.pathname;
+  const isProtectedRoute = protectedRoutes.some(route => path.startsWith(route));
+
+  if (!isProtectedRoute) return NextResponse.next();
+
+  const cookie = req.cookies.get('session')?.value;
+  if (!cookie) {
+    return NextResponse.redirect(new URL(`/login?redirect=${path}`, req.url));
+  }
+
+  try {
+    const session = await decrypt(cookie);
+    if (!session?.user) {
+      return NextResponse.redirect(new URL(`/login?redirect=${path}`, req.url));
+    }
+
+    // Admin route protection
+    if (path.startsWith('/admin')) {
+      const role = session.user.role;
+      if (role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
+        return NextResponse.redirect(new URL('/', req.url));
+      }
+    }
+
+    return NextResponse.next();
+  } catch (err) {
+    return NextResponse.redirect(new URL(`/login?redirect=${path}`, req.url));
+  }
+}
+
+export const config = {
+  matcher: ['/open-lab/:path*', '/history/:path*', '/mypage/:path*', '/admin/:path*'],
+};

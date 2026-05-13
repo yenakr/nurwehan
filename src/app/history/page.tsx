@@ -1,58 +1,79 @@
 import Header from '@/components/Header';
+import { getSession } from '@/lib/auth';
+import { prisma } from '@/lib/prisma';
+import Link from 'next/link';
 
-export default function HistoryPage() {
-  const records = [
-    { id: 1, date: '2026-05-15', time: '13:00 - 15:00', room: '제 2 실습실', status: '승인완료', log: '제출대기' },
-    { id: 2, date: '2026-05-08', time: '11:00 - 13:00', room: '제 1 실습실', status: '이용완료', log: '제출완료' },
-  ];
+export default async function HistoryPage() {
+  const session = await getSession();
+  
+  if (!session?.user) {
+    return null; // Should be handled by middleware, but safety first
+  }
+
+  const applications = await prisma.application.findMany({
+    where: { representativeUserId: session.user.id },
+    orderBy: { createdAt: 'desc' },
+    include: {
+      slot: true,
+      skills: { include: { skill: true } }
+    }
+  });
 
   return (
     <>
+      {/* @ts-expect-error Async Server Component */}
       <Header />
-      <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '40px 0' }}>
+      <main style={{ backgroundColor: 'var(--muted-background)', padding: '40px 0', flex: 1 }}>
         <div className="container">
-          <div className="card">
-            <h1 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '24px', borderBottom: '2px solid var(--primary)', paddingBottom: '12px', display: 'inline-block' }}>
-              신청 내역
-            </h1>
-            
-            <table style={{ width: '100%', borderCollapse: 'collapse', marginTop: '12px' }}>
-              <thead>
-                <tr style={{ backgroundColor: 'var(--muted-background)', borderTop: '2px solid var(--text)' }}>
-                  <th style={{ padding: '12px', textAlign: 'left', fontSize: '0.875rem' }}>No.</th>
-                  <th style={{ padding: '12px', textAlign: 'left', fontSize: '0.875rem' }}>사용 일자</th>
-                  <th style={{ padding: '12px', textAlign: 'left', fontSize: '0.875rem' }}>사용 시간</th>
-                  <th style={{ padding: '12px', textAlign: 'left', fontSize: '0.875rem' }}>장소</th>
-                  <th style={{ padding: '12px', textAlign: 'center', fontSize: '0.875rem' }}>상태</th>
-                  <th style={{ padding: '12px', textAlign: 'center', fontSize: '0.875rem' }}>사용일지</th>
-                </tr>
-              </thead>
-              <tbody>
-                {records.map((r, idx) => (
-                  <tr key={r.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                    <td style={{ padding: '16px 12px', fontSize: '0.875rem' }}>{records.length - idx}</td>
-                    <td style={{ padding: '16px 12px', fontSize: '0.875rem' }}>{r.date}</td>
-                    <td style={{ padding: '16px 12px', fontSize: '0.875rem' }}>{r.time}</td>
-                    <td style={{ padding: '16px 12px', fontSize: '0.875rem' }}>{r.room}</td>
-                    <td style={{ padding: '16px 12px', textAlign: 'center' }}>
-                      <span style={{ 
-                        fontSize: '0.75rem', 
-                        padding: '4px 8px', 
-                        borderRadius: '12px', 
-                        backgroundColor: r.status === '승인완료' ? '#ECFDF5' : '#F3F4F6',
-                        color: r.status === '승인완료' ? '#059669' : '#6B7280',
-                        fontWeight: '600'
-                      }}>{r.status}</span>
-                    </td>
-                    <td style={{ padding: '16px 12px', textAlign: 'center' }}>
-                      <button className="btn-outline" style={{ fontSize: '0.75rem', padding: '4px 8px' }}>
-                        {r.log}
-                      </button>
-                    </td>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: '800', borderBottom: '2px solid var(--primary)', paddingBottom: '12px', marginBottom: '32px' }}>
+            내 신청 내역
+          </h1>
+
+          <div className="card" style={{ padding: 0 }}>
+            <div className="table-container">
+              <table>
+                <thead>
+                  <tr>
+                    <th>사용 일자</th>
+                    <th>시간</th>
+                    <th>장소</th>
+                    <th>선택 술기</th>
+                    <th>상태</th>
+                    <th>사용일지</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {applications.length > 0 ? applications.map(app => (
+                    <tr key={app.id}>
+                      <td>{new Date(app.slot.date).toLocaleDateString('ko-KR')}</td>
+                      <td>{app.slot.startTime} - {app.slot.endTime}</td>
+                      <td>{app.slot.room}</td>
+                      <td>{app.skills.map(s => s.skill.name).join(', ')}</td>
+                      <td>
+                        <span className={`badge badge-${app.status.toLowerCase()}`}>
+                          {app.status}
+                        </span>
+                      </td>
+                      <td>
+                        {app.status === 'APPROVED' ? (
+                          <Link href={`/usage-log/${app.id}`} className="btn-outline" style={{ fontSize: '0.75rem', padding: '4px 8px' }}>
+                            제출하기
+                          </Link>
+                        ) : (
+                          <span style={{ fontSize: '0.75rem', color: 'var(--sub-text)' }}>-</span>
+                        )}
+                      </td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan={6} style={{ textAlign: 'center', padding: '60px', color: 'var(--sub-text)' }}>
+                        신청 내역이 없습니다.
+                      </td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
         </div>
       </main>
