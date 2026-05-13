@@ -1,27 +1,12 @@
 import Link from 'next/link';
-import { getSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
-
-export const dynamic = 'force-dynamic';
+import HomeHistory from './HomeHistory';
 
 export default async function Home() {
-  const session = await getSession();
-  const isLoggedIn = !!session?.user;
-  
-  // Fetch official notice
+  // Fetch official notice - This is static/shared data, safe for server render
   const notice = await prisma.notice.findUnique({
     where: { id: 'official-guide' }
   });
-
-  // Fetch recent applications if logged in
-  const recentApplications = (isLoggedIn && session?.user)
-    ? await prisma.application.findMany({
-        where: { representativeUserId: session.user.id },
-        take: 5,
-        orderBy: { createdAt: 'desc' },
-        include: { slot: true }
-      })
-    : [];
 
   return (
     <>
@@ -48,11 +33,9 @@ export default async function Home() {
               OPEN LAB 신청하기
             </Link>
             
-            {!isLoggedIn && (
-              <p style={{ marginTop: '16px', fontSize: '0.875rem', color: 'var(--sub-text)' }}>
-                * 로그인이 필요한 서비스입니다.
-              </p>
-            )}
+            <p style={{ marginTop: '16px', fontSize: '0.875rem', color: 'var(--sub-text)' }}>
+              * 로그인이 필요한 서비스입니다.
+            </p>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '40px' }}>
@@ -76,51 +59,13 @@ export default async function Home() {
               </div>
             </section>
 
-            {/* My Recent History (Visible only when logged in) */}
+            {/* My Recent History (Client Component) */}
             <section>
               <h3 className="section-title">
                 <span>최근 내 신청 내역</span>
               </h3>
               <div className="card">
-                {isLoggedIn ? (
-                  recentApplications.length > 0 ? (
-                    <div className="table-container">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th>날짜</th>
-                            <th>시간</th>
-                            <th>상태</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {recentApplications.map(app => (
-                            <tr key={app.id}>
-                              <td>{new Date(app.slot.date).toLocaleDateString('ko-KR')}</td>
-                              <td>{app.slot.startTime}</td>
-                              <td>
-                                <span className={`badge badge-${app.status.toLowerCase()}`}>
-                                  {app.status === 'PENDING' ? '승인대기' : 
-                                   app.status === 'APPROVED' ? '승인완료' : 
-                                   app.status === 'REJECTED' ? '반려' : app.status}
-                                </span>
-                              </td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  ) : (
-                    <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--sub-text)' }}>
-                      <p>최근 신청 내역이 없습니다.</p>
-                    </div>
-                  )
-                ) : (
-                  <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--sub-text)' }}>
-                    <p style={{ fontSize: '0.875rem' }}>로그인 후 내 신청 내역을 확인할 수 있습니다.</p>
-                    <Link href="/login" style={{ color: 'var(--primary)', fontWeight: '600', marginTop: '12px', display: 'inline-block' }}>로그인하기</Link>
-                  </div>
-                )}
+                <HomeHistory />
               </div>
             </section>
 

@@ -1,7 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
 
-export const dynamic = 'force-dynamic';
 
 export default async function NoticesPage() {
   const notices = await prisma.notice.findMany({

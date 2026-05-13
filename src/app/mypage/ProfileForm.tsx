@@ -28,7 +28,7 @@ export default function ProfileForm({ user }: Props) {
   const handleSave = async () => {
     setLoading(true);
     try {
-      const res = await fetch('/api/me', {
+      const res = await fetch('/api/auth/me', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
