@@ -110,6 +110,3 @@ export default function UsageLogForm({ application, user }: Props) {
     </form>
   );
 }
-    </form>
-  );
-}
