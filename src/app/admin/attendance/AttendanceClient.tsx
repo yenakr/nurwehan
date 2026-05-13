@@ -7,10 +7,12 @@ interface Participant {
   id: string;
   studentId: string;
   name: string;
-  attendanceStatus: 'PENDING' | 'PRESENT' | 'ABSENT' | 'LATE_30';
+  attendanceStatus: 'PENDING' | 'PRESENT' | 'ABSENT';
   cleanupBad: boolean;
   application: {
     id: string;
+    submittedAt: Date | string;
+    createdAt: Date | string;
     additionalRequest: string | null;
     representativeUser: {
       name: string;
@@ -28,24 +30,14 @@ interface Participant {
   };
 }
 
-interface GroupedApplication {
-  id: string;
-  startTime: string;
-  endTime: string;
+interface RoomGroup {
   room: string;
-  skills: string[];
-  representative: string;
-  additionalRequest: string | null;
-  hasUsageLog: boolean;
   participants: Participant[];
 }
 
-interface TimeSlotGroup {
+interface TimeGroup {
   timeLabel: string;
-  roomGroups: {
-    room: string;
-    applications: GroupedApplication[];
-  }[];
+  roomGroups: RoomGroup[];
 }
 
 export default function AttendanceClient({ 
@@ -58,19 +50,45 @@ export default function AttendanceClient({
   initialTime?: string | null;
 }) {
   const router = useRouter();
-  const [participants, setParticipants] = useState(initialParticipants);
-  const [loading, setLoading] = useState<string | null>(null);
+  const [participants, setParticipants] = useState<Participant[]>(initialParticipants);
+  const [currentDate, setCurrentDate] = useState(selectedDate);
+  const [loading, setLoading] = useState<boolean>(false);
+  const [updateLoading, setUpdateLoading] = useState<string | null>(null);
   const [expandedSlots, setExpandedSlots] = useState<string[]>([]);
   const [filterTime, setFilterTime] = useState<string | null>(initialTime || null);
 
-  // Group participants into a structured hierarchy
-  let timeSlotGroups = participants.reduce<TimeSlotGroup[]>((acc, p) => {
-    // ... same grouping logic ...
+  // Fetch data when date changes
+  useEffect(() => {
+    if (currentDate === selectedDate && participants.length > 0) return;
+    
+    const fetchData = async () => {
+      setLoading(true);
+      try {
+        const res = await fetch(`/api/admin/attendance?date=${currentDate}`);
+        if (res.ok) {
+          const data = await res.json();
+          setParticipants(data);
+          // Sync URL search param
+          const url = new URL(window.location.href);
+          url.searchParams.set('date', currentDate);
+          window.history.replaceState({}, '', url.toString());
+        }
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchData();
+  }, [currentDate]);
+
+  // Grouping logic: Time Slot -> Room -> Flat List of Participants
+  const processedGroups = participants.reduce<TimeGroup[]>((acc, p) => {
     const app = p.application;
     const timeLabel = `${app.slot.startTime} ~ ${app.slot.endTime}`;
     const room = app.slot.room;
-    
-    // Filter by time if set
+
     if (filterTime && !timeLabel.includes(filterTime)) return acc;
 
     let timeGroup = acc.find(g => g.timeLabel === timeLabel);
@@ -78,40 +96,43 @@ export default function AttendanceClient({
       timeGroup = { timeLabel, roomGroups: [] };
       acc.push(timeGroup);
     }
-    
+
     let roomGroup = timeGroup.roomGroups.find(rg => rg.room === room);
     if (!roomGroup) {
-      roomGroup = { room, applications: [] };
+      roomGroup = { room, participants: [] };
       timeGroup.roomGroups.push(roomGroup);
     }
-    
-    let groupedApp = roomGroup.applications.find(ga => ga.id === app.id);
-    if (!groupedApp) {
-      groupedApp = {
-        id: app.id,
-        startTime: app.slot.startTime,
-        endTime: app.slot.endTime,
-        room: app.slot.room,
-        skills: app.skills.map(s => s.skill.name),
-        representative: app.representativeUser?.name || 'Unknown',
-        additionalRequest: app.additionalRequest,
-        hasUsageLog: app.usageLogs.length > 0,
-        participants: []
-      };
-      roomGroup.applications.push(groupedApp);
-    }
-    
-    groupedApp.participants.push(p);
+
+    roomGroup.participants.push(p);
     return acc;
   }, []);
 
   // Sort time slots
-  timeSlotGroups.sort((a, b) => a.timeLabel.localeCompare(b.timeLabel));
+  processedGroups.sort((a, b) => a.timeLabel.localeCompare(b.timeLabel));
+  
+  // Sort participants within each room by application creation time
+  processedGroups.forEach(tg => {
+    tg.roomGroups.forEach(rg => {
+      rg.participants.sort((a, b) => {
+        const dateA = new Date(a.application.submittedAt || a.application.createdAt).getTime();
+        const dateB = new Date(b.application.submittedAt || b.application.createdAt).getTime();
+        return dateA - dateB;
+      });
+    });
+  });
 
-  // Expand all by default on first load
+  // Stats
+  const stats = {
+    total: participants.length,
+    present: participants.filter(p => p.attendanceStatus === 'PRESENT').length,
+    absent: participants.filter(p => p.attendanceStatus === 'ABSENT').length,
+    pending: participants.filter(p => p.attendanceStatus === 'PENDING').length,
+    badCleanup: participants.filter(p => p.cleanupBad).length,
+  };
+
   useEffect(() => {
-    setExpandedSlots(timeSlotGroups.map(g => g.timeLabel));
-  }, [initialParticipants]);
+    setExpandedSlots(processedGroups.map(g => g.timeLabel));
+  }, [participants]);
 
   const toggleSlot = (label: string) => {
     setExpandedSlots(prev => 
@@ -120,7 +141,7 @@ export default function AttendanceClient({
   };
 
   const updateStatus = async (participantId: string, updates: Partial<Pick<Participant, "attendanceStatus" | "cleanupBad">>) => {
-    setLoading(participantId);
+    setUpdateLoading(participantId);
     try {
       const res = await fetch('/api/admin/attendance', {
         method: 'PATCH',
@@ -129,27 +150,14 @@ export default function AttendanceClient({
       });
       if (res.ok) {
         setParticipants(prev => prev.map(p => p.id === participantId ? { ...p, ...updates } : p));
+      } else {
+        const error = await res.json();
+        alert(error.message || '업데이트에 실패했습니다.');
       }
+    } catch (err) {
+      alert('오류가 발생했습니다.');
     } finally {
-      setLoading(null);
-    }
-  };
-
-  const updateGroupCleanup = async (applicationId: string, cleanupBad: boolean) => {
-    setLoading(`group-${applicationId}`);
-    try {
-      const res = await fetch('/api/admin/attendance', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ applicationId, cleanupAll: cleanupBad })
-      });
-      if (res.ok) {
-        setParticipants(prev => prev.map(p => 
-          p.application.id === applicationId ? { ...p, cleanupBad } : p
-        ));
-      }
-    } finally {
-      setLoading(null);
+      setUpdateLoading(null);
     }
   };
 
@@ -159,16 +167,20 @@ export default function AttendanceClient({
         <div className="date-picker-wrapper">
           <input 
             type="date" 
-            value={selectedDate} 
-            onChange={(e) => router.push(`/admin/attendance?date=${e.target.value}`)}
+            value={currentDate} 
+            onChange={(e) => setCurrentDate(e.target.value)}
             className="date-input"
           />
-          <span className="stats-badge">
-            총 {new Set(participants.map(p => p.application.id)).size}팀 ({participants.length}명)
-          </span>
+          <div className="stats-group">
+            <span className="stats-badge total">총 {stats.total}명</span>
+            <span className="stats-badge present">출석 {stats.present}</span>
+            <span className="stats-badge absent">불참 {stats.absent}</span>
+            <span className="stats-badge pending">대기 {stats.pending}</span>
+            <span className="stats-badge cleanup">정리불량 {stats.badCleanup}</span>
+          </div>
           {filterTime && (
             <button className="btn-filter-reset" onClick={() => setFilterTime(null)}>
-              ⏰ {filterTime} 필터 해제 (전체 보기)
+              ⏰ {filterTime} 필터 해제
             </button>
           )}
         </div>
@@ -177,12 +189,17 @@ export default function AttendanceClient({
         </button>
       </div>
 
-      {timeSlotGroups.length === 0 ? (
+      {loading ? (
+        <div className="loading-state">
+          <div className="spinner"></div>
+          <p>명단을 불러오는 중...</p>
+        </div>
+      ) : processedGroups.length === 0 ? (
         <div className="empty-state">
-          해당 날짜에 승인된 OPEN LAB 신청이 없습니다.
+          해당 날짜에 승인된 신청 내역이 없습니다.
         </div>
       ) : (
-        timeSlotGroups.map((group) => (
+        processedGroups.map((group) => (
           <div key={group.timeLabel} className="time-slot-accordion">
             <button 
               className={`accordion-trigger ${expandedSlots.includes(group.timeLabel) ? 'active' : ''}`}
@@ -191,13 +208,13 @@ export default function AttendanceClient({
               <div className="trigger-content">
                 <span className="time-text">{group.timeLabel}</span>
                 <span className="summary-text">
-                  {group.roomGroups.length}개 장소 / {group.roomGroups.reduce((sum, rg) => sum + rg.applications.length, 0)}팀
+                  총 {group.roomGroups.reduce((sum, rg) => sum + rg.participants.length, 0)}명
                 </span>
               </div>
               <span className="chevron">{expandedSlots.includes(group.timeLabel) ? '▼' : '▶'}</span>
             </button>
             
-            {(expandedSlots.includes(group.timeLabel) || typeof window === 'undefined') && (
+            {expandedSlots.includes(group.timeLabel) && (
               <div className="accordion-content">
                 {group.roomGroups.map((roomGroup) => (
                   <div key={roomGroup.room} className="room-section">
@@ -205,78 +222,82 @@ export default function AttendanceClient({
                       📍 {roomGroup.room}
                     </div>
                     
-                    <div className="applications-list">
-                      {roomGroup.applications.map((app) => (
-                        <div key={app.id} className="app-card">
-                          <div className="app-header">
-                            <div className="app-info">
-                              <span className="rep-name">{app.representative} 팀</span>
-                              <span className="skill-tags">{app.skills.join(', ')}</span>
-                              {app.hasUsageLog && <span className="log-badge">소감 제출됨</span>}
-                            </div>
-                            <div className="app-actions no-print">
-                               <button 
-                                className={`btn-cleanup ${app.participants.every(p => p.cleanupBad) ? 'urgent' : ''}`}
-                                onClick={() => updateGroupCleanup(app.id, !app.participants.every(p => p.cleanupBad))}
-                                disabled={loading === `group-${app.id}`}
-                              >
-                                {app.participants.every(p => p.cleanupBad) ? '조 전체 정리불량 해제' : '조 전체 정리불량 처리'}
-                              </button>
-                            </div>
-                          </div>
-
-                          {app.additionalRequest && (
-                            <div className="request-box">
-                              <strong>요청사항:</strong> {app.additionalRequest}
-                            </div>
-                          )}
-
-                          <div className="participant-table">
-                            <table>
-                              <thead>
-                                <tr>
-                                  <th>학번</th>
-                                  <th>이름</th>
-                                  <th className="no-print">출석 상태</th>
-                                  <th className="no-print">정리 상태</th>
-                                  <th className="print-only">서명</th>
-                                </tr>
-                              </thead>
-                              <tbody>
-                                {app.participants.map((p) => (
-                                  <tr key={p.id}>
-                                    <td>{p.studentId}</td>
-                                    <td className="font-bold">{p.name}</td>
-                                    <td className="no-print">
-                                      <select 
-                                        value={p.attendanceStatus}
-                                        onChange={(e) => updateStatus(p.id, { attendanceStatus: e.target.value as any })}
-                                        className={`status-select ${p.attendanceStatus}`}
-                                        disabled={loading === p.id}
-                                      >
-                                        <option value="PENDING">대기</option>
-                                        <option value="PRESENT">출석</option>
-                                        <option value="ABSENT">불참</option>
-                                        <option value="LATE_30">30분↑ 지각</option>
-                                      </select>
-                                    </td>
-                                    <td className="no-print">
-                                      <button
-                                        className={`cleanup-toggle ${p.cleanupBad ? 'bad' : 'good'}`}
-                                        onClick={() => updateStatus(p.id, { cleanupBad: !p.cleanupBad })}
-                                        disabled={loading === p.id}
-                                      >
-                                        {p.cleanupBad ? '❌ 불량' : '✅ 양호'}
-                                      </button>
-                                    </td>
-                                    <td className="print-only signature-cell"></td>
-                                  </tr>
-                                ))}
-                              </tbody>
-                            </table>
-                          </div>
-                        </div>
-                      ))}
+                    <div className="table-wrapper">
+                      <table>
+                        <thead>
+                          <tr>
+                            <th className="col-idx">순서</th>
+                            <th className="col-student">학번/이름</th>
+                            <th className="col-role">구분</th>
+                            <th className="col-skill">신청 술기</th>
+                            <th className="col-request">요청사항</th>
+                            <th className="no-print col-attendance">출석 체크</th>
+                            <th className="no-print col-cleanup">정리 상태</th>
+                            <th className="print-only signature-cell">서명</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          {roomGroup.participants.map((p, idx) => (
+                            <tr key={p.id} className={updateLoading === p.id ? 'row-updating' : ''}>
+                              <td className="col-idx">{idx + 1}</td>
+                              <td className="col-student">
+                                <div className="student-id">{p.studentId}</div>
+                                <div className="student-name">{p.name}</div>
+                              </td>
+                              <td className="col-role">
+                                <span className={`role-badge ${p.studentId === p.application.representativeUser.studentId ? 'rep' : 'part'}`}>
+                                  {p.studentId === p.application.representativeUser.studentId ? '신청자' : '참여자'}
+                                </span>
+                              </td>
+                              <td className="col-skill">
+                                <div className="skill-text">
+                                  {p.application.skills.map(s => s.skill.name).join(', ')}
+                                </div>
+                              </td>
+                              <td className="col-request">
+                                <div className="request-text">{p.application.additionalRequest || '-'}</div>
+                              </td>
+                              <td className="no-print col-attendance">
+                                <div className="btn-group">
+                                  <button 
+                                    className={`btn-status present ${p.attendanceStatus === 'PRESENT' ? 'active' : ''}`}
+                                    onClick={() => updateStatus(p.id, { attendanceStatus: 'PRESENT' })}
+                                    disabled={updateLoading === p.id}
+                                  >
+                                    출석
+                                  </button>
+                                  <button 
+                                    className={`btn-status absent ${p.attendanceStatus === 'ABSENT' ? 'active' : ''}`}
+                                    onClick={() => updateStatus(p.id, { attendanceStatus: 'ABSENT' })}
+                                    disabled={updateLoading === p.id}
+                                  >
+                                    불참
+                                  </button>
+                                </div>
+                              </td>
+                              <td className="no-print col-cleanup">
+                                <div className="btn-group">
+                                  <button 
+                                    className={`btn-status good ${!p.cleanupBad ? 'active' : ''}`}
+                                    onClick={() => updateStatus(p.id, { cleanupBad: false })}
+                                    disabled={updateLoading === p.id}
+                                  >
+                                    양호
+                                  </button>
+                                  <button 
+                                    className={`btn-status bad ${p.cleanupBad ? 'active' : ''}`}
+                                    onClick={() => updateStatus(p.id, { cleanupBad: true })}
+                                    disabled={updateLoading === p.id}
+                                  >
+                                    불량
+                                  </button>
+                                </div>
+                              </td>
+                              <td className="print-only signature-cell"></td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
                     </div>
                   </div>
                 ))}
@@ -290,47 +311,50 @@ export default function AttendanceClient({
         .attendance-container {
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 20px;
+          margin-bottom: 60px;
         }
         .controls {
           display: flex;
           justify-content: space-between;
           align-items: center;
           margin-bottom: 24px;
+          position: sticky;
+          top: 0;
+          z-index: 100;
+          background: var(--muted-background);
+          padding: 10px 0;
         }
         .date-picker-wrapper {
           display: flex;
           align-items: center;
           gap: 16px;
+          flex-wrap: wrap;
         }
         .date-input {
           padding: 10px 14px;
           border: 1px solid var(--border);
           border-radius: 8px;
-          font-weight: 500;
+          font-weight: 700;
           outline: none;
+          color: var(--primary);
+        }
+        .stats-group {
+          display: flex;
+          gap: 8px;
         }
         .stats-badge {
           font-weight: 700;
-          font-size: 0.9375rem;
-          color: var(--primary);
-          background: #e6f0ff;
-          padding: 6px 12px;
-          border-radius: 20px;
-        }
-        .btn-filter-reset {
-          background: #f1f5f9;
-          border: 1px solid var(--border);
-          padding: 6px 12px;
-          border-radius: 20px;
           font-size: 0.8125rem;
-          font-weight: 700;
-          color: var(--text);
-          cursor: pointer;
+          padding: 6px 12px;
+          border-radius: 20px;
         }
-        .btn-filter-reset:hover {
-          background: #e2e8f0;
-        }
+        .stats-badge.total { background: #f1f5f9; color: #64748b; }
+        .stats-badge.present { background: #dcfce7; color: #166534; }
+        .stats-badge.absent { background: #fee2e2; color: #991b1b; }
+        .stats-badge.pending { background: #fff9db; color: #e67700; }
+        .stats-badge.cleanup { background: #fff5f5; color: #c92a2a; }
+
         .btn-print {
           background: var(--primary);
           color: white;
@@ -344,206 +368,132 @@ export default function AttendanceClient({
           gap: 8px;
         }
         
-        .empty-state {
-          text-align: center;
-          padding: 80px 20px;
-          background: white;
-          border: 1px solid var(--border);
-          border-radius: 12px;
+        .loading-state {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          justify-content: center;
+          padding: 100px;
+          gap: 16px;
           color: var(--sub-text);
         }
+        .spinner {
+          width: 30px;
+          height: 30px;
+          border: 3px solid #f1f5f9;
+          border-top: 3px solid var(--primary);
+          border-radius: 50%;
+          animation: spin 1s linear infinite;
+        }
+        @keyframes spin { to { transform: rotate(360deg); } }
 
         .time-slot-accordion {
           background: white;
           border: 1px solid var(--border);
           border-radius: 12px;
           overflow: hidden;
-          margin-bottom: 12px;
+          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
         }
         .accordion-trigger {
           width: 100%;
           display: flex;
           justify-content: space-between;
           align-items: center;
-          padding: 16px 24px;
+          padding: 20px 24px;
           background: white;
           border: none;
           cursor: pointer;
-          transition: background 0.2s;
           text-align: left;
         }
-        .accordion-trigger:hover {
-          background: #f8fafc;
-        }
-        .accordion-trigger.active {
-          border-bottom: 1px solid var(--border);
-          background: #f1f5f9;
-        }
-        .trigger-content {
-          display: flex;
-          align-items: center;
-          gap: 20px;
-        }
-        .time-text {
-          font-size: 1.125rem;
-          font-weight: 800;
-          color: var(--primary);
-        }
-        .summary-text {
-          font-size: 0.875rem;
-          color: var(--sub-text);
-          font-weight: 500;
-        }
-        .chevron {
-          font-size: 0.75rem;
-          color: var(--sub-text);
-        }
-
-        .accordion-content {
-          padding: 0;
-        }
-        .room-section {
-          padding: 0;
-          border-bottom: 1px solid #f1f5f9;
-        }
-        .room-section:last-child {
-          border-bottom: none;
-        }
+        .accordion-trigger:hover { background: #f8fafc; }
+        .accordion-trigger.active { border-bottom: 1px solid var(--border); background: #f8fafc; }
+        .time-text { font-size: 1.25rem; font-weight: 900; color: var(--primary); }
+        
+        .room-section { margin-bottom: 0; }
         .room-header {
           padding: 12px 24px;
-          background: #f8fafc;
-          font-weight: 700;
-          font-size: 0.875rem;
-          color: #475569;
-          border-bottom: 1px solid #f1f5f9;
-        }
-
-        .applications-list {
-          padding: 16px 24px;
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
-        }
-        .app-card {
-          border: 1px solid #edf2f7;
-          border-radius: 10px;
-          padding: 20px;
-          background: #fff;
-          box-shadow: 0 1px 2px rgba(0,0,0,0.02);
-        }
-        .app-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: flex-start;
-          margin-bottom: 16px;
-        }
-        .app-info {
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-        }
-        .rep-name {
-          font-size: 1rem;
-          font-weight: 700;
-          color: var(--text);
-        }
-        .skill-tags {
-          font-size: 0.8125rem;
-          color: var(--sub-text);
-          font-weight: 500;
-        }
-        .log-badge {
-          font-size: 0.6875rem;
-          background: #dcfce7;
-          color: #166534;
-          padding: 2px 8px;
-          border-radius: 4px;
-          width: fit-content;
-          font-weight: 700;
-        }
-        .btn-cleanup {
-          font-size: 0.75rem;
-          padding: 6px 12px;
-          border-radius: 6px;
-          border: 1px solid var(--border);
-          background: white;
-          color: var(--sub-text);
-          cursor: pointer;
-          font-weight: 600;
-          transition: all 0.2s;
-        }
-        .btn-cleanup:hover {
           background: #f1f5f9;
-        }
-        .btn-cleanup.urgent {
-          background: #fee2e2;
-          color: #ef4444;
-          border-color: #fecaca;
-        }
-
-        .request-box {
-          background: #fff9db;
-          padding: 12px;
-          border-radius: 6px;
-          font-size: 0.875rem;
-          margin-bottom: 16px;
-          border-left: 3px solid #fab005;
+          font-weight: 800;
+          font-size: 0.9375rem;
+          color: #334155;
+          border-top: 1px solid var(--border);
+          border-bottom: 1px solid var(--border);
         }
 
-        .participant-table table {
-          width: 100%;
-          border-collapse: collapse;
-          font-size: 0.875rem;
-        }
-        .participant-table th {
+        .table-wrapper { overflow-x: auto; }
+        table { width: 100%; border-collapse: collapse; min-width: 800px; }
+        th { 
+          background: #fafafa;
+          padding: 12px 16px;
+          font-size: 0.75rem;
+          font-weight: 700;
+          color: #64748b;
           text-align: left;
-          padding: 8px 12px;
-          color: var(--sub-text);
+          text-transform: uppercase;
           border-bottom: 2px solid #f1f5f9;
-          font-weight: 600;
         }
-        .participant-table td {
-          padding: 10px 12px;
-          border-bottom: 1px solid #f8fafc;
-        }
-        .font-bold { font-weight: 700; }
+        td { padding: 16px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
         
-        .status-select {
-          padding: 4px 8px;
-          border-radius: 4px;
-          border: 1px solid var(--border);
-          font-weight: 700;
-          font-size: 0.75rem;
-          outline: none;
-        }
-        .status-select.PRESENT { background: #dcfce7; color: #166534; border-color: #bbf7d0; }
-        .status-select.ABSENT { background: #fee2e2; color: #991b1b; border-color: #fecaca; }
-        .status-select.LATE_30 { background: #fef3c7; color: #92400e; border-color: #fde68a; }
+        .col-idx { width: 50px; text-align: center; color: var(--sub-text); font-size: 0.8125rem; }
+        .col-student { width: 150px; }
+        .student-id { font-size: 0.75rem; color: var(--sub-text); font-family: monospace; }
+        .student-name { font-size: 1rem; font-weight: 700; color: var(--text); }
         
-        .cleanup-toggle {
-          padding: 4px 10px;
-          border-radius: 4px;
-          font-size: 0.75rem;
-          font-weight: 700;
-          border: 1px solid transparent;
-          cursor: pointer;
+        .col-role { width: 80px; }
+        .role-badge { 
+          font-size: 0.6875rem; 
+          padding: 2px 6px; 
+          border-radius: 4px; 
+          font-weight: 800;
         }
-        .cleanup-toggle.good { background: #f1f5f9; color: #64748b; }
-        .cleanup-toggle.bad { background: #ef4444; color: white; }
+        .role-badge.rep { background: #e0f2fe; color: #0369a1; }
+        .role-badge.part { background: #f1f5f9; color: #64748b; }
 
-        .signature-cell { width: 120px; }
+        .col-skill { max-width: 200px; }
+        .skill-text { font-size: 0.875rem; color: #475569; line-height: 1.4; }
+        
+        .col-request { max-width: 200px; }
+        .request-text { font-size: 0.8125rem; color: #e67700; background: #fff9db; padding: 4px 8px; border-radius: 4px; display: inline-block; }
+        
+        .btn-group { display: flex; gap: 4px; }
+        .btn-status {
+          flex: 1;
+          padding: 8px 12px;
+          border: 1px solid #e2e8f0;
+          background: white;
+          border-radius: 6px;
+          font-size: 0.8125rem;
+          font-weight: 700;
+          cursor: pointer;
+          transition: all 0.2s;
+          color: #94a3b8;
+          white-space: nowrap;
+        }
+        .btn-status:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .btn-status.present.active { background: #22c55e; color: white; border-color: #16a34a; box-shadow: 0 2px 4px rgba(34, 197, 94, 0.2); }
+        .btn-status.absent.active { background: #ef4444; color: white; border-color: #dc2626; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2); }
+        .btn-status.good.active { background: #3b82f6; color: white; border-color: #2563eb; box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2); }
+        .btn-status.bad.active { background: #f97316; color: white; border-color: #ea580c; box-shadow: 0 2px 4px rgba(249, 115, 22, 0.2); }
+
+        .btn-status:hover:not(.active) { background: #f8fafc; color: var(--text); }
+        
+        .row-updating { opacity: 0.6; pointer-events: none; }
+        .signature-cell { width: 100px; border-left: 1px solid #f1f5f9; }
         .print-only { display: none; }
 
         @media print {
           .no-print { display: none !important; }
           .print-only { display: table-cell !important; }
-          .time-slot-accordion { border: none !important; margin: 0; }
-          .accordion-trigger { display: none !important; }
-          .accordion-content { display: block !important; }
-          .app-card { border: 1px solid #000; break-inside: avoid; margin-bottom: 20px; }
-          .room-header { border-bottom: 1px solid #000; background: none !important; }
-          .participant-table th { border-bottom: 1px solid #000; }
-          .participant-table td { border-bottom: 1px solid #000; }
+          .attendance-container { gap: 0; }
+          .time-slot-accordion { border: 1px solid #000; box-shadow: none; margin-bottom: 20px; border-radius: 0; }
+          .accordion-trigger { display: block; border: none; padding: 10px; }
+          .chevron { display: none; }
+          th, td { border: 1px solid #000; padding: 6px 10px; font-size: 0.75rem; color: #000; }
+          .role-badge { border: 1px solid #000; background: none !important; color: #000 !important; }
+          .btn-status { display: none; }
+          .btn-status.active { display: block; border: none; background: none !important; color: #000 !important; font-weight: 800; }
+          .request-text { background: none; border: 1px solid #ccc; color: #000; }
         }
       `}</style>
     </div>
