@@ -53,70 +53,40 @@ export default async function AdminQuickStats() {
         gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', 
         gap: '16px' 
       }}>
-        <Link href="/admin/users" className="stat-card">
-          <div className="stat-label">가입 신청 대기</div>
-          <div className="stat-value">{pendingUsers}<span>건</span></div>
-        </Link>
-        
-        <Link href="/admin/applications" className="stat-card">
-          <div className="stat-label">OPEN LAB 신청 대기</div>
-          <div className="stat-value">{pendingApps}<span>건</span></div>
-        </Link>
-        
-        <Link href="/admin/attendance" className="stat-card">
-          <div className="stat-label">오늘 승인된 OPEN LAB</div>
-          <div className="stat-value">{todayApprovedApps}<span>건</span></div>
-        </Link>
-        
-        <Link href="/admin/usage-logs" className="stat-card">
-          <div className="stat-label">사용일지 미제출</div>
-          <div className="stat-value" style={{ color: missingLogsCount > 0 ? '#ef4444' : 'inherit' }}>
-            {missingLogsCount}<span>건</span>
-          </div>
-        </Link>
-        
-        <Link href="/admin/restrictions" className="stat-card">
-          <div className="stat-label">신청 제한 학생</div>
-          <div className="stat-value">{restrictedStudents}<span>명</span></div>
-        </Link>
+        {[
+          { label: '가입 신청 대기', value: pendingUsers, unit: '건', href: '/admin/users' },
+          { label: 'OPEN LAB 신청 대기', value: pendingApps, unit: '건', href: '/admin/applications' },
+          { label: '오늘 승인된 OPEN LAB', value: todayApprovedApps, unit: '건', href: '/admin/attendance' },
+          { label: '사용일지 미제출', value: missingLogsCount, unit: '건', href: '/admin/usage-logs', urgent: missingLogsCount > 0 },
+          { label: '신청 제한 학생', value: restrictedStudents, unit: '명', href: '/admin/restrictions' },
+        ].map((stat, i) => (
+          <Link 
+            key={i}
+            href={stat.href} 
+            style={{
+              background: 'white',
+              border: '1px solid var(--border)',
+              padding: '20px',
+              borderRadius: '12px',
+              textDecoration: 'none',
+              color: 'inherit',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+              boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+            }}
+          >
+            <div style={{ fontSize: '0.8125rem', color: 'var(--sub-text)', fontWeight: 500 }}>{stat.label}</div>
+            <div style={{ 
+              fontSize: '1.5rem', 
+              fontWeight: 800, 
+              color: stat.urgent ? '#ef4444' : 'var(--primary)' 
+            }}>
+              {stat.value}<span style={{ fontSize: '0.875rem', marginLeft: '4px', fontWeight: 500, color: 'var(--sub-text)' }}>{stat.unit}</span>
+            </div>
+          </Link>
+        ))}
       </div>
-
-      <style jsx>{`
-        .stat-card {
-          background: white;
-          border: 1px solid var(--border);
-          padding: 20px;
-          border-radius: 12px;
-          text-decoration: none;
-          color: inherit;
-          transition: all 0.2s ease;
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-          box-shadow: 0 1px 2px rgba(0,0,0,0.05);
-        }
-        .stat-card:hover {
-          border-color: var(--primary);
-          transform: translateY(-2px);
-          box-shadow: 0 4px 6px rgba(0,0,0,0.05);
-        }
-        .stat-label {
-          font-size: 0.8125rem;
-          color: var(--sub-text);
-          font-weight: 500;
-        }
-        .stat-value {
-          font-size: 1.5rem;
-          font-weight: 800;
-          color: var(--primary);
-        }
-        .stat-value span {
-          font-size: 0.875rem;
-          margin-left: 4px;
-          font-weight: 500;
-          color: var(--sub-text);
-        }
-      `}</style>
     </div>
   );
 }
