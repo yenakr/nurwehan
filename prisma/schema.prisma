@@ -10,46 +10,227 @@ datasource db {
 }
 
 model User {
+  id               String            @id @default(cuid())
+  studentId        String            @unique // 학번
+  name             String
+  grade            Int?              // 학년
+  email            String?           @unique
+  phone            String?
+  password         String
+  role             Role              @default(STUDENT)
+  approvalStatus   ApprovalStatus    @default(PENDING)
+  rejectedReason   String?
+  createdAt        DateTime          @default(now())
+  updatedAt        DateTime          @updatedAt
+  
+  applications     Application[]     @relation("RepresentedApplications")
+  participations   ApplicationParticipant[]
+  restrictions     Restriction[]     @relation("UserRestrictions")
+  createdRestrictions Restriction[]  @relation("AdminCreatedRestrictions")
+  notices          Notice[]
+  warnings         CleanupWarning[]
+}
+
+model Semester {
   id        String   @id @default(cuid())
-  studentId String   @unique // 학번
-  name      String
-  password  String
-  role      Role     @default(STUDENT)
+  name      String   // 예: 2026학년도 1학기
+  startDate DateTime
+  endDate   DateTime
+  isActive  Boolean  @default(true)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  bookings  Booking[]
+  
+  slots     OpenLabSlot[]
+  gradeRules OpenLabGradeRule[]
+}
+
+model OpenLabGradeRule {
+  id         String   @id @default(cuid())
+  semesterId String
+  semester   Semester @relation(fields: [semesterId], references: [id])
+  grade      Int
+  dayOfWeek  Int      // 0-6 (Sunday-Saturday)
+  startTime  String   // HH:mm
+  endTime    String   // HH:mm
+  room       String
+  maxCapacity Int
+  isActive   Boolean  @default(true)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model OpenLabSlot {
+  id           String        @id @default(cuid())
+  semesterId   String
+  semester     Semester      @relation(fields: [semesterId], references: [id])
+  allowedGrade Int
+  date         DateTime
+  startTime    String        // HH:mm
+  endTime      String        // HH:mm
+  room         String
+  maxCapacity  Int
+  status       SlotStatus    @default(OPEN)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  
+  applications Application[]
+}
+
+model Skill {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  description String?
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  
+  supplies    SkillSupply[]
+  applications ApplicationSkill[]
+}
+
+model SkillSupply {
+  id         String   @id @default(cuid())
+  skillId    String
+  skill      Skill    @relation(fields: [skillId], references: [id])
+  supplyName String
+  quantity   Float
+  unit       String
+  note       String?
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+}
+
+model Application {
+  id                   String            @id @default(cuid())
+  slotId               String
+  slot                 OpenLabSlot       @relation(fields: [slotId], references: [id])
+  representativeUserId String
+  representativeUser   User              @relation("RepresentedApplications", fields: [representativeUserId], references: [id])
+  status               ApplicationStatus @default(PENDING)
+  additionalRequest    String?
+  rejectedReason       String?
+  submittedAt          DateTime          @default(now())
+  approvedAt           DateTime?
+  approvedById         String?
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+  
+  participants         ApplicationParticipant[]
+  skills               ApplicationSkill[]
+  usageLogs            UsageLog[]
+  restrictions         Restriction[]
+  cleanupWarnings      CleanupWarning[]
+}
+
+model ApplicationParticipant {
+  id               String           @id @default(cuid())
+  applicationId    String
+  application      Application      @relation(fields: [applicationId], references: [id])
+  userId           String?
+  user             User?            @relation(fields: [userId], references: [id])
+  studentId        String           // 비회원 또는 기록용 학번
+  name             String
+  attendanceStatus AttendanceStatus @default(PENDING)
+  cleanupBad       Boolean          @default(false)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+}
+
+model ApplicationSkill {
+  id            String      @id @default(cuid())
+  applicationId String
+  application   Application @relation(fields: [applicationId], references: [id])
+  skillId       String
+  skill         Skill       @relation(fields: [skillId], references: [id])
+  createdAt     DateTime    @default(now())
+}
+
+model UsageLog {
+  id                 String      @id @default(cuid())
+  applicationId      String
+  application        Application @relation(fields: [applicationId], references: [id])
+  submittedBy        String
+  practiceContent    String
+  difficulty         String
+  nextPracticeGoal   String
+  actualUsedSupplies String?
+  cleanupChecked     Boolean     @default(false)
+  wasteChecked       Boolean     @default(false)
+  submittedAt        DateTime    @default(now())
+  createdAt          DateTime    @default(now())
+}
+
+model Restriction {
+  id                  String      @id @default(cuid())
+  userId              String
+  user                User        @relation("UserRestrictions", fields: [userId], references: [id])
+  reason              String
+  sourceApplicationId String?
+  sourceApplication   Application? @relation(fields: [sourceApplicationId], references: [id])
+  startDate           DateTime
+  endDate             DateTime
+  isActive            Boolean     @default(true)
+  createdById         String
+  admin               User        @relation("AdminCreatedRestrictions", fields: [createdById], references: [id])
+  createdAt           DateTime    @default(now())
+  updatedAt           DateTime    @updatedAt
+}
+
+model CleanupWarning {
+  id                String      @id @default(cuid())
+  userId            String
+  user              User        @relation(fields: [userId], references: [id])
+  applicationId     String
+  application       Application @relation(fields: [applicationId], references: [id])
+  reason            String
+  warningCountAfter Int
+  createdById       String
+  createdAt         DateTime    @default(now())
 }
 
 model Notice {
-  id        String   @id @default(cuid())
-  title     String
-  content   String
-  author    String   @default("간호대학 행정팀")
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-}
-
-model Booking {
-  id        String   @id @default(cuid())
-  userId    String
-  user      User     @relation(fields: [userId], references: [id])
-  date      DateTime
-  startTime String
-  endTime   String
-  labName   String
-  items     String?  // 신청한 기자재
-  status    BookingStatus @default(PENDING)
-  createdAt DateTime @default(now())
+  id          String   @id @default(cuid())
+  title       String
+  content     String
+  targetGrade Int?     // null 이면 전체
+  isPinned    Boolean  @default(false)
+  createdById String
+  user        User     @relation(fields: [createdById], references: [id])
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 enum Role {
   STUDENT
   ADMIN
+  ASSISTANT
+  SUPER_ADMIN
 }
 
-enum BookingStatus {
+enum ApprovalStatus {
   PENDING
   APPROVED
   REJECTED
+  SUSPENDED
+}
+
+enum SlotStatus {
+  OPEN
+  CLOSED
   CANCELLED
+}
+
+enum ApplicationStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  COMPLETED
+  CANCELLED
+}
+
+enum AttendanceStatus {
+  PENDING
+  PRESENT
+  ABSENT
+  LATE_30
 }

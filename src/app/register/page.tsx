@@ -10,6 +10,9 @@ export default function RegisterPage() {
   const [formData, setFormData] = useState({
     studentId: '',
     name: '',
+    grade: '1',
+    email: '',
+    phone: '',
     password: '',
     confirmPassword: '',
   });
@@ -34,6 +37,9 @@ export default function RegisterPage() {
         body: JSON.stringify({
           studentId: formData.studentId,
           name: formData.name,
+          grade: parseInt(formData.grade),
+          email: formData.email,
+          phone: formData.phone,
           password: formData.password,
         }),
       });
@@ -41,7 +47,7 @@ export default function RegisterPage() {
       const data = await res.json();
 
       if (res.ok) {
-        alert('회원가입이 완료되었습니다! 로그인 해주세요.');
+        alert('회원가입 신청이 완료되었습니다! 관리자 승인 후 이용 가능합니다.');
         router.push('/login');
       } else {
         setError(data.message || '회원가입에 실패했습니다.');
@@ -56,11 +62,11 @@ export default function RegisterPage() {
   return (
     <>
       <Header />
-      <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '40px 0' }}>
-        <div className="card" style={{ width: '100%', maxWidth: '400px', padding: '40px' }}>
+      <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px 20px' }}>
+        <div className="card" style={{ width: '100%', maxWidth: '500px', padding: '40px' }}>
           <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--primary)', marginBottom: '8px' }}>회원가입</h1>
-            <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>NUR위한 시스템 이용을 위해 가입해주세요.</p>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--primary)', marginBottom: '8px' }}>학생 회원가입</h1>
+            <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>가입 후 관리자 승인이 완료되어야 시스템 이용이 가능합니다.</p>
           </div>
           
           {error && (
@@ -69,58 +75,102 @@ export default function RegisterPage() {
             </div>
           )}
 
-          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: '600', marginBottom: '6px' }}>학번</label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="202XXXXXXX" 
+                  value={formData.studentId}
+                  onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
+                  style={{ width: '100%' }} 
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: '600', marginBottom: '6px' }}>이름</label>
+                <input 
+                  type="text" 
+                  required
+                  placeholder="홍길동" 
+                  value={formData.name}
+                  onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                  style={{ width: '100%' }} 
+                />
+              </div>
+            </div>
+
             <div>
-              <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: '600', marginBottom: '6px' }}>학번</label>
+              <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: '600', marginBottom: '6px' }}>학년</label>
+              <select 
+                value={formData.grade}
+                onChange={(e) => setFormData({ ...formData, grade: e.target.value })}
+                style={{ width: '100%' }}
+              >
+                <option value="1">1학년</option>
+                <option value="2">2학년</option>
+                <option value="3">3학년</option>
+                <option value="4">4학년</option>
+              </select>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: '600', marginBottom: '6px' }}>이메일</label>
               <input 
-                type="text" 
+                type="email" 
                 required
-                placeholder="202XXXXXXX" 
-                value={formData.studentId}
-                onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
-                style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '4px' }} 
+                placeholder="example@hanyang.ac.kr" 
+                value={formData.email}
+                onChange={(e) => setFormData({ ...formData, email: e.target.value })}
+                style={{ width: '100%' }} 
               />
             </div>
+
             <div>
-              <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: '600', marginBottom: '6px' }}>이름</label>
+              <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: '600', marginBottom: '6px' }}>전화번호</label>
               <input 
-                type="text" 
+                type="tel" 
                 required
-                placeholder="홍길동" 
-                value={formData.name}
-                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '4px' }} 
+                placeholder="010-XXXX-XXXX" 
+                value={formData.phone}
+                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
+                style={{ width: '100%' }} 
               />
             </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: '600', marginBottom: '6px' }}>비밀번호</label>
-              <input 
-                type="password" 
-                required
-                placeholder="••••••••" 
-                value={formData.password}
-                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '4px' }} 
-              />
+
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: '600', marginBottom: '6px' }}>비밀번호</label>
+                <input 
+                  type="password" 
+                  required
+                  placeholder="••••••••" 
+                  value={formData.password}
+                  onChange={(e) => setFormData({ ...formData, password: e.target.value })}
+                  style={{ width: '100%' }} 
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: '600', marginBottom: '6px' }}>비밀번호 확인</label>
+                <input 
+                  type="password" 
+                  required
+                  placeholder="••••••••" 
+                  value={formData.confirmPassword}
+                  onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
+                  style={{ width: '100%' }} 
+                />
+              </div>
             </div>
-            <div>
-              <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: '600', marginBottom: '6px' }}>비밀번호 확인</label>
-              <input 
-                type="password" 
-                required
-                placeholder="••••••••" 
-                value={formData.confirmPassword}
-                onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                style={{ width: '100%', padding: '12px', border: '1px solid var(--border)', borderRadius: '4px' }} 
-              />
-            </div>
+
             <button 
               type="submit" 
               disabled={loading}
               className="btn-primary" 
-              style={{ padding: '12px', marginTop: '8px', opacity: loading ? 0.7 : 1 }}
+              style={{ padding: '14px', marginTop: '12px', opacity: loading ? 0.7 : 1 }}
             >
-              {loading ? '가입 중...' : '회원가입'}
+              {loading ? '가입 신청 중...' : '회원가입 신청'}
             </button>
           </form>
 

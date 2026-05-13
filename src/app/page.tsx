@@ -1,96 +1,150 @@
+import Link from 'next/link';
 import Header from '@/components/Header';
 import Logo from '@/components/Logo';
-import NoticeList from '@/components/NoticeList';
-import ScheduleSummary from '@/components/ScheduleSummary';
-import LoginSection from '@/components/LoginSection';
-import GuideSection from '@/components/GuideSection';
+import Image from 'next/image';
 
 export default function Home() {
+  // TODO: 실제 상태 연동
+  const isLoggedIn = false;
+  const approvalStatus = 'pending'; // pending, approved, rejected
+
   return (
     <>
       <Header />
       
-      <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '40px 0' }}>
+      <main style={{ flex: 1, backgroundColor: 'var(--white)', padding: '60px 0' }}>
         <div className="container">
-          {/* Main Grid Layout */}
+          
+          {/* Hero / Application Section */}
           <div style={{ 
-            display: 'grid', 
-            gridTemplateColumns: '1fr 340px', 
-            gap: '24px',
-            alignItems: 'start'
+            textAlign: 'center', 
+            padding: '40px 20px',
+            backgroundColor: 'var(--muted-background)',
+            borderRadius: '8px',
+            marginBottom: '48px',
+            border: '1px solid var(--border)'
           }}>
+            <h2 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '16px', color: 'var(--primary)' }}>
+              한양대학교 간호대학 OPEN LAB 신청
+            </h2>
+            <p style={{ color: 'var(--sub-text)', marginBottom: '32px', fontSize: '1rem' }}>
+              안전하고 효율적인 실습실 사용을 위해 신청 수칙을 반드시 준수해 주시기 바랍니다.
+            </p>
             
-            {/* Left Column: Notices and Schedule */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              <div style={{ 
-                display: 'grid', 
-                gridTemplateColumns: '1fr 1fr', 
-                gap: '24px' 
-              }}>
-                <NoticeList />
-                <ScheduleSummary />
-              </div>
-              
-              <GuideSection />
-              
-              {/* Quick Links / Additional Info */}
-              <div className="card" style={{ padding: '20px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div>
-                    <h3 style={{ fontSize: '1rem', fontWeight: '700', marginBottom: '4px' }}>실습실 및 기자재 사용신청</h3>
-                    <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>기자재 대여 및 반납은 행정팀을 방문해 주시기 바랍니다.</p>
-                  </div>
-                  <button className="btn-primary">바로가기</button>
-                </div>
-              </div>
-            </div>
+            <Link href="/open-lab" className="btn-accent">
+              OPEN LAB 신청하기
+            </Link>
             
-            {/* Right Column: Login and Stats */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-              <LoginSection />
-              
-              <div className="card" style={{ backgroundColor: 'var(--primary)', color: 'white' }}>
-                <h4 style={{ fontSize: '0.875rem', opacity: 0.9, marginBottom: '12px' }}>오늘의 신청 현황</h4>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
-                  <span style={{ fontSize: '2rem', fontWeight: '800' }}>12</span>
-                  <span style={{ fontSize: '0.875rem' }}>건 신청됨</span>
-                </div>
+            {!isLoggedIn && (
+              <p style={{ marginTop: '16px', fontSize: '0.875rem', color: 'var(--sub-text)' }}>
+                * 로그인이 필요한 서비스입니다.
+              </p>
+            )}
+            
+            {isLoggedIn && approvalStatus === 'pending' && (
+              <div style={{ marginTop: '24px', padding: '12px', backgroundColor: '#FEF3C7', color: '#92400E', borderRadius: '4px', fontSize: '0.875rem', display: 'inline-block' }}>
+                현재 관리자 승인 대기 중입니다. 승인 완료 후 신청이 가능합니다.
               </div>
+            )}
+          </div>
 
-              <div className="card">
-                <h4 style={{ fontSize: '0.875rem', fontWeight: '700', marginBottom: '12px' }}>담당자 연락처</h4>
-                <ul style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.8125rem' }}>
-                  <li style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: 'var(--sub-text)' }}>간호대학 행정팀</span>
-                    <span>02-2220-XXXX</span>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '40px' }}>
+            
+            {/* Notice Section */}
+            <section>
+              <h3 className="section-title">
+                <span>OPEN LAB 사용 시 공지사항</span>
+              </h3>
+              <div className="card" style={{ fontSize: '0.9375rem', lineHeight: '1.8' }}>
+                <ul style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <li style={{ display: 'flex', gap: '10px' }}>
+                    <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>•</span>
+                    <span>한 타임당 최대 2개 술기 신청 가능</span>
                   </li>
-                  <li style={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <span style={{ color: 'var(--sub-text)' }}>실습 지원 센터</span>
-                    <span>02-2220-XXXX</span>
+                  <li style={{ display: 'flex', gap: '10px' }}>
+                    <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>•</span>
+                    <span>신청 후 불참 또는 시작 30분 이후 참여 시 <strong>2주간 신청 제한</strong></span>
+                  </li>
+                  <li style={{ display: 'flex', gap: '10px' }}>
+                    <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>•</span>
+                    <span>정리불량 3회 누적 시 이후 <strong>OPEN LAB 참여 제한</strong></span>
+                  </li>
+                  <li style={{ display: 'flex', gap: '10px' }}>
+                    <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>•</span>
+                    <span>사용 후 정리 및 사용일지 작성 필수</span>
+                  </li>
+                  <li style={{ display: 'flex', gap: '10px' }}>
+                    <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>•</span>
+                    <span>일반의료폐기물과 손상성폐기물 구분 엄격 준수</span>
                   </li>
                 </ul>
               </div>
-            </div>
-            
+            </section>
+
+            {/* My Recent History (Visible only when logged in) */}
+            <section>
+              <h3 className="section-title">
+                <span>최근 내 신청 내역</span>
+              </h3>
+              <div className="card">
+                {isLoggedIn ? (
+                  <div className="table-container">
+                    <table>
+                      <thead>
+                        <tr>
+                          <th>날짜</th>
+                          <th>시간</th>
+                          <th>상태</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        <tr>
+                          <td>2026-05-20</td>
+                          <td>13:00 - 15:00</td>
+                          <td><span className="badge badge-pending">승인대기</span></td>
+                        </tr>
+                      </tbody>
+                    </table>
+                  </div>
+                ) : (
+                  <div style={{ textAlign: 'center', padding: '40px 0', color: 'var(--sub-text)' }}>
+                    <p style={{ fontSize: '0.875rem' }}>로그인 후 신청 내역을 확인할 수 있습니다.</p>
+                    <Link href="/login" style={{ color: 'var(--primary)', fontWeight: '600', marginTop: '12px', display: 'inline-block' }}>로그인하기</Link>
+                  </div>
+                )}
+              </div>
+              
+              <div style={{ marginTop: '24px', textAlign: 'center' }}>
+                <Image 
+                  src="/hylion-nursing.png" 
+                  alt="하리온" 
+                  width={120} 
+                  height={120} 
+                  style={{ opacity: 0.6 }}
+                />
+              </div>
+            </section>
+
           </div>
         </div>
       </main>
       
       <footer style={{ 
-        backgroundColor: 'var(--white)', 
+        backgroundColor: 'var(--muted-background)', 
         borderTop: '1px solid var(--border)', 
-        padding: '40px 0',
+        padding: '60px 0',
         color: 'var(--sub-text)',
         fontSize: '0.8125rem'
       }}>
         <div className="container">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-end' }}>
             <div>
-              <Logo width={160} className="mb-4" />
-              <p>서울특별시 성동구 왕십리로 222 한양대학교 간호대학</p>
-              <p style={{ marginTop: '16px' }}>© 2026 Hanyang University College of Nursing. All Rights Reserved.</p>
+              <p style={{ fontWeight: '700', color: 'var(--text)', marginBottom: '12px', fontSize: '0.9375rem' }}>한양대학교 간호대학</p>
+              <p>서울특별시 성동구 왕십리로 222 한양대학교 간호대학 행정팀</p>
+              <p>TEL: 02-2220-XXXX | FAX: 02-2220-XXXX</p>
+              <p style={{ marginTop: '24px', opacity: 0.8 }}>© 2026 Hanyang University College of Nursing. All Rights Reserved.</p>
             </div>
-            <div style={{ display: 'flex', gap: '24px' }}>
+            <div style={{ display: 'flex', gap: '24px', fontWeight: '500' }}>
               <a href="#">개인정보처리방침</a>
               <a href="#">이용약관</a>
               <a href="#">이메일무단수집거부</a>
