@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 import { isAdminRole } from '@/lib/auth-core';
 
 export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  context: { params: Promise<{ id: string }> }
 ) {
   try {
     const user = await getCurrentUser();
@@ -13,7 +13,7 @@ export async function PATCH(
       return NextResponse.json({ message: '권한이 없습니다.' }, { status: 403 });
     }
 
-    const { id } = await params;
+    const { id } = await context.params;
     const body = await request.json();
     const { approvalStatus, rejectedReason } = body;
 
