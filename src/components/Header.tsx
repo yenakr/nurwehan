@@ -2,6 +2,7 @@ import Link from 'next/link';
 import Logo from './Logo';
 import { getCurrentUser } from '@/lib/auth';
 import { isAdminRole } from '@/lib/auth-core';
+import LogoutButton from './LogoutButton';
 
 export default async function Header() {
   const user = await getCurrentUser();
@@ -25,7 +26,6 @@ export default async function Header() {
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
           <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            {/* Small text logo instead of broken image if preferred, but user said Logo left small */}
             <Logo width={150} />
             <span style={{ 
               fontSize: '1.125rem', 
@@ -54,9 +54,7 @@ export default async function Header() {
           {isLoggedIn ? (
             <>
               <span className="hide-mobile" style={{ fontSize: '0.875rem', fontWeight: '500' }}>{userName}님</span>
-              <form action="/api/logout" method="POST">
-                <button type="submit" className="btn-outline" style={{ padding: '6px 12px', fontSize: '0.8125rem' }}>로그아웃</button>
-              </form>
+              <LogoutButton />
             </>
           ) : (
             <Link href="/login" className="btn-primary" style={{ padding: '6px 16px', fontSize: '0.875rem' }}>

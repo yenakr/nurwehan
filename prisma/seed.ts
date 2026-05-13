@@ -59,6 +59,9 @@ async function main() {
   console.log('Skills seeded');
 
   // 3. Create Official Notice
+  // Clear existing notices first to remove dummy data
+  await prisma.notice.deleteMany({});
+  
   const noticeTitle = 'OPEN LAB 이용 안내';
   const noticeContent = `
 ### 3. 신청 방법

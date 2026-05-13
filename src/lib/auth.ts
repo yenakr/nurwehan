@@ -32,8 +32,30 @@ export async function getCurrentUser() {
       studentId: true,
       role: true,
       approvalStatus: true,
+      grade: true,
+      phone: true,
+      email: true,
     }
   });
 
+  return user;
+}
+
+import { redirect } from 'next/navigation';
+import { isAdminRole } from './auth-core';
+
+export async function requireAuth() {
+  const user = await getCurrentUser();
+  if (!user) {
+    redirect('/login');
+  }
+  return user;
+}
+
+export async function requireAdmin() {
+  const user = await getCurrentUser();
+  if (!user || !isAdminRole(user.role)) {
+    redirect('/admin'); // or /login?
+  }
   return user;
 }

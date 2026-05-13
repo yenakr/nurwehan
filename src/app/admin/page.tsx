@@ -1,6 +1,7 @@
 import { getCurrentUser } from '@/lib/auth';
 import { isAdminRole } from '@/lib/auth-core';
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 
 export default async function AdminPage() {
   const user = await getCurrentUser();
@@ -35,21 +36,21 @@ export default async function AdminPage() {
             {user.name}님, 환영합니다. 시스템 관리 기능을 사용할 수 있습니다.
           </p>
           
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginTop: '32px' }}>
-             <div className="card" style={{ border: '1px solid var(--border)', textAlign: 'center' }}>
-                <h3 style={{ fontSize: '1rem', marginBottom: '8px' }}>학생 승인 관리</h3>
-                <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)', marginBottom: '16px' }}>가입 대기 중인 학생들을 승인합니다.</p>
-                <button className="btn-outline" style={{ width: '100%' }}>관리하기</button>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginTop: '32px' }}>
+             <div className="card" style={{ border: '1px solid var(--border)', textAlign: 'center', display: 'flex', flexDirection: 'column' }}>
+                <h3 style={{ fontSize: '1rem', marginBottom: '8px', fontWeight: '700' }}>학생 승인 관리</h3>
+                <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)', marginBottom: '24px', flex: 1 }}>가입 대기 중인 학생들을 승인합니다.</p>
+                <Link href="/admin/users" className="btn-outline" style={{ width: '100%', textAlign: 'center' }}>관리하기</Link>
              </div>
-             <div className="card" style={{ border: '1px solid var(--border)', textAlign: 'center' }}>
-                <h3 style={{ fontSize: '1rem', marginBottom: '8px' }}>신청 현황 관리</h3>
-                <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)', marginBottom: '16px' }}>OPEN LAB 신청 내역을 관리합니다.</p>
-                <button className="btn-outline" style={{ width: '100%' }}>관리하기</button>
+             <div className="card" style={{ border: '1px solid var(--border)', textAlign: 'center', display: 'flex', flexDirection: 'column' }}>
+                <h3 style={{ fontSize: '1rem', marginBottom: '8px', fontWeight: '700' }}>신청 현황 관리</h3>
+                <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)', marginBottom: '24px', flex: 1 }}>OPEN LAB 신청 내역을 관리합니다.</p>
+                <Link href="/admin/applications" className="btn-outline" style={{ width: '100%', textAlign: 'center' }}>관리하기</Link>
              </div>
-             <div className="card" style={{ border: '1px solid var(--border)', textAlign: 'center' }}>
-                <h3 style={{ fontSize: '1rem', marginBottom: '8px' }}>공지사항 관리</h3>
-                <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)', marginBottom: '16px' }}>학부 공지사항을 등록/수정합니다.</p>
-                <button className="btn-outline" style={{ width: '100%' }}>관리하기</button>
+             <div className="card" style={{ border: '1px solid var(--border)', textAlign: 'center', display: 'flex', flexDirection: 'column' }}>
+                <h3 style={{ fontSize: '1rem', marginBottom: '8px', fontWeight: '700' }}>공지사항 관리</h3>
+                <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)', marginBottom: '24px', flex: 1 }}>학부 공지사항을 등록/수정합니다.</p>
+                <Link href="/admin/notices" className="btn-outline" style={{ width: '100%', textAlign: 'center' }}>관리하기</Link>
              </div>
           </div>
         </div>
