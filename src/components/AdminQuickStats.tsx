@@ -49,7 +49,7 @@ export default async function AdminQuickStats() {
         {[
           { label: '가입 신청 대기', value: pendingUsers, unit: '건', href: '/admin/users' },
           { label: 'OPEN LAB 신청 대기', value: pendingApps, unit: '건', href: '/admin/applications' },
-          { label: '사용일지 미제출', value: missingLogsCount, unit: '건', href: '/admin/usage-logs', urgent: missingLogsCount > 0 },
+          { label: '소감 미제출', value: missingLogsCount, unit: '건', href: '/admin/usage-logs', urgent: missingLogsCount > 0 },
           { label: '신청 제한 학생', value: restrictedStudents, unit: '명', href: '/admin/restrictions' },
         ].map((stat, i) => (
           <Link 

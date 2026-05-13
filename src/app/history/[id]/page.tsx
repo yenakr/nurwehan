@@ -192,7 +192,7 @@ export default async function HistoryDetailPage({ params }: { params: Promise<{ 
               </>
             )}
             {(application.status === 'APPROVED' || application.status === 'COMPLETED') && application.usageLogs.length === 0 && (
-              <Link href={`/usage-logs/new?applicationId=${application.id}`} className="btn btn-primary">사용일지 작성하기</Link>
+              <Link href={`/usage-logs/new?applicationId=${application.id}`} className="btn btn-primary">실습 소감 작성하기</Link>
             )}
           </div>
         </div>

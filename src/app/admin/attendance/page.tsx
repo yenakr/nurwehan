@@ -6,9 +6,9 @@ import AttendanceClient from './AttendanceClient';
 
 export const dynamic = 'force-dynamic';
 
-export default async function AdminAttendancePage({ searchParams }: { searchParams: Promise<{ date?: string }> }) {
+export default async function AdminAttendancePage({ searchParams }: { searchParams: Promise<{ date?: string; time?: string }> }) {
   const user = await getCurrentUser();
-  const { date } = await searchParams;
+  const { date, time } = await searchParams;
 
   if (!user || !isAdminRole(user.role)) {
     redirect('/admin');
@@ -68,14 +68,18 @@ export default async function AdminAttendancePage({ searchParams }: { searchPara
 
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '40px 0' }}>
-      <div className="container">
-        <h1 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '24px', borderBottom: '2px solid var(--primary)', paddingBottom: '12px', display: 'inline-block' }}>
-          일일 출석 및 정리 관리
-        </h1>
+      <div className="container" style={{ maxWidth: '1000px', padding: '40px 20px' }}>
+        <div className="flex-between" style={{ marginBottom: '32px' }}>
+          <div>
+            <h1 style={{ fontSize: '1.75rem', fontWeight: '800' }}>일자/시간별 출석부</h1>
+            <p style={{ color: 'var(--sub-text)', marginTop: '4px' }}>날짜와 시간대를 선택하여 학생들의 출석 상태를 관리하세요.</p>
+          </div>
+        </div>
         
         <AttendanceClient 
           initialParticipants={participants as any} 
           selectedDate={selectedDate} 
+          initialTime={time || null}
         />
       </div>
     </main>

@@ -46,7 +46,7 @@ export default async function NewUsageLogPage({ searchParams }: { searchParams: 
       <main className="container" style={{ padding: '40px 0' }}>
         <div className="card" style={{ textAlign: 'center' }}>
           <h1 style={{ color: '#ef4444' }}>접근 권한 없음</h1>
-          <p>해당 OPEN LAB 신청의 참여자만 사용일지를 작성할 수 있습니다.</p>
+          <p>해당 OPEN LAB 신청의 참여자만 실습 소감을 작성할 수 있습니다.</p>
         </div>
       </main>
     );
@@ -57,7 +57,7 @@ export default async function NewUsageLogPage({ searchParams }: { searchParams: 
       <main className="container" style={{ padding: '40px 0' }}>
         <div className="card" style={{ textAlign: 'center' }}>
           <h1 style={{ color: '#ef4444' }}>작성 불가</h1>
-          <p>승인된 OPEN LAB에 대해서만 사용일지를 작성할 수 있습니다.</p>
+          <p>승인된 OPEN LAB에 대해서만 실습 소감을 작성할 수 있습니다.</p>
         </div>
       </main>
     );
@@ -68,7 +68,7 @@ export default async function NewUsageLogPage({ searchParams }: { searchParams: 
       <main className="container" style={{ padding: '40px 0' }}>
         <div className="card" style={{ textAlign: 'center' }}>
           <h1 style={{ color: 'var(--primary)' }}>제출 완료</h1>
-          <p>이미 사용일지를 제출하셨습니다.</p>
+          <p>이미 실습 소감을 제출하셨습니다.</p>
           <Link href="/history" className="btn-outline" style={{ marginTop: '20px', display: 'inline-block' }}>내 신청 내역으로</Link>
         </div>
       </main>
@@ -79,7 +79,7 @@ export default async function NewUsageLogPage({ searchParams }: { searchParams: 
     <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '40px 0' }}>
       <div className="container" style={{ maxWidth: '800px' }}>
         <h1 style={{ fontSize: '1.75rem', fontWeight: '800', marginBottom: '24px', color: 'var(--text)' }}>
-          OPEN LAB 사용일지 작성
+          OPEN LAB 실습 소감 작성
         </h1>
         
         <UsageLogForm application={application} user={user} />

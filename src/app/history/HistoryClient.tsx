@@ -146,11 +146,11 @@ export default function HistoryClient({ initialApplications, currentUser }: Hist
               )}
 
               {(app.status === 'APPROVED' || app.status === 'COMPLETED') && app.usageLogs.length === 0 && (
-                <Link href={`/usage-logs/new?applicationId=${app.id}`} className="btn-small btn-primary">사용일지 작성</Link>
+                <Link href={`/usage-logs/new?applicationId=${app.id}`} className="btn-small btn-primary">실습 소감 작성</Link>
               )}
               
               {app.usageLogs.length > 0 && (
-                <span className="log-status">사용일지 제출 완료</span>
+                <span className="log-status">실습 소감 제출 완료</span>
               )}
             </div>
           </div>

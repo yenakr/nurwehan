@@ -142,7 +142,7 @@ export default function ApplicationStatusActions({
             </div>
             
             <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
-              <h4 style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '8px' }}>사용일지 제출 여부</h4>
+              <h4 style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '8px' }}>실습 소감 제출 여부</h4>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <span style={{ 
                   padding: '4px 8px', 
@@ -157,7 +157,7 @@ export default function ApplicationStatusActions({
               </div>
               {hasUsageLog && (
                 <Link href={`/admin/usage-logs?applicationId=${applicationId}`} style={{ display: 'inline-block', marginTop: '12px', fontSize: '0.8125rem', color: 'var(--primary)', fontWeight: '600' }}>
-                  사용일지 확인하기 →
+                  소감 확인하기 →
                 </Link>
               )}
             </div>

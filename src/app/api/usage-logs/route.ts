@@ -20,8 +20,8 @@ export async function POST(request: NextRequest) {
       wasteChecked 
     } = body;
 
-    if (!applicationId || !practiceContent || !cleanupChecked || !wasteChecked) {
-      return NextResponse.json({ message: '필수 항목을 모두 입력해주세요.' }, { status: 400 });
+    if (!applicationId || !practiceContent) {
+      return NextResponse.json({ message: '실습 소감을 입력해주세요.' }, { status: 400 });
     }
 
     // Verify application ownership/participation
@@ -51,7 +51,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (application.usageLogs.length > 0) {
-      return NextResponse.json({ message: '이미 사용일지를 제출했습니다.' }, { status: 409 });
+      return NextResponse.json({ message: '이미 실습 소감을 제출했습니다.' }, { status: 409 });
     }
 
     // Create Usage Log
@@ -63,8 +63,8 @@ export async function POST(request: NextRequest) {
         difficulty: difficulty || '',
         nextPracticeGoal: nextPracticeGoal || '',
         actualUsedSupplies: actualUsedSupplies || '',
-        cleanupChecked,
-        wasteChecked,
+        cleanupChecked: cleanupChecked ?? true,
+        wasteChecked: wasteChecked ?? true,
         submittedAt: new Date()
       }
     });

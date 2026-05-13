@@ -146,7 +146,7 @@ export default function AdminDashboardClient({
           className={activeTab === 'usage-logs' ? 'active' : ''} 
           onClick={() => setActiveTab('usage-logs')}
         >
-          사용일지 현황
+          실습 소감 현황
         </button>
       </div>
 
@@ -298,12 +298,12 @@ export default function AdminDashboardClient({
         {activeTab === 'usage-logs' && (
            <div className="dashboard-section">
               <div className="section-header">
-                <h3>최근 사용일지 제출 현황</h3>
+                <h3>최근 실습 소감 현황</h3>
                 <Link href="/admin/usage-logs" className="text-link">전체보기</Link>
               </div>
               <div className="card-table">
                 {usageLogs.length === 0 ? (
-                  <p className="empty-text">제출된 사용일지가 없습니다.</p>
+                  <p className="empty-text">제출된 실습 소감이 없습니다.</p>
                 ) : (
                   <table>
                     <thead>

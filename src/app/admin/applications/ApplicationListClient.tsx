@@ -98,7 +98,12 @@ export default function ApplicationListClient({ initialApplications }: { initial
               <div className="time-slots">
                 {dateGroup.timeSlots.map(timeSlot => (
                   <div key={timeSlot.time} className="time-slot-box">
-                    <h4 className="time-header">{timeSlot.time}</h4>
+                    <Link 
+                      href={`/admin/attendance?date=${new Date(timeSlot.applications[0].slot.date).toISOString().split('T')[0]}&time=${timeSlot.time}`}
+                      className="time-header-link"
+                    >
+                      <h4 className="time-header">{timeSlot.time} <span className="jump-link">명단 보기 ↗</span></h4>
+                    </Link>
                     <div className="apps-grid">
                       {timeSlot.applications.map(app => (
                         <div key={app.id} style={{ position: 'relative' }}>
@@ -146,7 +151,11 @@ export default function ApplicationListClient({ initialApplications }: { initial
         .date-header { font-size: 1.125rem; font-weight: 800; color: var(--text); margin-bottom: 16px; padding-bottom: 8px; border-bottom: 2px solid #f1f5f9; }
         
         .time-slots { display: flex; flex-direction: column; gap: 24px; }
-        .time-header { font-size: 0.9375rem; font-weight: 700; color: var(--primary); margin-bottom: 12px; }
+        .time-header-link { text-decoration: none; display: inline-block; margin-bottom: 12px; }
+        .time-header { font-size: 0.9375rem; font-weight: 700; color: var(--primary); display: flex; align-items: center; gap: 8px; }
+        .time-header-link:hover .time-header { color: var(--accent); }
+        .jump-link { font-size: 0.75rem; font-weight: 500; color: var(--sub-text); opacity: 0; transition: opacity 0.2s; }
+        .time-header-link:hover .jump-link { opacity: 1; }
         
         .apps-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
         .app-item-card { display: block; background: white; border: 1px solid var(--border); border-radius: 12px; padding: 16px; text-decoration: none; color: inherit; transition: transform 0.2s, box-shadow 0.2s; }

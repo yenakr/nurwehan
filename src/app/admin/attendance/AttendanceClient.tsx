@@ -50,22 +50,29 @@ interface TimeSlotGroup {
 
 export default function AttendanceClient({ 
   initialParticipants, 
-  selectedDate 
+  selectedDate,
+  initialTime
 }: { 
   initialParticipants: Participant[];
   selectedDate: string;
+  initialTime?: string | null;
 }) {
   const router = useRouter();
   const [participants, setParticipants] = useState(initialParticipants);
   const [loading, setLoading] = useState<string | null>(null);
   const [expandedSlots, setExpandedSlots] = useState<string[]>([]);
+  const [filterTime, setFilterTime] = useState<string | null>(initialTime || null);
 
   // Group participants into a structured hierarchy
-  const timeSlotGroups = participants.reduce<TimeSlotGroup[]>((acc, p) => {
+  let timeSlotGroups = participants.reduce<TimeSlotGroup[]>((acc, p) => {
+    // ... same grouping logic ...
     const app = p.application;
-    const timeLabel = `${app.slot.startTime} - ${app.slot.endTime}`;
+    const timeLabel = `${app.slot.startTime} ~ ${app.slot.endTime}`;
     const room = app.slot.room;
     
+    // Filter by time if set
+    if (filterTime && !timeLabel.includes(filterTime)) return acc;
+
     let timeGroup = acc.find(g => g.timeLabel === timeLabel);
     if (!timeGroup) {
       timeGroup = { timeLabel, roomGroups: [] };
@@ -159,6 +166,11 @@ export default function AttendanceClient({
           <span className="stats-badge">
             총 {new Set(participants.map(p => p.application.id)).size}팀 ({participants.length}명)
           </span>
+          {filterTime && (
+            <button className="btn-filter-reset" onClick={() => setFilterTime(null)}>
+              ⏰ {filterTime} 필터 해제 (전체 보기)
+            </button>
+          )}
         </div>
         <button onClick={() => window.print()} className="btn-print">
           🖨️ 명단 인쇄
@@ -200,7 +212,7 @@ export default function AttendanceClient({
                             <div className="app-info">
                               <span className="rep-name">{app.representative} 팀</span>
                               <span className="skill-tags">{app.skills.join(', ')}</span>
-                              {app.hasUsageLog && <span className="log-badge">사용일지 완료</span>}
+                              {app.hasUsageLog && <span className="log-badge">소감 제출됨</span>}
                             </div>
                             <div className="app-actions no-print">
                                <button 
@@ -305,6 +317,19 @@ export default function AttendanceClient({
           background: #e6f0ff;
           padding: 6px 12px;
           border-radius: 20px;
+        }
+        .btn-filter-reset {
+          background: #f1f5f9;
+          border: 1px solid var(--border);
+          padding: 6px 12px;
+          border-radius: 20px;
+          font-size: 0.8125rem;
+          font-weight: 700;
+          color: var(--text);
+          cursor: pointer;
+        }
+        .btn-filter-reset:hover {
+          background: #e2e8f0;
         }
         .btn-print {
           background: var(--primary);
