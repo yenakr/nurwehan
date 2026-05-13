@@ -226,7 +226,13 @@ export async function GET(request: NextRequest) {
       }
     });
 
-    return NextResponse.json(participants);
+    return NextResponse.json(participants, {
+      headers: {
+        'Cache-Control': 'no-store, no-cache, must-revalidate, proxy-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      }
+    });
   } catch (error) {
     console.error('Fetch attendance error:', error);
     return NextResponse.json({ message: '서버 오류가 발생했습니다.' }, { status: 500 });

@@ -62,9 +62,12 @@ export default function AttendanceClient({
     if (currentDate === selectedDate && participants.length > 0) return;
     
     const fetchData = async () => {
+      setParticipants([]); // Clear previous data
       setLoading(true);
       try {
-        const res = await fetch(`/api/admin/attendance?date=${currentDate}`);
+        const res = await fetch(`/api/admin/attendance?date=${currentDate}`, {
+          cache: 'no-store'
+        });
         if (res.ok) {
           const data = await res.json();
           setParticipants(data);
@@ -227,10 +230,12 @@ export default function AttendanceClient({
                         <thead>
                           <tr>
                             <th className="col-idx">순서</th>
-                            <th className="col-student">학번/이름</th>
-                            <th className="col-role">구분</th>
+                            <th className="no-print col-student">학번/이름</th>
+                            <th className="print-only col-student-id">학번</th>
+                            <th className="print-only col-name">이름</th>
+                            <th className="no-print col-role">구분</th>
                             <th className="col-skill">신청 술기</th>
-                            <th className="col-request">요청사항</th>
+                            <th className="no-print col-request">요청사항</th>
                             <th className="no-print col-attendance">출석 체크</th>
                             <th className="no-print col-cleanup">정리 상태</th>
                             <th className="print-only signature-cell">서명</th>
@@ -240,11 +245,13 @@ export default function AttendanceClient({
                           {roomGroup.participants.map((p, idx) => (
                             <tr key={p.id} className={updateLoading === p.id ? 'row-updating' : ''}>
                               <td className="col-idx">{idx + 1}</td>
-                              <td className="col-student">
+                              <td className="no-print col-student">
                                 <div className="student-id">{p.studentId}</div>
                                 <div className="student-name">{p.name}</div>
                               </td>
-                              <td className="col-role">
+                              <td className="print-only col-student-id">{p.studentId}</td>
+                              <td className="print-only col-name">{p.name}</td>
+                              <td className="no-print col-role">
                                 <span className={`role-badge ${p.studentId === p.application.representativeUser.studentId ? 'rep' : 'part'}`}>
                                   {p.studentId === p.application.representativeUser.studentId ? '신청자' : '참여자'}
                                 </span>
@@ -254,7 +261,7 @@ export default function AttendanceClient({
                                   {p.application.skills.map(s => s.skill.name).join(', ')}
                                 </div>
                               </td>
-                              <td className="col-request">
+                              <td className="no-print col-request">
                                 <div className="request-text">{p.application.additionalRequest || '-'}</div>
                               </td>
                               <td className="no-print col-attendance">
@@ -483,17 +490,27 @@ export default function AttendanceClient({
         .print-only { display: none; }
 
         @media print {
+          @page { size: A4; margin: 1cm; }
           .no-print { display: none !important; }
           .print-only { display: table-cell !important; }
-          .attendance-container { gap: 0; }
-          .time-slot-accordion { border: 1px solid #000; box-shadow: none; margin-bottom: 20px; border-radius: 0; }
-          .accordion-trigger { display: block; border: none; padding: 10px; }
+          .attendance-container { gap: 0; padding: 0; margin: 0; background: white; }
+          .time-slot-accordion { border: none; box-shadow: none; margin-bottom: 30px; border-radius: 0; page-break-inside: avoid; }
+          .accordion-trigger { display: block; border-bottom: 2px solid #000; padding: 10px 0; }
+          .time-text { color: #000; font-size: 1.5rem; }
           .chevron { display: none; }
-          th, td { border: 1px solid #000; padding: 6px 10px; font-size: 0.75rem; color: #000; }
-          .role-badge { border: 1px solid #000; background: none !important; color: #000 !important; }
-          .btn-status { display: none; }
-          .btn-status.active { display: block; border: none; background: none !important; color: #000 !important; font-weight: 800; }
-          .request-text { background: none; border: 1px solid #ccc; color: #000; }
+          
+          .table-wrapper { overflow: visible !important; }
+          table { width: 100% !important; table-layout: fixed !important; border: 2px solid #000 !important; }
+          th, td { border: 1px solid #000 !important; padding: 12px 8px !important; font-size: 0.875rem !important; color: #000 !important; word-break: break-all; }
+          th { background: #eee !important; -webkit-print-color-adjust: exact; }
+          
+          .col-idx { width: 8% !important; }
+          .col-student-id { width: 22% !important; }
+          .col-name { width: 18% !important; }
+          .col-skill { width: 32% !important; }
+          .signature-cell { width: 20% !important; height: 50px; }
+          
+          .role-badge, .request-text { display: none !important; }
         }
       `}</style>
     </div>
