@@ -92,6 +92,7 @@ async function main() {
     { name: '흡인', description: 'Suction' },
     { name: '기관절개관 관리', description: 'Tracheostomy Care' },
     { name: '배출관장', description: 'Evacuation Enema' },
+    { name: '기타', description: 'Other skills not listed above' },
   ];
 
   for (const item of skillsData) {
@@ -120,11 +121,9 @@ async function main() {
   const noticeTitle = 'OPEN LAB 이용 안내';
   const noticeContent = `
 1. 신청 방법
-- Open lab 진행할 인원을 모아 조를 구성하고, 한 명이 대표로 신청서를 제출합니다.
+- Open lab은 학생 개별적으로 신청합니다. 동반 학생이 있을 경우 각각 신청해야 합니다.
 - 한 타임에 최대 2가지 술기까지 신청 가능합니다.
 - 학생 1명당 주 1회 오픈랩 신청이 가능합니다. 예: 동일 학생이 월요일, 수요일 2개 타임 모두 신청은 불가합니다.
-- 희망하는 모든 학생들이 Open lab에 참여할 수 있도록 조끼리 소통하여 신청이 겹치지 않도록 소통해주십시오.
-- 예외: 2학년은 주 1회 금요일 수업을 고려해 금주 금요일부터 차주 금요일 오픈랩 중 1회만 신청 가능합니다.
 - 신청은 최대 신청 가능 인원 내에서 신청서 제출 및 접수 완료되는 순서대로 선착순 마감됩니다.
 - 신청 후 참여하지 않거나 Open lab 시작 30분 이후에 참여하는 경우에는 2주 동안 Open lab 신청 및 참여가 불가합니다.
 

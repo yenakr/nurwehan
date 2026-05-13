@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "NUR위한 | 한양대학교 간호대학",
-  description: "한양대학교 간호대학 OPEN LAB 신청 및 학과 내부 시스템",
+  description: "한양대학교 간호대학 OPEN LAB 신청",
 };
 
 import Header from "@/components/Header";

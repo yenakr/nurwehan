@@ -389,43 +389,30 @@ export default function ApplyForm({ user }: ApplyFormProps) {
       {/* 5. Participants */}
       <section>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: '700' }}>5. 참여 학생 명단</h3>
-          <button type="button" onClick={() => setParticipants([...participants, { studentId: '', name: '' }])} className="btn-outline" style={{ fontSize: '0.75rem', padding: '4px 12px' }}>
-            + 학생 추가
-          </button>
+          <h3 style={{ fontSize: '1rem', fontWeight: '700' }}>5. 신청자 정보</h3>
         </div>
         <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-          {participants.map((p, index) => (
-            <div key={index} style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '10px' }}>
+            <div style={{ flex: 1, minWidth: '120px' }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--sub-text)', marginBottom: '4px' }}>학번</label>
               <input 
                 type="text" 
-                placeholder="학번" 
-                value={p.studentId} 
-                readOnly={index === 0}
-                onChange={(e) => {
-                  const newP = [...participants];
-                  newP[index].studentId = e.target.value;
-                  setParticipants(newP);
-                }}
-                style={{ flex: 1, minWidth: '120px', backgroundColor: index === 0 ? '#f0f0f0' : 'white' }}
+                value={user.studentId} 
+                readOnly 
+                style={{ width: '100%', backgroundColor: '#f0f0f0' }}
               />
-              <input 
-                type="text" 
-                placeholder="이름" 
-                value={p.name} 
-                readOnly={index === 0}
-                onChange={(e) => {
-                  const newP = [...participants];
-                  newP[index].name = e.target.value;
-                  setParticipants(newP);
-                }}
-                style={{ flex: 1, minWidth: '120px', backgroundColor: index === 0 ? '#f0f0f0' : 'white' }}
-              />
-              {index > 0 && (
-                <button type="button" onClick={() => setParticipants(participants.filter((_, i) => i !== index))} style={{ color: '#ef4444', fontSize: '1.25rem', padding: '0 8px' }}>×</button>
-              )}
             </div>
-          ))}
+            <div style={{ flex: 1, minWidth: '120px' }}>
+              <label style={{ display: 'block', fontSize: '0.75rem', color: 'var(--sub-text)', marginBottom: '4px' }}>이름</label>
+              <input 
+                type="text" 
+                value={user.name} 
+                readOnly 
+                style={{ width: '100%', backgroundColor: '#f0f0f0' }}
+              />
+            </div>
+          </div>
+          <p style={{ fontSize: '0.8125rem', color: 'var(--sub-text)' }}>* 개별 신청만 가능합니다. 동반 학생이 있을 경우 각각 신청해 주세요.</p>
         </div>
       </section>
 

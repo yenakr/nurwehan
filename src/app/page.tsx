@@ -1,6 +1,7 @@
 import Link from 'next/link';
 import { prisma } from '@/lib/prisma';
 import HomeHistory from './HomeHistory';
+import AdminQuickStats from '@/components/AdminQuickStats';
 
 export default async function Home() {
   // Fetch official notice - This is static/shared data, safe for server render
@@ -12,6 +13,7 @@ export default async function Home() {
     <>
       <main style={{ flex: 1, backgroundColor: 'var(--white)', padding: '40px 0' }}>
         <div className="container">
+          <AdminQuickStats />
 
           {/* Hero / Application Section */}
           <div style={{
