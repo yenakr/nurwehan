@@ -5,22 +5,26 @@ import Link from 'next/link';
 import Logo from './Logo';
 import { isAdminRole } from '@/lib/auth-core';
 import LogoutButton from './LogoutButton';
-
+import { usePathname } from 'next/navigation';
 export default function Header() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetch('/api/auth/me')
-      .then(res => res.json())
-      .then(data => {
-        setUser(data);
-        setLoading(false);
-      })
-      .catch(() => {
-        setLoading(false);
-      });
-  }, []);
+  const pathname = usePathname();
+
+useEffect(() => {
+  setLoading(true);
+  fetch('/api/auth/me')
+    .then(res => res.json())
+    .then(data => {
+      setUser(data.user ?? null);
+      setLoading(false);
+    })
+    .catch(() => {
+      setUser(null);
+      setLoading(false);
+    });
+}, [pathname]);
 
   const isLoggedIn = !!user;
   const isAdmin = isAdminRole(user?.role);
