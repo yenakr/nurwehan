@@ -12,7 +12,7 @@
   "dependencies": {
     "@prisma/adapter-pg": "^7.8.0",
     "@prisma/client": "^7.8.0",
-    "bcrypt": "^6.0.0",
+    "bcryptjs": "^3.0.3",
     "cookie": "^1.1.1",
     "date-fns": "^4.1.0",
     "dotenv": "^16.4.7",
@@ -24,7 +24,7 @@
     "react-dom": "19.2.4"
   },
   "devDependencies": {
-    "@types/bcrypt": "^6.0.0",
+    "@types/bcryptjs": "^2.4.6",
     "@types/cookie": "^0.6.0",
     "@types/node": "^20",
     "@types/pg": "^8.20.0",

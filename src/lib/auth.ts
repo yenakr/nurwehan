@@ -20,25 +20,30 @@ export async function getSession(): Promise<AuthSession | null> {
 }
 
 export async function getCurrentUser() {
-  const session = await getSession();
-  if (!session?.user) return null;
+  try {
+    const session = await getSession();
+    if (!session?.user) return null;
 
-  // Always fetch latest from DB to ensure roles/status are accurate
-  const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    select: {
-      id: true,
-      name: true,
-      studentId: true,
-      role: true,
-      approvalStatus: true,
-      grade: true,
-      phone: true,
-      email: true,
-    }
-  });
+    // Always fetch latest from DB to ensure roles/status are accurate
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        id: true,
+        name: true,
+        studentId: true,
+        role: true,
+        approvalStatus: true,
+        grade: true,
+        phone: true,
+        email: true,
+      }
+    });
 
-  return user;
+    return user;
+  } catch (error) {
+    console.error('GetCurrentUser error:', error);
+    return null;
+  }
 }
 
 import { redirect } from 'next/navigation';

@@ -24,11 +24,16 @@ export async function encrypt(payload: AuthSession) {
     .sign(key);
 }
 
-export async function decrypt(input: string): Promise<AuthSession> {
-  const { payload } = await jwtVerify(input, key, {
-    algorithms: ['HS256'],
-  });
-  return payload as AuthSession;
+export async function decrypt(input: string): Promise<AuthSession | null> {
+  try {
+    const { payload } = await jwtVerify(input, key, {
+      algorithms: ['HS256'],
+    });
+    return payload as AuthSession;
+  } catch (err) {
+    console.error('Session decryption failed:', err);
+    return null;
+  }
 }
 
 export function isAdminRole(role?: string | null) {
