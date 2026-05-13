@@ -1,12 +1,13 @@
 import Link from 'next/link';
 import Logo from './Logo';
-import { getSession } from '@/lib/auth';
+import { getCurrentUser } from '@/lib/auth';
+import { isAdminRole } from '@/lib/auth-core';
 
 export default async function Header() {
-  const session = await getSession();
-  const isLoggedIn = !!session?.user;
-  const isAdmin = session?.user?.role === 'ADMIN' || session?.user?.role === 'SUPER_ADMIN';
-  const userName = session?.user?.name || '';
+  const user = await getCurrentUser();
+  const isLoggedIn = !!user;
+  const isAdmin = isAdminRole(user?.role);
+  const userName = user?.name || '';
 
   return (
     <header style={{

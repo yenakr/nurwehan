@@ -1,5 +1,6 @@
 import { cookies } from 'next/headers';
-import { encrypt, decrypt, type AuthUser } from './auth-core';
+import { encrypt, decrypt, type AuthUser, type AuthSession } from './auth-core';
+import { prisma } from './prisma';
 
 export async function login(user: AuthUser) {
   const expires = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours
@@ -12,8 +13,27 @@ export async function logout() {
   (await cookies()).set('session', '', { expires: new Date(0) });
 }
 
-export async function getSession() {
+export async function getSession(): Promise<AuthSession | null> {
   const session = (await cookies()).get('session')?.value;
   if (!session) return null;
   return await decrypt(session);
+}
+
+export async function getCurrentUser() {
+  const session = await getSession();
+  if (!session?.user) return null;
+
+  // Always fetch latest from DB to ensure roles/status are accurate
+  const user = await prisma.user.findUnique({
+    where: { id: session.user.id },
+    select: {
+      id: true,
+      name: true,
+      studentId: true,
+      role: true,
+      approvalStatus: true,
+    }
+  });
+
+  return user;
 }

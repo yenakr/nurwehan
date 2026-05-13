@@ -30,3 +30,9 @@ export async function decrypt(input: string): Promise<AuthSession> {
   });
   return payload as AuthSession;
 }
+
+export function isAdminRole(role?: string | null) {
+  if (!role) return false;
+  const upperRole = role.toUpperCase();
+  return upperRole === 'ADMIN' || upperRole === 'SUPER_ADMIN' || upperRole === 'ASSISTANT';
+}

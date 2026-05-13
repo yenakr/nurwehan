@@ -1,19 +1,59 @@
-import Header from '@/components/Header';
+import { getCurrentUser } from '@/lib/auth';
+import { isAdminRole } from '@/lib/auth-core';
+import { redirect } from 'next/navigation';
 
-export default function AdminPage() {
-  return (
-    <>
-      <Header />
+export default async function AdminPage() {
+  const user = await getCurrentUser();
+
+  if (!user) {
+    redirect('/login?redirect=/admin');
+  }
+
+  if (!isAdminRole(user.role)) {
+    return (
       <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '40px 0' }}>
         <div className="container">
           <div className="card">
-            <h1 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '24px', borderBottom: '2px solid var(--primary)', paddingBottom: '12px', display: 'inline-block' }}>
-              관리자 메뉴
+            <h1 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '24px', color: '#ef4444' }}>
+              접근 권한 없음
             </h1>
             <p style={{ color: 'var(--sub-text)' }}>관리자 전용 페이지입니다. 접근 권한이 필요합니다.</p>
           </div>
         </div>
       </main>
-    </>
+    );
+  }
+
+  return (
+    <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '40px 0' }}>
+      <div className="container">
+        <div className="card">
+          <h1 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '24px', borderBottom: '2px solid var(--primary)', paddingBottom: '12px', display: 'inline-block' }}>
+            관리자 대시보드
+          </h1>
+          <p style={{ color: 'var(--text)', marginBottom: '20px' }}>
+            {user.name}님, 환영합니다. 시스템 관리 기능을 사용할 수 있습니다.
+          </p>
+          
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', marginTop: '32px' }}>
+             <div className="card" style={{ border: '1px solid var(--border)', textAlign: 'center' }}>
+                <h3 style={{ fontSize: '1rem', marginBottom: '8px' }}>학생 승인 관리</h3>
+                <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)', marginBottom: '16px' }}>가입 대기 중인 학생들을 승인합니다.</p>
+                <button className="btn-outline" style={{ width: '100%' }}>관리하기</button>
+             </div>
+             <div className="card" style={{ border: '1px solid var(--border)', textAlign: 'center' }}>
+                <h3 style={{ fontSize: '1rem', marginBottom: '8px' }}>신청 현황 관리</h3>
+                <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)', marginBottom: '16px' }}>OPEN LAB 신청 내역을 관리합니다.</p>
+                <button className="btn-outline" style={{ width: '100%' }}>관리하기</button>
+             </div>
+             <div className="card" style={{ border: '1px solid var(--border)', textAlign: 'center' }}>
+                <h3 style={{ fontSize: '1rem', marginBottom: '8px' }}>공지사항 관리</h3>
+                <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)', marginBottom: '16px' }}>학부 공지사항을 등록/수정합니다.</p>
+                <button className="btn-outline" style={{ width: '100%' }}>관리하기</button>
+             </div>
+          </div>
+        </div>
+      </div>
+    </main>
   );
 }

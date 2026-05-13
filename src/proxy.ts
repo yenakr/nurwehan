@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { decrypt } from './lib/auth-core';
+import { decrypt, isAdminRole } from './lib/auth-core';
 
 const protectedRoutes = ['/open-lab', '/history', '/mypage', '/admin'];
 
@@ -22,8 +22,7 @@ export async function proxy(req: NextRequest) {
 
     // Admin route protection
     if (path.startsWith('/admin')) {
-      const role = session.user.role;
-      if (role !== 'ADMIN' && role !== 'SUPER_ADMIN') {
+      if (!isAdminRole(session.user.role)) {
         return NextResponse.redirect(new URL('/', req.url));
       }
     }
