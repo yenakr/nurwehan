@@ -194,7 +194,7 @@ export default async function HistoryDetailPage({ params }: { params: Promise<{ 
         </div>
       </div>
 
-      <style jsx>{`
+      <style dangerouslySetInnerHTML={{ __html: `
         .status-badge {
           font-size: 0.875rem;
           font-weight: 800;
@@ -317,7 +317,7 @@ export default async function HistoryDetailPage({ params }: { params: Promise<{ 
         }
         .btn-primary { background: var(--primary); color: white; border: none; }
         .btn-outline { background: white; color: var(--sub-text); border: 1px solid var(--border); }
-      `}</style>
+      ` }} />
     </main>
   );
 }
