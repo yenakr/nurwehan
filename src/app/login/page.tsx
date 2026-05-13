@@ -27,7 +27,7 @@ export default function LoginPage() {
           <div style={{ marginTop: '24px', display: 'flex', justifyContent: 'center', gap: '16px', fontSize: '0.8125rem', color: 'var(--sub-text)' }}>
             <Link href="#">비밀번호 초기화</Link>
             <span style={{ color: 'var(--border)' }}>|</span>
-            <Link href="#">회원가입 안내</Link>
+            <Link href="/register">회원가입</Link>
           </div>
         </div>
       </main>

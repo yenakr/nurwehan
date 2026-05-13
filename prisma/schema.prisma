@@ -1,0 +1,55 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  studentId String   @unique // 학번
+  name      String
+  password  String
+  role      Role     @default(STUDENT)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  bookings  Booking[]
+}
+
+model Notice {
+  id        String   @id @default(cuid())
+  title     String
+  content   String
+  author    String   @default("간호대학 행정팀")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Booking {
+  id        String   @id @default(cuid())
+  userId    String
+  user      User     @relation(fields: [userId], references: [id])
+  date      DateTime
+  startTime String
+  endTime   String
+  labName   String
+  items     String?  // 신청한 기자재
+  status    BookingStatus @default(PENDING)
+  createdAt DateTime @default(now())
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+}
+
+enum BookingStatus {
+  PENDING
+  APPROVED
+  REJECTED
+  CANCELLED
+}

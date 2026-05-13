@@ -53,6 +53,7 @@ export default function LoginSection() {
       </div>
       <div style={{ marginTop: '8px', paddingTop: '16px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
         <Link href="/find-pw" style={{ fontSize: '0.75rem', color: 'var(--sub-text)' }}>비밀번호 찾기</Link>
+        <Link href="/register" style={{ fontSize: '0.75rem', color: 'var(--primary)', fontWeight: '600' }}>회원가입</Link>
         <Link href="/help" style={{ fontSize: '0.75rem', color: 'var(--sub-text)' }}>이용 문의</Link>
       </div>
     </div>
