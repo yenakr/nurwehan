@@ -38,13 +38,13 @@ export default async function Header() {
             </span>
           </Link>
           
-          <nav className="desktop-nav">
+          <nav className="desktop-nav hide-mobile">
             <ul style={{ display: 'flex', gap: '20px' }}>
-              <li><Link href="/open-lab">OPEN LAB 신청</Link></li>
-              <li><Link href="/history">신청 내역</Link></li>
-              <li><Link href="/notices">공지사항</Link></li>
-              <li><Link href="/mypage">마이페이지</Link></li>
-              {isAdmin && <li><Link href="/admin" style={{ fontWeight: '700', color: 'var(--primary)' }}>관리자</Link></li>}
+              <li><Link href="/open-lab" style={{ fontSize: '0.9375rem', fontWeight: '500', color: 'var(--sub-text)' }}>OPEN LAB 신청</Link></li>
+              <li><Link href="/history" style={{ fontSize: '0.9375rem', fontWeight: '500', color: 'var(--sub-text)' }}>신청 내역</Link></li>
+              <li><Link href="/notices" style={{ fontSize: '0.9375rem', fontWeight: '500', color: 'var(--sub-text)' }}>공지사항</Link></li>
+              <li><Link href="/mypage" style={{ fontSize: '0.9375rem', fontWeight: '500', color: 'var(--sub-text)' }}>마이페이지</Link></li>
+              {isAdmin && <li><Link href="/admin" style={{ fontSize: '0.9375rem', fontWeight: '700', color: 'var(--primary)' }}>관리자</Link></li>}
             </ul>
           </nav>
         </div>
@@ -52,7 +52,7 @@ export default async function Header() {
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           {isLoggedIn ? (
             <>
-              <span className="user-greeting" style={{ fontSize: '0.875rem', fontWeight: '500' }}>{userName}님</span>
+              <span className="hide-mobile" style={{ fontSize: '0.875rem', fontWeight: '500' }}>{userName}님</span>
               <form action="/api/logout" method="POST">
                 <button type="submit" className="btn-outline" style={{ padding: '6px 12px', fontSize: '0.8125rem' }}>로그아웃</button>
               </form>
@@ -64,21 +64,6 @@ export default async function Header() {
           )}
         </div>
       </div>
-      
-      <style jsx>{`
-        nav ul li a {
-          font-size: 0.9375rem;
-          font-weight: 500;
-          color: var(--sub-text);
-        }
-        nav ul li a:hover {
-          color: var(--primary);
-        }
-        @media (max-width: 768px) {
-          .desktop-nav { display: none; }
-          .user-greeting { display: none; }
-        }
-      `}</style>
     </header>
   );
 }

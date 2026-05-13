@@ -97,7 +97,6 @@ export default function LoginPage() {
             <Link href="/register">회원가입</Link>
           </div>
         </div>
-      </main>
-    </>
+    </main>
   );
 }

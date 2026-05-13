@@ -219,3 +219,10 @@ tr:last-child td {
 .badge-pending { background-color: #FEF3C7; color: #92400E; }
 .badge-approved { background-color: #DCFCE7; color: #166534; }
 .badge-rejected { background-color: #FEE2E2; color: #991B1B; }
+
+/* Utility for Mobile */
+@media (max-width: 768px) {
+  .hide-mobile {
+    display: none !important;
+  }
+}
