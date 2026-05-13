@@ -14,18 +14,11 @@ export default async function AdminQuickStats() {
   const [
     pendingUsers,
     pendingApps,
-    todayApprovedApps,
     missingLogsCount,
     restrictedStudents
   ] = await Promise.all([
     prisma.user.count({ where: { approvalStatus: 'PENDING' } }),
     prisma.application.count({ where: { status: 'PENDING' } }),
-    prisma.application.count({ 
-      where: { 
-        status: { in: ['APPROVED', 'COMPLETED'] },
-        slot: { date: { gte: startOfToday, lte: endOfToday } }
-      } 
-    }),
     prisma.application.count({
       where: {
         status: { in: ['APPROVED', 'COMPLETED'] },
@@ -56,7 +49,6 @@ export default async function AdminQuickStats() {
         {[
           { label: '가입 신청 대기', value: pendingUsers, unit: '건', href: '/admin/users' },
           { label: 'OPEN LAB 신청 대기', value: pendingApps, unit: '건', href: '/admin/applications' },
-          { label: '오늘 승인된 OPEN LAB', value: todayApprovedApps, unit: '건', href: '/admin/attendance' },
           { label: '사용일지 미제출', value: missingLogsCount, unit: '건', href: '/admin/usage-logs', urgent: missingLogsCount > 0 },
           { label: '신청 제한 학생', value: restrictedStudents, unit: '명', href: '/admin/restrictions' },
         ].map((stat, i) => (

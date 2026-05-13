@@ -62,6 +62,27 @@ export default function ApplicationStatusActions({
     }
   };
 
+  const handleDelete = async () => {
+    if (!confirm('정말로 이 신청 내역을 완전히 삭제하시겠습니까? 관련 참여 정보 및 일지가 모두 삭제되며 복구할 수 없습니다.')) return;
+    
+    setLoading(true);
+    try {
+      const res = await fetch(`/api/admin/applications/${applicationId}`, {
+        method: 'DELETE'
+      });
+      if (res.ok) {
+        alert('삭제되었습니다.');
+        router.push('/admin/applications');
+      } else {
+        alert('삭제 중 오류가 발생했습니다.');
+      }
+    } catch {
+      alert('서버 오류가 발생했습니다.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
   return (
     <div className="card" style={{ borderTop: '3px solid var(--primary)' }}>
       {currentStatus === 'PENDING' ? (
@@ -154,12 +175,22 @@ export default function ApplicationStatusActions({
             </div>
           )}
 
-          <button 
-            className="btn-outline" 
-            onClick={() => router.push('/admin/applications')}
-          >
-            목록으로 돌아가기
-          </button>
+          <div style={{ display: 'flex', justifyContent: 'center', gap: '12px', marginTop: '24px' }}>
+            <button 
+              className="btn-outline" 
+              onClick={() => router.push('/admin/applications')}
+            >
+              목록으로 돌아가기
+            </button>
+            <button 
+              className="btn-outline" 
+              style={{ color: '#ef4444', borderColor: '#ef4444' }}
+              onClick={handleDelete}
+              disabled={loading}
+            >
+              내역 영구 삭제
+            </button>
+          </div>
         </div>
       )}
     </div>

@@ -44,7 +44,7 @@ export default async function EditApplicationPage({ params }: { params: Promise<
 
         <EditForm 
           user={session.user as any} 
-          application={application} 
+          application={application as any} 
         />
       </div>
     </main>

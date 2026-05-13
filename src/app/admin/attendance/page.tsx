@@ -15,15 +15,18 @@ export default async function AdminAttendancePage({ searchParams }: { searchPara
   }
 
   // Default to today in KST
-  const today = new Date();
-  const kstOffset = 9 * 60 * 60 * 1000;
-  const kstToday = new Date(today.getTime() + kstOffset).toISOString().split('T')[0];
+  const now = new Date();
+  const kstNow = new Date(now.getTime() + (9 * 60 * 60 * 1000));
+  const kstToday = kstNow.toISOString().split('T')[0];
   const selectedDate = date || kstToday;
 
-  const startOfDay = new Date(selectedDate);
-  startOfDay.setHours(0, 0, 0, 0);
-  const endOfDay = new Date(selectedDate);
-  endOfDay.setHours(23, 59, 59, 999);
+  // Create UTC date range that covers the entire KST day
+  // selectedDate is 'YYYY-MM-DD'
+  const startOfDay = new Date(`${selectedDate}T00:00:00.000Z`);
+  startOfDay.setHours(startOfDay.getHours() - 9); // Shift to UTC
+  
+  const endOfDay = new Date(`${selectedDate}T23:59:59.999Z`);
+  endOfDay.setHours(endOfDay.getHours() - 9); // Shift to UTC
 
   const participants = await prisma.applicationParticipant.findMany({
     where: {

@@ -4,6 +4,26 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 
+interface EditApplication {
+  id: string;
+  ruleId: string | null;
+  selectedGrade: number;
+  confirmedNotice: boolean;
+  additionalRequest: string | null;
+  otherSkillName: string | null;
+  status: string;
+  slot: {
+    date: string;
+    startTime: string;
+    endTime: string;
+    room: string;
+    maxCapacity: number;
+  };
+  skills: Array<{
+    skillId: string;
+  }>;
+}
+
 interface EditFormProps {
   user: {
     id: string;
@@ -12,7 +32,7 @@ interface EditFormProps {
     phone: string;
     grade: number;
   };
-  application: any;
+  application: EditApplication;
 }
 
 interface Skill {
@@ -57,7 +77,7 @@ export default function EditForm({ user, application }: EditFormProps) {
     maxCapacity: application.slot.maxCapacity,
     remaining: 0 // Will be updated
   });
-  const [selectedSkills, setSelectedSkills] = useState<string[]>(application.skills.map((as: any) => as.skillId) || []);
+  const [selectedSkills, setSelectedSkills] = useState<string[]>(application.skills.map(as => as.skillId) || []);
   const [otherSkillName, setOtherSkillName] = useState(application.otherSkillName || '');
   const [confirmedNotice, setConfirmedNotice] = useState(application.confirmedNotice || false);
   const [additionalRequest, setAdditionalRequest] = useState(application.additionalRequest || '');

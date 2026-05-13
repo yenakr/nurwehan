@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 
 interface Participant {
@@ -24,7 +24,7 @@ interface Participant {
       room: string;
     };
     skills: Array<{ skill: { id: string; name: string } }>;
-    usageLogs: any[];
+    usageLogs: { id: string }[];
   };
 }
 
@@ -101,13 +101,18 @@ export default function AttendanceClient({
   // Sort time slots
   timeSlotGroups.sort((a, b) => a.timeLabel.localeCompare(b.timeLabel));
 
+  // Expand all by default on first load
+  useEffect(() => {
+    setExpandedSlots(timeSlotGroups.map(g => g.timeLabel));
+  }, [initialParticipants]);
+
   const toggleSlot = (label: string) => {
     setExpandedSlots(prev => 
       prev.includes(label) ? prev.filter(l => l !== label) : [...prev, label]
     );
   };
 
-  const updateStatus = async (participantId: string, updates: any) => {
+  const updateStatus = async (participantId: string, updates: Partial<Pick<Participant, "attendanceStatus" | "cleanupBad">>) => {
     setLoading(participantId);
     try {
       const res = await fetch('/api/admin/attendance', {
@@ -233,7 +238,7 @@ export default function AttendanceClient({
                                     <td className="no-print">
                                       <select 
                                         value={p.attendanceStatus}
-                                        onChange={(e) => updateStatus(p.id, { attendanceStatus: e.target.value })}
+                                        onChange={(e) => updateStatus(p.id, { attendanceStatus: e.target.value as any })}
                                         className={`status-select ${p.attendanceStatus}`}
                                         disabled={loading === p.id}
                                       >

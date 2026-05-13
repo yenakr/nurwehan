@@ -4,9 +4,34 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 
+interface HistoryApplication {
+  id: string;
+  status: string;
+  createdAt: Date | string;
+  rejectedReason?: string | null;
+  cancelReason?: string | null;
+  representativeUserId: string;
+  slot: {
+    date: Date | string;
+    startTime: string;
+    endTime: string;
+    room: string;
+  };
+  skills: Array<{
+    skill: {
+      name: string;
+    };
+  }>;
+  otherSkillName?: string | null;
+  participants: any[];
+  usageLogs: any[];
+}
+
 interface HistoryClientProps {
-  initialApplications: any[];
-  currentUser: any;
+  initialApplications: HistoryApplication[];
+  currentUser: {
+    id: string;
+  };
 }
 
 export default function HistoryClient({ initialApplications, currentUser }: HistoryClientProps) {
@@ -78,11 +103,17 @@ export default function HistoryClient({ initialApplications, currentUser }: Hist
               </div>
               <div className="info-row">
                 <span className="label">술기</span>
-                <span className="value">{app.skills.map((as: any) => as.skill.name).join(', ')}</span>
+                <span className="value">{app.skills.map(as => as.skill.name).join(', ')}</span>
               </div>
               <div className="info-row">
                 <span className="label">인원</span>
                 <span className="value">{app.participants.length}명</span>
+              </div>
+              <div className="info-row">
+                <span className="label">신청시각</span>
+                <span className="value">
+                  {new Date(app.createdAt).toLocaleString('ko-KR', { month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', second: '2-digit' })}
+                </span>
               </div>
 
               {app.status === 'REJECTED' && app.rejectedReason && (
