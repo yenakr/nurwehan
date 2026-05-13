@@ -41,8 +41,18 @@ export default async function AdminAttendancePage({ searchParams }: { searchPara
       application: {
         include: {
           slot: true,
-          skills: { include: { skill: true } },
-          representativeUser: true
+          skills: {
+            include: {
+              skill: {
+                select: {
+                  id: true,
+                  name: true
+                }
+              }
+            }
+          },
+          representativeUser: true,
+          participants: true
         }
       }
     },

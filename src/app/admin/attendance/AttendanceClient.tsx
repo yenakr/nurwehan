@@ -10,14 +10,31 @@ interface Participant {
   attendanceStatus: 'PENDING' | 'PRESENT' | 'ABSENT' | 'LATE_30';
   cleanupBad: boolean;
   application: {
+    id: string;
+    representativeUser: {
+      name: string;
+      studentId: string;
+    };
     slot: {
+      id: string;
+      date: Date | string;
       startTime: string;
       endTime: string;
       room: string;
     };
-    skills: Array<{ skill: { name: string } }>;
+    skills: Array<{ skill: { id: string; name: string } }>;
   };
 }
+
+type GroupedApplication = {
+  id: string;
+  startTime: string;
+  endTime: string;
+  room: string;
+  skills: string[];
+  representative: string;
+  participants: Participant[];
+};
 
 export default function AttendanceClient({ 
   initialParticipants, 
@@ -31,7 +48,7 @@ export default function AttendanceClient({
   const [loading, setLoading] = useState<string | null>(null);
 
   // Group participants by application
-  const applications = participants.reduce((acc, p) => {
+  const applications = participants.reduce<Record<string, GroupedApplication>>((acc, p) => {
     const appId = p.application.id;
     if (!acc[appId]) {
       acc[appId] = {
@@ -40,13 +57,13 @@ export default function AttendanceClient({
         endTime: p.application.slot.endTime,
         room: p.application.slot.room,
         skills: p.application.skills.map(s => s.skill.name),
-        representative: (p.application as any).representativeUser?.name || 'Unknown',
+        representative: p.application.representativeUser?.name || 'Unknown',
         participants: []
       };
     }
     acc[appId].participants.push(p);
     return acc;
-  }, {} as Record<string, any>);
+  }, {});
 
   const updateStatus = async (participantId: string, updates: any) => {
     setLoading(participantId);
@@ -106,7 +123,7 @@ export default function AttendanceClient({
           해당 날짜에 승인된 신청 내역이 없습니다.
         </div>
       ) : (
-        Object.values(applications).map((app: any) => (
+        Object.values(applications).map((app: GroupedApplication) => (
           <div key={app.id} className="attendance-group-card">
             <div className="group-header">
               <div className="group-info">
@@ -117,8 +134,8 @@ export default function AttendanceClient({
               </div>
               <div className="group-actions no-print">
                 <button 
-                  className={`btn-small ${app.participants.every((p: any) => p.cleanupBad) ? 'btn-danger' : 'btn-outline'}`}
-                  onClick={() => updateGroupCleanup(app.id, !app.participants.every((p: any) => p.cleanupBad))}
+                  className={`btn-small ${app.participants.every((p: Participant) => p.cleanupBad) ? 'btn-danger' : 'btn-outline'}`}
+                  onClick={() => updateGroupCleanup(app.id, !app.participants.every((p: Participant) => p.cleanupBad))}
                   disabled={loading === `group-${app.id}`}
                 >
                   조 전체 정리불량 처리
@@ -138,7 +155,7 @@ export default function AttendanceClient({
                   </tr>
                 </thead>
                 <tbody>
-                  {app.participants.map((p: any) => (
+                  {app.participants.map((p: Participant) => (
                     <tr key={p.id}>
                       <td>{p.studentId}</td>
                       <td style={{ fontWeight: '600' }}>{p.name}</td>
