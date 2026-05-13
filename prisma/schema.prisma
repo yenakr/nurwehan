@@ -126,10 +126,10 @@ model ApplicationParticipant {
   id               String           @id @default(cuid())
   applicationId    String
   application      Application      @relation(fields: [applicationId], references: [id])
-  userId           String?
+  userId           String?          // nullable
   user             User?            @relation(fields: [userId], references: [id])
-  studentId        String           // 비회원 또는 기록용 학번
-  name             String
+  studentId        String           // Not null
+  name             String           // Not null
   attendanceStatus AttendanceStatus @default(PENDING)
   cleanupBad       Boolean          @default(false)
   createdAt        DateTime         @default(now())
@@ -162,8 +162,10 @@ model UsageLog {
 
 model Restriction {
   id                  String      @id @default(cuid())
-  userId              String
-  user                User        @relation("UserRestrictions", fields: [userId], references: [id])
+  userId              String?     // nullable
+  user                User?       @relation("UserRestrictions", fields: [userId], references: [id])
+  studentId           String      // Not null
+  studentName         String      // Not null
   reason              String
   sourceApplicationId String?
   sourceApplication   Application? @relation(fields: [sourceApplicationId], references: [id])
@@ -178,8 +180,10 @@ model Restriction {
 
 model CleanupWarning {
   id                String      @id @default(cuid())
-  userId            String
-  user              User        @relation(fields: [userId], references: [id])
+  userId            String?     // nullable
+  user              User?       @relation(fields: [userId], references: [id])
+  studentId         String      // Not null
+  studentName       String      // Not null
   applicationId     String
   application       Application @relation(fields: [applicationId], references: [id])
   reason            String

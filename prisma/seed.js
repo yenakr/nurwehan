@@ -51,7 +51,45 @@ async function main() {
       },
     });
   }
-  console.log('Initial skills seeded');
+  // 3. Create Sample Semester
+  const semester = await prisma.semester.upsert({
+    where: { id: 'sem-2026-1' },
+    update: {},
+    create: {
+      id: 'sem-2026-1',
+      name: '2026학년도 1학기',
+      startDate: new Date('2026-03-02'),
+      endDate: new Date('2026-06-20'),
+      isActive: true,
+    },
+  });
+
+  // 4. Create Sample Slots
+  const slots = [
+    {
+      semesterId: semester.id,
+      allowedGrade: 2,
+      date: new Date('2026-05-20'),
+      startTime: '13:00',
+      endTime: '15:00',
+      room: '임상수기실습실 5층',
+      maxCapacity: 20,
+    },
+    {
+      semesterId: semester.id,
+      allowedGrade: 3,
+      date: new Date('2026-05-21'),
+      startTime: '18:00',
+      endTime: '20:00',
+      room: '시뮬레이션실습실 6층',
+      maxCapacity: 15,
+    }
+  ];
+
+  for (const slot of slots) {
+    await prisma.openLabSlot.create({ data: slot });
+  }
+  console.log('Sample slots seeded');
 }
 
 main()

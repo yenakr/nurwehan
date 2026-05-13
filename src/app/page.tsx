@@ -55,29 +55,33 @@ export default function Home() {
               <h3 className="section-title">
                 <span>OPEN LAB 사용 시 공지사항</span>
               </h3>
-              <div className="card" style={{ fontSize: '0.9375rem', lineHeight: '1.8' }}>
-                <ul style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <li style={{ display: 'flex', gap: '10px' }}>
-                    <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>•</span>
-                    <span>한 타임당 최대 2개 술기 신청 가능</span>
-                  </li>
-                  <li style={{ display: 'flex', gap: '10px' }}>
-                    <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>•</span>
-                    <span>신청 후 불참 또는 시작 30분 이후 참여 시 <strong>2주간 신청 제한</strong></span>
-                  </li>
-                  <li style={{ display: 'flex', gap: '10px' }}>
-                    <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>•</span>
-                    <span>정리불량 3회 누적 시 이후 <strong>OPEN LAB 참여 제한</strong></span>
-                  </li>
-                  <li style={{ display: 'flex', gap: '10px' }}>
-                    <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>•</span>
-                    <span>사용 후 정리 및 사용일지 작성 필수</span>
-                  </li>
-                  <li style={{ display: 'flex', gap: '10px' }}>
-                    <span style={{ color: 'var(--primary)', fontWeight: 'bold' }}>•</span>
-                    <span>일반의료폐기물과 손상성폐기물 구분 엄격 준수</span>
-                  </li>
-                </ul>
+              <div className="card" style={{ fontSize: '0.875rem', lineHeight: '1.6', color: 'var(--text)' }}>
+                <div style={{ marginBottom: '20px' }}>
+                  <h4 style={{ fontWeight: '700', marginBottom: '8px', color: 'var(--primary)' }}>3. 신청 방법</h4>
+                  <ul style={{ paddingLeft: '16px', listStyleType: 'disc', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <li>Open lab 진행할 인원을 모아 조를 구성하고, 한 명이 대표로 신청서를 작성합니다.</li>
+                    <li>한 타임에 최대 2가지 술기까지 신청 가능합니다.</li>
+                    <li>학생 1명당 <strong>주 1회</strong> 신청 가능합니다. (동일 학생이 중복 신청 불가)</li>
+                    <li>신청은 선착순으로 마감됩니다.</li>
+                    <li>불참 또는 시작 30분 이후 참여 시 <strong>2주간 신청 및 참여가 불가</strong>합니다.</li>
+                  </ul>
+                </div>
+                <div style={{ marginBottom: '20px' }}>
+                  <h4 style={{ fontWeight: '700', marginBottom: '8px', color: 'var(--primary)' }}>4. 신청 기간</h4>
+                  <ul style={{ paddingLeft: '16px', listStyleType: 'disc', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <li>Open lab 날짜 일주일 전부터 공휴일 제외 이틀 전까지 신청합니다.</li>
+                    <li>월요일 신청은 전 주 금요일 오전까지 가능합니다.</li>
+                  </ul>
+                </div>
+                <div>
+                  <h4 style={{ fontWeight: '700', marginBottom: '8px', color: 'var(--primary)' }}>7. 유의 사항</h4>
+                  <ul style={{ paddingLeft: '16px', listStyleType: 'disc', display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                    <li>마지막 10분은 정리를 실시합니다.</li>
+                    <li><strong>정리 상태 불량 3회 적발 시</strong> 해당 조원 모두 이용이 불가합니다.</li>
+                    <li>일반의료 폐기물과 손상성 폐기물을 반드시 구별하여 폐기합니다.</li>
+                    <li>밀폐되는 텀블러 외 음료 반입 및 섭취를 금지합니다.</li>
+                  </ul>
+                </div>
               </div>
             </section>
 

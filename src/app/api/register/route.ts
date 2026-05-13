@@ -48,6 +48,22 @@ export async function POST(request: Request) {
       },
     });
 
+    // Link legacy records based on studentId
+    await prisma.applicationParticipant.updateMany({
+      where: { studentId },
+      data: { userId: user.id },
+    });
+
+    await prisma.restriction.updateMany({
+      where: { studentId },
+      data: { userId: user.id },
+    });
+
+    await prisma.cleanupWarning.updateMany({
+      where: { studentId },
+      data: { userId: user.id },
+    });
+
     return NextResponse.json(
       { message: '회원가입 신청이 완료되었습니다. 관리자 승인 후 이용 가능합니다.', userId: user.id },
       { status: 201 }
