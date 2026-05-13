@@ -12,10 +12,10 @@ export default async function Home() {
     <>
       <main style={{ flex: 1, backgroundColor: 'var(--white)', padding: '40px 0' }}>
         <div className="container">
-          
+
           {/* Hero / Application Section */}
-          <div style={{ 
-            textAlign: 'center', 
+          <div style={{
+            textAlign: 'center',
             padding: '60px 20px',
             backgroundColor: 'var(--muted-background)',
             borderRadius: '8px',
@@ -25,21 +25,18 @@ export default async function Home() {
             <h2 style={{ fontSize: '1.75rem', fontWeight: '800', marginBottom: '16px', color: 'var(--primary)' }}>
               한양대학교 간호대학 OPEN LAB 신청
             </h2>
-            <p style={{ color: 'var(--sub-text)', marginBottom: '40px', fontSize: '1.125rem' }}>
-              안전하고 효율적인 실습실 사용을 위해 신청 수칙을 반드시 준수해 주시기 바랍니다.
-            </p>
-            
+
             <Link href="/open-lab" className="btn-accent">
               OPEN LAB 신청하기
             </Link>
-            
+
             <p style={{ marginTop: '16px', fontSize: '0.875rem', color: 'var(--sub-text)' }}>
               * 로그인이 필요한 서비스입니다.
             </p>
           </div>
 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '40px' }}>
-            
+
             {/* Notice Section */}
             <section>
               <h3 className="section-title">
@@ -72,10 +69,10 @@ export default async function Home() {
           </div>
         </div>
       </main>
-      
-      <footer style={{ 
-        backgroundColor: 'var(--muted-background)', 
-        borderTop: '1px solid var(--border)', 
+
+      <footer style={{
+        backgroundColor: 'var(--muted-background)',
+        borderTop: '1px solid var(--border)',
         padding: '40px 0',
         color: 'var(--sub-text)',
         fontSize: '0.8125rem'

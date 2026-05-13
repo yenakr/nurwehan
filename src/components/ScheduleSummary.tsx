@@ -12,11 +12,6 @@ export default function ScheduleSummary() {
       <div className="section-title">
         <span>OPEN LAB 운영 일정</span>
       </div>
-      <div style={{ backgroundColor: 'var(--muted-background)', padding: '12px', borderRadius: '6px', marginBottom: '16px' }}>
-        <p style={{ fontSize: '0.875rem', color: 'var(--primary)', fontWeight: '600' }}>
-          ※ 이번 주 특이사항: 금요일 15:00 이후 방역 작업으로 폐쇄
-        </p>
-      </div>
       <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
         <thead>
           <tr style={{ borderBottom: '2px solid var(--border)' }}>
@@ -31,7 +26,7 @@ export default function ScheduleSummary() {
               <td style={{ padding: '10px 4px' }}>{s.day}</td>
               <td style={{ padding: '10px 4px' }}>{s.time}</td>
               <td style={{ padding: '10px 4px', textAlign: 'right' }}>
-                <span style={{ 
+                <span style={{
                   color: s.status === '야간운영' ? 'var(--primary)' : 'var(--text)',
                   fontWeight: s.status === '야간운영' ? '600' : '400'
                 }}>

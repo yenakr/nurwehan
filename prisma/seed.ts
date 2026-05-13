@@ -6,7 +6,7 @@ import * as dotenv from 'dotenv';
 
 dotenv.config();
 
-const pool = new Pool({ 
+const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
   ssl: process.env.DATABASE_URL?.includes('localhost') ? false : { rejectUnauthorized: false }
 });
@@ -38,8 +38,8 @@ async function main() {
 
   // 2. Create Skills and Supplies
   const skillsData = [
-    { 
-      name: '간헐적 위관영양', 
+    {
+      name: '간헐적 위관영양',
       description: 'Nasogastric Tube Feeding',
       supplies: [
         { supplyName: '처방된 위관영양액 (200-500mL)', quantity: 1, unit: '개' },
@@ -50,8 +50,8 @@ async function main() {
         { supplyName: '일회용 장갑', quantity: 1, unit: '켤레' },
       ]
     },
-    { 
-      name: '단순도뇨', 
+    {
+      name: '단순도뇨',
       description: 'Simple Catheterization',
       supplies: [
         { supplyName: '단순도뇨 세트 (멸균)', quantity: 1, unit: '개' },
@@ -61,8 +61,8 @@ async function main() {
         { supplyName: '소독솜', quantity: 5, unit: '개' },
       ]
     },
-    { 
-      name: '유치도뇨', 
+    {
+      name: '유치도뇨',
       description: 'Indwelling Catheterization',
       supplies: [
         { supplyName: '유치도뇨 세트 (멸균)', quantity: 1, unit: '개' },
@@ -71,8 +71,8 @@ async function main() {
         { supplyName: '소변 수집백', quantity: 1, unit: '개' },
       ]
     },
-    { 
-      name: '정맥수액주입', 
+    {
+      name: '정맥수액주입',
       description: 'Intravenous Fluid Infusion',
       supplies: [
         { supplyName: '수액백', quantity: 1, unit: '개' },
@@ -119,30 +119,30 @@ async function main() {
   await prisma.notice.deleteMany({});
   const noticeTitle = 'OPEN LAB 이용 안내';
   const noticeContent = `
-### 3. 신청 방법
+신청 방법
 - Open lab 진행할 인원을 모아 조를 구성하고, 한 명이 대표로 신청서를 제출합니다.
 - 한 타임에 최대 2가지 술기까지 신청 가능합니다.
-- 학생 1명당 **주 1회** 오픈랩 신청이 가능합니다. 예: 동일 학생이 월요일, 수요일 2개 타임 모두 신청은 불가합니다.
+- 학생 1명당 주 1회 오픈랩 신청이 가능합니다. 예: 동일 학생이 월요일, 수요일 2개 타임 모두 신청은 불가합니다.
 - 희망하는 모든 학생들이 Open lab에 참여할 수 있도록 조끼리 소통하여 신청이 겹치지 않도록 소통해주십시오.
 - 예외: 2학년은 주 1회 금요일 수업을 고려해 금주 금요일부터 차주 금요일 오픈랩 중 1회만 신청 가능합니다.
 - 신청은 최대 신청 가능 인원 내에서 신청서 제출 및 접수 완료되는 순서대로 선착순 마감됩니다.
 - 신청 후 참여하지 않거나 Open lab 시작 30분 이후에 참여하는 경우에는 2주 동안 Open lab 신청 및 참여가 불가합니다.
 
-### 4. 신청기간
+신청기간
 - 신청서는 Open lab 날짜 일주일 전부터 공휴일 제외 이틀 전까지 행정실 근무시간 오후 5시 30분 내에 제출합니다.
 - 기간 내에 신청서를 제출하지 않은 경우 오픈랩 이용이 불가합니다.
 - 예외: 월요일 Open lab 신청은 전 주 금요일 오전까지 제출 가능합니다.
 
-### 5. 신청 시 유의사항
+신청 시 유의사항
 - 신청서 제출 후 반드시 승인 여부를 확인하십시오.
 - 신청이 불가능한 경우 반려 사유가 표시됩니다.
 - 기자재 신청 수량은 실습실 물품 재고를 고려하여 신청 수량보다 적게 준비될 수 있습니다.
 
-### 6. Open lab 이용
+Open lab 이용
 - Open lab 종료 전 Open lab 사용일지를 학생별로 작성하여 제출합니다.
 - 사용일지 미작성 시 참여하지 않은 것으로 간주하여 2주간 Open lab 신청 및 참여가 불가합니다.
 
-### 7. Open lab 시 유의사항
+Open lab 시 유의사항
 - 마지막 10분은 정리를 실시합니다.
 - 정리 상태 불량 3회 적발 시 해당 조원 모두 Open lab 이용이 불가합니다.
 - 사용한 물품을 처음과 동일한 상태로 정리하고, 일반의료 폐기물과 손상성 폐기물을 반드시 구별하여 버립니다.
@@ -183,14 +183,14 @@ async function main() {
     { grade: 2, dayOfWeek: 4, startTime: '09:00', endTime: '10:00', room: '임상수기실습실 5층', maxCapacity: 16 },
     { grade: 2, dayOfWeek: 4, startTime: '10:00', endTime: '11:00', room: '임상수기실습실 5층', maxCapacity: 16 },
     // 3rd Year
-    { grade: 3, dayOfWeek: 2, startTime: '09:00', endTime: '10:00', room: '시뮬레이션실습실 6층', maxCapacity: 16 },
-    { grade: 3, dayOfWeek: 2, startTime: '10:00', endTime: '11:00', room: '시뮬레이션실습실 6층', maxCapacity: 16 },
-    { grade: 3, dayOfWeek: 3, startTime: '09:00', endTime: '10:00', room: '시뮬레이션실습실 6층', maxCapacity: 16 },
-    { grade: 3, dayOfWeek: 3, startTime: '10:00', endTime: '11:00', room: '시뮬레이션실습실 6층', maxCapacity: 16 },
+    { grade: 3, dayOfWeek: 2, startTime: '09:00', endTime: '10:00', room: '임상수기실습실 5층', maxCapacity: 16 },
+    { grade: 3, dayOfWeek: 2, startTime: '10:00', endTime: '11:00', room: '임상수기실습실 5층', maxCapacity: 16 },
+    { grade: 3, dayOfWeek: 3, startTime: '09:00', endTime: '10:00', room: '임상수기실습실 5층', maxCapacity: 16 },
+    { grade: 3, dayOfWeek: 3, startTime: '10:00', endTime: '11:00', room: '임상수기실습실 5층', maxCapacity: 16 },
     // 4th Year
-    { grade: 4, dayOfWeek: 1, startTime: '11:00', endTime: '12:00', room: '임상수기실습실 5층', maxCapacity: 16 },
+    { grade: 4, dayOfWeek: 1, startTime: '11:00', endTime: '12:00', room: '시뮬레이션실습실 6층', maxCapacity: 16 },
     { grade: 4, dayOfWeek: 2, startTime: '11:00', endTime: '12:00', room: '시뮬레이션실습실 6층', maxCapacity: 16 },
-    { grade: 4, dayOfWeek: 4, startTime: '11:00', endTime: '12:00', room: '임상수기실습실 5층', maxCapacity: 16 },
+    { grade: 4, dayOfWeek: 4, startTime: '11:00', endTime: '12:00', room: '시뮬레이션실습실 6층', maxCapacity: 16 },
   ];
 
   await prisma.openLabGradeRule.deleteMany({ where: { semesterId: semester.id } });
@@ -207,7 +207,7 @@ async function main() {
   // Create some initial slots for next week to test
   const nextWeekStart = new Date();
   nextWeekStart.setDate(nextWeekStart.getDate() + (7 - nextWeekStart.getDay()) + 1); // Next Monday
-  
+
   for (let i = 0; i < 5; i++) {
     const currentDate = new Date(nextWeekStart);
     currentDate.setDate(nextWeekStart.getDate() + i);
