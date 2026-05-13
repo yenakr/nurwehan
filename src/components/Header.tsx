@@ -1,11 +1,27 @@
+'use client';
+
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Logo from './Logo';
-import { getCurrentUser } from '@/lib/auth';
 import { isAdminRole } from '@/lib/auth-core';
 import LogoutButton from './LogoutButton';
 
-export default async function Header() {
-  const user = await getCurrentUser();
+export default function Header() {
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch('/api/me')
+      .then(res => res.json())
+      .then(data => {
+        setUser(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setLoading(false);
+      });
+  }, []);
+
   const isLoggedIn = !!user;
   const isAdmin = isAdminRole(user?.role);
   const userName = user?.name || '';
@@ -51,15 +67,17 @@ export default async function Header() {
         </div>
         
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-          {isLoggedIn ? (
-            <>
-              <span className="hide-mobile" style={{ fontSize: '0.875rem', fontWeight: '500' }}>{userName}님</span>
-              <LogoutButton />
-            </>
-          ) : (
-            <Link href="/login" className="btn-primary" style={{ padding: '6px 16px', fontSize: '0.875rem' }}>
-              로그인
-            </Link>
+          {!loading && (
+            isLoggedIn ? (
+              <>
+                <span className="hide-mobile" style={{ fontSize: '0.875rem', fontWeight: '500' }}>{userName}님</span>
+                <LogoutButton />
+              </>
+            ) : (
+              <Link href="/login" className="btn-primary" style={{ padding: '6px 16px', fontSize: '0.875rem' }}>
+                로그인
+              </Link>
+            )
           )}
         </div>
       </div>

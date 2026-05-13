@@ -4,6 +4,8 @@ import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import UserList from './UserList';
 
+export const dynamic = 'force-dynamic';
+
 export default async function AdminUsersPage() {
   const user = await getCurrentUser();
 

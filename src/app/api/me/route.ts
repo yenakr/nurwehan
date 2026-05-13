@@ -2,6 +2,19 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 
+export async function GET() {
+  try {
+    const user = await getCurrentUser();
+    if (!user) {
+      return NextResponse.json(null);
+    }
+    return NextResponse.json(user);
+  } catch (error) {
+    console.error('Get profile error:', error);
+    return NextResponse.json({ message: '서버 오류가 발생했습니다.' }, { status: 500 });
+  }
+}
+
 export async function PATCH(request: NextRequest) {
   try {
     const user = await getCurrentUser();

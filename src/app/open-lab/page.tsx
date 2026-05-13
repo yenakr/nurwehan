@@ -4,6 +4,8 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import ApplyForm from './ApplyForm';
 
+export const dynamic = 'force-dynamic';
+
 export default async function OpenLabApplyPage() {
   const session = await getSession();
   
