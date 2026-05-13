@@ -118,6 +118,8 @@ model Application {
   
   participants         ApplicationParticipant[]
   skills               ApplicationSkill[]
+  confirmedNotice      Boolean           @default(false)
+  otherSkillName       String?
   usageLogs            UsageLog[]
   restrictions         Restriction[]
   cleanupWarnings      CleanupWarning[]

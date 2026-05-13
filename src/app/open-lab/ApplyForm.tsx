@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 
 interface ApplyFormProps {
   user: {
@@ -48,6 +49,8 @@ export default function ApplyForm({ user }: ApplyFormProps) {
   const [selectedDate, setSelectedDate] = useState('');
   const [selectedRoom, setSelectedRoom] = useState(ROOM_OPTIONS[0]);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
+  const [otherSkillName, setOtherSkillName] = useState('');
+  const [confirmedNotice, setConfirmedNotice] = useState(false);
   
   // Capacity State
   const [capacityInfo, setCapacityInfo] = useState<{ remaining: number; maxCapacity: number } | null>(null);
@@ -65,7 +68,8 @@ export default function ApplyForm({ user }: ApplyFormProps) {
       try {
         const skillsRes = await fetch('/api/skills');
         const skillsData = await skillsRes.json();
-        setSkills(skillsData);
+        // Add "기타" to the end
+        setSkills([...skillsData, { id: 'other', name: '기타', supplies: [] }]);
       } catch (err) {
         console.error('Error fetching skills:', err);
       }
@@ -179,10 +183,15 @@ export default function ApplyForm({ user }: ApplyFormProps) {
     }
   };
 
+  const isOtherSelected = selectedSkills.includes('other');
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!selectedRule || !selectedDate || !selectedRoom) return alert('운영시간, 날짜, 실습실을 모두 선택해주세요.');
     if (selectedSkills.length === 0) return alert('술기를 하나 이상 선택해주세요.');
+    if (isOtherSelected && !otherSkillName.trim()) return alert('기타 술기명을 입력해주세요.');
+    if (!confirmedNotice) return alert('OPEN LAB 이용 안내 및 유의사항 확인이 필요합니다.');
+    
     if (capacityInfo && capacityInfo.remaining < participants.length) {
       return alert('신청 가능 인원보다 참여 학생 수가 많습니다.');
     }
@@ -198,8 +207,10 @@ export default function ApplyForm({ user }: ApplyFormProps) {
           room: selectedRoom,
           grade: selectedGrade,
           skillIds: selectedSkills,
+          otherSkillName: isOtherSelected ? otherSkillName : undefined,
           participants,
-          additionalRequest
+          additionalRequest,
+          confirmedNotice
         })
       });
       
@@ -332,7 +343,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
       {/* 3. Skill Selection */}
       <section>
         <h3 style={{ fontSize: '1rem', fontWeight: '700', marginBottom: '16px' }}>3. 실습 술기 선택 (최대 2개)</h3>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '12px', marginBottom: isOtherSelected ? '16px' : '0' }}>
           {skills.map(skill => (
             <label key={skill.id} style={{ 
               display: 'flex', 
@@ -354,12 +365,24 @@ export default function ApplyForm({ user }: ApplyFormProps) {
             </label>
           ))}
         </div>
+        {isOtherSelected && (
+          <div style={{ padding: '16px', backgroundColor: '#f8fafc', border: '1px solid var(--border)', borderRadius: '8px' }}>
+            <label style={{ display: 'block', fontSize: '0.875rem', fontWeight: '600', marginBottom: '8px' }}>기타 술기명 입력</label>
+            <input 
+              type="text" 
+              placeholder="직접 입력 (예: 정맥주사 숙달 연습)" 
+              value={otherSkillName}
+              onChange={(e) => setOtherSkillName(e.target.value)}
+              style={{ width: '100%', padding: '10px' }}
+            />
+          </div>
+        )}
       </section>
 
       {/* 4. Aggregate Supplies Display */}
-      {aggregatedSupplies.length > 0 && (
-        <section>
-          <h3 style={{ fontSize: '1rem', fontWeight: '700', marginBottom: '16px' }}>4. 필요물품 목록</h3>
+      <section>
+        <h3 style={{ fontSize: '1rem', fontWeight: '700', marginBottom: '16px' }}>4. 필요물품 목록</h3>
+        {aggregatedSupplies.length > 0 ? (
           <div className="table-container" style={{ backgroundColor: 'white' }}>
             <table style={{ width: '100%', borderCollapse: 'collapse' }}>
               <thead>
@@ -382,9 +405,13 @@ export default function ApplyForm({ user }: ApplyFormProps) {
               </tbody>
             </table>
           </div>
-          <p style={{ fontSize: '0.75rem', color: 'var(--sub-text)', marginTop: '8px' }}>* 준비물은 선택한 술기에 맞춰 자동으로 계산됩니다. 추가 요청은 아래 입력란을 이용해 주세요.</p>
-        </section>
-      )}
+        ) : (
+          <div style={{ padding: '24px', textAlign: 'center', backgroundColor: 'white', border: '1px solid var(--border)', borderRadius: '4px', color: 'var(--sub-text)' }}>
+            {isOtherSelected ? '기타 술기 선택 시 필요한 물품을 아래 추가 요청사항에 직접 작성해주세요.' : '술기를 선택하면 필요물품이 표시됩니다.'}
+          </div>
+        )}
+        <p style={{ fontSize: '0.75rem', color: 'var(--sub-text)', marginTop: '8px' }}>* 준비물은 선택한 술기에 맞춰 자동으로 계산되며 수정이 불가합니다.</p>
+      </section>
 
       {/* 5. Participants */}
       <section>
@@ -399,7 +426,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
                 type="text" 
                 value={user.studentId} 
                 readOnly 
-                style={{ width: '100%', backgroundColor: '#f0f0f0' }}
+                style={{ width: '100%', backgroundColor: '#f0f0f0', padding: '10px', borderRadius: '4px', border: '1px solid var(--border)' }}
               />
             </div>
             <div style={{ flex: 1, minWidth: '120px' }}>
@@ -408,7 +435,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
                 type="text" 
                 value={user.name} 
                 readOnly 
-                style={{ width: '100%', backgroundColor: '#f0f0f0' }}
+                style={{ width: '100%', backgroundColor: '#f0f0f0', padding: '10px', borderRadius: '4px', border: '1px solid var(--border)' }}
               />
             </div>
           </div>
@@ -418,8 +445,11 @@ export default function ApplyForm({ user }: ApplyFormProps) {
 
       {/* 6. Additional Request */}
       <section>
-        <h3 style={{ fontSize: '1rem', fontWeight: '700', marginBottom: '8px' }}>6. 추가 요청사항 (선택)</h3>
-        <p style={{ fontSize: '0.8125rem', color: 'var(--sub-text)', marginBottom: '12px' }}>기본 필요물품 외 추가로 필요한 물품이나 요청사항이 있으면 작성해주세요.</p>
+        <h3 style={{ fontSize: '1rem', fontWeight: '700', marginBottom: '8px' }}>6. 추가 요청사항</h3>
+        <p style={{ fontSize: '0.8125rem', color: 'var(--sub-text)', marginBottom: '12px' }}>
+          기본 필요물품 외 추가로 필요한 물품이나 요청사항이 있으면 작성해주세요.<br/>
+          {isOtherSelected && <strong style={{ color: 'var(--primary)' }}>* 기타 술기를 선택한 경우 연습할 술기명과 필요한 물품을 상세히 작성해주세요.</strong>}
+        </p>
         <textarea 
           placeholder="예: 청진기 1개 추가 요청합니다. 도뇨 연습용 거즈 여분 요청합니다."
           value={additionalRequest}
@@ -428,15 +458,41 @@ export default function ApplyForm({ user }: ApplyFormProps) {
         />
       </section>
 
-      <div style={{ marginTop: '20px', borderTop: '1px solid var(--border)', paddingTop: '32px', textAlign: 'center' }}>
+      {/* 7. Notice Confirmation */}
+      <section style={{ backgroundColor: '#fff9db', padding: '24px', borderRadius: '8px', border: '1px solid #ffe066' }}>
+        <div style={{ display: 'flex', alignItems: 'flex-start', gap: '12px' }}>
+          <input 
+            type="checkbox" 
+            id="notice-confirm" 
+            checked={confirmedNotice} 
+            onChange={(e) => setConfirmedNotice(e.target.checked)}
+            style={{ marginTop: '4px', width: '20px', height: '20px' }}
+          />
+          <label htmlFor="notice-confirm" style={{ fontWeight: '700', fontSize: '1rem', cursor: 'pointer' }}>
+            OPEN LAB 이용 안내 및 유의사항을 확인했습니다. (필수)
+          </label>
+        </div>
+        <div style={{ marginTop: '12px', marginLeft: '32px' }}>
+          <Link href="/notices" target="_blank" style={{ fontSize: '0.875rem', color: 'var(--primary)', textDecoration: 'underline' }}>
+            OPEN LAB 이용 안내 보기
+          </Link>
+        </div>
+      </section>
+
+      <div style={{ textAlign: 'center' }}>
         <button 
           type="submit" 
-          disabled={loading || !!(capacityInfo && capacityInfo.remaining <= 0)}
+          disabled={loading || !confirmedNotice || !!(capacityInfo && capacityInfo.remaining <= 0)}
           className="btn-accent" 
-          style={{ width: '100%', padding: '16px', opacity: (capacityInfo && capacityInfo.remaining <= 0) ? 0.5 : 1 }}
+          style={{ width: '100%', padding: '18px', fontSize: '1.125rem' }}
         >
           {loading ? '신청 처리 중...' : (capacityInfo && capacityInfo.remaining <= 0) ? '신청 마감' : '사용 신청서 제출'}
         </button>
+        {!confirmedNotice && (
+          <p style={{ color: '#ef4444', fontSize: '0.8125rem', marginTop: '8px' }}>
+            * 이용 안내 확인 체크박스를 선택해주세요.
+          </p>
+        )}
       </div>
     </form>
   );

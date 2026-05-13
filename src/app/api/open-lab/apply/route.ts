@@ -12,11 +12,15 @@ export async function POST(request: NextRequest) {
 
   try {
     const body = await request.json();
-    const { ruleId, date, room, grade, skillIds, participants, additionalRequest } = body;
+    const { ruleId, date, room, grade, skillIds, otherSkillName, participants, additionalRequest, confirmedNotice } = body;
 
     // 1. Basic Validation
     if (!ruleId || !date || !room || !grade || !skillIds || skillIds.length === 0 || !participants || participants.length === 0) {
       return NextResponse.json({ message: '필수 정보를 모두 입력해주세요.' }, { status: 400 });
+    }
+
+    if (!confirmedNotice) {
+      return NextResponse.json({ message: '이용 안내 및 유의사항 확인이 필요합니다.' }, { status: 400 });
     }
 
     if (skillIds.length > 2) {
@@ -110,6 +114,9 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: '참여자 중 해당 주에 이미 신청 이력이 있는 학생이 있습니다.' }, { status: 400 });
     }
 
+    // Filter out 'other' skill ID for actual DB skills
+    const actualSkillIds = skillIds.filter((id: string) => id !== 'other');
+
     // 6. Create Application
     const application = await prisma.application.create({
       data: {
@@ -118,8 +125,10 @@ export async function POST(request: NextRequest) {
         status: 'PENDING',
         selectedGrade: grade,
         additionalRequest,
+        otherSkillName: otherSkillName || null,
+        confirmedNotice: true,
         skills: {
-          create: skillIds.map((skillId: string) => ({ skillId }))
+          create: actualSkillIds.map((skillId: string) => ({ skillId }))
         },
         participants: {
           create: participants.map((p: { studentId: string; name: string }) => ({

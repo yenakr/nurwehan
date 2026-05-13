@@ -24,6 +24,7 @@ export default async function AdminApplicationDetailPage({ params }: { params: P
         include: { skill: { include: { supplies: true } } }
       },
       participants: true,
+      usageLogs: true,
     }
   });
 
@@ -98,6 +99,18 @@ export default async function AdminApplicationDetailPage({ params }: { params: P
                     {as.skill.name}
                   </span>
                 ))}
+                {application.otherSkillName && (
+                  <span style={{ backgroundColor: '#fff4e6', padding: '6px 12px', borderRadius: '4px', fontSize: '0.875rem', fontWeight: '700', color: '#d9480f', border: '1px solid #ffd8a8' }}>
+                    기타: {application.otherSkillName}
+                  </span>
+                )}
+              </div>
+            </div>
+
+            <div style={{ marginBottom: '24px' }}>
+              <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--sub-text)', marginBottom: '4px' }}>유의사항 확인 여부</label>
+              <div style={{ fontSize: '0.875rem', fontWeight: '600', color: application.confirmedNotice ? '#166534' : '#991b1b' }}>
+                {application.confirmedNotice ? '✅ 확인 완료' : '❌ 미확인 (구버전 신청)'}
               </div>
             </div>
 
@@ -169,6 +182,8 @@ export default async function AdminApplicationDetailPage({ params }: { params: P
             applicationId={application.id} 
             currentStatus={application.status} 
             rejectedReason={application.rejectedReason} 
+            hasUsageLog={application.usageLogs.length > 0}
+            participants={application.participants}
           />
         </div>
       </div>

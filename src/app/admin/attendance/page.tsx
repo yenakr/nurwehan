@@ -28,7 +28,7 @@ export default async function AdminAttendancePage({ searchParams }: { searchPara
   const participants = await prisma.applicationParticipant.findMany({
     where: {
       application: {
-        status: 'APPROVED',
+        status: { in: ['APPROVED', 'COMPLETED'] },
         slot: {
           date: {
             gte: startOfDay,
@@ -41,7 +41,8 @@ export default async function AdminAttendancePage({ searchParams }: { searchPara
       application: {
         include: {
           slot: true,
-          skills: { include: { skill: true } }
+          skills: { include: { skill: true } },
+          representativeUser: true
         }
       }
     },
