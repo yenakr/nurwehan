@@ -40,7 +40,10 @@ export async function getCurrentUser() {
     });
 
     return user;
-  } catch (error) {
+  } catch (error: any) {
+    if (error.digest === 'DYNAMIC_SERVER_USAGE') {
+      throw error;
+    }
     console.error('GetCurrentUser error:', error);
     return null;
   }

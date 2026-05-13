@@ -3,6 +3,8 @@ import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import ProfileForm from './ProfileForm';
 
+export const dynamic = 'force-dynamic';
+
 export default async function MyPage() {
   const user = await getCurrentUser();
 
