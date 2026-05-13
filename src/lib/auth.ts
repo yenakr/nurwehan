@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
-import { encrypt, decrypt } from './auth-core';
+import { encrypt, decrypt, type AuthUser } from './auth-core';
 
-export async function login(user: { id: string; studentId: string; role: string; name: string }) {
+export async function login(user: AuthUser) {
   const expires = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours
   const session = await encrypt({ user, expires });
 

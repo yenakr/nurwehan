@@ -8,7 +8,7 @@ export async function GET() {
       orderBy: { name: 'asc' },
     });
     return NextResponse.json(skills);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ message: 'Error fetching skills' }, { status: 500 });
   }
 }

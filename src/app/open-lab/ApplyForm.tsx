@@ -12,11 +12,28 @@ interface ApplyFormProps {
   };
 }
 
+interface Skill {
+  id: string;
+  name: string;
+}
+
+interface Slot {
+  id: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+  room: string;
+  maxCapacity: number;
+  _count?: {
+    applications: number;
+  };
+}
+
 export default function ApplyForm({ user }: ApplyFormProps) {
   const router = useRouter();
   
-  const [skills, setSkills] = useState<any[]>([]);
-  const [slots, setSlots] = useState<any[]>([]);
+  const [skills, setSkills] = useState<Skill[]>([]);
+  const [slots, setSlots] = useState<Slot[]>([]);
   const [selectedSlotId, setSelectedSlotId] = useState('');
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [participants, setParticipants] = useState([{ studentId: user.studentId, name: user.name }]);
@@ -93,7 +110,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
       } else {
         alert(data.message || '신청에 실패했습니다.');
       }
-    } catch (err) {
+    } catch {
       alert('오류가 발생했습니다.');
     } finally {
       setLoading(false);

@@ -12,15 +12,14 @@ export default async function Home() {
   });
 
   // Fetch recent applications if logged in
-  let recentApplications = [];
-  if (isLoggedIn) {
-    recentApplications = await prisma.application.findMany({
-      where: { representativeUserId: session.user.id },
-      take: 5,
-      orderBy: { createdAt: 'desc' },
-      include: { slot: true }
-    });
-  }
+  const recentApplications = (isLoggedIn && session?.user)
+    ? await prisma.application.findMany({
+        where: { representativeUserId: session.user.id },
+        take: 5,
+        orderBy: { createdAt: 'desc' },
+        include: { slot: true }
+      })
+    : [];
 
   return (
     <>

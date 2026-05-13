@@ -34,7 +34,7 @@ export async function GET(request: Request) {
       orderBy: { date: 'asc' }
     });
     return NextResponse.json(slots);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ message: 'Error fetching slots' }, { status: 500 });
   }
 }

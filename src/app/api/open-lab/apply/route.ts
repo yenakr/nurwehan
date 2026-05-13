@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     }
 
     // 3. Validate Participants Eligibility
-    const participantStudentIds = participants.map((p: any) => p.studentId);
+    const participantStudentIds = participants.map((p: { studentId: string }) => p.studentId);
     
     // 3a. Check for active restrictions
     const activeRestrictions = await prisma.restriction.findMany({
@@ -89,7 +89,7 @@ export async function POST(request: Request) {
           create: skillIds.map((skillId: string) => ({ skillId }))
         },
         participants: {
-          create: participants.map((p: any) => ({
+          create: participants.map((p: { studentId: string; name: string }) => ({
             studentId: p.studentId,
             name: p.name,
             // Try to link user_id if already registered
@@ -101,8 +101,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ message: '신청이 완료되었습니다.', id: application.id });
 
-  } catch (error) {
-    console.error('Apply error:', error);
+  } catch {
     return NextResponse.json({ message: '서버 오류가 발생했습니다.' }, { status: 500 });
   }
 }

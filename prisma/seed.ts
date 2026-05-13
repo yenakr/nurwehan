@@ -1,8 +1,10 @@
-const { PrismaClient } = require('@prisma/client');
-const { PrismaPg } = require('@prisma/adapter-pg');
-const { Pool } = require('pg');
-const bcrypt = require('bcrypt');
-require('dotenv').config();
+import { PrismaClient } from '@prisma/client';
+import { PrismaPg } from '@prisma/adapter-pg';
+import { Pool } from 'pg';
+import bcrypt from 'bcrypt';
+import * as dotenv from 'dotenv';
+
+dotenv.config();
 
 const pool = new Pool({ connectionString: process.env.DATABASE_URL });
 const adapter = new PrismaPg(pool);
@@ -11,12 +13,7 @@ const prisma = new PrismaClient({ adapter });
 async function main() {
   console.log('Seeding started...');
 
-  // 1. Clean up existing data (Optional but recommended for a clean start)
-  // await prisma.notice.deleteMany({});
-  // await prisma.openLabSlot.deleteMany({});
-  // await prisma.skill.deleteMany({});
-
-  // 2. Create Super Admin
+  // 1. Create Super Admin
   const adminPassword = await bcrypt.hash('admin1234', 10);
   const superAdmin = await prisma.user.upsert({
     where: { studentId: 'admin' },
@@ -36,7 +33,7 @@ async function main() {
   });
   console.log('Super Admin created: admin / admin1234');
 
-  // 3. Create Initial Skills
+  // 2. Create Initial Skills
   const skills = [
     { name: '간헐적 위관영양', description: 'Nasogastric Tube Feeding' },
     { name: '단순도뇨', description: 'Simple Catheterization' },
@@ -61,7 +58,7 @@ async function main() {
   }
   console.log('Skills seeded');
 
-  // 4. Create Official Notice
+  // 3. Create Official Notice
   const noticeTitle = 'OPEN LAB 이용 안내';
   const noticeContent = `
 ### 3. 신청 방법
@@ -114,7 +111,7 @@ async function main() {
   });
   console.log('Official notice seeded');
 
-  // 5. Create Sample Semester & Slots (Fixed Room Names)
+  // 4. Create Sample Semester & Slots
   const semester = await prisma.semester.upsert({
     where: { id: 'sem-2026-1' },
     update: { isActive: true },

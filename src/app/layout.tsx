@@ -17,7 +17,6 @@ export default function RootLayout({
     <html lang="ko">
       <body>
         <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
-          {/* @ts-expect-error Async Server Component */}
           <Header />
           {children}
         </div>

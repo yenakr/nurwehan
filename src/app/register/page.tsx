@@ -51,7 +51,7 @@ export default function RegisterPage() {
       } else {
         setError(data.message || '회원가입에 실패했습니다.');
       }
-    } catch (err) {
+    } catch {
       setError('네트워크 오류가 발생했습니다.');
     } finally {
       setLoading(false);

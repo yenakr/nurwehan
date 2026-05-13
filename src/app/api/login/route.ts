@@ -32,6 +32,7 @@ export async function POST(request: Request) {
       studentId: user.studentId,
       role: user.role,
       name: user.name,
+      grade: user.grade ?? undefined,
     });
 
     return NextResponse.json({ 

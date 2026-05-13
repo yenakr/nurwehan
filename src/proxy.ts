@@ -3,7 +3,7 @@ import { decrypt } from './lib/auth-core';
 
 const protectedRoutes = ['/open-lab', '/history', '/mypage', '/admin'];
 
-export async function middleware(req: NextRequest) {
+export async function proxy(req: NextRequest) {
   const path = req.nextUrl.pathname;
   const isProtectedRoute = protectedRoutes.some(route => path.startsWith(route));
 
@@ -29,7 +29,7 @@ export async function middleware(req: NextRequest) {
     }
 
     return NextResponse.next();
-  } catch (err) {
+  } catch {
     return NextResponse.redirect(new URL(`/login?redirect=${path}`, req.url));
   }
 }
