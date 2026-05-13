@@ -6,6 +6,8 @@ export const metadata: Metadata = {
   description: "한양대학교 간호대학 OPEN LAB 신청 및 학과 내부 시스템",
 };
 
+import Header from "@/components/Header";
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -14,7 +16,11 @@ export default function RootLayout({
   return (
     <html lang="ko">
       <body>
-        {children}
+        <div style={{ display: 'flex', flexDirection: 'column', minHeight: '100vh' }}>
+          {/* @ts-expect-error Async Server Component */}
+          <Header />
+          {children}
+        </div>
       </body>
     </html>
   );

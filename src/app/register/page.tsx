@@ -2,7 +2,6 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Header from '@/components/Header';
 import Link from 'next/link';
 
 export default function RegisterPage() {
@@ -60,9 +59,7 @@ export default function RegisterPage() {
   };
 
   return (
-    <>
-      <Header />
-      <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px 20px' }}>
+    <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px 20px' }}>
         <div className="card" style={{ width: '100%', maxWidth: '500px', padding: '40px' }}>
           <div style={{ textAlign: 'center', marginBottom: '32px' }}>
             <h1 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--primary)', marginBottom: '8px' }}>학생 회원가입</h1>
@@ -179,6 +176,5 @@ export default function RegisterPage() {
           </div>
         </div>
       </main>
-    </>
   );
 }

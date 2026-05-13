@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { decrypt } from './lib/auth';
+import { decrypt } from './lib/auth-core';
 
 const protectedRoutes = ['/open-lab', '/history', '/mypage', '/admin'];
 

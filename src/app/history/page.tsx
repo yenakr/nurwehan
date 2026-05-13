@@ -1,4 +1,3 @@
-import Header from '@/components/Header';
 import { getSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import Link from 'next/link';
@@ -20,10 +19,7 @@ export default async function HistoryPage() {
   });
 
   return (
-    <>
-      {/* @ts-expect-error Async Server Component */}
-      <Header />
-      <main style={{ backgroundColor: 'var(--muted-background)', padding: '40px 0', flex: 1 }}>
+    <main style={{ backgroundColor: 'var(--muted-background)', padding: '40px 0', flex: 1 }}>
         <div className="container">
           <h1 style={{ fontSize: '1.5rem', fontWeight: '800', borderBottom: '2px solid var(--primary)', paddingBottom: '12px', marginBottom: '32px' }}>
             내 신청 내역
@@ -77,6 +73,5 @@ export default async function HistoryPage() {
           </div>
         </div>
       </main>
-    </>
   );
 }

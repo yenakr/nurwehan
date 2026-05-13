@@ -1,5 +1,4 @@
 import Link from 'next/link';
-import Header from '@/components/Header';
 import { getSession } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 
@@ -25,9 +24,6 @@ export default async function Home() {
 
   return (
     <>
-      {/* @ts-expect-error Async Server Component */}
-      <Header />
-      
       <main style={{ flex: 1, backgroundColor: 'var(--white)', padding: '40px 0' }}>
         <div className="container">
           
