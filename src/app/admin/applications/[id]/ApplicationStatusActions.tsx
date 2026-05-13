@@ -31,6 +31,9 @@ export default function ApplicationStatusActions({
         alert('반려 사유를 입력해야 합니다.');
         return;
       }
+    } else if (status === 'CANCELLED') {
+      reason = prompt('취소 사유를 입력해주세요 (운영 일정 변경 등):');
+      if (reason === null) return;
     }
 
     setLoading(true);
@@ -38,7 +41,11 @@ export default function ApplicationStatusActions({
       const res = await fetch(`/api/admin/applications/${applicationId}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status, rejectedReason: reason }),
+        body: JSON.stringify({ 
+          status, 
+          rejectedReason: status === 'REJECTED' ? reason : undefined,
+          cancelReason: status === 'CANCELLED' ? reason : undefined
+        }),
       });
 
       if (res.ok) {
@@ -78,7 +85,19 @@ export default function ApplicationStatusActions({
         </div>
       ) : (
         <div style={{ textAlign: 'center' }}>
-          <h3 style={{ fontSize: '1.125rem', fontWeight: '700', marginBottom: '16px' }}>처리 완료</h3>
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: '700' }}>처리 완료</h3>
+            {currentStatus === 'APPROVED' && (
+              <button 
+                className="btn-small btn-outline" 
+                style={{ color: '#ef4444', borderColor: '#ef4444' }}
+                disabled={loading}
+                onClick={() => handleStatusUpdate('CANCELLED')}
+              >
+                신청 취소 (관리자)
+              </button>
+            )}
+          </div>
           
           <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', textAlign: 'left', marginBottom: '24px' }}>
             <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
@@ -123,9 +142,15 @@ export default function ApplicationStatusActions({
             </div>
           </div>
 
-          {currentStatus === 'REJECTED' && (
+          {currentStatus === 'REJECTED' && rejectedReason && (
             <div style={{ color: '#ef4444', fontSize: '0.875rem', marginBottom: '16px', backgroundColor: '#fef2f2', padding: '12px', borderRadius: '4px' }}>
               반려 사유: {rejectedReason}
+            </div>
+          )}
+
+          {currentStatus === 'CANCELLED' && (
+            <div style={{ color: '#475569', fontSize: '0.875rem', marginBottom: '16px', backgroundColor: '#f1f5f9', padding: '12px', borderRadius: '4px' }}>
+              취소 상태입니다.
             </div>
           )}
 

@@ -46,8 +46,23 @@ export default async function Home() {
               </h3>
               <div className="card" style={{ fontSize: '0.875rem', lineHeight: '1.6', color: 'var(--text)' }}>
                 {notice ? (
-                  <div style={{ whiteSpace: 'pre-wrap' }}>
-                    {notice.content}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <ul style={{ paddingLeft: '20px', margin: 0, display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      <li>한 타임에 최대 2가지 술기까지 신청 가능합니다.</li>
+                      <li>학생 1명당 주 1회 신청 가능합니다.</li>
+                      <li>불참 또는 30분 이상 지각 시 2주간 신청이 제한됩니다.</li>
+                    </ul>
+                    <div style={{
+                      marginTop: '8px',
+                      padding: '12px',
+                      backgroundColor: '#f8fafc',
+                      borderRadius: '6px',
+                      fontSize: '0.8125rem',
+                      color: 'var(--sub-text)',
+                      whiteSpace: 'pre-wrap'
+                    }}>
+                      {notice.content.length > 150 ? notice.content.substring(0, 150) + '...' : notice.content}
+                    </div>
                   </div>
                 ) : (
                   <p>공지사항을 불러오는 중입니다...</p>

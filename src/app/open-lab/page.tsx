@@ -65,6 +65,7 @@ export default async function OpenLabApplyPage() {
   }
 
   const userData = {
+    id: user.id,
     name: user.name,
     studentId: user.studentId,
     phone: user.phone || '',

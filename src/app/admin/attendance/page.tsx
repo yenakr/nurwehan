@@ -52,7 +52,8 @@ export default async function AdminAttendancePage({ searchParams }: { searchPara
             }
           },
           representativeUser: true,
-          participants: true
+          participants: true,
+          usageLogs: true
         }
       }
     },

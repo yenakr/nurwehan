@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getSession } from '@/lib/auth';
 import { startOfWeek, endOfWeek } from 'date-fns';
+import { isWithinApplicationWindow } from '@/lib/application-window';
 
 export async function POST(request: NextRequest) {
   const session = await getSession();
@@ -23,6 +24,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: '이용 안내 및 유의사항 확인이 필요합니다.' }, { status: 400 });
     }
 
+    // 1.1 Application Window Check
+    const targetDate = new Date(date);
+    if (!isWithinApplicationWindow(targetDate)) {
+      return NextResponse.json({ message: '현재 신청 가능 기간이 아닙니다.' }, { status: 400 });
+    }
+
     if (skillIds.length > 2) {
       return NextResponse.json({ message: '한 타임에는 최대 2개 술기까지 신청할 수 있습니다.' }, { status: 400 });
     }
@@ -33,7 +40,6 @@ export async function POST(request: NextRequest) {
     });
     if (!rule) return NextResponse.json({ message: '유효하지 않은 운영시간입니다.' }, { status: 404 });
 
-    const targetDate = new Date(date);
     targetDate.setHours(0, 0, 0, 0);
 
     // 3. Find or Create Slot
