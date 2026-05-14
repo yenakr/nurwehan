@@ -95,22 +95,25 @@ export default function HomeHistory() {
         .home-history-container {
           display: flex;
           flex-direction: column;
+          padding: 8px 4px;
         }
         .history-list {
           display: flex;
           flex-direction: column;
+          gap: 4px;
         }
         .history-row {
           display: flex;
           align-items: center;
-          padding: 12px 4px;
+          padding: 16px 12px;
           border-bottom: 1px solid #f1f5f9;
           text-decoration: none;
           transition: all 0.2s;
+          border-radius: 12px;
         }
         .history-row:hover {
-          background: #fcfcfc;
-          padding-left: 8px;
+          background: #f8fafc;
+          transform: translateX(4px);
         }
         .history-row:last-child {
           border-bottom: none;
@@ -119,24 +122,27 @@ export default function HomeHistory() {
         .row-content {
           display: flex;
           align-items: center;
-          gap: 12px;
+          gap: 20px;
           overflow: hidden;
+          width: 100%;
         }
         .info-wrap {
           display: flex;
           align-items: center;
-          gap: 8px;
+          gap: 12px;
           overflow: hidden;
+          flex: 1;
         }
 
         .status-dot {
-          font-size: 0.6875rem;
+          font-size: 0.75rem;
           font-weight: 800;
-          padding: 2px 6px;
-          border-radius: 4px;
-          min-width: 36px;
+          padding: 4px 10px;
+          border-radius: 6px;
+          min-width: 44px;
           text-align: center;
           flex-shrink: 0;
+          letter-spacing: -0.02em;
         }
         .status-dot.pending { background: #fef9c3; color: #a16207; }
         .status-dot.approved { background: #dcfce7; color: #15803d; }
@@ -145,19 +151,21 @@ export default function HomeHistory() {
         .status-dot.cancelled { background: #f1f5f9; color: #94a3b8; }
 
         .date-time {
-          font-size: 0.875rem;
-          font-weight: 600;
+          font-size: 0.9375rem;
+          font-weight: 700;
           color: var(--text);
           white-space: nowrap;
+          letter-spacing: -0.01em;
         }
         
         .divider {
           color: #e2e8f0;
-          font-size: 0.75rem;
+          font-size: 0.875rem;
+          font-weight: 300;
         }
 
         .skill-name {
-          font-size: 0.8125rem;
+          font-size: 0.875rem;
           color: var(--sub-text);
           font-weight: 500;
           white-space: nowrap;
@@ -166,11 +174,12 @@ export default function HomeHistory() {
         }
 
         .view-all-container {
-          margin-top: 12px;
+          margin-top: 20px;
+          padding-right: 12px;
           text-align: right;
         }
         .view-all-link {
-          font-size: 0.8125rem;
+          font-size: 0.875rem;
           font-weight: 700;
           color: var(--primary);
           text-decoration: none;
@@ -183,12 +192,22 @@ export default function HomeHistory() {
         }
 
         @media (max-width: 480px) {
+          .history-row {
+            padding: 16px 8px;
+          }
+          .row-content {
+            gap: 12px;
+          }
           .info-wrap {
-            flex-wrap: wrap;
-            gap: 4px 8px;
+            flex-direction: column;
+            align-items: flex-start;
+            gap: 4px;
           }
           .divider {
             display: none;
+          }
+          .skill-name {
+            font-size: 0.8125rem;
           }
         }
       `}</style>
