@@ -15,13 +15,14 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
-    const { grade, approvalStatus } = body;
+    const { grade, approvalStatus, rejectedReason } = body;
 
     const updatedUser = await prisma.user.update({
       where: { id },
       data: {
         ...(grade !== undefined && { grade }),
-        ...(approvalStatus !== undefined && { approvalStatus })
+        ...(approvalStatus !== undefined && { approvalStatus }),
+        ...(rejectedReason !== undefined && { rejectedReason })
       }
     });
 

@@ -44,13 +44,16 @@ export default function UserList({ initialUsers }: { initialUsers: User[] }) {
     else if (tab === 'restricted') setActiveTab('RESTRICTED');
   }, [searchParams]);
 
-  const handleStatusUpdate = async (id: string, status: string) => {
+  const handleStatusUpdate = async (id: string, status: string, reason?: string) => {
     setLoading(id);
     try {
       const res = await fetch(`/api/admin/users/${id}`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ approvalStatus: status }),
+        body: JSON.stringify({ 
+          approvalStatus: status,
+          ...(reason && { rejectedReason: reason })
+        }),
       });
       if (res.ok) {
         setUsers(users.map(u => u.id === id ? { ...u, approvalStatus: status } : u));
@@ -158,6 +161,16 @@ export default function UserList({ initialUsers }: { initialUsers: User[] }) {
                      <td>
                         <div className="action-btns">
                           <button onClick={() => handleStatusUpdate(user.id, 'APPROVED')} disabled={loading === user.id} className="btn-approve">승인</button>
+                          <button 
+                            onClick={() => {
+                              const reason = prompt('반려 사유를 입력해주세요:');
+                              if (reason) handleStatusUpdate(user.id, 'REJECTED', reason);
+                            }} 
+                            disabled={loading === user.id} 
+                            className="btn-reject"
+                          >
+                            거절
+                          </button>
                         </div>
                      </td>
                    </tr>
@@ -382,6 +395,13 @@ export default function UserList({ initialUsers }: { initialUsers: User[] }) {
         .btn-approve:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 6px 10px -1px rgba(0, 112, 243, 0.3); }
         .btn-approve:active { transform: translateY(0); }
         .btn-approve:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .btn-reject { background: white; color: #ef4444; border: 1px solid #fee2e2; padding: 8px 18px; border-radius: 10px; font-size: 0.875rem; font-weight: 800; cursor: pointer; transition: all 0.2s; }
+        .btn-reject:hover { background: #fef2f2; border-color: #fecaca; transform: translateY(-1px); }
+        .btn-reject:active { transform: translateY(0); }
+        .btn-reject:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
+
+        .action-btns { display: flex; gap: 8px; }
 
         .empty-td { text-align: center; color: #94a3b8; padding: 60px !important; font-size: 1rem; font-weight: 500; }
 
