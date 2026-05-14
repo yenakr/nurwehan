@@ -14,18 +14,22 @@ export default async function OpenLabApplyPage() {
   }
 
   const user = await prisma.user.findUnique({
-    where: { id: session.user.id },
-    include: { 
-      restrictions: { 
-        where: { 
-          isActive: true, 
-          endDate: { gte: new Date() } 
-        } 
-      } 
-    }
+    where: { id: session.user.id }
   });
 
   if (!user) redirect('/login');
+
+  // Check for active restrictions by userId OR studentId
+  const activeRestrictions = await prisma.restriction.findMany({
+    where: {
+      OR: [
+        { userId: user.id },
+        { studentId: user.studentId }
+      ],
+      isActive: true,
+      endDate: { gte: new Date() }
+    }
+  });
 
   // Authorization Checks
   if (user.approvalStatus !== 'APPROVED') {
@@ -46,8 +50,8 @@ export default async function OpenLabApplyPage() {
     );
   }
 
-  if (user.restrictions.length > 0) {
-    const restriction = user.restrictions[0];
+  if (activeRestrictions.length > 0) {
+    const restriction = activeRestrictions[0];
     return (
       <main style={{ backgroundColor: 'var(--muted-background)', minHeight: 'calc(100vh - 64px)', padding: '60px 20px' }}>
         <div className="container" style={{ maxWidth: '600px' }}>
