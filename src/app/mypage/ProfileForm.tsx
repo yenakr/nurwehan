@@ -60,7 +60,7 @@ export default function ProfileForm({ user }: Props) {
       {/* Rejection Reason Alert */}
       {isRejected && !isEditing && (
         <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fee2e2', padding: '16px', borderRadius: '12px', marginBottom: '24px' }}>
-          <p style={{ color: '#b91c1c', fontWeight: '700', fontSize: '0.9375rem', marginBottom: '4px' }}>⚠️ 회원 승인이 반려되었습니다.</p>
+          <p style={{ color: '#b91c1c', fontWeight: '700', fontSize: '0.9375rem', marginBottom: '4px' }}>⚠️ 회원 승인이 거절되었습니다.</p>
           <p style={{ color: '#7f1d1d', fontSize: '0.875rem' }}>사유: {user.rejectedReason || '사유가 입력되지 않았습니다.'}</p>
           <p style={{ color: '#b91c1c', fontSize: '0.8125rem', marginTop: '8px', fontWeight: '500' }}>정보를 수정한 후 저장하면 재심사가 요청됩니다.</p>
         </div>
@@ -162,7 +162,7 @@ export default function ProfileForm({ user }: Props) {
                    user.approvalStatus === 'REJECTED' ? '#ef4444' : '#f59e0b' 
           }}>
             {user.approvalStatus === 'APPROVED' ? '승인완료' : 
-             user.approvalStatus === 'REJECTED' ? '반려됨' : '승인대기'}
+             user.approvalStatus === 'REJECTED' ? '거절됨' : '승인대기'}
           </div>
         </div>
       </div>

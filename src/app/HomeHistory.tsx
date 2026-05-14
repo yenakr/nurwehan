@@ -24,8 +24,8 @@ export default function HomeHistory() {
     switch (status) {
       case 'PENDING': return '대기';
       case 'APPROVED': return '승인';
-      case 'REJECTED': return '반려';
-      case 'COMPLETED': return '완료';
+      case 'REJECTED': return '거절';
+      case 'COMPLETED': return '참여 완료';
       case 'CANCELLED': return '취소';
       default: return status;
     }

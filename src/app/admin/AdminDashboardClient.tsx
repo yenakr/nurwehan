@@ -4,12 +4,13 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import UserList from './users/UserList';
 import AttendanceClient from './attendance/AttendanceClient';
+import ApplicationListClient from './applications/ApplicationListClient';
 
 interface Props {
   initialUsers: any[];
   initialParticipants: any[];
   initialSkills: any[];
-  initialPendingApps: any[];
+  initialApplications: any[];
   selectedDate: string;
 }
 
@@ -17,10 +18,10 @@ export default function AdminDashboardClient({
   initialUsers,
   initialParticipants,
   initialSkills,
-  initialPendingApps,
+  initialApplications,
   selectedDate
 }: Props) {
-  const [activeTab, setActiveTab] = useState('users');
+  const [activeTab, setActiveTab] = useState('applications');
   const [skills, setSkills] = useState(initialSkills);
   
   const router = useRouter();
@@ -28,6 +29,12 @@ export default function AdminDashboardClient({
   return (
     <div className="dashboard-container">
       <div className="tab-menu">
+        <button 
+          className={activeTab === 'applications' ? 'active' : ''} 
+          onClick={() => setActiveTab('applications')}
+        >
+          신청 현황 관리
+        </button>
         <button 
           className={activeTab === 'users' ? 'active' : ''} 
           onClick={() => setActiveTab('users')}
@@ -49,6 +56,12 @@ export default function AdminDashboardClient({
       </div>
 
       <div className="tab-content">
+        {activeTab === 'applications' && (
+          <div className="dashboard-section no-padding">
+            <ApplicationListClient initialApplications={initialApplications} />
+          </div>
+        )}
+
         {activeTab === 'users' && (
           <div className="dashboard-section no-padding">
              <UserList initialUsers={initialUsers} />

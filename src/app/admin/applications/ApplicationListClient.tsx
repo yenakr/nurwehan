@@ -25,7 +25,7 @@ interface Application {
 }
 
 export default function ApplicationListClient({ initialApplications }: { initialApplications: Application[] }) {
-  const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'APPROVED'>('ALL');
+  const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
   const [weekOffset, setWeekOffset] = useState(0);
 
   const weekInterval = useMemo(() => {
@@ -37,7 +37,10 @@ export default function ApplicationListClient({ initialApplications }: { initial
 
   const filteredApplications = useMemo(() => {
     return initialApplications.filter(app => {
-      if (filter !== 'ALL' && app.status !== filter) return false;
+      if (filter === 'PENDING' && app.status !== 'PENDING') return false;
+      if (filter === 'APPROVED' && app.status !== 'APPROVED' && app.status !== 'COMPLETED') return false;
+      if (filter === 'REJECTED' && app.status !== 'REJECTED') return false;
+      
       const appDate = typeof app.slot.date === 'string' ? parseISO(app.slot.date) : app.slot.date;
       return isWithinInterval(appDate, weekInterval);
     });
@@ -84,6 +87,7 @@ export default function ApplicationListClient({ initialApplications }: { initial
           <button className={`tab ${filter === 'ALL' ? 'active' : ''}`} onClick={() => setFilter('ALL')}>전체</button>
           <button className={`tab ${filter === 'PENDING' ? 'active' : ''}`} onClick={() => setFilter('PENDING')}>대기 중</button>
           <button className={`tab ${filter === 'APPROVED' ? 'active' : ''}`} onClick={() => setFilter('APPROVED')}>승인됨</button>
+          <button className={`tab ${filter === 'REJECTED' ? 'active' : ''}`} onClick={() => setFilter('REJECTED')}>거절됨</button>
         </div>
 
         <div className="week-switcher">
@@ -126,7 +130,12 @@ export default function ApplicationListClient({ initialApplications }: { initial
                           <div className="card-top">
                             <div className="status-indicator">
                               <span className={`status-dot ${app.status.toLowerCase()}`}></span>
-                              <span className="status-text">{app.status === 'PENDING' ? '대기' : app.status === 'APPROVED' ? '승인' : '완료'}</span>
+                              <span className={`status-text ${app.status === 'REJECTED' ? 'text-rejected' : ''}`}>
+                                {app.status === 'PENDING' ? '대기' : 
+                                 app.status === 'APPROVED' ? '승인' : 
+                                 app.status === 'COMPLETED' ? '참여 완료' : 
+                                 app.status === 'REJECTED' ? '거절됨' : app.status}
+                              </span>
                             </div>
                             <span className="app-time">{formatInTimeZone(new Date(app.createdAt), TIME_ZONE, 'MM/dd HH:mm')}</span>
                           </div>
@@ -263,7 +272,10 @@ export default function ApplicationListClient({ initialApplications }: { initial
         .status-dot { width: 6px; height: 6px; border-radius: 50%; }
         .status-dot.pending { background: #f59e0b; box-shadow: 0 0 8px #fbbf24; }
         .status-dot.approved { background: #10b981; box-shadow: 0 0 8px #34d399; }
+        .status-dot.completed { background: #64748b; }
+        .status-dot.rejected { background: #ef4444; box-shadow: 0 0 8px #fca5a5; }
         .status-text { font-size: 0.6875rem; font-weight: 800; color: #64748b; }
+        .status-text.text-rejected { color: #ef4444; }
         .app-time { font-size: 0.6875rem; color: #94a3b8; font-weight: 600; }
 
         .card-mid { margin-bottom: 12px; }

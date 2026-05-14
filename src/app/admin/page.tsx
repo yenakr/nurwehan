@@ -23,7 +23,7 @@ export default async function AdminPage() {
     allUsers,
     allParticipants,
     skills,
-    pendingApps
+    allApplications
   ] = await Promise.all([
     // 1. All users for student management
     prisma.user.findMany({
@@ -63,16 +63,14 @@ export default async function AdminPage() {
       include: { supplies: true },
       orderBy: { name: 'asc' }
     }),
-    // 4. Pending applications for quick check
+    // 4. All applications for application management
     prisma.application.findMany({
-      where: { status: 'PENDING' },
       include: {
         representativeUser: true,
         slot: true,
         skills: { include: { skill: true } },
         participants: true
       },
-      take: 10,
       orderBy: { createdAt: 'desc' }
     })
   ]);
@@ -93,7 +91,7 @@ export default async function AdminPage() {
           initialUsers={allUsers as any}
           initialParticipants={allParticipants as any}
           initialSkills={skills}
-          initialPendingApps={pendingApps as any}
+          initialApplications={allApplications as any}
           selectedDate={today.toISOString().split('T')[0]}
         />
       </div>
