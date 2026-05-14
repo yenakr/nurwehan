@@ -28,7 +28,6 @@ export default function ApplicationListClient({ initialApplications }: { initial
   const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'APPROVED'>('ALL');
   const [weekOffset, setWeekOffset] = useState(0);
 
-  // Calculate week interval based on offset
   const weekInterval = useMemo(() => {
     const now = new Date();
     const start = startOfWeek(addWeeks(now, weekOffset), { weekStartsOn: 1 }); // Monday
@@ -38,16 +37,12 @@ export default function ApplicationListClient({ initialApplications }: { initial
 
   const filteredApplications = useMemo(() => {
     return initialApplications.filter(app => {
-      // Status filter
       if (filter !== 'ALL' && app.status !== filter) return false;
-      
-      // Weekly filter
       const appDate = typeof app.slot.date === 'string' ? parseISO(app.slot.date) : app.slot.date;
       return isWithinInterval(appDate, weekInterval);
     });
   }, [initialApplications, filter, weekInterval]);
 
-  // Grouping: Date -> Time Slot
   const grouped = useMemo(() => {
     const groups: { [key: string]: { dateStr: string; displayDate: string; timeSlots: { time: string; applications: Application[] }[] } } = {};
 
@@ -69,7 +64,6 @@ export default function ApplicationListClient({ initialApplications }: { initial
       timeSlot.applications.push(app);
     });
 
-    // Sort dates desc, then times asc
     return Object.values(groups)
       .sort((a, b) => b.dateStr.localeCompare(a.dateStr))
       .map(group => ({
@@ -85,7 +79,7 @@ export default function ApplicationListClient({ initialApplications }: { initial
 
   return (
     <div className="admin-applications-view">
-      <div className="header-controls">
+      <div className="header-controls no-print">
         <div className="filter-tabs">
           <button className={`tab ${filter === 'ALL' ? 'active' : ''}`} onClick={() => setFilter('ALL')}>전체</button>
           <button className={`tab ${filter === 'PENDING' ? 'active' : ''}`} onClick={() => setFilter('PENDING')}>대기 중</button>
@@ -112,7 +106,7 @@ export default function ApplicationListClient({ initialApplications }: { initial
                 <h3 className="date-header">{dateGroup.displayDate}</h3>
                 <Link 
                   href={`/admin/attendance?date=${dateGroup.dateStr}`}
-                  className="jump-link-main"
+                  className="jump-link-main no-print"
                 >
                   전체 명단 보기 ↗
                 </Link>
@@ -123,27 +117,37 @@ export default function ApplicationListClient({ initialApplications }: { initial
                   <div key={timeSlot.time} className="time-slot-section">
                     <div className="time-header-row">
                       <h4 className="time-text">{timeSlot.time}</h4>
+                      <span className="slot-count">{timeSlot.applications.length}명</span>
                     </div>
+                    
                     <div className="apps-grid">
                       {timeSlot.applications.map(app => (
-                        <div key={app.id} className="app-card-wrapper">
-                          <Link href={`/admin/applications/${app.id}`} className="app-item-card">
-                            <div className="app-card-header">
+                        <Link key={app.id} href={`/admin/applications/${app.id}`} className="app-item-card">
+                          <div className="card-top">
+                            <div className="status-indicator">
                               <span className={`status-dot ${app.status.toLowerCase()}`}></span>
-                              <span className="app-time">{formatInTimeZone(new Date(app.createdAt), TIME_ZONE, 'MM/dd HH:mm')}</span>
+                              <span className="status-text">{app.status === 'PENDING' ? '대기' : app.status === 'APPROVED' ? '승인' : '완료'}</span>
                             </div>
-                            <div className="app-card-body">
-                              <div className="applicant-info">
-                                <span className="name">{app.representativeUser.name}</span>
-                                <span className="student-id">({app.representativeUser.studentId})</span>
-                              </div>
-                              <div className="room-badge">{app.slot.room}</div>
-                              <div className="skill-preview">
-                                {app.skills.map(s => s.skill.name).join(', ')}
-                              </div>
+                            <span className="app-time">{formatInTimeZone(new Date(app.createdAt), TIME_ZONE, 'MM/dd HH:mm')}</span>
+                          </div>
+
+                          <div className="card-mid">
+                            <div className="applicant-primary">
+                              <span className="name">{app.representativeUser.name}</span>
+                              <span className="student-id">{app.representativeUser.studentId}</span>
                             </div>
-                          </Link>
-                        </div>
+                            <div className="room-tag">
+                              <span className="icon">📍</span>
+                              {app.slot.room}
+                            </div>
+                          </div>
+
+                          <div className="card-bottom">
+                            <div className="skills-list">
+                              {app.skills.map(s => s.skill.name).join(', ')}
+                            </div>
+                          </div>
+                        </Link>
                       ))}
                     </div>
                   </div>
@@ -156,106 +160,157 @@ export default function ApplicationListClient({ initialApplications }: { initial
 
       <style jsx>{`
         .admin-applications-view { 
-          max-width: 1200px; 
+          max-width: 1400px; 
           margin: 0 auto; 
-          padding: 20px; 
+          padding: 0 20px 60px; 
+          font-family: 'Pretendard', sans-serif;
         }
         
         .header-controls { 
           display: flex; 
           justify-content: space-between; 
           align-items: center; 
-          margin-bottom: 40px;
+          margin-bottom: 30px;
           gap: 20px;
           flex-wrap: wrap;
         }
 
-        .filter-tabs { display: flex; gap: 8px; background: white; padding: 6px; border-radius: 12px; border: 1px solid var(--border); }
-        .tab { padding: 8px 20px; border: none; background: transparent; border-radius: 8px; font-size: 0.875rem; font-weight: 700; color: var(--sub-text); cursor: pointer; transition: all 0.2s; }
-        .tab.active { background: var(--primary); color: white; }
+        .filter-tabs { display: flex; gap: 6px; background: #f1f5f9; padding: 4px; border-radius: 12px; }
+        .tab { 
+          padding: 8px 18px; 
+          border: none; 
+          background: transparent; 
+          border-radius: 8px; 
+          font-size: 0.875rem; 
+          font-weight: 700; 
+          color: #64748b; 
+          cursor: pointer; 
+          transition: all 0.2s; 
+        }
+        .tab.active { background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
 
-        .week-switcher { display: flex; align-items: center; gap: 16px; background: white; padding: 6px 12px; border-radius: 12px; border: 1px solid var(--border); }
-        .week-btn { background: transparent; border: none; font-size: 0.875rem; font-weight: 700; color: var(--sub-text); cursor: pointer; padding: 6px 10px; border-radius: 6px; }
-        .week-btn:hover { background: #f1f5f9; color: var(--primary); }
-        .current-week-label { font-size: 1rem; font-weight: 800; color: var(--text); display: flex; align-items: center; gap: 8px; cursor: pointer; }
-        .this-week-badge { background: #e0f2fe; color: #0369a1; font-size: 0.6875rem; padding: 2px 6px; border-radius: 4px; }
+        .week-switcher { display: flex; align-items: center; gap: 12px; background: white; padding: 4px 8px; border-radius: 12px; border: 1px solid #e2e8f0; }
+        .week-btn { background: transparent; border: none; font-size: 1.25rem; color: #94a3b8; cursor: pointer; padding: 4px 10px; border-radius: 8px; transition: all 0.2s; }
+        .week-btn:hover { background: #f8fafc; color: var(--primary); }
+        .current-week-label { font-size: 0.9375rem; font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 8px; cursor: pointer; }
+        .this-week-badge { background: #e0f2fe; color: #0369a1; font-size: 0.625rem; padding: 2px 6px; border-radius: 4px; }
 
         .date-group-card { 
           background: white; 
-          border: 1px solid var(--border); 
-          border-radius: 20px; 
+          border: 1px solid #e2e8f0; 
+          border-radius: 24px; 
           padding: 32px; 
           margin-bottom: 32px; 
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.03);
         }
         
         .date-header-row {
           display: flex;
           justify-content: space-between;
           align-items: center;
-          margin-bottom: 24px;
-          padding-bottom: 12px;
+          margin-bottom: 32px;
+          padding-bottom: 16px;
           border-bottom: 2px solid #f1f5f9;
         }
-        .date-header { 
-          font-size: 1.25rem; 
-          font-weight: 900; 
-          color: var(--text);
-          margin: 0;
-        }
+        .date-header { font-size: 1.5rem; font-weight: 900; color: #1e293b; margin: 0; }
         .jump-link-main {
-          font-size: 0.875rem;
+          font-size: 0.8125rem;
           font-weight: 800;
           color: var(--primary);
           text-decoration: none;
           background: #f0f7ff;
-          padding: 8px 16px;
-          border-radius: 8px;
+          padding: 10px 18px;
+          border-radius: 10px;
           transition: all 0.2s;
         }
-        .jump-link-main:hover {
-          background: var(--primary);
-          color: white;
-          transform: translateY(-2px);
-        }
+        .jump-link-main:hover { background: var(--primary); color: white; transform: translateY(-2px); }
 
-        .time-slot-section { margin-bottom: 32px; }
+        .time-slot-section { margin-bottom: 48px; }
         .time-slot-section:last-child { margin-bottom: 0; }
         
-        .time-header-row { display: flex; align-items: center; gap: 16px; margin-bottom: 16px; }
-        .time-text { font-size: 1.125rem; font-weight: 900; color: var(--primary); margin: 0; }
+        .time-header-row { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }
+        .time-text { font-size: 1.25rem; font-weight: 900; color: var(--primary); margin: 0; }
+        .slot-count { font-size: 0.875rem; font-weight: 700; color: #94a3b8; background: #f8fafc; padding: 2px 10px; border-radius: 20px; }
         
-        .apps-grid { display: flex; flex-wrap: wrap; gap: 16px; }
-        .app-card-wrapper { width: calc(50% - 8px); }
-        
-        .app-item-card { 
-          display: block; 
-          text-decoration: none; 
-          padding: 20px; 
-          border: 1px solid #f1f5f9; 
-          border-radius: 12px; 
-          transition: all 0.2s; 
-          background: #fafafa;
+        /* Grid Layout */
+        .apps-grid { 
+          display: grid; 
+          grid-template-columns: repeat(1, 1fr);
+          gap: 12px;
         }
-        .app-item-card:hover { border-color: var(--primary); background: white; box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); transform: translateY(-2px); }
+        @media (min-width: 640px) { .apps-grid { grid-template-columns: repeat(2, 1fr); } }
+        @media (min-width: 1024px) { .apps-grid { grid-template-columns: repeat(3, 1fr); } }
+        @media (min-width: 1280px) { .apps-grid { grid-template-columns: repeat(4, 1fr); } }
 
-        .app-card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
-        .status-dot { width: 8px; height: 8px; border-radius: 50%; }
-        .status-dot.pending { background: #eab308; box-shadow: 0 0 8px #fde047; }
-        .status-dot.approved { background: #22c55e; box-shadow: 0 0 8px #86efac; }
-        .app-time { font-size: 0.75rem; color: var(--sub-text); font-weight: 600; }
+        /* Premium Card Design */
+        .app-item-card { 
+          display: flex;
+          flex-direction: column;
+          justify-content: space-between;
+          min-height: 150px;
+          padding: 16px; 
+          background: white;
+          border: 1px solid #e2e8f0; 
+          border-radius: 16px; 
+          text-decoration: none; 
+          transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+          box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+        }
+        .app-item-card:hover { 
+          border-color: var(--primary); 
+          box-shadow: 0 12px 20px -5px rgba(0,0,0,0.08); 
+          transform: translateY(-4px); 
+        }
 
-        .applicant-info { display: flex; align-items: baseline; gap: 6px; margin-bottom: 6px; }
-        .applicant-info .name { font-size: 1rem; font-weight: 800; color: var(--text); }
-        .applicant-info .student-id { font-size: 0.8125rem; color: var(--sub-text); font-weight: 600; }
+        .card-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .status-indicator { display: flex; align-items: center; gap: 6px; }
+        .status-dot { width: 6px; height: 6px; border-radius: 50%; }
+        .status-dot.pending { background: #f59e0b; box-shadow: 0 0 8px #fbbf24; }
+        .status-dot.approved { background: #10b981; box-shadow: 0 0 8px #34d399; }
+        .status-text { font-size: 0.6875rem; font-weight: 800; color: #64748b; }
+        .app-time { font-size: 0.6875rem; color: #94a3b8; font-weight: 600; }
+
+        .card-mid { margin-bottom: 12px; }
+        .applicant-primary { display: flex; align-items: baseline; gap: 8px; margin-bottom: 6px; }
+        .applicant-primary .name { font-size: 1.0625rem; font-weight: 900; color: #1e293b; }
+        .applicant-primary .student-id { font-size: 0.8125rem; color: #94a3b8; font-weight: 600; font-family: monospace; }
         
-        .room-badge { font-size: 0.75rem; color: #475569; background: #f1f5f9; padding: 2px 8px; border-radius: 4px; display: inline-block; margin-bottom: 10px; font-weight: 700; }
-        .skill-preview { font-size: 0.8125rem; color: var(--sub-text); line-height: 1.4; font-weight: 500; }
+        .room-tag { 
+          display: inline-flex; 
+          align-items: center; 
+          gap: 4px; 
+          font-size: 0.75rem; 
+          color: #475569; 
+          background: #f1f5f9; 
+          padding: 4px 10px; 
+          border-radius: 20px; 
+          font-weight: 700; 
+        }
+        .room-tag .icon { font-size: 0.75rem; }
 
-        .empty-msg { text-align: center; padding: 80px; color: var(--sub-text); font-size: 1rem; background: white; border-radius: 20px; border: 1px dashed var(--border); }
+        .card-bottom { 
+          padding-top: 12px; 
+          border-top: 1px dashed #f1f5f9; 
+        }
+        .skills-list { 
+          font-size: 0.8125rem; 
+          color: #64748b; 
+          line-height: 1.5; 
+          font-weight: 600;
+          display: -webkit-box;
+          -webkit-line-clamp: 2;
+          -webkit-box-orient: vertical;
+          overflow: hidden;
+        }
 
-        @media (max-width: 768px) {
-          .app-card-wrapper { width: 100%; }
+        .empty-msg { text-align: center; padding: 100px 40px; color: #94a3b8; font-size: 1rem; font-weight: 600; background: white; border-radius: 24px; border: 2px dashed #e2e8f0; }
+
+        @media print {
+          .no-print { display: none !important; }
+          .admin-applications-view { padding: 0; max-width: none; }
+          .date-group-card { border: none; box-shadow: none; padding: 0; margin-bottom: 50px; page-break-inside: avoid; }
+          .apps-grid { grid-template-columns: repeat(3, 1fr) !important; gap: 10px; }
+          .app-item-card { border: 1px solid #000; box-shadow: none !important; transform: none !important; min-height: 120px; }
         }
       `}</style>
     </div>
