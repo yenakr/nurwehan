@@ -36,8 +36,7 @@ interface Slot {
   remaining: number;
 }
 
-const ROOM_OPTIONS = ['전체', '임상수기실습실 5층', '시뮬레이션실습실 6층'];
-const GRADE_OPTIONS = ['전체', '2학년', '3학년', '4학년'];
+const GRADE_OPTIONS = ['2학년', '3학년', '4학년'];
 
 export default function ApplyForm({ user }: ApplyFormProps) {
   const router = useRouter();
@@ -49,7 +48,6 @@ export default function ApplyForm({ user }: ApplyFormProps) {
   
   // Filter State
   const [gradeFilter, setGradeFilter] = useState(user.grade.toString());
-  const [roomFilter, setRoomFilter] = useState('전체');
   
   // Selection State
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
@@ -82,9 +80,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
 
   // 2. Filter Logic
   const filteredSlots = allSlots.filter(slot => {
-    const gradeMatch = gradeFilter === '전체' || slot.grade.toString() === gradeFilter;
-    const roomMatch = roomFilter === '전체' || slot.room === roomFilter;
-    return gradeMatch && roomMatch;
+    return slot.grade.toString() === gradeFilter;
   });
 
   const handleSkillChange = (skillId: string) => {
@@ -101,7 +97,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!selectedSlot) return alert('신청할 슬롯을 선택해주세요.');
+    if (!selectedSlot) return alert('신청할 일정을 선택해주세요.');
     if (selectedSkills.length === 0) return alert('술기를 하나 이상 선택해주세요.');
     if (selectedSkills.includes('other') && !otherSkillName.trim()) return alert('기타 술기명을 입력해주세요.');
     if (!confirmedNotice) return alert('이용 안내 및 유의사항 확인이 필요합니다.');
@@ -118,7 +114,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
           grade: selectedSlot.grade,
           skillIds: selectedSkills,
           otherSkillName: selectedSkills.includes('other') ? otherSkillName : undefined,
-          participants: [{ studentId: user.studentId, name: user.name }], // Now single participant only as per rules
+          participants: [{ studentId: user.studentId, name: user.name }],
           additionalRequest,
           confirmedNotice
         })
@@ -140,9 +136,9 @@ export default function ApplyForm({ user }: ApplyFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="apply-form">
-      {/* 1. Slot Selection Section */}
+      {/* 1. Schedule Selection Section */}
       <section className="form-section">
-        <h3 className="section-title">1. 신청 가능한 슬롯 선택</h3>
+        <h3 className="section-title">1. OPEN LAB 일정 선택</h3>
         
         <div className="filters">
           <div className="filter-group">
@@ -152,26 +148,10 @@ export default function ApplyForm({ user }: ApplyFormProps) {
                 <button 
                   key={g} 
                   type="button"
-                  onClick={() => setGradeFilter(g === '전체' ? '전체' : g.replace('학년', ''))}
-                  className={`filter-btn ${gradeFilter === (g === '전체' ? '전체' : g.replace('학년', '')) ? 'active' : ''}`}
+                  onClick={() => setGradeFilter(g.replace('학년', ''))}
+                  className={`filter-btn ${gradeFilter === g.replace('학년', '') ? 'active' : ''}`}
                 >
                   {g}
-                </button>
-              ))}
-            </div>
-          </div>
-          
-          <div className="filter-group">
-            <label>실습실 필터</label>
-            <div className="filter-buttons">
-              {ROOM_OPTIONS.map(r => (
-                <button 
-                  key={r} 
-                  type="button"
-                  onClick={() => setRoomFilter(r)}
-                  className={`filter-btn ${roomFilter === r ? 'active' : ''}`}
-                >
-                  {r}
                 </button>
               ))}
             </div>
@@ -179,32 +159,36 @@ export default function ApplyForm({ user }: ApplyFormProps) {
         </div>
 
         {loadingSlots ? (
-          <div className="loading-slots">신청 가능한 슬롯을 불러오는 중...</div>
+          <div className="loading-slots">신청 가능한 시간을 불러오는 중...</div>
         ) : filteredSlots.length === 0 ? (
-          <div className="no-slots">현재 신청 가능한 슬롯이 없습니다.</div>
+          <div className="no-slots">현재 선택하신 학년에서 신청 가능한 일정이 없습니다.</div>
         ) : (
           <div className="slots-grid">
-            {filteredSlots.map((slot, idx) => {
+            {filteredSlots.map((slot) => {
               const isSelected = selectedSlot?.ruleId === slot.ruleId && selectedSlot?.date === slot.date && selectedSlot?.room === slot.room;
               const dateObj = new Date(slot.date);
-              const dateStr = dateObj.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', weekday: 'short' });
+              const dateStr = dateObj.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' });
+              const isFull = slot.remaining <= 0;
               
+              let capacityClass = 'high';
+              if (isFull) capacityClass = 'full';
+              else if (slot.remaining <= 3) capacityClass = 'low';
+
               return (
                 <button
                   key={`${slot.ruleId}-${slot.date}-${slot.room}`}
                   type="button"
                   onClick={() => setSelectedSlot(slot)}
-                  className={`slot-card ${isSelected ? 'selected' : ''} ${slot.remaining <= 0 ? 'disabled' : ''}`}
-                  disabled={slot.remaining <= 0}
+                  className={`slot-card ${isSelected ? 'selected' : ''} ${isFull ? 'disabled' : ''}`}
+                  disabled={isFull}
                 >
+                  {isSelected && <span className="selection-badge">선택됨</span>}
                   <div className="slot-date">{dateStr}</div>
                   <div className="slot-time">{slot.startTime} ~ {slot.endTime}</div>
                   <div className="slot-room">{slot.room}</div>
-                  <div className="slot-footer">
-                    <span className="slot-grade">{slot.grade}학년 전용</span>
-                    <span className={`slot-capacity ${slot.remaining <= 2 ? 'low' : ''}`}>
-                      {slot.remaining === 0 ? '마감' : `잔여 ${slot.remaining}명`}
-                    </span>
+                  
+                  <div className={`capacity-badge ${capacityClass}`}>
+                    {isFull ? `마감 ${slot.maxCapacity} / ${slot.maxCapacity}명` : `잔여 ${slot.remaining} / ${slot.maxCapacity}명`}
                   </div>
                 </button>
               );
@@ -300,6 +284,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
           border-radius: 16px;
           border: 1px solid var(--border);
           box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+          position: relative;
         }
         .section-title {
           font-size: 1.25rem;
@@ -352,61 +337,78 @@ export default function ApplyForm({ user }: ApplyFormProps) {
 
         .slots-grid {
           display: grid;
-          grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+          grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
           gap: 16px;
         }
         .slot-card {
-          padding: 20px;
+          padding: 24px;
           border: 2px solid #f1f5f9;
-          border-radius: 12px;
+          border-radius: 16px;
           background: white;
           text-align: left;
           cursor: pointer;
           transition: all 0.2s;
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          gap: 6px;
+          position: relative;
         }
         .slot-card:hover:not(.disabled) {
           border-color: #cbd5e1;
           transform: translateY(-2px);
         }
         .slot-card.selected {
-          border-color: var(--primary);
+          border-color: #0E4A84;
           background: #f0f7ff;
+          box-shadow: 0 4px 12px rgba(14, 74, 132, 0.1);
         }
         .slot-card.disabled {
-          opacity: 0.5;
+          opacity: 0.6;
           cursor: not-allowed;
-          background: #f8fafc;
+          background: #fcfcfc;
+          border-color: #f1f5f9;
         }
+        
+        .selection-badge {
+          position: absolute;
+          top: 12px;
+          right: 12px;
+          background: #0E4A84;
+          color: white;
+          font-size: 0.6875rem;
+          font-weight: 800;
+          padding: 2px 8px;
+          border-radius: 4px;
+        }
+
         .slot-date {
           font-weight: 800;
-          font-size: 0.9375rem;
+          font-size: 1rem;
           color: var(--text);
+          margin-bottom: 2px;
         }
         .slot-time {
-          font-size: 0.875rem;
-          font-weight: 600;
+          font-size: 0.9375rem;
+          font-weight: 700;
           color: var(--primary);
         }
         .slot-room {
           font-size: 0.8125rem;
           color: var(--sub-text);
+          margin-bottom: 12px;
         }
-        .slot-footer {
-          margin-top: 8px;
-          padding-top: 8px;
-          border-top: 1px solid #f1f5f9;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
+        
+        .capacity-badge {
+          align-self: flex-start;
           font-size: 0.75rem;
-          font-weight: 700;
+          font-weight: 800;
+          padding: 4px 10px;
+          border-radius: 6px;
+          margin-top: auto;
         }
-        .slot-capacity.low {
-          color: #ef4444;
-        }
+        .capacity-badge.high { background: #dcfce7; color: #166534; } /* 초록 */
+        .capacity-badge.low { background: #ffedd5; color: #9a3412; }  /* 주황 */
+        .capacity-badge.full { background: #fee2e2; color: #991b1b; } /* 빨강 */
 
         .skills-grid {
           display: grid;
@@ -533,6 +535,12 @@ export default function ApplyForm({ user }: ApplyFormProps) {
         .btn-submit:disabled {
           background: #cbd5e1;
           cursor: not-allowed;
+        }
+        
+        @media (max-width: 600px) {
+          .info-box { grid-template-columns: 1fr; }
+          .form-section { padding: 24px; }
+          .slots-grid { grid-template-columns: 1fr; }
         }
       `}</style>
     </form>
