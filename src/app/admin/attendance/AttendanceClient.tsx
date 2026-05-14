@@ -479,6 +479,7 @@ export default function AttendanceClient({
 
         /* Print Logic */
         .print-header { display: none; }
+        .print-only { display: none; }
         
         @media print {
           @page { size: A4; margin: 0; }
