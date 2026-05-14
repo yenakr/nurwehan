@@ -136,10 +136,6 @@ export default function ApplicationListClient({ initialApplications }: { initial
                               <span className="name">{app.representativeUser.name}</span>
                               <span className="student-id">{app.representativeUser.studentId}</span>
                             </div>
-                            <div className="room-tag">
-                              <span className="icon">📍</span>
-                              {app.slot.room}
-                            </div>
                           </div>
 
                           <div className="card-bottom">
@@ -275,18 +271,6 @@ export default function ApplicationListClient({ initialApplications }: { initial
         .applicant-primary .name { font-size: 1.0625rem; font-weight: 900; color: #1e293b; }
         .applicant-primary .student-id { font-size: 0.8125rem; color: #94a3b8; font-weight: 600; font-family: monospace; }
         
-        .room-tag { 
-          display: inline-flex; 
-          align-items: center; 
-          gap: 4px; 
-          font-size: 0.75rem; 
-          color: #475569; 
-          background: #f1f5f9; 
-          padding: 4px 10px; 
-          border-radius: 20px; 
-          font-weight: 700; 
-        }
-        .room-tag .icon { font-size: 0.75rem; }
 
         .card-bottom { 
           padding-top: 12px; 
