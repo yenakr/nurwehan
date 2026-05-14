@@ -59,7 +59,9 @@ export default async function OpenLabApplyPage() {
             <h2 style={{ color: '#B91C1C', marginBottom: '16px', fontSize: '1.25rem' }}>OPEN LAB 신청 제한</h2>
             <div style={{ marginBottom: '24px' }}>
               <p style={{ fontWeight: '700', marginBottom: '8px', fontSize: '1.125rem' }}>사유: {restriction.reason}</p>
-              <p style={{ color: 'var(--sub-text)' }}>제한 종료일: {new Date(restriction.endDate).toLocaleDateString('ko-KR')}</p>
+              <p style={{ color: 'var(--sub-text)' }}>
+                제한 기간: {new Date(restriction.startDate).toLocaleDateString('ko-KR')} ~ {restriction.endDate && new Date(restriction.endDate).getFullYear() < 9000 ? new Date(restriction.endDate).toLocaleDateString('ko-KR') : '영구'}
+              </p>
             </div>
             <Link href="/" className="btn-primary">홈으로 이동</Link>
           </div>

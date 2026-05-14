@@ -12,13 +12,17 @@ export default async function MyPage() {
     redirect('/login?redirect=/mypage');
   }
 
-  // Fetch full user data including restrictions and applications
+  // Fetch full user data including restrictions, warnings, and applications
   const fullUser = await prisma.user.findUnique({
     where: { id: user.id },
     include: {
       restrictions: {
-        where: { isActive: true, endDate: { gte: new Date() } }
+        where: { 
+          isActive: true, 
+          endDate: { gte: new Date() }
+        }
       },
+      warnings: true,
       applications: {
         orderBy: { createdAt: 'desc' },
         include: { 
@@ -31,7 +35,9 @@ export default async function MyPage() {
 
   if (!fullUser) redirect('/login');
 
-  const isRestricted = fullUser.restrictions.length > 0;
+  const activeRestrictions = fullUser.restrictions;
+  const isRestricted = activeRestrictions.length > 0;
+  const warningCount = fullUser.warnings.length;
 
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '40px 0' }}>
@@ -52,19 +58,46 @@ export default async function MyPage() {
             approvalStatus: fullUser.approvalStatus
           }} />
 
-          {/* Restriction Section */}
+          {/* Status Overview Section */}
           <section className="card" style={{ border: isRestricted ? '2px solid #ef4444' : '1px solid var(--border)' }}>
-            <h2 style={{ fontSize: '1.125rem', fontWeight: '700', marginBottom: '16px', color: isRestricted ? '#ef4444' : 'inherit' }}>
-              신청 제한 내역
-            </h2>
-            {isRestricted ? (
-              <div style={{ backgroundColor: '#fef2f2', padding: '16px', borderRadius: '8px' }}>
-                <p style={{ fontWeight: '600', marginBottom: '4px' }}>사유: {fullUser.restrictions[0].reason}</p>
-                <p style={{ fontSize: '0.875rem', color: '#b91c1c' }}>
-                  제한 종료일: {new Date(fullUser.restrictions[0].endDate).toLocaleDateString('ko-KR')}
+            <h2 style={{ fontSize: '1.125rem', fontWeight: '700', marginBottom: '20px' }}>계정 상태 및 제한 내역</h2>
+            
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', marginBottom: '24px' }}>
+              <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: '0.8125rem', color: '#64748b', fontWeight: '600' }}>신청 가능 여부</span>
+                <p style={{ fontSize: '1.125rem', fontWeight: '800', marginTop: '4px', color: isRestricted ? '#ef4444' : '#10b981' }}>
+                  {isRestricted ? '신청 제한' : '신청 가능'}
                 </p>
               </div>
-            ) : (
+              <div style={{ background: '#f8fafc', padding: '16px', borderRadius: '12px', border: '1px solid #e2e8f0' }}>
+                <span style={{ fontSize: '0.8125rem', color: '#64748b', fontWeight: '600' }}>정리불량 누적 횟수</span>
+                <p style={{ fontSize: '1.125rem', fontWeight: '800', marginTop: '4px', color: warningCount >= 3 ? '#ef4444' : '#1e293b' }}>
+                  {warningCount}회 {warningCount >= 3 && <span style={{ fontSize: '0.75rem' }}>(영구 제한)</span>}
+                </p>
+              </div>
+            </div>
+
+            {isRestricted && (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <p style={{ fontSize: '0.875rem', fontWeight: '700', color: '#ef4444' }}>⚠️ 현재 다음 사유로 인해 신청이 제한되고 있습니다:</p>
+                {activeRestrictions.map(r => (
+                  <div key={r.id} style={{ backgroundColor: '#fef2f2', padding: '16px', borderRadius: '10px', border: '1px solid #fee2e2' }}>
+                    <p style={{ fontWeight: '700', marginBottom: '4px', fontSize: '0.9375rem' }}>{r.reason}</p>
+                    <p style={{ fontSize: '0.8125rem', color: '#b91c1c' }}>
+                      기간: {new Date(r.startDate).toLocaleDateString('ko-KR')} ~ {r.endDate && new Date(r.endDate).getFullYear() < 9000 ? new Date(r.endDate).toLocaleDateString('ko-KR') : '영구'}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+            
+            {!isRestricted && warningCount > 0 && warningCount < 3 && (
+              <p style={{ fontSize: '0.875rem', color: '#f59e0b', fontWeight: '500' }}>
+                알림: 정리불량이 {warningCount}회 기록되었습니다. 3회 누적 시 OPEN LAB 신청이 영구적으로 제한됩니다.
+              </p>
+            )}
+
+            {!isRestricted && warningCount === 0 && (
               <p style={{ color: 'var(--sub-text)', fontSize: '0.875rem' }}>현재 적용된 신청 제한 내역이 없습니다.</p>
             )}
           </section>

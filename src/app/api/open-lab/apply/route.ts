@@ -98,8 +98,14 @@ export async function POST(request: NextRequest) {
     });
 
     if (activeRestrictions.length > 0) {
-      const restrictedNames = activeRestrictions.map(r => r.studentName).join(', ');
-      return NextResponse.json({ message: `신청 제한 상태인 학생이 포함되어 있습니다: ${restrictedNames}` }, { status: 400 });
+      const restrictedInfos = activeRestrictions.map(r => {
+        const dateStr = r.endDate ? ` (제한 종료일: ${new Date(r.endDate).toLocaleDateString('ko-KR')})` : ' (영구 제한)';
+        return `${r.studentName} 학생: ${r.reason}${dateStr}`;
+      }).join('\n');
+      
+      return NextResponse.json({ 
+        message: `신청 제한 상태인 학생이 포함되어 있습니다.\n${restrictedInfos}` 
+      }, { status: 400 });
     }
 
     // Check for duplicate application in the same week

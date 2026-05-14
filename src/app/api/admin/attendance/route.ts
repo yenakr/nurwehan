@@ -20,14 +20,15 @@ export async function PATCH(request: NextRequest) {
         data: { cleanupBad: cleanupAll }
       });
       
-      // If setting group cleanup as bad, create warnings for all
-      if (cleanupAll) {
-        const participants = await prisma.applicationParticipant.findMany({
-          where: { applicationId }
-        });
-        
-        for (const p of participants) {
-          await createCleanupWarning(p, applicationId, user.id);
+      const participants = await prisma.applicationParticipant.findMany({
+        where: { applicationId }
+      });
+      
+      for (const p of participants) {
+        if (cleanupAll) {
+          await addCleanupWarning(p, applicationId, user.id);
+        } else {
+          await removeCleanupWarning(p, applicationId);
         }
       }
       
@@ -38,7 +39,6 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ message: '대상 학생 ID가 필요합니다.' }, { status: 400 });
     }
 
-    // Get current state to check for changes
     const current = await prisma.applicationParticipant.findUnique({
       where: { id: participantId },
       include: { application: { include: { slot: true } } }
@@ -56,58 +56,18 @@ export async function PATCH(request: NextRequest) {
       }
     });
 
-    // 1. Attendance Restriction Logic
-    if (attendanceStatus === 'ABSENT') {
-      // Check if restriction already exists for this student and application
-      const existingRestriction = await prisma.restriction.findFirst({
-        where: { 
-          studentId: updated.studentId,
-          sourceApplicationId: updated.applicationId,
-          reason: { contains: '불참' }
-        }
-      });
-
-      if (!existingRestriction) {
-        // Lab date for the restriction start
-        const labDate = new Date(current.application.slot.date);
-        const endDate = new Date(labDate.getTime() + 14 * 24 * 60 * 60 * 1000); // Exactly 14 days later
-        
-        await prisma.restriction.create({
-          data: {
-            userId: updated.userId,
-            studentId: updated.studentId,
-            studentName: updated.name,
-            reason: 'OPEN LAB 불참 (2주 제한)',
-            sourceApplicationId: updated.applicationId,
-            startDate: labDate,
-            endDate: endDate,
-            createdById: user.id
-          }
-        });
-      }
-    } else if (attendanceStatus === 'PRESENT' || attendanceStatus === 'PENDING') {
-      // If changed back, remove the 'ABSENT' restriction for this specific application
-      await prisma.restriction.deleteMany({
-        where: {
-          studentId: updated.studentId,
-          sourceApplicationId: updated.applicationId,
-          reason: { contains: '불참' }
-        }
-      });
+    // 1. Attendance Status Change
+    if (attendanceStatus === 'ABSENT' && current.attendanceStatus !== 'ABSENT') {
+      await createAbsenceRestriction(updated, current.application.slot.date, user.id);
+    } else if ((attendanceStatus === 'PRESENT' || attendanceStatus === 'PENDING') && current.attendanceStatus === 'ABSENT') {
+      await removeAbsenceRestriction(updated);
     }
 
-    // 2. Cleanup Warning Logic
+    // 2. Cleanup Status Change
     if (cleanupBad === true && current.cleanupBad === false) {
-      await createCleanupWarning(updated, updated.applicationId, user.id);
+      await addCleanupWarning(updated, updated.applicationId, user.id);
     } else if (cleanupBad === false && current.cleanupBad === true) {
-      // If changed to Good, remove the warning for this specific application
-      // Note: This won't remove a restriction if it was already triggered, but it prevents count inflation.
-      await prisma.cleanupWarning.deleteMany({
-        where: {
-          studentId: updated.studentId,
-          applicationId: updated.applicationId
-        }
-      });
+      await removeCleanupWarning(updated, updated.applicationId);
     }
 
     return NextResponse.json(updated);
@@ -117,23 +77,58 @@ export async function PATCH(request: NextRequest) {
   }
 }
 
-async function createCleanupWarning(participant: any, applicationId: string, adminId: string) {
-  // Check if warning already exists for this application to prevent duplicates
-  const existingWarning = await prisma.cleanupWarning.findFirst({
+async function createAbsenceRestriction(participant: any, labDate: Date, adminId: string) {
+  const existing = await prisma.restriction.findFirst({
+    where: {
+      studentId: participant.studentId,
+      sourceApplicationId: participant.applicationId,
+      reason: { contains: '불참' }
+    }
+  });
+
+  if (existing) return;
+
+  const startDate = new Date(labDate);
+  const endDate = new Date(startDate.getTime() + 14 * 24 * 60 * 60 * 1000);
+  
+  await prisma.restriction.create({
+    data: {
+      userId: participant.userId,
+      studentId: participant.studentId,
+      studentName: participant.name,
+      reason: 'OPEN LAB 불참 (2주 제한)',
+      sourceApplicationId: participant.applicationId,
+      startDate,
+      endDate,
+      isActive: true,
+      createdById: adminId
+    }
+  });
+}
+
+async function removeAbsenceRestriction(participant: any) {
+  await prisma.restriction.deleteMany({
+    where: {
+      studentId: participant.studentId,
+      sourceApplicationId: participant.applicationId,
+      reason: { contains: '불참' }
+    }
+  });
+}
+
+async function addCleanupWarning(participant: any, applicationId: string, adminId: string) {
+  const existing = await prisma.cleanupWarning.findFirst({
     where: { 
       studentId: participant.studentId,
       applicationId: applicationId
     }
   });
 
-  if (existingWarning) return;
+  if (existing) return;
 
-  // Count existing warnings (excluding current one since we haven't created it yet)
-  const warningCount = await prisma.cleanupWarning.count({
+  const count = await prisma.cleanupWarning.count({
     where: { studentId: participant.studentId }
   });
-
-  const newCount = warningCount + 1;
 
   await prisma.cleanupWarning.create({
     data: {
@@ -142,39 +137,64 @@ async function createCleanupWarning(participant: any, applicationId: string, adm
       studentName: participant.name,
       applicationId: applicationId,
       reason: 'OPEN LAB 정리 불량',
-      warningCountAfter: newCount,
+      warningCountAfter: count + 1,
       createdById: adminId
     }
   });
 
-  // If 3 warnings, create restriction
-  if (newCount >= 3) {
-    // Check if restriction already exists for '3 warnings'
-    const existingRestriction = await prisma.restriction.findFirst({
+  await checkAndApplyPermanentCleanupRestriction(participant.studentId, participant.name, participant.userId, adminId);
+}
+
+async function removeCleanupWarning(participant: any, applicationId: string) {
+  await prisma.cleanupWarning.deleteMany({
+    where: {
+      studentId: participant.studentId,
+      applicationId: applicationId
+    }
+  });
+
+  // Re-check permanent restriction
+  await checkAndApplyPermanentCleanupRestriction(participant.studentId, participant.name, participant.userId, '');
+}
+
+async function checkAndApplyPermanentCleanupRestriction(studentId: string, name: string, userId: string | null, adminId: string) {
+  const count = await prisma.cleanupWarning.count({
+    where: { studentId }
+  });
+
+  if (count >= 3) {
+    const existing = await prisma.restriction.findFirst({
       where: {
-        studentId: participant.studentId,
+        studentId,
         reason: { contains: '정리 불량 3회' },
-        isActive: true,
-        endDate: { gte: new Date() }
+        isActive: true
       }
     });
 
-    if (!existingRestriction) {
-      const now = new Date();
-      const endDate = new Date(now.getTime() + 100 * 365 * 24 * 60 * 60 * 1000); // 100 years (Permanent)
-      
+    if (!existing && adminId) {
       await prisma.restriction.create({
         data: {
-          userId: participant.userId,
-          studentId: participant.studentId,
-          studentName: participant.name,
+          userId,
+          studentId,
+          studentName: name,
           reason: '정리 불량 3회 누적 (영구 제한)',
-          startDate: now,
-          endDate: endDate,
+          startDate: new Date(),
+          endDate: new Date('9999-12-31'),
+          isActive: true,
           createdById: adminId
         }
       });
     }
+  } else {
+    // If count < 3, deactivate any permanent cleanup restrictions
+    await prisma.restriction.updateMany({
+      where: {
+        studentId,
+        reason: { contains: '정리 불량 3회' },
+        isActive: true
+      },
+      data: { isActive: false }
+    });
   }
 }
 
