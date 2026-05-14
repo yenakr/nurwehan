@@ -1,143 +1,38 @@
 'use client';
 
 import { useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { formatInTimeZone } from 'date-fns-tz';
-
-const TIME_ZONE = 'Asia/Seoul';
-
-interface User {
-  id: string;
-  studentId: string;
-  name: string;
-  grade: number | null;
-  createdAt: Date;
-}
-
-interface Application {
-  id: string;
-  status: string;
-  representativeUser: {
-    name: string;
-    studentId: string;
-  };
-  slot: {
-    date: Date;
-    startTime: string;
-    endTime: string;
-    room: string;
-  };
-  skills: Array<{
-    skill: {
-      name: string;
-    };
-  }>;
-  participants: Array<{
-    name: string;
-    studentId: string;
-    attendanceStatus: string;
-    cleanupBad: boolean;
-  }>;
-}
-
-interface Skill {
-  id: string;
-  name: string;
-  isActive: boolean;
-  supplies: Array<{
-    id: string;
-    supplyName: string;
-    quantity: number;
-    unit: string;
-    note: string | null;
-  }>;
-}
-
-interface UsageLog {
-  id: string;
-  submittedAt: Date;
-  application: {
-    representativeUser: {
-      name: string;
-    };
-    slot: {
-      date: Date;
-      room: string;
-    };
-  };
-}
+import UserList from './users/UserList';
+import AttendanceClient from './attendance/AttendanceClient';
 
 interface Props {
-  initialPendingUsers: any[];
-  initialPendingApps: any[];
-  initialTodayApps: any[];
+  initialUsers: any[];
+  initialParticipants: any[];
   initialSkills: any[];
-  initialUsageLogs: any[];
+  initialPendingApps: any[];
+  selectedDate: string;
 }
 
 export default function AdminDashboardClient({
-  initialPendingUsers,
-  initialPendingApps,
-  initialTodayApps,
+  initialUsers,
+  initialParticipants,
   initialSkills,
-  initialUsageLogs
+  initialPendingApps,
+  selectedDate
 }: Props) {
-  const [activeTab, setActiveTab] = useState('summary');
-  const [pendingUsers, setPendingUsers] = useState(initialPendingUsers);
-  const [pendingApps, setPendingApps] = useState(initialPendingApps);
-  const [todayApps, setTodayApps] = useState(initialTodayApps);
+  const [activeTab, setActiveTab] = useState('users');
   const [skills, setSkills] = useState(initialSkills);
-  const [usageLogs, setUsageLogs] = useState(initialUsageLogs);
   
   const router = useRouter();
-
-  const handleUserAction = async (userId: string, action: 'approve' | 'reject') => {
-    try {
-      const res = await fetch(`/api/admin/users/${userId}/status`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: action === 'approve' ? 'APPROVED' : 'REJECTED' })
-      });
-      if (res.ok) {
-        setPendingUsers(prev => prev.filter(u => u.id !== userId));
-        alert(action === 'approve' ? '승인되었습니다.' : '반려되었습니다.');
-      }
-    } catch (error) {
-      alert('처리 중 오류가 발생했습니다.');
-    }
-  };
-
-  const handleAppAction = async (appId: string, action: 'approve' | 'reject') => {
-    try {
-      const res = await fetch(`/api/admin/applications/${appId}/status`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ status: action === 'approve' ? 'APPROVED' : 'REJECTED' })
-      });
-      if (res.ok) {
-        setPendingApps(prev => prev.filter(a => a.id !== appId));
-        alert(action === 'approve' ? '승인되었습니다.' : '반려되었습니다.');
-      }
-    } catch (error) {
-      alert('처리 중 오류가 발생했습니다.');
-    }
-  };
 
   return (
     <div className="dashboard-container">
       <div className="tab-menu">
         <button 
-          className={activeTab === 'summary' ? 'active' : ''} 
-          onClick={() => setActiveTab('summary')}
+          className={activeTab === 'users' ? 'active' : ''} 
+          onClick={() => setActiveTab('users')}
         >
-          요약 현황
-        </button>
-        <button 
-          className={activeTab === 'attendance' ? 'active' : ''} 
-          onClick={() => setActiveTab('attendance')}
-        >
-          출석 및 정리 관리
+          학생 및 가입 관리
         </button>
         <button 
           className={activeTab === 'skills' ? 'active' : ''} 
@@ -145,146 +40,27 @@ export default function AdminDashboardClient({
         >
           술기 및 준비물
         </button>
+        <button 
+          className={activeTab === 'attendance' ? 'active' : ''} 
+          onClick={() => setActiveTab('attendance')}
+        >
+          출석 및 정리 관리
+        </button>
       </div>
 
       <div className="tab-content">
-        {activeTab === 'summary' && (
-          <div style={{ display: 'grid', gap: '32px' }}>
-            {/* Pending Users */}
-            <section className="dashboard-section">
-              <div className="section-header">
-                <h3>가입 신청 대기 ({pendingUsers.length})</h3>
-                <Link href="/admin/users" className="text-link">전체보기</Link>
-              </div>
-              <div className="card-table">
-                {pendingUsers.length === 0 ? (
-                  <p className="empty-text">대기 중인 가입 신청이 없습니다.</p>
-                ) : (
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>신청일</th>
-                        <th>이름</th>
-                        <th>학번</th>
-                        <th>학년</th>
-                        <th>관리</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pendingUsers.map((user) => (
-                        <tr key={user.id}>
-                          <td>{formatInTimeZone(new Date(user.createdAt), TIME_ZONE, 'yyyy.MM.dd')}</td>
-                          <td>{user.name}</td>
-                          <td>{user.studentId}</td>
-                          <td>{user.grade}학년</td>
-                          <td>
-                            <div style={{ display: 'flex', gap: '8px' }}>
-                              <button onClick={() => handleUserAction(user.id, 'approve')} className="btn-small btn-primary">승인</button>
-                              <button onClick={() => handleUserAction(user.id, 'reject')} className="btn-small btn-outline">반려</button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            </section>
-
-            {/* Pending Applications */}
-            <section className="dashboard-section">
-              <div className="section-header">
-                <h3>OPEN LAB 신청 대기 ({pendingApps.length})</h3>
-                <Link href="/admin/applications" className="text-link">전체보기</Link>
-              </div>
-              <div className="card-table">
-                {pendingApps.length === 0 ? (
-                  <p className="empty-text">대기 중인 OPEN LAB 신청이 없습니다.</p>
-                ) : (
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>날짜/시간</th>
-                        <th>실습실</th>
-                        <th>신청자</th>
-                        <th>술기</th>
-                        <th>인원</th>
-                        <th>관리</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {pendingApps.map((app) => (
-                        <tr key={app.id}>
-                          <td>
-                            {formatInTimeZone(new Date(app.slot.date), TIME_ZONE, 'yyyy.MM.dd')}<br/>
-                            <span style={{ fontSize: '0.75rem', color: 'var(--sub-text)' }}>{app.slot.startTime} ~ {app.slot.endTime}</span>
-                          </td>
-                          <td>{app.slot.room}</td>
-                          <td>{app.representativeUser.name} ({app.representativeUser.studentId})</td>
-                          <td>{app.skills.map((s: any) => s.skill.name).join(', ')}</td>
-                          <td>{app.participants.length}명</td>
-                          <td>
-                            <div style={{ display: 'flex', gap: '8px' }}>
-                              <Link href={`/admin/applications/${app.id}`} className="btn-small btn-outline">상세</Link>
-                              <button onClick={() => handleAppAction(app.id, 'approve')} className="btn-small btn-primary">승인</button>
-                              <button onClick={() => handleAppAction(app.id, 'reject')} className="btn-small btn-outline">반려</button>
-                            </div>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            </section>
+        {activeTab === 'users' && (
+          <div className="dashboard-section no-padding">
+             <UserList initialUsers={initialUsers} />
           </div>
         )}
 
         {activeTab === 'attendance' && (
-          <div className="dashboard-section">
-             <div className="section-header">
-                <h3>오늘의 OPEN LAB 명단 ({todayApps.length})</h3>
-                <Link href="/admin/attendance" className="btn-small btn-outline">출석 관리 전체보기</Link>
-              </div>
-              <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)', marginBottom: '16px' }}>
-                승인된 신청 내역입니다. 참여 학생별로 출석 및 정리 상태를 체크할 수 있습니다.
-              </p>
-              {/* This will be handled in detail in point 3 of the request, 
-                  but for the dashboard we can show a summary or direct link. */}
-              <div className="card-table">
-                {todayApps.length === 0 ? (
-                  <p className="empty-text">오늘 승인된 OPEN LAB이 없습니다.</p>
-                ) : (
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>시간</th>
-                        <th>실습실</th>
-                        <th>대표자</th>
-                        <th>술기</th>
-                        <th>참여자</th>
-                        <th>관리</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {todayApps.map((app) => (
-                        <tr key={app.id}>
-                          <td>{app.slot.startTime} ~ {app.slot.endTime}</td>
-                          <td>{app.slot.room}</td>
-                          <td>{app.representativeUser.name}</td>
-                          <td>{app.skills.map((s: any) => s.skill.name).join(', ')}</td>
-                          <td>{app.participants.length}명</td>
-                          <td>
-                            <Link href={`/admin/attendance?date=${new Date().toISOString().split('T')[0]}&appId=${app.id}`} className="btn-small btn-primary">
-                              출석체크
-                            </Link>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
+          <div className="dashboard-section no-padding">
+             <AttendanceClient 
+                initialParticipants={initialParticipants} 
+                selectedDate={selectedDate} 
+             />
           </div>
         )}
 
@@ -308,15 +84,16 @@ export default function AdminDashboardClient({
           overflow-x: auto;
         }
         .tab-menu button {
-          padding: 12px 20px;
+          padding: 12px 24px;
           background: none;
           border: none;
           border-bottom: 3px solid transparent;
-          font-weight: 600;
+          font-weight: 700;
           color: var(--sub-text);
           cursor: pointer;
           white-space: nowrap;
           transition: all 0.2s;
+          font-size: 1rem;
         }
         .tab-menu button:hover {
           color: var(--primary);
@@ -327,71 +104,16 @@ export default function AdminDashboardClient({
         }
         .dashboard-section {
           background: white;
-          padding: 24px;
-          border-radius: 12px;
+          padding: 32px;
+          border-radius: 16px;
           border: 1px solid var(--border);
-          box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
         }
-        .section-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 20px;
-        }
-        .section-header h3 {
-          font-size: 1.125rem;
-          font-weight: 700;
-        }
-        .card-table {
-          overflow-x: auto;
-        }
-        table {
-          width: 100%;
-          border-collapse: collapse;
-          font-size: 0.9375rem;
-        }
-        th {
-          text-align: left;
-          padding: 12px;
-          border-bottom: 2px solid var(--muted-background);
-          color: var(--sub-text);
-          font-weight: 600;
-        }
-        td {
-          padding: 12px;
-          border-bottom: 1px solid var(--muted-background);
-        }
-        .empty-text {
-          text-align: center;
-          padding: 40px;
-          color: var(--sub-text);
-          background: var(--muted-background);
-          border-radius: 8px;
-        }
-        .btn-small {
-          padding: 6px 12px;
-          font-size: 0.8125rem;
-          border-radius: 6px;
-          cursor: pointer;
-          font-weight: 600;
-          text-decoration: none;
-          display: inline-block;
-          border: 1px solid transparent;
-        }
-        .btn-primary {
-          background-color: var(--primary);
-          color: white;
-        }
-        .btn-outline {
-          border-color: var(--border);
-          background: white;
-          color: var(--text);
-        }
-        .text-link {
-          color: var(--primary);
-          text-decoration: none;
-          font-size: 0.875rem;
-          font-weight: 600;
+        .dashboard-section.no-padding {
+          padding: 0;
+          background: transparent;
+          border: none;
+          box-shadow: none;
         }
       `}</style>
     </div>

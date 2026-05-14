@@ -14,20 +14,56 @@ export default async function AdminPage() {
   }
 
   // Fetch initial data for dashboard
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
   const [
-    pendingUsers,
-    pendingApps,
-    todayApps,
+    allUsers,
+    allParticipants,
     skills,
-    usageLogs
+    pendingApps
   ] = await Promise.all([
-    // 1. Pending user registrations (top 5)
+    // 1. All users for student management
     prisma.user.findMany({
-      where: { approvalStatus: 'PENDING' },
-      take: 5,
+      include: {
+        restrictions: {
+          where: { endDate: { gte: new Date() } }
+        },
+        warnings: true
+      },
       orderBy: { createdAt: 'desc' }
     }),
-    // 2. Pending OPEN LAB applications (top 5)
+    // 2. Today's participants for attendance management
+    prisma.applicationParticipant.findMany({
+      where: {
+        application: {
+          slot: {
+            date: {
+              gte: today,
+              lt: tomorrow
+            }
+          }
+        }
+      },
+      include: {
+        application: {
+          include: {
+            representativeUser: true,
+            slot: true,
+            skills: { include: { skill: true } },
+            usageLogs: true
+          }
+        }
+      }
+    }),
+    // 3. Skills and supplies
+    prisma.skill.findMany({
+      include: { supplies: true },
+      orderBy: { name: 'asc' }
+    }),
+    // 4. Pending applications for quick check
     prisma.application.findMany({
       where: { status: 'PENDING' },
       include: {
@@ -36,44 +72,8 @@ export default async function AdminPage() {
         skills: { include: { skill: true } },
         participants: true
       },
-      take: 5,
-      orderBy: { createdAt: 'desc' }
-    }),
-    // 3. Today's approved applications
-    prisma.application.findMany({
-      where: {
-        status: { in: ['APPROVED', 'COMPLETED'] },
-        slot: {
-          date: {
-            gte: new Date(new Date().setHours(0, 0, 0, 0)),
-            lte: new Date(new Date().setHours(23, 59, 59, 999))
-          }
-        }
-      },
-      include: {
-        representativeUser: true,
-        slot: true,
-        skills: { include: { skill: true } },
-        participants: true
-      }
-    }),
-    // 4. Skills and supplies
-    prisma.skill.findMany({
-      include: { supplies: true },
-      orderBy: { name: 'asc' }
-    }),
-    // 5. Recent usage logs
-    prisma.usageLog.findMany({
-      include: {
-        application: {
-          include: {
-            representativeUser: true,
-            slot: true
-          }
-        }
-      },
       take: 10,
-      orderBy: { submittedAt: 'desc' }
+      orderBy: { createdAt: 'desc' }
     })
   ]);
 
@@ -85,16 +85,16 @@ export default async function AdminPage() {
             관리자 통합 대시보드
           </h1>
           <p style={{ color: 'var(--sub-text)', marginTop: '8px' }}>
-            {user.name}님, 오늘 하루도 수고 많으십니다.
+            {user.name} 관리자님, 오늘 하루도 수고 많으십니다.
           </p>
         </div>
 
         <AdminDashboardClient 
-          initialPendingUsers={pendingUsers}
-          initialPendingApps={pendingApps}
-          initialTodayApps={todayApps}
+          initialUsers={allUsers as any}
+          initialParticipants={allParticipants as any}
           initialSkills={skills}
-          initialUsageLogs={usageLogs}
+          initialPendingApps={pendingApps as any}
+          selectedDate={today.toISOString().split('T')[0]}
         />
       </div>
     </main>
