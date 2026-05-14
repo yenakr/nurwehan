@@ -59,13 +59,14 @@ export default function AttendanceClient({
   const [updateLoading, setUpdateLoading] = useState<string | null>(null);
   const [expandedSlots, setExpandedSlots] = useState<string[]>([]);
   const [filterTime, setFilterTime] = useState<string | null>(initialTime || null);
+  const [printingSlot, setPrintingSlot] = useState<string | null>(null);
 
   // Fetch data when date changes
   useEffect(() => {
     if (currentDate === selectedDate && participants.length > 0) return;
     
     const fetchData = async () => {
-      setParticipants([]); // Clear previous data
+      setParticipants([]); 
       setLoading(true);
       try {
         const res = await fetch(`/api/admin/attendance?date=${currentDate}`, {
@@ -74,7 +75,6 @@ export default function AttendanceClient({
         if (res.ok) {
           const data = await res.json();
           setParticipants(data);
-          // Sync URL search param
           const url = new URL(window.location.href);
           url.searchParams.set('date', currentDate);
           window.history.replaceState({}, '', url.toString());
@@ -89,7 +89,6 @@ export default function AttendanceClient({
     fetchData();
   }, [currentDate]);
 
-  // Grouping logic: Time Slot -> Room -> Flat List of Participants
   const processedGroups = participants.reduce<TimeGroup[]>((acc, p) => {
     const app = p.application;
     const timeLabel = `${app.slot.startTime} ~ ${app.slot.endTime}`;
@@ -113,10 +112,8 @@ export default function AttendanceClient({
     return acc;
   }, []);
 
-  // Sort time slots
   processedGroups.sort((a, b) => a.timeLabel.localeCompare(b.timeLabel));
   
-  // Sort participants within each room by application creation time
   processedGroups.forEach(tg => {
     tg.roomGroups.forEach(rg => {
       rg.participants.sort((a, b) => {
@@ -127,7 +124,6 @@ export default function AttendanceClient({
     });
   });
 
-  // Stats
   const stats = {
     total: participants.length,
     present: participants.filter(p => p.attendanceStatus === 'PRESENT').length,
@@ -167,353 +163,364 @@ export default function AttendanceClient({
     }
   };
 
+  const handlePrintSlot = (timeLabel: string) => {
+    setPrintingSlot(timeLabel);
+    setTimeout(() => {
+      window.print();
+      setPrintingSlot(null);
+    }, 100);
+  };
+
   return (
-    <div className="attendance-container">
-      <div className="no-print controls">
-        <div className="date-picker-wrapper">
-          <input 
-            type="date" 
-            value={currentDate} 
-            onChange={(e) => setCurrentDate(e.target.value)}
-            className="date-input"
-          />
-          <div className="stats-group">
-            <span className="stats-badge total">총 {stats.total}명</span>
-            <span className="stats-badge present">출석 {stats.present}</span>
-            <span className="stats-badge absent">불참 {stats.absent}</span>
-            <span className="stats-badge pending">대기 {stats.pending}</span>
-            <span className="stats-badge cleanup">정리불량 {stats.badCleanup}</span>
-          </div>
-          {filterTime && (
-            <button className="btn-filter-reset" onClick={() => setFilterTime(null)}>
-              ⏰ {filterTime} 필터 해제
-            </button>
-          )}
+    <div className={`attendance-container ${printingSlot ? 'printing-mode' : ''}`}>
+      <div className="no-print admin-header-nav">
+        <div className="title-row">
+          <h1>일자/시간별 출석부</h1>
+          <p>날짜와 시간대를 선택하여 학생들의 출석 상태를 실시간으로 관리하세요.</p>
         </div>
-        <button onClick={() => window.print()} className="btn-print">
-          🖨️ 명단 인쇄
-        </button>
+        
+        <div className="controls-box">
+          <div className="date-selector">
+            <label>점검 일자</label>
+            <input 
+              type="date" 
+              value={currentDate} 
+              onChange={(e) => setCurrentDate(e.target.value)}
+              className="premium-date-input"
+            />
+          </div>
+          
+          <div className="stats-dashboard">
+            <div className="stat-card">
+              <span className="label">총원</span>
+              <span className="value">{stats.total}</span>
+            </div>
+            <div className="stat-card present">
+              <span className="label">출석</span>
+              <span className="value">{stats.present}</span>
+            </div>
+            <div className="stat-card absent">
+              <span className="label">불참</span>
+              <span className="value">{stats.absent}</span>
+            </div>
+            <div className="stat-card pending">
+              <span className="label">대기</span>
+              <span className="value">{stats.pending}</span>
+            </div>
+            <div className="stat-card cleanup">
+              <span className="label">정리불량</span>
+              <span className="value">{stats.badCleanup}</span>
+            </div>
+          </div>
+        </div>
+
+        {filterTime && (
+          <div className="filter-info">
+            <span className="filter-badge">⏰ {filterTime} 필터링 중</span>
+            <button className="reset-link" onClick={() => setFilterTime(null)}>필터 해제</button>
+          </div>
+        )}
       </div>
 
-      {loading ? (
-        <div className="loading-state">
-          <div className="spinner"></div>
-          <p>명단을 불러오는 중...</p>
-        </div>
-      ) : processedGroups.length === 0 ? (
-        <div className="empty-state">
-          해당 날짜에 승인된 신청 내역이 없습니다.
-        </div>
-      ) : (
-        processedGroups.map((group) => (
-          <div key={group.timeLabel} className="time-slot-accordion">
-            <button 
-              className={`accordion-trigger ${expandedSlots.includes(group.timeLabel) ? 'active' : ''}`}
-              onClick={() => toggleSlot(group.timeLabel)}
-            >
-              <div className="trigger-content">
-                <span className="time-text">{group.timeLabel}</span>
-                <span className="summary-text">
-                  총 {group.roomGroups.reduce((sum, rg) => sum + rg.participants.length, 0)}명
-                </span>
-              </div>
-              <span className="chevron">{expandedSlots.includes(group.timeLabel) ? '▼' : '▶'}</span>
-            </button>
-            
-            {expandedSlots.includes(group.timeLabel) && (
-              <div className="accordion-content">
-                {group.roomGroups.map((roomGroup) => (
-                  <div key={roomGroup.room} className="room-section">
-                    <div className="room-header">
-                      📍 {roomGroup.room}
-                    </div>
-                    
-                    <div className="table-wrapper">
-                      <table>
-                        <thead>
-                          <tr>
-                            <th className="col-idx">순서</th>
-                            <th className="no-print col-student">학번/이름</th>
-                            <th className="print-only col-student-id">학번</th>
-                            <th className="print-only col-name">이름</th>
-                            <th className="no-print col-role">구분</th>
-                            <th className="col-skill">신청 술기</th>
-                            <th className="no-print col-request">요청사항</th>
-                            <th className="no-print col-attendance">출석 체크</th>
-                            <th className="no-print col-cleanup">정리 상태</th>
-                            <th className="print-only signature-cell">서명</th>
-                          </tr>
-                        </thead>
-                        <tbody>
-                          {roomGroup.participants.map((p, idx) => (
-                            <tr key={p.id} className={updateLoading === p.id ? 'row-updating' : ''}>
-                              <td className="col-idx">{idx + 1}</td>
-                              <td className="no-print col-student">
-                                <div className="student-id">{p.studentId}</div>
-                                <div className="student-name">{p.name}</div>
-                              </td>
-                              <td className="print-only col-student-id">{p.studentId}</td>
-                              <td className="print-only col-name">{p.name}</td>
-                              <td className="no-print col-role">
-                                <span className={`role-badge ${p.studentId === p.application.representativeUser.studentId ? 'rep' : 'part'}`}>
-                                  {p.studentId === p.application.representativeUser.studentId ? '신청자' : '참여자'}
-                                </span>
-                              </td>
-                              <td className="col-skill">
-                                <div className="skill-text">
-                                  {p.application.skills.map(s => s.skill.name).join(', ')}
-                                </div>
-                              </td>
-                              <td className="no-print col-request">
-                                <div className="request-text">{p.application.additionalRequest || '-'}</div>
-                              </td>
-                              <td className="no-print col-attendance">
-                                <div className="btn-group">
-                                  <button 
-                                    className={`btn-status present ${p.attendanceStatus === 'PRESENT' ? 'active' : ''}`}
-                                    onClick={() => updateStatus(p.id, { attendanceStatus: 'PRESENT' })}
-                                    disabled={updateLoading === p.id}
-                                  >
-                                    출석
-                                  </button>
-                                  <button 
-                                    className={`btn-status absent ${p.attendanceStatus === 'ABSENT' ? 'active' : ''}`}
-                                    onClick={() => updateStatus(p.id, { attendanceStatus: 'ABSENT' })}
-                                    disabled={updateLoading === p.id}
-                                  >
-                                    불참
-                                  </button>
-                                </div>
-                              </td>
-                              <td className="no-print col-cleanup">
-                                <div className="btn-group">
-                                  <button 
-                                    className={`btn-status good ${!p.cleanupBad ? 'active' : ''}`}
-                                    onClick={() => updateStatus(p.id, { cleanupBad: false })}
-                                    disabled={updateLoading === p.id}
-                                  >
-                                    양호
-                                  </button>
-                                  <button 
-                                    className={`btn-status bad ${p.cleanupBad ? 'active' : ''}`}
-                                    onClick={() => updateStatus(p.id, { cleanupBad: true })}
-                                    disabled={updateLoading === p.id}
-                                  >
-                                    불량
-                                  </button>
-                                </div>
-                              </td>
-                              <td className="print-only signature-cell"></td>
-                            </tr>
-                          ))}
-                        </tbody>
-                      </table>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            )}
+      <div className="attendance-content">
+        {loading ? (
+          <div className="premium-loading">
+            <div className="loader-ring"></div>
+            <p>데이터를 안전하게 불러오는 중입니다...</p>
           </div>
-        ))
-      )}
+        ) : processedGroups.length === 0 ? (
+          <div className="premium-empty">
+             <div className="empty-icon">📅</div>
+             <h3>승인된 내역이 없습니다.</h3>
+             <p>선택하신 날짜에 승인된 OPEN LAB 신청이 존재하지 않습니다.</p>
+          </div>
+        ) : (
+          processedGroups.map((group) => (
+            <div 
+              key={group.timeLabel} 
+              className={`time-group-wrapper ${printingSlot === group.timeLabel ? 'print-target' : ''}`}
+            >
+              <div className="group-header no-print">
+                <div className="header-left" onClick={() => toggleSlot(group.timeLabel)}>
+                  <span className={`chevron ${expandedSlots.includes(group.timeLabel) ? 'down' : ''}`}>▼</span>
+                  <h2>{group.timeLabel}</h2>
+                  <span className="count-tag">{group.roomGroups.reduce((sum, rg) => sum + rg.participants.length, 0)}명</span>
+                </div>
+                <div className="header-right">
+                  <button className="btn-print-slot" onClick={() => handlePrintSlot(group.timeLabel)}>
+                    🖨️ 이 시간대 인쇄
+                  </button>
+                </div>
+              </div>
+
+              {/* Print Header (Visible only when printing) */}
+              <div className="print-header">
+                <h1>출석부 ({formatInTimeZone(new Date(currentDate), TIME_ZONE, 'yyyy.MM.dd')})</h1>
+                <div className="print-info">
+                   <span>시간: {group.timeLabel}</span>
+                   <span>인원: {group.roomGroups.reduce((sum, rg) => sum + rg.participants.length, 0)}명</span>
+                </div>
+              </div>
+              
+              {(expandedSlots.includes(group.timeLabel) || printingSlot === group.timeLabel) && (
+                <div className="group-body">
+                  {group.roomGroups.map((roomGroup) => (
+                    <div key={roomGroup.room} className="room-container">
+                      <div className="room-label">
+                        📍 {roomGroup.room}
+                      </div>
+                      
+                      <div className="premium-table-wrapper">
+                        <table className="attendance-table">
+                          <thead>
+                            <tr>
+                              <th className="col-idx">순서</th>
+                              <th className="col-student-id">학번</th>
+                              <th className="col-name">이름</th>
+                              <th className="col-skill">신청 술기</th>
+                              <th className="no-print col-attendance">출석</th>
+                              <th className="no-print col-cleanup">정리</th>
+                              <th className="print-only col-signature">서명</th>
+                            </tr>
+                          </thead>
+                          <tbody>
+                            {roomGroup.participants.map((p, idx) => (
+                              <tr key={p.id} className={updateLoading === p.id ? 'row-busy' : ''}>
+                                <td className="col-idx">{idx + 1}</td>
+                                <td className="col-student-id">{p.studentId}</td>
+                                <td className="col-name">{p.name}</td>
+                                <td className="col-skill">
+                                  <div className="skill-pill-list">
+                                    {p.application.skills.map(s => (
+                                      <span key={s.skill.id} className="skill-pill">{s.skill.name}</span>
+                                    ))}
+                                  </div>
+                                </td>
+                                <td className="no-print col-attendance">
+                                  <div className="status-toggle">
+                                    <button 
+                                      className={`toggle-btn present ${p.attendanceStatus === 'PRESENT' ? 'active' : ''}`}
+                                      onClick={() => updateStatus(p.id, { attendanceStatus: 'PRESENT' })}
+                                      disabled={updateLoading === p.id}
+                                    >출석</button>
+                                    <button 
+                                      className={`toggle-btn absent ${p.attendanceStatus === 'ABSENT' ? 'active' : ''}`}
+                                      onClick={() => updateStatus(p.id, { attendanceStatus: 'ABSENT' })}
+                                      disabled={updateLoading === p.id}
+                                    >불참</button>
+                                  </div>
+                                </td>
+                                <td className="no-print col-cleanup">
+                                  <div className="status-toggle">
+                                    <button 
+                                      className={`toggle-btn good ${!p.cleanupBad ? 'active' : ''}`}
+                                      onClick={() => updateStatus(p.id, { cleanupBad: false })}
+                                      disabled={updateLoading === p.id}
+                                    >양호</button>
+                                    <button 
+                                      className={`toggle-btn bad ${p.cleanupBad ? 'active' : ''}`}
+                                      onClick={() => updateStatus(p.id, { cleanupBad: true })}
+                                      disabled={updateLoading === p.id}
+                                    >불량</button>
+                                  </div>
+                                </td>
+                                <td className="print-only col-signature"></td>
+                              </tr>
+                            ))}
+                          </tbody>
+                        </table>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          ))
+        )}
+      </div>
 
       <style jsx global>{`
-        .attendance-container {
-          display: flex;
-          flex-direction: column;
-          gap: 20px;
-          margin-bottom: 60px;
+        .attendance-container { 
+          max-width: 1200px; 
+          margin: 0 auto; 
+          padding: 20px; 
+          font-family: 'Pretendard', sans-serif;
         }
-        .controls {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 24px;
-          position: sticky;
-          top: 0;
-          z-index: 100;
-          background: var(--muted-background);
-          padding: 10px 0;
+
+        /* Header UI */
+        .admin-header-nav { margin-bottom: 40px; }
+        .title-row h1 { font-size: 2rem; font-weight: 900; color: var(--text); margin-bottom: 8px; }
+        .title-row p { color: var(--sub-text); font-size: 1rem; }
+
+        .controls-box { 
+          display: flex; 
+          justify-content: space-between; 
+          align-items: flex-end; 
+          background: white; 
+          padding: 24px; 
+          border-radius: 16px; 
+          border: 1px solid var(--border); 
+          box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+          margin-top: 24px;
+          gap: 24px;
         }
-        .date-picker-wrapper {
-          display: flex;
-          align-items: center;
-          gap: 16px;
-          flex-wrap: wrap;
-        }
-        .date-input {
-          padding: 10px 14px;
-          border: 1px solid var(--border);
-          border-radius: 8px;
-          font-weight: 700;
-          outline: none;
+
+        .date-selector { display: flex; flex-direction: column; gap: 8px; }
+        .date-selector label { font-size: 0.8125rem; font-weight: 700; color: var(--sub-text); }
+        .premium-date-input { 
+          padding: 12px 16px; 
+          border: 2px solid #f1f5f9; 
+          border-radius: 10px; 
+          font-size: 1rem; 
+          font-weight: 700; 
           color: var(--primary);
+          outline: none;
+          transition: border-color 0.2s;
         }
-        .stats-group {
-          display: flex;
-          gap: 8px;
-        }
-        .stats-badge {
-          font-weight: 700;
-          font-size: 0.8125rem;
-          padding: 6px 12px;
-          border-radius: 20px;
-        }
-        .stats-badge.total { background: #f1f5f9; color: #64748b; }
-        .stats-badge.present { background: #dcfce7; color: #166534; }
-        .stats-badge.absent { background: #fee2e2; color: #991b1b; }
-        .stats-badge.pending { background: #fff9db; color: #e67700; }
-        .stats-badge.cleanup { background: #fff5f5; color: #c92a2a; }
+        .premium-date-input:focus { border-color: var(--primary); }
 
-        .btn-print {
-          background: var(--primary);
-          color: white;
-          border: none;
-          padding: 10px 20px;
-          border-radius: 8px;
-          font-weight: 600;
-          cursor: pointer;
-          display: flex;
-          align-items: center;
-          gap: 8px;
+        .stats-dashboard { display: flex; gap: 12px; }
+        .stat-card { 
+          background: #f8fafc; 
+          padding: 12px 20px; 
+          border-radius: 12px; 
+          display: flex; 
+          flex-direction: column; 
+          align-items: center; 
+          min-width: 80px;
         }
-        
-        .loading-state {
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 100px;
-          gap: 16px;
-          color: var(--sub-text);
-        }
-        .spinner {
-          width: 30px;
-          height: 30px;
-          border: 3px solid #f1f5f9;
-          border-top: 3px solid var(--primary);
-          border-radius: 50%;
-          animation: spin 1s linear infinite;
-        }
-        @keyframes spin { to { transform: rotate(360deg); } }
+        .stat-card .label { font-size: 0.6875rem; font-weight: 700; color: #64748b; margin-bottom: 4px; }
+        .stat-card .value { font-size: 1.25rem; font-weight: 900; color: #1e293b; }
 
-        .time-slot-accordion {
-          background: white;
-          border: 1px solid var(--border);
-          border-radius: 12px;
+        .stat-card.present { background: #f0fdf4; }
+        .stat-card.present .value { color: #15803d; }
+        .stat-card.absent { background: #fef2f2; }
+        .stat-card.absent .value { color: #b91c1c; }
+        .stat-card.pending { background: #fffbeb; }
+        .stat-card.pending .value { color: #b45309; }
+        .stat-card.cleanup { background: #fff1f2; }
+        .stat-card.cleanup .value { color: #e11d48; }
+
+        /* Content UI */
+        .time-group-wrapper { 
+          background: white; 
+          border: 1px solid var(--border); 
+          border-radius: 20px; 
+          margin-bottom: 32px; 
           overflow: hidden;
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
-        }
-        .accordion-trigger {
-          width: 100%;
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          padding: 20px 24px;
-          background: white;
-          border: none;
-          cursor: pointer;
-          text-align: left;
-        }
-        .accordion-trigger:hover { background: #f8fafc; }
-        .accordion-trigger.active { border-bottom: 1px solid var(--border); background: #f8fafc; }
-        .time-text { font-size: 1.25rem; font-weight: 900; color: var(--primary); }
-        
-        .room-section { margin-bottom: 0; }
-        .room-header {
-          padding: 12px 24px;
-          background: #f1f5f9;
-          font-weight: 800;
-          font-size: 0.9375rem;
-          color: #334155;
-          border-top: 1px solid var(--border);
-          border-bottom: 1px solid var(--border);
+          box-shadow: 0 4px 12px rgba(0,0,0,0.03);
         }
 
-        .table-wrapper { overflow-x: auto; }
-        table { width: 100%; border-collapse: collapse; min-width: 800px; }
-        th { 
-          background: #fafafa;
-          padding: 12px 16px;
-          font-size: 0.75rem;
-          font-weight: 700;
-          color: #64748b;
-          text-align: left;
-          text-transform: uppercase;
-          border-bottom: 2px solid #f1f5f9;
-        }
-        td { padding: 16px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
-        
-        .col-idx { width: 50px; text-align: center; color: var(--sub-text); font-size: 0.8125rem; }
-        .col-student { width: 150px; }
-        .student-id { font-size: 0.75rem; color: var(--sub-text); font-family: monospace; }
-        .student-name { font-size: 1rem; font-weight: 700; color: var(--text); }
-        
-        .col-role { width: 80px; }
-        .role-badge { 
-          font-size: 0.6875rem; 
-          padding: 2px 6px; 
-          border-radius: 4px; 
-          font-weight: 800;
-        }
-        .role-badge.rep { background: #e0f2fe; color: #0369a1; }
-        .role-badge.part { background: #f1f5f9; color: #64748b; }
-
-        .col-skill { max-width: 200px; }
-        .skill-text { font-size: 0.875rem; color: #475569; line-height: 1.4; }
-        
-        .col-request { max-width: 200px; }
-        .request-text { font-size: 0.8125rem; color: #e67700; background: #fff9db; padding: 4px 8px; border-radius: 4px; display: inline-block; }
-        
-        .btn-group { display: flex; gap: 4px; }
-        .btn-status {
-          flex: 1;
-          padding: 8px 12px;
-          border: 1px solid #e2e8f0;
+        .group-header { 
+          display: flex; 
+          justify-content: space-between; 
+          align-items: center; 
+          padding: 24px 32px; 
           background: white;
-          border-radius: 6px;
-          font-size: 0.8125rem;
-          font-weight: 700;
+          border-bottom: 1px solid #f1f5f9;
+        }
+        .header-left { display: flex; align-items: center; gap: 16px; cursor: pointer; flex: 1; }
+        .chevron { color: #cbd5e1; font-size: 0.875rem; transition: transform 0.2s; }
+        .chevron.down { transform: rotate(180deg); }
+        .header-left h2 { font-size: 1.5rem; font-weight: 900; color: var(--primary); }
+        .count-tag { background: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 20px; font-size: 0.8125rem; font-weight: 700; }
+
+        .btn-print-slot { 
+          background: #f8fafc; 
+          border: 1px solid #e2e8f0; 
+          padding: 8px 16px; 
+          border-radius: 8px; 
+          font-size: 0.8125rem; 
+          font-weight: 700; 
+          color: #475569; 
           cursor: pointer;
           transition: all 0.2s;
-          color: #94a3b8;
-          white-space: nowrap;
         }
-        .btn-status:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-print-slot:hover { background: #f1f5f9; color: var(--primary); border-color: var(--primary); }
 
-        .btn-status.present.active { background: #22c55e; color: white; border-color: #16a34a; box-shadow: 0 2px 4px rgba(34, 197, 94, 0.2); }
-        .btn-status.absent.active { background: #ef4444; color: white; border-color: #dc2626; box-shadow: 0 2px 4px rgba(239, 68, 68, 0.2); }
-        .btn-status.good.active { background: #3b82f6; color: white; border-color: #2563eb; box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2); }
-        .btn-status.bad.active { background: #f97316; color: white; border-color: #ea580c; box-shadow: 0 2px 4px rgba(249, 115, 22, 0.2); }
+        .group-body { padding: 32px; display: flex; flex-direction: column; gap: 40px; }
+        .room-label { font-size: 1.125rem; font-weight: 800; color: #1e293b; margin-bottom: 16px; padding-left: 8px; border-left: 4px solid var(--primary); }
 
-        .btn-status:hover:not(.active) { background: #f8fafc; color: var(--text); }
+        /* Table Styling */
+        .premium-table-wrapper { overflow-x: auto; border-radius: 12px; border: 1px solid #f1f5f9; }
+        .attendance-table { width: 100%; border-collapse: collapse; min-width: 900px; background: white; }
+        .attendance-table th { background: #f8fafc; padding: 16px; font-size: 0.75rem; font-weight: 800; color: #64748b; text-align: left; text-transform: uppercase; border-bottom: 2px solid #f1f5f9; }
+        .attendance-table td { padding: 20px 16px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
         
-        .row-updating { opacity: 0.6; pointer-events: none; }
-        .signature-cell { width: 100px; border-left: 1px solid #f1f5f9; }
-        .print-only { display: none; }
+        .col-idx { width: 60px; text-align: center; color: #94a3b8; font-weight: 700; }
+        .col-student-id { width: 140px; font-family: monospace; font-weight: 600; color: #475569; }
+        .col-name { width: 120px; font-weight: 800; color: var(--text); }
+        .col-skill { min-width: 250px; }
+        .skill-pill-list { display: flex; flex-wrap: wrap; gap: 6px; }
+        .skill-pill { background: #f1f5f9; color: #475569; font-size: 0.75rem; font-weight: 700; padding: 3px 10px; border-radius: 6px; }
 
+        .col-attendance, .col-cleanup { width: 160px; }
+        .status-toggle { display: flex; background: #f1f5f9; padding: 3px; border-radius: 8px; }
+        .toggle-btn { 
+          flex: 1; 
+          border: none; 
+          background: transparent; 
+          padding: 8px; 
+          font-size: 0.75rem; 
+          font-weight: 800; 
+          color: #94a3b8; 
+          cursor: pointer; 
+          border-radius: 6px; 
+          transition: all 0.2s;
+        }
+        .toggle-btn:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        .toggle-btn.present.active { background: #22c55e; color: white; box-shadow: 0 2px 4px rgba(34,197,94,0.2); }
+        .toggle-btn.absent.active { background: #ef4444; color: white; box-shadow: 0 2px 4px rgba(239,68,68,0.2); }
+        .toggle-btn.good.active { background: var(--primary); color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .toggle-btn.bad.active { background: #f97316; color: white; box-shadow: 0 2px 4px rgba(249,115,22,0.2); }
+
+        .row-busy { opacity: 0.5; pointer-events: none; }
+
+        /* Print Logic */
+        .print-header { display: none; }
+        
         @media print {
-          @page { size: A4; margin: 1cm; }
+          @page { size: A4; margin: 0; }
+          body { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
           .no-print { display: none !important; }
           .print-only { display: table-cell !important; }
-          .attendance-container { gap: 0; padding: 0; margin: 0; background: white; }
-          .time-slot-accordion { border: none; box-shadow: none; margin-bottom: 30px; border-radius: 0; page-break-inside: avoid; }
-          .accordion-trigger { display: block; border-bottom: 2px solid #000; padding: 10px 0; }
-          .time-text { color: #000; font-size: 1.5rem; }
-          .chevron { display: none; }
           
-          .table-wrapper { overflow: visible !important; }
-          table { width: 100% !important; table-layout: fixed !important; border: 2px solid #000 !important; }
-          th, td { border: 1px solid #000 !important; padding: 12px 8px !important; font-size: 0.875rem !important; color: #000 !important; word-break: break-all; }
-          th { background: #eee !important; -webkit-print-color-adjust: exact; }
+          /* Full container print reset */
+          .attendance-container { width: 100% !important; max-width: none !important; margin: 0 !important; padding: 0 !important; }
           
-          .col-idx { width: 8% !important; }
+          /* Hide other slots if printing specific slot */
+          .printing-mode .time-group-wrapper:not(.print-target) { display: none !important; }
+          
+          .time-group-wrapper { border: none !important; box-shadow: none !important; width: 100% !important; margin: 0 !important; border-radius: 0 !important; }
+          .group-body { padding: 0 !important; width: 100% !important; }
+          .room-container { page-break-inside: avoid; margin-bottom: 20px; width: 100% !important; }
+          
+          .print-header { 
+            display: block !important; 
+            text-align: center; 
+            padding: 40px 20px 20px;
+            border-bottom: 2px solid #000;
+            margin-bottom: 30px;
+          }
+          .print-header h1 { font-size: 1.75rem; font-weight: 900; margin-bottom: 10px; }
+          .print-info { display: flex; justify-content: center; gap: 40px; font-weight: 700; font-size: 1.125rem; }
+
+          .room-label { border-left: 8px solid #000; padding-left: 15px; font-size: 1.25rem; margin: 20px 0; }
+          
+          .premium-table-wrapper { overflow: visible !important; width: 100% !important; border: none !important; }
+          .attendance-table { width: 100% !important; table-layout: fixed !important; border: 2.5px solid #000 !important; min-width: 0 !important; }
+          .attendance-table th, .attendance-table td { border: 1px solid #000 !important; padding: 10px 8px !important; font-size: 0.9rem !important; color: #000 !important; word-break: break-all; }
+          .attendance-table th { background: #f0f0f0 !important; font-weight: 900 !important; }
+          
+          /* Explicit Print Column Widths to prevent cutoff */
+          .col-idx { width: 7% !important; }
           .col-student-id { width: 22% !important; }
           .col-name { width: 18% !important; }
-          .col-skill { width: 32% !important; }
-          .signature-cell { width: 20% !important; height: 50px; }
-          
-          .role-badge, .request-text { display: none !important; }
+          .col-skill { width: 35% !important; }
+          .col-signature { width: 18% !important; height: 50px !important; }
+
+          .skill-pill { background: transparent !important; border: 1px solid #ddd !important; display: inline-block; margin: 1px; }
         }
       `}</style>
     </div>

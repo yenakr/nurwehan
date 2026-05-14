@@ -145,12 +145,6 @@ export default function AdminDashboardClient({
         >
           술기 및 준비물
         </button>
-        <button 
-          className={activeTab === 'usage-logs' ? 'active' : ''} 
-          onClick={() => setActiveTab('usage-logs')}
-        >
-          실습 소감 현황
-        </button>
       </div>
 
       <div className="tab-content">
@@ -298,44 +292,6 @@ export default function AdminDashboardClient({
           <SkillManagement initialSkills={skills} />
         )}
 
-        {activeTab === 'usage-logs' && (
-           <div className="dashboard-section">
-              <div className="section-header">
-                <h3>최근 실습 소감 현황</h3>
-                <Link href="/admin/usage-logs" className="text-link">전체보기</Link>
-              </div>
-              <div className="card-table">
-                {usageLogs.length === 0 ? (
-                  <p className="empty-text">제출된 실습 소감이 없습니다.</p>
-                ) : (
-                  <table>
-                    <thead>
-                      <tr>
-                        <th>제출일시</th>
-                        <th>사용일</th>
-                        <th>신청자</th>
-                        <th>실습실</th>
-                        <th>상세</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {usageLogs.map((log) => (
-                        <tr key={log.id}>
-                          <td>{formatInTimeZone(new Date(log.submittedAt), TIME_ZONE, 'yyyy.MM.dd HH:mm')}</td>
-                          <td>{formatInTimeZone(new Date(log.application.slot.date), TIME_ZONE, 'yyyy.MM.dd')}</td>
-                          <td>{log.application.representativeUser.name}</td>
-                          <td>{log.application.slot.room}</td>
-                          <td>
-                            <Link href={`/admin/usage-logs/${log.id}`} className="text-link">보기</Link>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-           </div>
-        )}
       </div>
 
       <style jsx>{`
