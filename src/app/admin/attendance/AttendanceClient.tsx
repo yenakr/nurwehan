@@ -2,6 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { formatInTimeZone } from 'date-fns-tz';
+
+const TIME_ZONE = 'Asia/Seoul';
 
 interface Participant {
   id: string;

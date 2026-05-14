@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { formatInTimeZone } from 'date-fns-tz';
+
+const TIME_ZONE = 'Asia/Seoul';
 
 interface User {
   id: string;
@@ -176,7 +179,7 @@ export default function AdminDashboardClient({
                     <tbody>
                       {pendingUsers.map((user) => (
                         <tr key={user.id}>
-                          <td>{new Date(user.createdAt).toLocaleDateString()}</td>
+                          <td>{formatInTimeZone(new Date(user.createdAt), TIME_ZONE, 'yyyy.MM.dd')}</td>
                           <td>{user.name}</td>
                           <td>{user.studentId}</td>
                           <td>{user.grade}학년</td>
@@ -219,7 +222,7 @@ export default function AdminDashboardClient({
                       {pendingApps.map((app) => (
                         <tr key={app.id}>
                           <td>
-                            {new Date(app.slot.date).toLocaleDateString()}<br/>
+                            {formatInTimeZone(new Date(app.slot.date), TIME_ZONE, 'yyyy.MM.dd')}<br/>
                             <span style={{ fontSize: '0.75rem', color: 'var(--sub-text)' }}>{app.slot.startTime} ~ {app.slot.endTime}</span>
                           </td>
                           <td>{app.slot.room}</td>
@@ -318,8 +321,8 @@ export default function AdminDashboardClient({
                     <tbody>
                       {usageLogs.map((log) => (
                         <tr key={log.id}>
-                          <td>{new Date(log.submittedAt).toLocaleString()}</td>
-                          <td>{new Date(log.application.slot.date).toLocaleDateString()}</td>
+                          <td>{formatInTimeZone(new Date(log.submittedAt), TIME_ZONE, 'yyyy.MM.dd HH:mm')}</td>
+                          <td>{formatInTimeZone(new Date(log.application.slot.date), TIME_ZONE, 'yyyy.MM.dd')}</td>
                           <td>{log.application.representativeUser.name}</td>
                           <td>{log.application.slot.room}</td>
                           <td>

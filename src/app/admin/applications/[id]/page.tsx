@@ -3,7 +3,10 @@ import { isAdminRole } from '@/lib/auth-core';
 import { prisma } from '@/lib/prisma';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
+import { formatInTimeZone } from 'date-fns-tz';
 import ApplicationStatusActions from './ApplicationStatusActions';
+
+const TIME_ZONE = 'Asia/Seoul';
 
 export const dynamic = 'force-dynamic';
 
@@ -74,7 +77,7 @@ export default async function AdminApplicationDetailPage({ params }: { params: P
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--sub-text)', marginBottom: '4px' }}>사용 일시</label>
-                <div style={{ fontWeight: '600' }}>{new Date(application.slot.date).toLocaleDateString('ko-KR')}</div>
+                <div style={{ fontWeight: '600' }}>{formatInTimeZone(new Date(application.slot.date), TIME_ZONE, 'yyyy.MM.dd')}</div>
                 <div style={{ fontSize: '0.875rem', color: 'var(--primary)', fontWeight: '500' }}>{application.slot.startTime} ~ {application.slot.endTime}</div>
               </div>
               <div>

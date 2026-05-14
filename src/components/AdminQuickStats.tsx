@@ -14,18 +14,10 @@ export default async function AdminQuickStats() {
   const [
     pendingUsers,
     pendingApps,
-    missingLogsCount,
     restrictedStudents
   ] = await Promise.all([
     prisma.user.count({ where: { approvalStatus: 'PENDING' } }),
     prisma.application.count({ where: { status: 'PENDING' } }),
-    prisma.application.count({
-      where: {
-        status: { in: ['APPROVED', 'COMPLETED'] },
-        slot: { date: { lt: startOfToday } }, // Past applications
-        usageLogs: { none: {} }
-      }
-    }),
     prisma.restriction.count({
       where: {
         isActive: true,
@@ -49,7 +41,6 @@ export default async function AdminQuickStats() {
         {[
           { label: '가입 신청 대기', value: pendingUsers, unit: '건', href: '/admin/users' },
           { label: 'OPEN LAB 신청 대기', value: pendingApps, unit: '건', href: '/admin/applications' },
-          { label: '소감 미제출', value: missingLogsCount, unit: '건', href: '/admin/usage-logs', urgent: missingLogsCount > 0 },
           { label: '신청 제한 학생', value: restrictedStudents, unit: '명', href: '/admin/restrictions' },
         ].map((stat, i) => (
           <Link 
@@ -72,7 +63,7 @@ export default async function AdminQuickStats() {
             <div style={{ 
               fontSize: '1.5rem', 
               fontWeight: 800, 
-              color: stat.urgent ? '#ef4444' : 'var(--primary)' 
+              color: 'var(--primary)' 
             }}>
               {stat.value}<span style={{ fontSize: '0.875rem', marginLeft: '4px', fontWeight: 500, color: 'var(--sub-text)' }}>{stat.unit}</span>
             </div>
