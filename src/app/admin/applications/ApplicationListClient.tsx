@@ -25,7 +25,7 @@ interface Application {
 }
 
 export default function ApplicationListClient({ initialApplications }: { initialApplications: Application[] }) {
-  const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
+  const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('PENDING');
   const [weekOffset, setWeekOffset] = useState(0);
 
   const weekInterval = useMemo(() => {
