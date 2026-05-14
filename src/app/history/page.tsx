@@ -34,11 +34,8 @@ export default async function HistoryPage() {
       <div className="container">
         <div style={{ marginBottom: '32px' }}>
           <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--text)' }}>
-            내 신청 내역
+            신청 내역
           </h1>
-          <p style={{ color: 'var(--sub-text)', marginTop: '8px' }}>
-            신청한 OPEN LAB 내역을 확인하고 관리할 수 있습니다.
-          </p>
         </div>
 
         <HistoryClient 

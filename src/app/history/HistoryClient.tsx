@@ -78,7 +78,7 @@ export default function HistoryClient({ initialApplications, currentUser }: Hist
     <div className="history-list">
       {applications.length === 0 ? (
         <div className="empty-state">
-          신청 내역이 없습니다.
+          신청 내역 없음
         </div>
       ) : (
         applications.map(app => (
@@ -104,10 +104,6 @@ export default function HistoryClient({ initialApplications, currentUser }: Hist
               <div className="info-row">
                 <span className="label">술기</span>
                 <span className="value">{app.skills.map(as => as.skill.name).join(', ')}</span>
-              </div>
-              <div className="info-row">
-                <span className="label">인원</span>
-                <span className="value">{app.participants.length}명</span>
               </div>
               <div className="info-row">
                 <span className="label">신청시각</span>
@@ -146,11 +142,11 @@ export default function HistoryClient({ initialApplications, currentUser }: Hist
               )}
 
               {(app.status === 'APPROVED' || app.status === 'COMPLETED') && app.usageLogs.length === 0 && (
-                <Link href={`/usage-logs/new?applicationId=${app.id}`} className="btn-small btn-primary">실습 소감 작성</Link>
+                <Link href={`/usage-logs/new?applicationId=${app.id}`} className="btn-small btn-primary">사용일지 작성</Link>
               )}
               
               {app.usageLogs.length > 0 && (
-                <span className="log-status">실습 소감 제출 완료</span>
+                <span className="log-status">사용일지 제출 완료</span>
               )}
             </div>
           </div>

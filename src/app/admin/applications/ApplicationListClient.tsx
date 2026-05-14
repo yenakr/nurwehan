@@ -102,7 +102,7 @@ export default function ApplicationListClient({ initialApplications }: { initial
 
       <div className="grouped-list">
         {grouped.length === 0 ? (
-          <div className="empty-msg">선택한 주간에 내역이 없습니다.</div>
+          <div className="empty-msg">신청 내역 없음</div>
         ) : (
           grouped.map(dateGroup => (
             <div key={dateGroup.dateStr} className="date-group-card">

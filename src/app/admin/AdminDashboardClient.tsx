@@ -33,13 +33,13 @@ export default function AdminDashboardClient({
           className={activeTab === 'applications' ? 'active' : ''} 
           onClick={() => setActiveTab('applications')}
         >
-          신청 현황 관리
+          신청 현황
         </button>
         <button 
           className={activeTab === 'users' ? 'active' : ''} 
           onClick={() => setActiveTab('users')}
         >
-          학생 및 가입 관리
+          가입 승인
         </button>
         <button 
           className={activeTab === 'skills' ? 'active' : ''} 
@@ -51,7 +51,7 @@ export default function AdminDashboardClient({
           className={activeTab === 'attendance' ? 'active' : ''} 
           onClick={() => setActiveTab('attendance')}
         >
-          출석 및 정리 관리
+          출석·정리 관리
         </button>
       </div>
 

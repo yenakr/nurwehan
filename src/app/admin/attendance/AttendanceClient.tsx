@@ -178,7 +178,7 @@ export default function AttendanceClient({
       <div className="no-print admin-header-nav">
         <div className="title-row">
           <h1>승인 명단</h1>
-          <p>학생들의 출석 상태를 실시간으로 관리하세요.</p>
+          <p>출석 상태 관리</p>
         </div>
         
         <div className="controls-box">
@@ -247,7 +247,7 @@ export default function AttendanceClient({
                 </div>
                 <div className="header-right">
                   <button className="btn-print-slot" onClick={() => handlePrintSlot(group.timeLabel)}>
-                    🖨️ 명단 출력
+                    🖨️ 명단 인쇄
                   </button>
                 </div>
               </div>

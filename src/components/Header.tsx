@@ -70,7 +70,9 @@ export default function Header() {
           {!loading && (
             isLoggedIn ? (
               <>
-                <span className="user-name-label">{userName}님</span>
+                <span className="user-name-label">
+                  {userName}{userName === '시스템 관리자' ? '' : '님'}
+                </span>
                 <div className="hide-mobile">
                   <LogoutButton />
                 </div>

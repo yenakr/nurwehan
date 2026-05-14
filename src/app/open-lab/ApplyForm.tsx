@@ -257,7 +257,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
             checked={confirmedNotice} 
             onChange={(e) => setConfirmedNotice(e.target.checked)}
           />
-          <span>OPEN LAB 이용 안내 및 유의사항을 확인했습니다. (필수)</span>
+          <span>OPEN LAB 이용 안내 확인 (필수)</span>
         </label>
         <Link href="/notices" target="_blank" className="notice-link">이용 안내 전문 보기</Link>
       </section>

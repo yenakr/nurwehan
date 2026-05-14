@@ -45,8 +45,8 @@ export default function HomeHistory() {
   if (!data) {
     return (
       <div style={{ textAlign: 'center', padding: '24px 0', color: 'var(--sub-text)' }}>
-        <p style={{ fontSize: '0.875rem' }}>로그인 후 내역 확인이 가능합니다.</p>
-        <Link href="/login" style={{ color: 'var(--primary)', fontWeight: '700', fontSize: '0.8125rem', marginTop: '8px', display: 'inline-block' }}>로그인 →</Link>
+        <p style={{ fontSize: '0.875rem' }}>로그인 필요</p>
+        <Link href="/login" style={{ color: 'var(--primary)', fontWeight: '700', fontSize: '0.8125rem', marginTop: '8px', display: 'inline-block' }}>로그인</Link>
       </div>
     );
   }
@@ -54,7 +54,7 @@ export default function HomeHistory() {
   if (data.length === 0) {
     return (
       <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--sub-text)' }}>
-        <p style={{ fontSize: '0.875rem' }}>최근 신청 내역이 없습니다.</p>
+        <p style={{ fontSize: '0.875rem' }}>신청 내역 없음</p>
       </div>
     );
   }

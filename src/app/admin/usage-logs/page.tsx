@@ -24,8 +24,8 @@ export default async function AdminUsageLogsPage({ searchParams }: { searchParam
     <main style={{ padding: '40px 0', backgroundColor: 'var(--muted-background)', flex: 1 }}>
       <div className="container">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: '800' }}>실습 소감 내역</h1>
-          <Link href="/admin" className="btn-outline">대시보드로 돌아가기</Link>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: '800' }}>사용일지 현황</h1>
+          <Link href="/admin" className="btn-outline">대시보드</Link>
         </div>
 
         <div className="card" style={{ padding: 0 }}>
@@ -36,7 +36,7 @@ export default async function AdminUsageLogsPage({ searchParams }: { searchParam
                   <th>제출 일시</th>
                   <th>사용자</th>
                   <th>사용 일시</th>
-                  <th>실습 소감</th>
+                  <th>사용일지</th>
                   <th>정리 상태</th>
                   <th>상세</th>
                 </tr>
@@ -82,7 +82,7 @@ export default async function AdminUsageLogsPage({ searchParams }: { searchParam
                 )) : (
                   <tr>
                     <td colSpan={6} style={{ textAlign: 'center', padding: '60px', color: 'var(--sub-text)' }}>
-                      제출된 실습 소감이 없습니다.
+                      내역 없음
                     </td>
                   </tr>
                 )}

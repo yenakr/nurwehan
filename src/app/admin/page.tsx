@@ -80,11 +80,8 @@ export default async function AdminPage() {
       <div className="container">
         <div style={{ marginBottom: '32px' }}>
           <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--text)' }}>
-            관리자 통합 대시보드
+            관리자 대시보드
           </h1>
-          <p style={{ color: 'var(--sub-text)', marginTop: '8px' }}>
-            {user.name} 관리자님, 오늘 하루도 수고 많으십니다.
-          </p>
         </div>
 
         <AdminDashboardClient 
