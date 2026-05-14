@@ -62,21 +62,29 @@ export default function HomeHistory() {
   return (
     <div className="home-history-container">
       <div className="history-list">
-        {data.map(app => (
-          <Link href={`/history/${app.id}`} key={app.id} className="history-row">
-            <div className="row-left">
-              <span className={`status-dot ${app.status.toLowerCase()}`}>
-                {getStatusText(app.status)}
-              </span>
-              <span className="date-time">
-                {formatDate(app.slot.date)} {app.slot.startTime}
-              </span>
-            </div>
-            <div className="row-right">
-              <span className="room-name">{app.slot.room}</span>
-            </div>
-          </Link>
-        ))}
+        {data.map(app => {
+          const skillNames = [
+            ...app.skills.map((s: any) => s.skill.name),
+            ...(app.otherSkillName ? [app.otherSkillName] : [])
+          ].join(', ');
+
+          return (
+            <Link href={`/history/${app.id}`} key={app.id} className="history-row">
+              <div className="row-content">
+                <span className={`status-dot ${app.status.toLowerCase()}`}>
+                  {getStatusText(app.status)}
+                </span>
+                <div className="info-wrap">
+                  <span className="date-time">
+                    {formatDate(app.slot.date)} {app.slot.startTime}
+                  </span>
+                  <span className="divider">|</span>
+                  <span className="skill-name">{skillNames || '기술 미지정'}</span>
+                </div>
+              </div>
+            </Link>
+          );
+        })}
       </div>
       
       <div className="view-all-container">
@@ -94,13 +102,11 @@ export default function HomeHistory() {
         }
         .history-row {
           display: flex;
-          justify-content: space-between;
           align-items: center;
           padding: 12px 4px;
           border-bottom: 1px solid #f1f5f9;
           text-decoration: none;
           transition: all 0.2s;
-          gap: 12px;
         }
         .history-row:hover {
           background: #fcfcfc;
@@ -110,15 +116,17 @@ export default function HomeHistory() {
           border-bottom: none;
         }
         
-        .row-left {
+        .row-content {
           display: flex;
           align-items: center;
           gap: 12px;
-          flex-wrap: wrap;
+          overflow: hidden;
         }
-        .row-right {
-          text-align: right;
-          flex-shrink: 0;
+        .info-wrap {
+          display: flex;
+          align-items: center;
+          gap: 8px;
+          overflow: hidden;
         }
 
         .status-dot {
@@ -128,25 +136,33 @@ export default function HomeHistory() {
           border-radius: 4px;
           min-width: 36px;
           text-align: center;
+          flex-shrink: 0;
         }
-        /* 상태별 색상 (사용자 요구사항 반영) */
-        .status-dot.pending { background: #fef9c3; color: #a16207; } /* 노랑 */
-        .status-dot.approved { background: #dcfce7; color: #15803d; } /* 초록 */
-        .status-dot.rejected { background: #fee2e2; color: #b91c1c; } /* 빨강 */
-        .status-dot.completed { background: #f1f5f9; color: #475569; } /* 회색 */
-        .status-dot.cancelled { background: #f1f5f9; color: #94a3b8; } /* 회색 */
+        .status-dot.pending { background: #fef9c3; color: #a16207; }
+        .status-dot.approved { background: #dcfce7; color: #15803d; }
+        .status-dot.rejected { background: #fee2e2; color: #b91c1c; }
+        .status-dot.completed { background: #f1f5f9; color: #475569; }
+        .status-dot.cancelled { background: #f1f5f9; color: #94a3b8; }
 
         .date-time {
           font-size: 0.875rem;
           font-weight: 600;
           color: var(--text);
-          letter-spacing: -0.01em;
+          white-space: nowrap;
         }
         
-        .room-name {
+        .divider {
+          color: #e2e8f0;
+          font-size: 0.75rem;
+        }
+
+        .skill-name {
           font-size: 0.8125rem;
           color: var(--sub-text);
           font-weight: 500;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
         }
 
         .view-all-container {
@@ -167,14 +183,12 @@ export default function HomeHistory() {
         }
 
         @media (max-width: 480px) {
-          .history-row {
-            flex-direction: column;
-            align-items: flex-start;
-            gap: 6px;
-            padding: 12px 8px;
+          .info-wrap {
+            flex-wrap: wrap;
+            gap: 4px 8px;
           }
-          .row-right {
-            padding-left: 48px;
+          .divider {
+            display: none;
           }
         }
       `}</style>

@@ -16,7 +16,12 @@ export async function GET(request: NextRequest) {
       where: { representativeUserId: session.user.id },
       take: limit,
       orderBy: { createdAt: 'desc' },
-      include: { slot: true }
+      include: { 
+        slot: true,
+        skills: {
+          include: { skill: true }
+        }
+      }
     });
 
     return NextResponse.json(applications);
