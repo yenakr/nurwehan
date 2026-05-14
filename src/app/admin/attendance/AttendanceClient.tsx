@@ -177,7 +177,7 @@ export default function AttendanceClient({
     <div className={`attendance-container ${printingSlot ? 'printing-mode' : ''}`}>
       <div className="no-print admin-header-nav">
         <div className="title-row">
-          <h1>신청자 명단</h1>
+          <h1>승인 명단</h1>
           <p>학생들의 출석 상태를 실시간으로 관리하세요.</p>
         </div>
         
@@ -254,7 +254,7 @@ export default function AttendanceClient({
 
               {/* Print Header (Visible only when printing) */}
               <div className="print-header">
-                <h1>신청자 명단 ({formatInTimeZone(new Date(currentDate), TIME_ZONE, 'yyyy.MM.dd')})</h1>
+                <h1>승인 명단 ({formatInTimeZone(new Date(currentDate), TIME_ZONE, 'yyyy.MM.dd')})</h1>
                 <div className="print-info">
                    <span>시간: {group.timeLabel}</span>
                    <span>인원: {group.roomGroups.reduce((sum, rg) => sum + rg.participants.length, 0)}명</span>

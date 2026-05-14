@@ -112,7 +112,7 @@ export default function ApplicationListClient({ initialApplications }: { initial
                   href={`/admin/attendance?date=${dateGroup.dateStr}`}
                   className="jump-link-main no-print"
                 >
-                  전체 명단 보기 ↗
+                  승인 명단 ↗
                 </Link>
               </div>
               
