@@ -69,12 +69,6 @@ export default async function AdminAttendancePage({ searchParams }: { searchPara
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '40px 0' }}>
       <div className="container" style={{ maxWidth: '1000px', padding: '40px 20px' }}>
-        <div className="flex-between" style={{ marginBottom: '32px' }}>
-          <div>
-            <h1 style={{ fontSize: '1.75rem', fontWeight: '800' }}>일자/시간별 출석부</h1>
-            <p style={{ color: 'var(--sub-text)', marginTop: '4px' }}>날짜와 시간대를 선택하여 학생들의 출석 상태를 관리하세요.</p>
-          </div>
-        </div>
         
         <AttendanceClient 
           initialParticipants={participants as any} 

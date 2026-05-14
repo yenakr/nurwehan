@@ -45,8 +45,7 @@ interface TimeGroup {
 
 export default function AttendanceClient({ 
   initialParticipants, 
-  selectedDate,
-  initialTime
+  selectedDate
 }: { 
   initialParticipants: Participant[];
   selectedDate: string;
@@ -58,7 +57,6 @@ export default function AttendanceClient({
   const [loading, setLoading] = useState<boolean>(false);
   const [updateLoading, setUpdateLoading] = useState<string | null>(null);
   const [expandedSlots, setExpandedSlots] = useState<string[]>([]);
-  const [filterTime, setFilterTime] = useState<string | null>(initialTime || null);
   const [printingSlot, setPrintingSlot] = useState<string | null>(null);
 
   // Fetch data when date changes
@@ -93,8 +91,6 @@ export default function AttendanceClient({
     const app = p.application;
     const timeLabel = `${app.slot.startTime} ~ ${app.slot.endTime}`;
     const room = app.slot.room;
-
-    if (filterTime && !timeLabel.includes(filterTime)) return acc;
 
     let timeGroup = acc.find(g => g.timeLabel === timeLabel);
     if (!timeGroup) {
@@ -175,8 +171,8 @@ export default function AttendanceClient({
     <div className={`attendance-container ${printingSlot ? 'printing-mode' : ''}`}>
       <div className="no-print admin-header-nav">
         <div className="title-row">
-          <h1>일자/시간별 출석부</h1>
-          <p>날짜와 시간대를 선택하여 학생들의 출석 상태를 실시간으로 관리하세요.</p>
+          <h1>신청자 명단</h1>
+          <p>학생들의 출석 상태를 실시간으로 관리하세요.</p>
         </div>
         
         <div className="controls-box">
@@ -213,26 +209,19 @@ export default function AttendanceClient({
             </div>
           </div>
         </div>
-
-        {filterTime && (
-          <div className="filter-info">
-            <span className="filter-badge">⏰ {filterTime} 필터링 중</span>
-            <button className="reset-link" onClick={() => setFilterTime(null)}>필터 해제</button>
-          </div>
-        )}
       </div>
 
       <div className="attendance-content">
         {loading ? (
           <div className="premium-loading">
             <div className="loader-ring"></div>
-            <p>데이터를 안전하게 불러오는 중입니다...</p>
+            <p>데이터를 불러오는 중입니다...</p>
           </div>
         ) : processedGroups.length === 0 ? (
           <div className="premium-empty">
              <div className="empty-icon">📅</div>
-             <h3>승인된 내역이 없습니다.</h3>
-             <p>선택하신 날짜에 승인된 OPEN LAB 신청이 존재하지 않습니다.</p>
+             <h3>신청 내역이 없습니다.</h3>
+             <p>해당 날짜에 승인된 OPEN LAB 신청이 존재하지 않습니다.</p>
           </div>
         ) : (
           processedGroups.map((group) => (
@@ -248,14 +237,14 @@ export default function AttendanceClient({
                 </div>
                 <div className="header-right">
                   <button className="btn-print-slot" onClick={() => handlePrintSlot(group.timeLabel)}>
-                    🖨️ 이 시간대 인쇄
+                    🖨️ 명단 출력
                   </button>
                 </div>
               </div>
 
               {/* Print Header (Visible only when printing) */}
               <div className="print-header">
-                <h1>출석부 ({formatInTimeZone(new Date(currentDate), TIME_ZONE, 'yyyy.MM.dd')})</h1>
+                <h1>신청자 명단 ({formatInTimeZone(new Date(currentDate), TIME_ZONE, 'yyyy.MM.dd')})</h1>
                 <div className="print-info">
                    <span>시간: {group.timeLabel}</span>
                    <span>인원: {group.roomGroups.reduce((sum, rg) => sum + rg.participants.length, 0)}명</span>
@@ -341,56 +330,58 @@ export default function AttendanceClient({
 
       <style jsx global>{`
         .attendance-container { 
-          max-width: 1200px; 
+          width: 100%;
+          max-width: 1400px;
           margin: 0 auto; 
-          padding: 20px; 
+          padding: 0 20px 40px; 
           font-family: 'Pretendard', sans-serif;
         }
 
         /* Header UI */
-        .admin-header-nav { margin-bottom: 40px; }
-        .title-row h1 { font-size: 2rem; font-weight: 900; color: var(--text); margin-bottom: 8px; }
-        .title-row p { color: var(--sub-text); font-size: 1rem; }
+        .admin-header-nav { margin-bottom: 30px; }
+        .title-row h1 { font-size: 1.75rem; font-weight: 900; color: var(--text); margin-bottom: 6px; }
+        .title-row p { color: var(--sub-text); font-size: 0.9375rem; }
 
         .controls-box { 
           display: flex; 
           justify-content: space-between; 
-          align-items: flex-end; 
+          align-items: center; 
           background: white; 
-          padding: 24px; 
+          padding: 20px 24px; 
           border-radius: 16px; 
           border: 1px solid var(--border); 
-          box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-          margin-top: 24px;
-          gap: 24px;
+          box-shadow: 0 4px 12px rgba(0,0,0,0.04);
+          margin-top: 20px;
+          gap: 20px;
+          flex-wrap: wrap;
         }
 
-        .date-selector { display: flex; flex-direction: column; gap: 8px; }
-        .date-selector label { font-size: 0.8125rem; font-weight: 700; color: var(--sub-text); }
+        .date-selector { display: flex; align-items: center; gap: 12px; }
+        .date-selector label { font-size: 0.875rem; font-weight: 800; color: var(--sub-text); white-space: nowrap; }
         .premium-date-input { 
-          padding: 12px 16px; 
+          padding: 10px 14px; 
           border: 2px solid #f1f5f9; 
           border-radius: 10px; 
-          font-size: 1rem; 
-          font-weight: 700; 
+          font-size: 0.9375rem; 
+          font-weight: 800; 
           color: var(--primary);
           outline: none;
           transition: border-color 0.2s;
         }
         .premium-date-input:focus { border-color: var(--primary); }
 
-        .stats-dashboard { display: flex; gap: 12px; }
+        .stats-dashboard { display: flex; gap: 8px; flex-wrap: wrap; }
         .stat-card { 
           background: #f8fafc; 
-          padding: 12px 20px; 
-          border-radius: 12px; 
+          padding: 10px 16px; 
+          border-radius: 10px; 
           display: flex; 
           flex-direction: column; 
           align-items: center; 
-          min-width: 80px;
+          min-width: 70px;
         }
-        .stat-card .label { font-size: 0.6875rem; font-weight: 700; color: #64748b; margin-bottom: 4px; }
-        .stat-card .value { font-size: 1.25rem; font-weight: 900; color: #1e293b; }
+        .stat-card .label { font-size: 0.625rem; font-weight: 700; color: #64748b; margin-bottom: 2px; }
+        .stat-card .value { font-size: 1.125rem; font-weight: 900; color: #1e293b; }
 
         .stat-card.present { background: #f0fdf4; }
         .stat-card.present .value { color: #15803d; }
@@ -405,62 +396,62 @@ export default function AttendanceClient({
         .time-group-wrapper { 
           background: white; 
           border: 1px solid var(--border); 
-          border-radius: 20px; 
-          margin-bottom: 32px; 
+          border-radius: 16px; 
+          margin-bottom: 24px; 
           overflow: hidden;
-          box-shadow: 0 4px 12px rgba(0,0,0,0.03);
+          box-shadow: 0 2px 8px rgba(0,0,0,0.02);
         }
 
         .group-header { 
           display: flex; 
           justify-content: space-between; 
           align-items: center; 
-          padding: 24px 32px; 
+          padding: 16px 24px; 
           background: white;
           border-bottom: 1px solid #f1f5f9;
         }
-        .header-left { display: flex; align-items: center; gap: 16px; cursor: pointer; flex: 1; }
-        .chevron { color: #cbd5e1; font-size: 0.875rem; transition: transform 0.2s; }
+        .header-left { display: flex; align-items: center; gap: 12px; cursor: pointer; flex: 1; }
+        .chevron { color: #cbd5e1; font-size: 0.75rem; transition: transform 0.2s; }
         .chevron.down { transform: rotate(180deg); }
-        .header-left h2 { font-size: 1.5rem; font-weight: 900; color: var(--primary); }
-        .count-tag { background: #f1f5f9; color: #475569; padding: 4px 10px; border-radius: 20px; font-size: 0.8125rem; font-weight: 700; }
+        .header-left h2 { font-size: 1.25rem; font-weight: 900; color: var(--primary); }
+        .count-tag { background: #f1f5f9; color: #475569; padding: 3px 8px; border-radius: 12px; font-size: 0.75rem; font-weight: 700; }
 
         .btn-print-slot { 
-          background: #f8fafc; 
+          background: white; 
           border: 1px solid #e2e8f0; 
-          padding: 8px 16px; 
+          padding: 8px 14px; 
           border-radius: 8px; 
           font-size: 0.8125rem; 
-          font-weight: 700; 
+          font-weight: 800; 
           color: #475569; 
           cursor: pointer;
           transition: all 0.2s;
         }
-        .btn-print-slot:hover { background: #f1f5f9; color: var(--primary); border-color: var(--primary); }
+        .btn-print-slot:hover { background: #f8fafc; color: var(--primary); border-color: var(--primary); }
 
-        .group-body { padding: 32px; display: flex; flex-direction: column; gap: 40px; }
-        .room-label { font-size: 1.125rem; font-weight: 800; color: #1e293b; margin-bottom: 16px; padding-left: 8px; border-left: 4px solid var(--primary); }
+        .group-body { padding: 24px; display: flex; flex-direction: column; gap: 32px; }
+        .room-label { font-size: 1rem; font-weight: 800; color: #1e293b; margin-bottom: 12px; padding-left: 10px; border-left: 4px solid var(--primary); }
 
         /* Table Styling */
-        .premium-table-wrapper { overflow-x: auto; border-radius: 12px; border: 1px solid #f1f5f9; }
-        .attendance-table { width: 100%; border-collapse: collapse; min-width: 900px; background: white; }
-        .attendance-table th { background: #f8fafc; padding: 16px; font-size: 0.75rem; font-weight: 800; color: #64748b; text-align: left; text-transform: uppercase; border-bottom: 2px solid #f1f5f9; }
-        .attendance-table td { padding: 20px 16px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+        .premium-table-wrapper { width: 100%; overflow-x: auto; border-radius: 12px; border: 1px solid #f1f5f9; }
+        .attendance-table { width: 100%; border-collapse: collapse; background: white; }
+        .attendance-table th { background: #f8fafc; padding: 12px 14px; font-size: 0.75rem; font-weight: 800; color: #64748b; text-align: left; text-transform: uppercase; border-bottom: 2px solid #f1f5f9; }
+        .attendance-table td { padding: 14px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
         
-        .col-idx { width: 60px; text-align: center; color: #94a3b8; font-weight: 700; }
-        .col-student-id { width: 140px; font-family: monospace; font-weight: 600; color: #475569; }
-        .col-name { width: 120px; font-weight: 800; color: var(--text); }
-        .col-skill { min-width: 250px; }
-        .skill-pill-list { display: flex; flex-wrap: wrap; gap: 6px; }
-        .skill-pill { background: #f1f5f9; color: #475569; font-size: 0.75rem; font-weight: 700; padding: 3px 10px; border-radius: 6px; }
+        .col-idx { width: 50px; text-align: center; color: #94a3b8; font-weight: 700; }
+        .col-student-id { width: 110px; font-family: monospace; font-weight: 600; color: #475569; font-size: 0.875rem; }
+        .col-name { width: 100px; font-weight: 800; color: var(--text); font-size: 0.9375rem; }
+        .col-skill { min-width: 200px; }
+        .skill-pill-list { display: flex; flex-wrap: wrap; gap: 4px; }
+        .skill-pill { background: #f1f5f9; color: #475569; font-size: 0.7rem; font-weight: 700; padding: 2px 8px; border-radius: 4px; }
 
-        .col-attendance, .col-cleanup { width: 160px; }
-        .status-toggle { display: flex; background: #f1f5f9; padding: 3px; border-radius: 8px; }
+        .col-attendance, .col-cleanup { width: 140px; }
+        .status-toggle { display: flex; background: #f1f5f9; padding: 2px; border-radius: 8px; }
         .toggle-btn { 
           flex: 1; 
           border: none; 
           background: transparent; 
-          padding: 8px; 
+          padding: 6px; 
           font-size: 0.75rem; 
           font-weight: 800; 
           color: #94a3b8; 
@@ -470,10 +461,10 @@ export default function AttendanceClient({
         }
         .toggle-btn:disabled { opacity: 0.5; cursor: not-allowed; }
 
-        .toggle-btn.present.active { background: #22c55e; color: white; box-shadow: 0 2px 4px rgba(34,197,94,0.2); }
-        .toggle-btn.absent.active { background: #ef4444; color: white; box-shadow: 0 2px 4px rgba(239,68,68,0.2); }
-        .toggle-btn.good.active { background: var(--primary); color: white; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
-        .toggle-btn.bad.active { background: #f97316; color: white; box-shadow: 0 2px 4px rgba(249,115,22,0.2); }
+        .toggle-btn.present.active { background: #22c55e; color: white; box-shadow: 0 2px 4px rgba(34,197,94,0.1); }
+        .toggle-btn.absent.active { background: #ef4444; color: white; box-shadow: 0 2px 4px rgba(239,68,68,0.1); }
+        .toggle-btn.good.active { background: var(--primary); color: white; }
+        .toggle-btn.bad.active { background: #f97316; color: white; }
 
         .row-busy { opacity: 0.5; pointer-events: none; }
 
@@ -487,10 +478,7 @@ export default function AttendanceClient({
           .no-print { display: none !important; }
           .print-only { display: table-cell !important; }
           
-          /* Full container print reset */
           .attendance-container { width: 100% !important; max-width: none !important; margin: 0 !important; padding: 0 !important; }
-          
-          /* Hide other slots if printing specific slot */
           .printing-mode .time-group-wrapper:not(.print-target) { display: none !important; }
           
           .time-group-wrapper { border: none !important; box-shadow: none !important; width: 100% !important; margin: 0 !important; border-radius: 0 !important; }
@@ -514,7 +502,6 @@ export default function AttendanceClient({
           .attendance-table th, .attendance-table td { border: 1px solid #000 !important; padding: 10px 8px !important; font-size: 0.9rem !important; color: #000 !important; word-break: break-all; }
           .attendance-table th { background: #f0f0f0 !important; font-weight: 900 !important; }
           
-          /* Explicit Print Column Widths to prevent cutoff */
           .col-idx { width: 7% !important; }
           .col-student-id { width: 22% !important; }
           .col-name { width: 18% !important; }
