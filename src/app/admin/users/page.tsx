@@ -17,18 +17,28 @@ export default async function AdminUsersPage() {
     where: {
       role: 'STUDENT'
     },
-    orderBy: {
-      createdAt: 'desc'
-    }
+    include: {
+      restrictions: {
+        where: {
+          isActive: true,
+          endDate: { gte: new Date() }
+        }
+      },
+      warnings: true
+    },
+    orderBy: [
+      { grade: 'asc' },
+      { studentId: 'asc' }
+    ]
   });
 
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '40px 0' }}>
-      <div className="container" style={{ maxWidth: '1000px' }}>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '24px', borderBottom: '2px solid var(--primary)', paddingBottom: '12px', display: 'inline-block' }}>
-          학생 승인 관리
+      <div className="container" style={{ maxWidth: '1200px' }}>
+        <h1 style={{ fontSize: '1.75rem', fontWeight: '800', marginBottom: '32px', color: 'var(--primary)' }}>
+          학생 및 페널티 관리
         </h1>
-        <UserList initialUsers={users} />
+        <UserList initialUsers={users as any} />
       </div>
     </main>
   );

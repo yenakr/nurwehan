@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { formatInTimeZone } from 'date-fns-tz';
+import { addDays, format, parseISO } from 'date-fns';
 
 const TIME_ZONE = 'Asia/Seoul';
 
@@ -59,7 +60,6 @@ export default function AttendanceClient({
   const [expandedSlots, setExpandedSlots] = useState<string[]>([]);
   const [printingSlot, setPrintingSlot] = useState<string | null>(null);
 
-  // Fetch data when date changes
   useEffect(() => {
     if (currentDate === selectedDate && participants.length > 0) return;
     
@@ -86,6 +86,12 @@ export default function AttendanceClient({
     
     fetchData();
   }, [currentDate]);
+
+  const changeDate = (days: number) => {
+    const current = parseISO(currentDate);
+    const next = addDays(current, days);
+    setCurrentDate(format(next, 'yyyy-MM-dd'));
+  };
 
   const processedGroups = participants.reduce<TimeGroup[]>((acc, p) => {
     const app = p.application;
@@ -176,14 +182,18 @@ export default function AttendanceClient({
         </div>
         
         <div className="controls-box">
-          <div className="date-selector">
-            <label>점검 일자</label>
-            <input 
-              type="date" 
-              value={currentDate} 
-              onChange={(e) => setCurrentDate(e.target.value)}
-              className="premium-date-input"
-            />
+          <div className="date-controls">
+            <button className="nav-btn" onClick={() => changeDate(-1)}>이전날</button>
+            <div className="date-selector">
+              <label>점검 일자</label>
+              <input 
+                type="date" 
+                value={currentDate} 
+                onChange={(e) => setCurrentDate(e.target.value)}
+                className="premium-date-input"
+              />
+            </div>
+            <button className="nav-btn" onClick={() => changeDate(1)}>다음날</button>
           </div>
           
           <div className="stats-dashboard">
@@ -256,7 +266,7 @@ export default function AttendanceClient({
                   {group.roomGroups.map((roomGroup) => (
                     <div key={roomGroup.room} className="room-container">
                       <div className="room-label">
-                        📍 {roomGroup.room}
+                        {roomGroup.room}
                       </div>
                       
                       <div className="premium-table-wrapper">
@@ -355,6 +365,20 @@ export default function AttendanceClient({
           gap: 20px;
           flex-wrap: wrap;
         }
+
+        .date-controls { display: flex; align-items: center; gap: 16px; }
+        .nav-btn { 
+          background: #f8fafc; 
+          border: 1px solid #e2e8f0; 
+          padding: 8px 14px; 
+          border-radius: 10px; 
+          font-size: 0.8125rem; 
+          font-weight: 700; 
+          color: #64748b; 
+          cursor: pointer; 
+          transition: all 0.2s; 
+        }
+        .nav-btn:hover { background: #f1f5f9; color: var(--primary); border-color: var(--primary); }
 
         .date-selector { display: flex; align-items: center; gap: 12px; }
         .date-selector label { font-size: 0.875rem; font-weight: 800; color: var(--sub-text); white-space: nowrap; }

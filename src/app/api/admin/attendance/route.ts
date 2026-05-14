@@ -161,14 +161,14 @@ async function createCleanupWarning(participant: any, applicationId: string, adm
 
     if (!existingRestriction) {
       const now = new Date();
-      const endDate = new Date(now.getTime() + 14 * 24 * 60 * 60 * 1000); // 2 weeks
+      const endDate = new Date(now.getTime() + 100 * 365 * 24 * 60 * 60 * 1000); // 100 years (Permanent)
       
       await prisma.restriction.create({
         data: {
           userId: participant.userId,
           studentId: participant.studentId,
           studentName: participant.name,
-          reason: '정리 불량 3회 누적 (2주 제한)',
+          reason: '정리 불량 3회 누적 (영구 제한)',
           startDate: now,
           endDate: endDate,
           createdById: adminId

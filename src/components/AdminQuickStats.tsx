@@ -39,9 +39,9 @@ export default async function AdminQuickStats() {
         gap: '16px' 
       }}>
         {[
-          { label: '가입 신청 대기', value: pendingUsers, unit: '건', href: '/admin/users' },
+          { label: '가입 신청 대기', value: pendingUsers, unit: '건', href: '/admin/users?tab=pending' },
           { label: 'OPEN LAB 신청 대기', value: pendingApps, unit: '건', href: '/admin/applications' },
-          { label: '신청 제한 학생', value: restrictedStudents, unit: '명', href: '/admin/restrictions' },
+          { label: '신청 제한 학생', value: restrictedStudents, unit: '명', href: '/admin/users?tab=restricted' },
         ].map((stat, i) => (
           <Link 
             key={i}
