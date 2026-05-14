@@ -21,14 +21,27 @@ export async function PATCH(request: NextRequest) {
     }
 
     const body = await request.json();
-    const { grade, phone, email } = body;
+    const { name, studentId, grade, phone, email } = body;
+
+    // Fetch current user status
+    const currentUser = await prisma.user.findUnique({
+      where: { id: user.id }
+    });
+
+    if (!currentUser) return NextResponse.json({ message: '사용자를 찾을 수 없습니다.' }, { status: 404 });
+
+    // If status is REJECTED, auto-reset to PENDING when user updates info
+    const newStatus = currentUser.approvalStatus === 'REJECTED' ? 'PENDING' : currentUser.approvalStatus;
 
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
       data: {
+        ...(name && { name }),
+        ...(studentId && { studentId }),
         grade,
         phone,
-        email
+        email,
+        approvalStatus: newStatus
       }
     });
 

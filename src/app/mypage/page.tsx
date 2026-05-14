@@ -55,7 +55,8 @@ export default async function MyPage() {
             grade: fullUser.grade,
             email: fullUser.email,
             phone: fullUser.phone,
-            approvalStatus: fullUser.approvalStatus
+            approvalStatus: fullUser.approvalStatus,
+            rejectedReason: fullUser.rejectedReason
           }} />
 
           {/* Status Overview Section */}
