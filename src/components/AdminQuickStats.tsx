@@ -18,10 +18,15 @@ export default async function AdminQuickStats() {
   ] = await Promise.all([
     prisma.user.count({ where: { approvalStatus: 'PENDING' } }),
     prisma.application.count({ where: { status: 'PENDING' } }),
-    prisma.restriction.count({
+    prisma.user.count({
       where: {
-        isActive: true,
-        endDate: { gte: now }
+        role: 'STUDENT',
+        restrictions: {
+          some: {
+            isActive: true,
+            endDate: { gte: now }
+          }
+        }
       }
     })
   ]);
