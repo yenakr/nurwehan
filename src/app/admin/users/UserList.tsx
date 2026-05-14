@@ -35,6 +35,7 @@ export default function UserList({ initialUsers }: { initialUsers: User[] }) {
   const searchParams = useSearchParams();
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [loading, setLoading] = useState<string | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const [activeTab, setActiveTab] = useState<'PENDING' | 'ALL' | 'RESTRICTED'>('ALL');
 
   useEffect(() => {
@@ -79,27 +80,56 @@ export default function UserList({ initialUsers }: { initialUsers: User[] }) {
     }
   };
 
-  const pendingUsers = users.filter(u => u.approvalStatus === 'PENDING');
-  const restrictedUsers = users.filter(u => u.restrictions.length > 0);
+  const filteredUsers = useMemo(() => {
+    let filtered = users;
+    if (searchTerm) {
+      const lowerSearch = searchTerm.toLowerCase();
+      filtered = filtered.filter(u => 
+        u.name.toLowerCase().includes(lowerSearch) || 
+        u.studentId.includes(lowerSearch)
+      );
+    }
+    return filtered;
+  }, [users, searchTerm]);
+
+  const pendingUsers = filteredUsers.filter(u => u.approvalStatus === 'PENDING');
+  const restrictedUsers = filteredUsers.filter(u => u.restrictions.length > 0);
   
   const groupedByGrade = useMemo(() => {
     const groups: { [key: number]: User[] } = {};
-    users.forEach(u => {
+    filteredUsers.forEach(u => {
       const g = u.grade || 0;
       if (!groups[g]) groups[g] = [];
       groups[g].push(u);
     });
     return groups;
-  }, [users]);
+  }, [filteredUsers]);
 
   const sortedGrades = Object.keys(groupedByGrade).map(Number).sort((a, b) => a - b);
 
   return (
     <div className="users-management">
-      <div className="tabs no-print">
-        <button className={`tab-btn ${activeTab === 'ALL' ? 'active' : ''}`} onClick={() => setActiveTab('ALL')}>전체 학생 ({users.length})</button>
-        <button className={`tab-btn ${activeTab === 'PENDING' ? 'active' : ''}`} onClick={() => setActiveTab('PENDING')}>가입 대기 ({pendingUsers.length})</button>
-        <button className={`tab-btn ${activeTab === 'RESTRICTED' ? 'active' : ''}`} onClick={() => setActiveTab('RESTRICTED')}>신청 제한 ({restrictedUsers.length})</button>
+      <div className="management-header">
+        <div className="tabs no-print">
+          <button className={`tab-btn ${activeTab === 'ALL' ? 'active' : ''}`} onClick={() => setActiveTab('ALL')}>
+            전체 학생 ({users.length})
+          </button>
+          <button className={`tab-btn ${activeTab === 'PENDING' ? 'active' : ''}`} onClick={() => setActiveTab('PENDING')}>
+            가입 대기 ({users.filter(u => u.approvalStatus === 'PENDING').length})
+          </button>
+          <button className={`tab-btn ${activeTab === 'RESTRICTED' ? 'active' : ''}`} onClick={() => setActiveTab('RESTRICTED')}>
+            참여 불가 ({users.filter(u => u.restrictions.length > 0).length})
+          </button>
+        </div>
+
+        <div className="search-bar">
+          <input 
+            type="text" 
+            placeholder="이름 또는 학번 검색..." 
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+          />
+        </div>
       </div>
 
       <div className="tab-content">
@@ -145,8 +175,9 @@ export default function UserList({ initialUsers }: { initialUsers: User[] }) {
                  <tr>
                    <th>학생 정보</th>
                    <th>학년</th>
-                   <th>제한 사유</th>
-                   <th>제한 기간</th>
+                   <th>누적 페널티</th>
+                   <th>불가 사유</th>
+                   <th>불가 기간</th>
                  </tr>
                </thead>
                <tbody>
@@ -159,6 +190,16 @@ export default function UserList({ initialUsers }: { initialUsers: User[] }) {
                         </div>
                      </td>
                      <td>{user.grade}학년</td>
+                     <td>
+                        <div className="penalty-status">
+                           {user.warnings.length > 0 && (
+                             <span className={`penalty-badge cleanup ${user.warnings.length >= 3 ? 'critical' : ''}`}>
+                               정리불량 누적 {user.warnings.length}회
+                             </span>
+                           )}
+                           {user.warnings.length === 0 && <span className="clean-status">-</span>}
+                        </div>
+                     </td>
                      <td>
                         {user.restrictions.map(r => (
                           <div key={r.id} className="penalty-tag red">{r.reason}</div>
@@ -173,7 +214,7 @@ export default function UserList({ initialUsers }: { initialUsers: User[] }) {
                      </td>
                    </tr>
                  ))}
-                 {restrictedUsers.length === 0 && <tr><td colSpan={4} className="empty-td">신청 제한 학생이 없습니다.</td></tr>}
+                 {restrictedUsers.length === 0 && <tr><td colSpan={5} className="empty-td">참여 불가 학생이 없습니다.</td></tr>}
                </tbody>
              </table>
           </div>
@@ -190,7 +231,7 @@ export default function UserList({ initialUsers }: { initialUsers: User[] }) {
                       <tr>
                         <th>학번/이름</th>
                         <th>학년 수정</th>
-                        <th>페널티 현황</th>
+                        <th style={{ width: '200px' }}>누적 페널티</th>
                         <th>상태</th>
                       </tr>
                     </thead>
@@ -224,10 +265,10 @@ export default function UserList({ initialUsers }: { initialUsers: User[] }) {
                                   정리불량 {user.warnings.length}회
                                 </span>
                               )}
-                              {user.restrictions.some(r => r.reason.includes('불참')) && (
-                                <span className="penalty-badge absent">불참 제한 중</span>
+                              {user.restrictions.length > 0 && (
+                                <span className="penalty-badge absent">참여 제한 중</span>
                               )}
-                              {user.warnings.length === 0 && user.restrictions.length === 0 && <span className="clean-status">정상</span>}
+                              {user.warnings.length === 0 && user.restrictions.length === 0 && <span className="clean-status">기록 없음</span>}
                             </div>
                           </td>
                           <td>
@@ -249,65 +290,106 @@ export default function UserList({ initialUsers }: { initialUsers: User[] }) {
       <style jsx>{`
         .users-management { padding: 0; font-family: 'Pretendard', sans-serif; }
         
-        .tabs { display: flex; gap: 8px; margin-bottom: 24px; background: #f1f5f9; padding: 6px; border-radius: 12px; width: fit-content; }
+        .management-header {
+          display: flex;
+          justify-content: space-between;
+          align-items: center;
+          margin-bottom: 32px;
+          gap: 20px;
+          flex-wrap: wrap;
+        }
+
+        .search-bar {
+          flex: 1;
+          min-width: 280px;
+          max-width: 400px;
+        }
+        .search-bar input {
+          width: 100%;
+          padding: 12px 20px;
+          border-radius: 12px;
+          border: 1px solid #e2e8f0;
+          font-size: 0.9375rem;
+          outline: none;
+          transition: all 0.2s;
+          background: white;
+          box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+        }
+        .search-bar input:focus {
+          border-color: var(--primary);
+          box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.1);
+        }
+
+        .tabs { display: flex; gap: 8px; background: #f1f5f9; padding: 6px; border-radius: 14px; width: fit-content; }
         .tab-btn { 
-          padding: 10px 20px; 
+          padding: 10px 24px; 
           border: none; 
           background: transparent; 
-          border-radius: 8px; 
-          font-size: 0.875rem; 
+          border-radius: 10px; 
+          font-size: 0.9375rem; 
           font-weight: 700; 
           color: #64748b; 
           cursor: pointer; 
           transition: all 0.2s; 
         }
-        .tab-btn.active { background: white; color: var(--primary); box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+        .tab-btn.active { background: white; color: var(--primary); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); }
 
-        .grade-group { margin-bottom: 40px; }
-        .grade-title { font-size: 1.125rem; font-weight: 900; color: #1e293b; margin-bottom: 16px; padding-left: 10px; border-left: 4px solid var(--primary); }
+        .grade-group { margin-bottom: 48px; }
+        .grade-title { font-size: 1.25rem; font-weight: 900; color: #1e293b; margin-bottom: 20px; padding-left: 14px; border-left: 5px solid var(--primary); letter-spacing: -0.02em; }
 
-        .user-section { background: white; border-radius: 16px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+        .user-section { background: white; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
         .admin-table { width: 100%; border-collapse: collapse; }
-        .admin-table th { background: #f8fafc; padding: 12px 20px; text-align: left; font-size: 0.75rem; font-weight: 800; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; }
-        .admin-table td { padding: 14px 20px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
+        .admin-table th { background: #f8fafc; padding: 16px 24px; text-align: left; font-size: 0.8125rem; font-weight: 800; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; letter-spacing: 0.05em; }
+        .admin-table td { padding: 18px 24px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
         
-        .user-id-name { display: flex; flex-direction: column; }
-        .user-id-name .name { font-size: 0.9375rem; font-weight: 800; color: #1e293b; }
-        .user-id-name .id { font-size: 0.75rem; color: #94a3b8; font-family: monospace; }
+        .user-id-name { display: flex; flex-direction: column; gap: 2px; }
+        .user-id-name .name { font-size: 1rem; font-weight: 800; color: #1e293b; }
+        .user-id-name .id { font-size: 0.8125rem; color: #94a3b8; font-family: 'JetBrains Mono', monospace; font-weight: 500; }
 
         .grade-select { 
-          padding: 6px 10px; 
+          padding: 8px 12px; 
           border: 1px solid #e2e8f0; 
-          border-radius: 8px; 
-          font-size: 0.8125rem; 
+          border-radius: 10px; 
+          font-size: 0.875rem; 
           font-weight: 600; 
           outline: none; 
           background: #f8fafc;
           cursor: pointer;
+          transition: all 0.2s;
         }
         .grade-select:focus { border-color: var(--primary); background: white; }
 
         .penalty-status { display: flex; gap: 8px; flex-wrap: wrap; }
-        .penalty-badge { font-size: 0.6875rem; font-weight: 800; padding: 2px 8px; border-radius: 4px; }
-        .penalty-badge.cleanup { background: #fee2e2; color: #ef4444; }
-        .penalty-badge.cleanup.critical { background: #7f1d1d; color: white; }
-        .penalty-badge.absent { background: #ffedd5; color: #f59e0b; }
-        .clean-status { font-size: 0.75rem; color: #94a3b8; font-weight: 500; }
+        .penalty-badge { font-size: 0.75rem; font-weight: 800; padding: 4px 10px; border-radius: 6px; display: flex; align-items: center; gap: 4px; }
+        .penalty-badge::before { content: '⚠️'; font-size: 0.7rem; }
+        .penalty-badge.cleanup { background: #fee2e2; color: #ef4444; border: 1px solid #fecaca; }
+        .penalty-badge.cleanup.critical { background: #7f1d1d; color: white; border-color: #7f1d1d; box-shadow: 0 2px 4px rgba(127, 29, 29, 0.2); }
+        .penalty-badge.absent { background: #ffedd5; color: #f59e0b; border: 1px solid #fed7aa; }
+        .clean-status { font-size: 0.8125rem; color: #94a3b8; font-weight: 500; display: flex; align-items: center; gap: 4px; }
+        .clean-status::before { content: '✅'; font-size: 0.7rem; }
 
-        .status-badge { font-size: 0.6875rem; font-weight: 800; padding: 3px 10px; border-radius: 20px; }
-        .status-badge.approved { background: #dcfce7; color: #15803d; }
-        .status-badge.pending { background: #fef9c3; color: #a16207; }
-        .status-badge.rejected { background: #fee2e2; color: #b91c1c; }
+        .status-badge { font-size: 0.75rem; font-weight: 800; padding: 4px 12px; border-radius: 20px; border: 1px solid transparent; }
+        .status-badge.approved { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
+        .status-badge.pending { background: #fef9c3; color: #a16207; border-color: #fef08a; }
+        .status-badge.rejected { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
 
-        .penalty-tag { font-size: 0.75rem; font-weight: 700; margin-bottom: 4px; }
+        .penalty-tag { font-size: 0.875rem; font-weight: 800; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
+        .penalty-tag::before { content: '🚫'; font-size: 0.8rem; }
         .penalty-tag.red { color: #ef4444; }
-        .penalty-date { font-size: 0.75rem; color: #94a3b8; margin-bottom: 4px; }
+        .penalty-date { font-size: 0.8125rem; color: #64748b; margin-bottom: 4px; font-weight: 500; padding-left: 24px; }
 
-        .btn-approve { background: var(--primary); color: white; border: none; padding: 6px 14px; border-radius: 8px; font-size: 0.75rem; font-weight: 800; cursor: pointer; transition: opacity 0.2s; }
-        .btn-approve:hover { opacity: 0.9; }
-        .btn-approve:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-approve { background: var(--primary); color: white; border: none; padding: 8px 18px; border-radius: 10px; font-size: 0.875rem; font-weight: 800; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0, 112, 243, 0.2); }
+        .btn-approve:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 6px 10px -1px rgba(0, 112, 243, 0.3); }
+        .btn-approve:active { transform: translateY(0); }
+        .btn-approve:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
 
-        .empty-td { text-align: center; color: #94a3b8; padding: 40px !important; font-size: 0.875rem; font-weight: 500; }
+        .empty-td { text-align: center; color: #94a3b8; padding: 60px !important; font-size: 1rem; font-weight: 500; }
+
+        @media (max-width: 768px) {
+          .management-header { flex-direction: column; align-items: stretch; }
+          .search-bar { max-width: none; }
+          .tabs { width: 100%; overflow-x: auto; }
+        }
       `}</style>
     </div>
   );

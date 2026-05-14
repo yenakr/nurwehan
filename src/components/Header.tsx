@@ -61,7 +61,7 @@ export default function Header() {
               <li><Link href="/history">신청 내역</Link></li>
               <li><Link href="/notices">공지사항</Link></li>
               <li><Link href="/mypage">마이페이지</Link></li>
-              {isAdmin && <li><Link href="/admin" className="admin-link">관리자</Link></li>}
+              {isAdmin && <li><Link href="/admin/users" className="admin-link">전체 학생 관리</Link></li>}
             </ul>
           </nav>
         </div>
@@ -101,7 +101,7 @@ export default function Header() {
               <li><Link href="/history">신청 내역</Link></li>
               <li><Link href="/notices">공지사항</Link></li>
               <li><Link href="/mypage">마이페이지</Link></li>
-              {isAdmin && <li><Link href="/admin" className="admin-link">관리자</Link></li>}
+              {isAdmin && <li><Link href="/admin/users" className="admin-link">전체 학생 관리</Link></li>}
               {isLoggedIn && (
                 <li style={{ marginTop: '20px', borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
                   <LogoutButton />
