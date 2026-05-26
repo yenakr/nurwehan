@@ -67,7 +67,7 @@ export default function UsageLogForm({ application, user }: Props) {
           </div>
           <div>
             <label style={{ color: 'var(--sub-text)', display: 'block', marginBottom: '4px' }}>대표 신청자</label>
-            <div style={{ fontWeight: '600' }}>{application.representativeUser.name}</div>
+            <div style={{ fontWeight: '600' }}>{application.representativeUser ? application.representativeUser.name : application.guestName}</div>
           </div>
         </div>
       </div>

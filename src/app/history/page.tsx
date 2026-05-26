@@ -15,6 +15,7 @@ export default async function HistoryPage() {
     where: {
       OR: [
         { representativeUserId: session.user.id },
+        { guestStudentId: session.user.studentId },
         { participants: { some: { studentId: session.user.studentId } } }
       ]
     },

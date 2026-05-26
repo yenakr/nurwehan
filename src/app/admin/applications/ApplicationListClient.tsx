@@ -19,13 +19,15 @@ interface Application {
   representativeUser: {
     name: string;
     studentId: string;
-  };
+  } | null;
+  guestName?: string | null;
+  guestStudentId?: string | null;
   skills: Array<{ skill: { name: string } }>;
   createdAt: Date | string;
 }
 
 export default function ApplicationListClient({ initialApplications }: { initialApplications: Application[] }) {
-  const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('PENDING');
+  const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('APPROVED');
   const [weekOffset, setWeekOffset] = useState(0);
 
   const weekInterval = useMemo(() => {
@@ -142,8 +144,18 @@ export default function ApplicationListClient({ initialApplications }: { initial
 
                           <div className="card-mid">
                             <div className="applicant-primary">
-                              <span className="name">{app.representativeUser.name}</span>
-                              <span className="student-id">{app.representativeUser.studentId}</span>
+                              {app.representativeUser ? (
+                                <>
+                                  <span className="name">{app.representativeUser.name}</span>
+                                  <span className="student-id">{app.representativeUser.studentId}</span>
+                                </>
+                              ) : (
+                                <>
+                                  <span className="name" style={{ color: '#0f766e' }}>{app.guestName}</span>
+                                  <span className="student-id">{app.guestStudentId}</span>
+                                  <span style={{ fontSize: '0.625rem', backgroundColor: '#ccfbf1', color: '#0f766e', padding: '2px 6px', borderRadius: '4px', fontWeight: '800' }}>비회원</span>
+                                </>
+                              )}
                             </div>
                           </div>
 

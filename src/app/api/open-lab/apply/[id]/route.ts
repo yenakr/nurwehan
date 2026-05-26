@@ -66,8 +66,8 @@ export async function PATCH(
       return NextResponse.json({ message: '권한이 없습니다.' }, { status: 403 });
     }
 
-    if (application.status !== 'PENDING') {
-      return NextResponse.json({ message: '승인 대기 상태인 신청만 수정할 수 있습니다.' }, { status: 400 });
+    if (application.status !== 'PENDING' && application.status !== 'APPROVED') {
+      return NextResponse.json({ message: '수정할 수 있는 상태가 아닙니다.' }, { status: 400 });
     }
 
     // 2. Validate Window
@@ -166,7 +166,7 @@ export async function DELETE(
     const application = await prisma.application.findUnique({ where: { id } });
     if (!application) return NextResponse.json({ message: '신청 내역 없음' }, { status: 404 });
     if (application.representativeUserId !== session.user.id) return NextResponse.json({ message: '권한 없음' }, { status: 403 });
-    if (application.status !== 'PENDING') return NextResponse.json({ message: '승인 대기 상태만 취소 가능' }, { status: 400 });
+    if (application.status !== 'PENDING' && application.status !== 'APPROVED') return NextResponse.json({ message: '대기 중이거나 승인 완료된 신청만 취소 가능' }, { status: 400 });
     
     await prisma.application.update({
       where: { id },

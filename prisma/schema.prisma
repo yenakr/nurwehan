@@ -104,10 +104,17 @@ model Application {
   id                   String            @id @default(cuid())
   slotId               String
   slot                 OpenLabSlot       @relation(fields: [slotId], references: [id])
-  representativeUserId String
-  representativeUser   User              @relation("RepresentedApplications", fields: [representativeUserId], references: [id])
+  representativeUserId String?
+  representativeUser   User?             @relation("RepresentedApplications", fields: [representativeUserId], references: [id])
   status               ApplicationStatus @default(PENDING)
   selectedGrade        Int?              // 신청 시 선택한 학년 구분
+  subject              String?           // 실습과목
+  professor            String?           // 담당교수
+  purpose              String?           // 실습목적
+  guestName            String?           // 비회원 신청자 이름
+  guestStudentId       String?           // 비회원 신청자 학번
+  guestPhone           String?           // 비회원 신청자 연락처
+  guestGrade           Int?              // 비회원 신청자 학년
   additionalRequest    String?
   rejectedReason       String?
   submittedAt          DateTime          @default(now())

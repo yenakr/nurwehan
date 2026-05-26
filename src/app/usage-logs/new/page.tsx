@@ -39,7 +39,7 @@ export default async function NewUsageLogPage({ searchParams }: { searchParams: 
 
   // Condition Check
   const isParticipant = application.participants.some(p => p.studentId === user.studentId);
-  const isRep = application.representativeUser.studentId === user.studentId;
+  const isRep = application.representativeUser?.studentId === user.studentId || application.guestStudentId === user.studentId;
   
   if (!isParticipant && !isRep) {
     return (

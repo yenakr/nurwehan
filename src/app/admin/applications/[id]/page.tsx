@@ -72,8 +72,17 @@ export default async function AdminApplicationDetailPage({ params }: { params: P
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--sub-text)', marginBottom: '4px' }}>신청자 (대표)</label>
-                <div style={{ fontWeight: '600' }}>{application.representativeUser.name} ({application.representativeUser.studentId})</div>
-                <div style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>{application.representativeUser.phone}</div>
+                {application.representativeUser ? (
+                  <>
+                    <div style={{ fontWeight: '600' }}>{application.representativeUser.name} ({application.representativeUser.studentId})</div>
+                    <div style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>{application.representativeUser.phone}</div>
+                  </>
+                ) : (
+                  <>
+                    <div style={{ fontWeight: '600' }}>{application.guestName} ({application.guestStudentId}) <span style={{ fontSize: '0.625rem', color: '#0f766e', backgroundColor: '#ccfbf1', padding: '2px 6px', borderRadius: '4px', marginLeft: '4px', fontWeight: '800' }}>비회원</span></div>
+                    <div style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>{application.guestPhone}</div>
+                  </>
+                )}
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--sub-text)', marginBottom: '4px' }}>사용 일시</label>
@@ -86,7 +95,22 @@ export default async function AdminApplicationDetailPage({ params }: { params: P
               </div>
               <div>
                 <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--sub-text)', marginBottom: '4px' }}>선택 학년</label>
-                <div style={{ fontWeight: '600' }}>{application.selectedGrade || application.representativeUser.grade}학년</div>
+                <div style={{ fontWeight: '600' }}>{application.selectedGrade || application.representativeUser?.grade || application.guestGrade}학년</div>
+              </div>
+            </div>
+
+            <div style={{ marginTop: '20px', paddingTop: '20px', borderTop: '1px solid var(--border)', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '24px' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--sub-text)', marginBottom: '4px' }}>실습 과목</label>
+                <div style={{ fontWeight: '600' }}>{application.subject || '-'}</div>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--sub-text)', marginBottom: '4px' }}>담당 교수</label>
+                <div style={{ fontWeight: '600' }}>{application.professor || '-'}</div>
+              </div>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--sub-text)', marginBottom: '4px' }}>실습 목적</label>
+                <div style={{ fontWeight: '600' }}>{application.purpose || '-'}</div>
               </div>
             </div>
           </div>
@@ -171,7 +195,7 @@ export default async function AdminApplicationDetailPage({ params }: { params: P
                       <td style={{ padding: '12px', fontSize: '0.875rem' }}>{p.studentId}</td>
                       <td style={{ padding: '12px', fontSize: '0.875rem', fontWeight: '500' }}>{p.name}</td>
                       <td style={{ padding: '12px', fontSize: '0.8125rem', color: 'var(--sub-text)' }}>
-                        {p.studentId === application.representativeUser.studentId ? '대표자' : '참여학생'}
+                        {p.studentId === (application.representativeUser?.studentId || application.guestStudentId) ? '대표자' : '참여학생'}
                       </td>
                     </tr>
                   ))}

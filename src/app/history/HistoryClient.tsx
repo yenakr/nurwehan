@@ -10,7 +10,8 @@ interface HistoryApplication {
   createdAt: Date | string;
   rejectedReason?: string | null;
   cancelReason?: string | null;
-  representativeUserId: string;
+  representativeUserId: string | null;
+  guestStudentId?: string | null;
   slot: {
     date: Date | string;
     startTime: string;
@@ -128,7 +129,7 @@ export default function HistoryClient({ initialApplications, currentUser }: Hist
             <div className="card-footer">
               <Link href={`/history/${app.id}`} className="btn-small btn-outline">상세보기</Link>
               
-              {app.status === 'PENDING' && app.representativeUserId === currentUser.id && (
+              {(app.status === 'PENDING' || app.status === 'APPROVED') && (app.representativeUserId === currentUser.id) && (
                 <>
                   <Link href={`/open-lab/edit/${app.id}`} className="btn-small btn-outline">수정</Link>
                   <button 

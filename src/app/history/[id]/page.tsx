@@ -117,11 +117,30 @@ export default async function HistoryDetailPage({ params }: { params: Promise<{ 
               </div>
               <div className="detail-item">
                 <span className="label">대표 신청자</span>
-                <span className="value">{application.representativeUser.name} ({application.representativeUser.studentId})</span>
+                <span className="value">
+                  {application.representativeUser 
+                    ? `${application.representativeUser.name} (${application.representativeUser.studentId})`
+                    : `${application.guestName} (${application.guestStudentId}) [비회원]`
+                  }
+                </span>
               </div>
               <div className="detail-item">
                 <span className="label">연락처</span>
-                <span className="value">{application.representativeUser.phone}</span>
+                <span className="value">
+                  {application.representativeUser ? application.representativeUser.phone : application.guestPhone}
+                </span>
+              </div>
+              <div className="detail-item">
+                <span className="label">실습 과목</span>
+                <span className="value">{application.subject || '-'}</span>
+              </div>
+              <div className="detail-item">
+                <span className="label">담당 교수</span>
+                <span className="value">{application.professor || '-'}</span>
+              </div>
+              <div className="detail-item">
+                <span className="label">실습 목적</span>
+                <span className="value">{application.purpose || '-'}</span>
               </div>
             </div>
           </section>
@@ -184,16 +203,20 @@ export default async function HistoryDetailPage({ params }: { params: Promise<{ 
             </div>
           </section>
 
-          <div className="actions">
-            {application.status === 'PENDING' && application.representativeUserId === session.user.id && (
-              <>
-                <Link href={`/open-lab/edit/${application.id}`} className="btn btn-primary">수정하기</Link>
-                <Link href="/history" className="btn btn-outline">목록으로</Link>
-              </>
+          <div className="actions" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap' }}>
+            {(application.representativeUserId === session.user.id || application.guestStudentId === session.user.studentId) && (
+              <Link href={`/open-lab/success/${application.id}`} className="btn btn-accent" style={{ background: 'var(--accent)', color: 'white' }}>
+                신청서 출력 및 이메일 발송 ↗
+              </Link>
+            )}
+            {(application.status === 'PENDING' || application.status === 'APPROVED') && 
+             (application.representativeUserId === session.user.id || application.guestStudentId === session.user.studentId) && (
+              <Link href={`/open-lab/edit/${application.id}`} className="btn btn-primary">수정하기</Link>
             )}
             {(application.status === 'APPROVED' || application.status === 'COMPLETED') && application.usageLogs.length === 0 && (
               <Link href={`/usage-logs/new?applicationId=${application.id}`} className="btn btn-primary">실습 소감 작성하기</Link>
             )}
+            <Link href="/history" className="btn btn-outline">목록으로</Link>
           </div>
         </div>
       </div>

@@ -13,7 +13,12 @@ export async function GET(request: NextRequest) {
     const limit = searchParams.get('limit') ? parseInt(searchParams.get('limit')!) : undefined;
 
     const applications = await prisma.application.findMany({
-      where: { representativeUserId: session.user.id },
+      where: {
+        OR: [
+          { representativeUserId: session.user.id },
+          { guestStudentId: session.user.studentId }
+        ]
+      },
       take: limit,
       orderBy: { createdAt: 'desc' },
       include: { 

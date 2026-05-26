@@ -6,18 +6,38 @@ import { isWithinApplicationWindow } from '@/lib/application-window';
 
 export async function POST(request: NextRequest) {
   const session = await getSession();
-  if (!session?.user) {
-    return NextResponse.json({ message: '로그인이 필요합니다.' }, { status: 401 });
-  }
-  const user = session.user;
+  const user = session?.user;
 
   try {
     const body = await request.json();
-    const { ruleId, date, room, grade, skillIds, otherSkillName, participants, additionalRequest, confirmedNotice } = body;
+    const {
+      ruleId,
+      date,
+      room,
+      grade,
+      skillIds,
+      otherSkillName,
+      participants,
+      additionalRequest,
+      confirmedNotice,
+      subject,
+      professor,
+      purpose,
+      guestName,
+      guestStudentId,
+      guestPhone,
+      guestGrade
+    } = body;
 
     // 1. Basic Validation
     if (!ruleId || !date || !room || !grade || !skillIds || skillIds.length === 0 || !participants || participants.length === 0) {
       return NextResponse.json({ message: '필수 정보를 모두 입력해주세요.' }, { status: 400 });
+    }
+
+    if (!user) {
+      if (!guestName || !guestStudentId || !guestPhone || !guestGrade) {
+        return NextResponse.json({ message: '신청자 정보(이름, 학번, 연락처, 학년)를 모두 입력해주세요.' }, { status: 400 });
+      }
     }
 
     if (!confirmedNotice) {
@@ -86,12 +106,15 @@ export async function POST(request: NextRequest) {
     }
 
     // 5. Validate Participants Eligibility
-    const participantStudentIds = participants.map((p: { studentId: string }) => p.studentId);
+    const participantStudentIds = Array.from(new Set([
+      ...participants.map((p: { studentId: string }) => p.studentId),
+      ...(user ? [] : [guestStudentId])
+    ].filter(Boolean)));
     
     // Check for active restrictions
     const activeRestrictions = await prisma.restriction.findMany({
       where: {
-        studentId: { in: participantStudentIds },
+        studentId: { in: participantStudentIds as string[] },
         isActive: true,
         endDate: { gte: new Date() }
       }
@@ -117,7 +140,7 @@ export async function POST(request: NextRequest) {
         status: { in: ['PENDING', 'APPROVED'] },
         slot: { date: { gte: weekStart, lte: weekEnd } },
         participants: {
-          some: { studentId: { in: participantStudentIds } }
+          some: { studentId: { in: participantStudentIds as string[] } }
         }
       }
     });
@@ -133,9 +156,16 @@ export async function POST(request: NextRequest) {
     const application = await prisma.application.create({
       data: {
         slotId: slot.id,
-        representativeUserId: user.id,
-        status: 'PENDING',
+        representativeUserId: user?.id || null,
+        status: 'APPROVED',
         selectedGrade: grade,
+        subject: subject || null,
+        professor: professor || null,
+        purpose: purpose || null,
+        guestName: user ? null : guestName,
+        guestStudentId: user ? null : guestStudentId,
+        guestPhone: user ? null : guestPhone,
+        guestGrade: user ? null : parseInt(guestGrade.toString()),
         additionalRequest,
         otherSkillName: otherSkillName || null,
         confirmedNotice: true,
