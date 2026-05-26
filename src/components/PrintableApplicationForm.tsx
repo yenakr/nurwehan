@@ -136,7 +136,7 @@ export default function PrintableApplicationForm({ application, supplies }: Prin
             </tr>
 
             <tr>
-              <td colSpan={4} style={{ padding: 0 }}>
+              <td colSpan={4} style={{ padding: 0, overflow: 'hidden' }}>
                 <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed', border: 'none' }}>
                   <colgroup>
                     <col style={{ width: '33.33%' }} />
@@ -176,8 +176,8 @@ export default function PrintableApplicationForm({ application, supplies }: Prin
               <td className="label-cell vertical-text" style={{ padding: '20px 0' }}>
                 필요물품
               </td>
-              <td colSpan={3} style={{ padding: 0 }}>
-                <table className="supplies-sub-table">
+              <td colSpan={3} style={{ padding: 0, overflow: 'hidden' }}>
+                <table className="supplies-sub-table" style={{ tableLayout: 'fixed' }}>
                   <thead>
                     <tr>
                       <th style={{ width: '8%', borderLeft: 'none', borderTop: 'none' }}></th>
@@ -331,6 +331,7 @@ export default function PrintableApplicationForm({ application, supplies }: Prin
           width: 100%;
           border-collapse: collapse;
           border: none;
+          table-layout: fixed;
         }
 
         .supplies-sub-table th, .supplies-sub-table td {
