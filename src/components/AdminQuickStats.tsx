@@ -7,28 +7,9 @@ export default async function AdminQuickStats() {
   const user = await getCurrentUser();
   if (!user || !isAdminRole(user.role)) return null;
 
-  const now = new Date();
-  const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
-  const endOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59, 999);
-
-  const [
-    pendingUsers,
-    pendingApps,
-    restrictedStudents
-  ] = await Promise.all([
-    prisma.user.count({ where: { approvalStatus: 'PENDING' } }),
-    prisma.application.count({ where: { status: 'PENDING' } }),
-    prisma.user.count({
-      where: {
-        role: 'STUDENT',
-        restrictions: {
-          some: {
-            isActive: true,
-            endDate: { gte: now }
-          }
-        }
-      }
-    })
+  const [rulesCount, skillsCount] = await Promise.all([
+    prisma.openLabGradeRule.count(),
+    prisma.skill.count()
   ]);
 
   return (
@@ -44,9 +25,8 @@ export default async function AdminQuickStats() {
         gap: '16px' 
       }}>
         {[
-          { label: '가입 신청 대기', value: pendingUsers, unit: '건', href: '/admin/users?tab=pending' },
-          { label: 'OPEN LAB 신청 대기', value: pendingApps, unit: '건', href: '/admin/applications' },
-          { label: '참여 불가 학생', value: restrictedStudents, unit: '명', href: '/admin/users?tab=restricted' },
+          { label: '등록된 시간표 규칙', value: rulesCount, unit: '건', href: '/admin' },
+          { label: '등록된 실습 술기', value: skillsCount, unit: '개', href: '/admin' },
         ].map((stat, i) => (
           <Link 
             key={i}

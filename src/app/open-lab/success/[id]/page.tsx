@@ -21,15 +21,17 @@ export default async function OpenLabSuccessPage({ params }: { params: Promise<{
 
   if (!application) notFound();
 
-  // Aggregate supplies from skills
+  // Aggregate supplies from skills (scaled by participant count)
+  const participantCount = application.participants.length || 1;
   const suppliesMap = new Map<string, { quantity: number; unit: string; note: string | null }>();
   application.skills.forEach(as => {
     as.skill.supplies.forEach(s => {
       const existing = suppliesMap.get(s.supplyName);
+      const scaledQuantity = s.quantity * participantCount;
       if (existing) {
-        existing.quantity += s.quantity;
+        existing.quantity += scaledQuantity;
       } else {
-        suppliesMap.set(s.supplyName, { quantity: s.quantity, unit: s.unit, note: s.note });
+        suppliesMap.set(s.supplyName, { quantity: scaledQuantity, unit: s.unit, note: s.note });
       }
     });
   });

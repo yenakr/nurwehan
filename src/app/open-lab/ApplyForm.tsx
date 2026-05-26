@@ -38,6 +38,21 @@ interface Slot {
 
 const GRADE_OPTIONS = ['2학년', '3학년', '4학년'];
 
+const SUBJECTS_BY_GRADE: Record<string, string[]> = {
+  '2': ['기본간호학실습1', '기본간호학실습2'],
+  '3': ['핵심술기실습1', '성인간호실습1', '성인간호실습2', '여성간호실습'],
+  '4': [
+    '간호관리실습',
+    '아동간호실습',
+    '정신간호실습',
+    '노인간호실습',
+    '심화통합실습',
+    '임상종합실습',
+    '지역사회간호실습',
+    '지역사회정신간호실습'
+  ]
+};
+
 export default function ApplyForm({ user }: ApplyFormProps) {
   const router = useRouter();
   
@@ -69,7 +84,25 @@ export default function ApplyForm({ user }: ApplyFormProps) {
   const [confirmedNotice] = useState(true);
   const [additionalRequest, setAdditionalRequest] = useState('');
   const [accompanyingNames, setAccompanyingNames] = useState('');
+  
+  // Custom schedule inputs
+  const [customDate, setCustomDate] = useState('');
+  const [customStartTime, setCustomStartTime] = useState('');
+  const [customEndTime, setCustomEndTime] = useState('');
+  const [customRoom, setCustomRoom] = useState('임상수기실습실 (5층)');
+  
+  // Skill search
+  const [skillSearchQuery, setSkillSearchQuery] = useState('');
+  
   const [submitting, setSubmitting] = useState(false);
+
+  // Phone Formatter
+  const formatPhoneNumber = (value: string) => {
+    const digits = value.replace(/\D/g, '');
+    if (digits.length <= 3) return digits;
+    if (digits.length <= 7) return `${digits.slice(0, 3)}-${digits.slice(3)}`;
+    return `${digits.slice(0, 3)}-${digits.slice(3, 7)}-${digits.slice(7, 11)}`;
+  };
 
   // 2. Initial Data Fetch (Skills, Slots, and Templates if logged in)
   useEffect(() => {
@@ -77,7 +110,9 @@ export default function ApplyForm({ user }: ApplyFormProps) {
       try {
         const skillsRes = await fetch('/api/skills');
         const skillsData = await skillsRes.json();
-        setSkills([...skillsData, { id: 'other', name: '기타', supplies: [] }]);
+        // Prevent duplicate "기타" skill
+        const filteredDBData = skillsData.filter((s: Skill) => s.name !== '기타' && s.id !== 'other');
+        setSkills([...filteredDBData, { id: 'other', name: '기타', supplies: [] }]);
 
         const slotsRes = await fetch('/api/open-lab/available-slots');
         const slotsData = await slotsRes.json();
@@ -103,12 +138,22 @@ export default function ApplyForm({ user }: ApplyFormProps) {
   useEffect(() => {
     if (!user) {
       setGradeFilter(guestGrade);
-      // Reset selected slot if it doesn't match the new grade
-      if (selectedSlot && selectedSlot.grade.toString() !== guestGrade) {
+      // Reset selected slot if it doesn't match the new grade and is not custom
+      if (selectedSlot && selectedSlot.grade.toString() !== guestGrade && selectedSlot.ruleId !== 'custom') {
         setSelectedSlot(null);
       }
     }
   }, [guestGrade, user, selectedSlot]);
+
+  // Dynamic subject dropdown auto-population based on gradeFilter
+  useEffect(() => {
+    const subjects = SUBJECTS_BY_GRADE[gradeFilter] || [];
+    if (subjects.length > 0) {
+      setSubject(subjects[0]);
+    } else {
+      setSubject('');
+    }
+  }, [gradeFilter]);
 
   // 3. Filter Logic
   const filteredSlots = allSlots.filter(slot => {
@@ -172,8 +217,11 @@ export default function ApplyForm({ user }: ApplyFormProps) {
     }
     if (!subject.trim()) return alert('실습과목을 입력해주세요.');
     if (!professor.trim()) return alert('담당교수를 입력해주세요.');
-    if (!purpose.trim()) return alert('실습목적을 입력해주세요.');
     if (!selectedSlot) return alert('신청할 일정을 선택해주세요.');
+    if (selectedSlot.ruleId === 'custom') {
+      if (!customDate) return alert('대체 일정 날짜를 선택해주세요.');
+      if (!customStartTime.trim() || !customEndTime.trim()) return alert('대체 일정 시작 시간과 종료 시간을 입력해주세요.');
+    }
     if (selectedSkills.length === 0) return alert('술기를 하나 이상 선택해주세요.');
     if (selectedSkills.includes('other') && !otherSkillName.trim()) return alert('기타 술기명을 입력해주세요.');
     
@@ -197,10 +245,20 @@ export default function ApplyForm({ user }: ApplyFormProps) {
         ...parsedAccompanying
       ];
 
+      // Convert selected skills to purpose string automatically
+      const skillNames = selectedSkills
+        .map(id => {
+          if (id === 'other') return otherSkillName;
+          return skills.find(s => s.id === id)?.name || '';
+        })
+        .filter(Boolean)
+        .join(', ');
+      const autoPurpose = `${skillNames} 실습`;
+
       const payload = {
         ruleId: selectedSlot.ruleId,
-        date: selectedSlot.date,
-        room: selectedSlot.room,
+        date: selectedSlot.ruleId === 'custom' ? customDate : selectedSlot.date,
+        room: selectedSlot.ruleId === 'custom' ? customRoom : selectedSlot.room,
         grade: selectedSlot.grade,
         skillIds: selectedSkills,
         otherSkillName: selectedSkills.includes('other') ? otherSkillName : undefined,
@@ -209,7 +267,11 @@ export default function ApplyForm({ user }: ApplyFormProps) {
         confirmedNotice: true,
         subject,
         professor,
-        purpose,
+        purpose: autoPurpose,
+        ...(selectedSlot.ruleId === 'custom' ? {
+          customStartTime,
+          customEndTime
+        } : {}),
         ...(user ? {} : {
           guestName,
           guestStudentId,
@@ -263,7 +325,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
         </div>
       )}
 
-      {/* 1. Applicant Details */}
+       {/* 1. Applicant Details */}
       <section className="form-section">
         <h3 className="section-title">1. 신청자 기본 정보</h3>
         {user ? (
@@ -310,38 +372,45 @@ export default function ApplyForm({ user }: ApplyFormProps) {
                   type="text" 
                   placeholder="010-XXXX-XXXX" 
                   value={guestPhone}
-                  onChange={(e) => setGuestPhone(e.target.value)}
+                  onChange={(e) => setGuestPhone(formatPhoneNumber(e.target.value))}
                 />
               </div>
               <div className="input-group">
                 <label>학년</label>
-                <select 
-                  value={guestGrade}
-                  onChange={(e) => setGuestGrade(e.target.value)}
-                  className="form-select"
-                >
-                  <option value="2">2학년</option>
-                  <option value="3">3학년</option>
-                  <option value="4">4학년</option>
-                </select>
+                <div className="grade-buttons" style={{ display: 'flex', gap: '8px' }}>
+                  {['2', '3', '4'].map(g => (
+                    <button 
+                      key={g} 
+                      type="button"
+                      onClick={() => setGuestGrade(g)}
+                      className={`filter-btn ${guestGrade === g ? 'active' : ''}`}
+                      style={{ flex: 1, padding: '10px', height: '100%', fontSize: '0.875rem' }}
+                    >
+                      {g}학년
+                    </button>
+                  ))}
+                </div>
               </div>
             </div>
           </div>
         )}
       </section>
 
-      {/* 2. Practice Paper Details (Subject, Professor, Purpose) */}
+      {/* 2. Practice Paper Details (Subject, Professor) */}
       <section className="form-section">
         <h3 className="section-title">2. 실습 상세 정보 (신청서 출력 양식 반영)</h3>
         <div className="input-row">
           <div className="input-group">
             <label>실습과목 <span className="req">*</span></label>
-            <input 
-              type="text" 
-              placeholder="예: 기본간호학실습 (1)" 
+            <select 
               value={subject}
               onChange={(e) => setSubject(e.target.value)}
-            />
+              className="form-select"
+            >
+              {(SUBJECTS_BY_GRADE[gradeFilter] || []).map(sub => (
+                <option key={sub} value={sub}>{sub}</option>
+              ))}
+            </select>
           </div>
           <div className="input-group">
             <label>담당교수 <span className="req">*</span></label>
@@ -352,15 +421,6 @@ export default function ApplyForm({ user }: ApplyFormProps) {
               onChange={(e) => setProfessor(e.target.value)}
             />
           </div>
-        </div>
-        <div className="input-group" style={{ marginTop: '16px' }}>
-          <label>실습목적 <span className="req">*</span></label>
-          <input 
-            type="text" 
-            placeholder="예: 활력징후 측정 및 정맥주사 자율 실습" 
-            value={purpose}
-            onChange={(e) => setPurpose(e.target.value)}
-          />
         </div>
       </section>
 
@@ -423,6 +483,90 @@ export default function ApplyForm({ user }: ApplyFormProps) {
                 </button>
               );
             })}
+
+            {/* Custom/Holiday Alternative schedule button */}
+            <button
+              type="button"
+              onClick={() => setSelectedSlot({
+                ruleId: 'custom',
+                date: customDate,
+                startTime: customStartTime,
+                endTime: customEndTime,
+                room: customRoom,
+                grade: parseInt(gradeFilter),
+                maxCapacity: 20,
+                remaining: 20
+              })}
+              className={`slot-card custom-slot-card ${selectedSlot?.ruleId === 'custom' ? 'selected' : ''}`}
+              style={{ borderStyle: 'dashed' }}
+            >
+              {selectedSlot?.ruleId === 'custom' && <span className="selection-badge">선택됨</span>}
+              <div className="slot-date">기타 일정</div>
+              <div className="slot-time" style={{ color: 'var(--sub-text)' }}>대체 일정 직접 입력</div>
+              <div className="slot-room">공휴일/대체용</div>
+              <div className="capacity-badge high" style={{ background: '#f1f5f9', color: '#475569' }}>
+                직접 설정
+              </div>
+            </button>
+          </div>
+        )}
+
+        {selectedSlot?.ruleId === 'custom' && (
+          <div className="custom-schedule-inputs" style={{ marginTop: '24px', padding: '20px', background: '#f8fafc', borderRadius: '12px', border: '1px solid var(--border)' }}>
+            <h4 style={{ margin: '0 0 16px 0', fontSize: '0.9375rem', fontWeight: 800, color: 'var(--text)' }}>대체 일정 상세 입력</h4>
+            <div className="input-row">
+              <div className="input-group">
+                <label>실습 날짜</label>
+                <input 
+                  type="date" 
+                  value={customDate} 
+                  onChange={(e) => {
+                    setCustomDate(e.target.value);
+                    setSelectedSlot(prev => prev ? { ...prev, date: e.target.value } : null);
+                  }}
+                />
+              </div>
+              <div className="input-group">
+                <label>실습실</label>
+                <select 
+                  value={customRoom} 
+                  onChange={(e) => {
+                    setCustomRoom(e.target.value);
+                    setSelectedSlot(prev => prev ? { ...prev, room: e.target.value } : null);
+                  }}
+                  className="form-select"
+                >
+                  <option value="임상수기실습실 (5층)">임상수기실습실 (5층)</option>
+                  <option value="시뮬레이션실습실(6층)">시뮬레이션실습실(6층)</option>
+                </select>
+              </div>
+            </div>
+            <div className="input-row" style={{ marginTop: '16px' }}>
+              <div className="input-group">
+                <label>시작 시간 (HH:mm)</label>
+                <input 
+                  type="text" 
+                  placeholder="예: 09:00" 
+                  value={customStartTime} 
+                  onChange={(e) => {
+                    setCustomStartTime(e.target.value);
+                    setSelectedSlot(prev => prev ? { ...prev, startTime: e.target.value } : null);
+                  }}
+                />
+              </div>
+              <div className="input-group">
+                <label>종료 시간 (HH:mm)</label>
+                <input 
+                  type="text" 
+                  placeholder="예: 12:00" 
+                  value={customEndTime} 
+                  onChange={(e) => {
+                    setCustomEndTime(e.target.value);
+                    setSelectedSlot(prev => prev ? { ...prev, endTime: e.target.value } : null);
+                  }}
+                />
+              </div>
+            </div>
           </div>
         )}
       </section>
@@ -430,17 +574,30 @@ export default function ApplyForm({ user }: ApplyFormProps) {
       {/* 4. Skill Selection */}
       <section className="form-section">
         <h3 className="section-title">4. 실습 술기 선택 (최대 2개)</h3>
+        
+        <div style={{ marginBottom: '16px' }}>
+          <input 
+            type="text" 
+            placeholder="🔍 술기 이름 검색..." 
+            value={skillSearchQuery}
+            onChange={(e) => setSkillSearchQuery(e.target.value)}
+            style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.875rem', fontWeight: 600 }}
+          />
+        </div>
+
         <div className="skills-grid">
-          {skills.map(skill => (
-            <label key={skill.id} className={`skill-item ${selectedSkills.includes(skill.id) ? 'checked' : ''}`}>
-              <input 
-                type="checkbox" 
-                checked={selectedSkills.includes(skill.id)} 
-                onChange={() => handleSkillChange(skill.id)}
-              />
-              <span>{skill.name}</span>
-            </label>
-          ))}
+          {skills
+            .filter(skill => skill.name.toLowerCase().includes(skillSearchQuery.toLowerCase()))
+            .map(skill => (
+              <label key={skill.id} className={`skill-item ${selectedSkills.includes(skill.id) ? 'checked' : ''}`}>
+                <input 
+                  type="checkbox" 
+                  checked={selectedSkills.includes(skill.id)} 
+                  onChange={() => handleSkillChange(skill.id)}
+                />
+                <span>{skill.name}</span>
+              </label>
+            ))}
         </div>
         {selectedSkills.includes('other') && (
           <div className="other-skill-input">

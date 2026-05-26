@@ -26,7 +26,9 @@ export async function POST(request: NextRequest) {
       guestName,
       guestStudentId,
       guestPhone,
-      guestGrade
+      guestGrade,
+      customStartTime,
+      customEndTime
     } = body;
 
     // 1. Basic Validation
@@ -53,11 +55,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: '한 타임에는 최대 2개 술기까지 신청할 수 있습니다.' }, { status: 400 });
     }
 
-    // 2. Fetch Rule
-    const rule = await prisma.openLabGradeRule.findUnique({
-      where: { id: ruleId }
-    });
-    if (!rule) return NextResponse.json({ message: '유효하지 않은 운영시간입니다.' }, { status: 404 });
+    // 2. Fetch Rule or handle Custom Slot
+    let targetStartTime = '';
+    let targetEndTime = '';
+    let targetMaxCapacity = 20;
+    let targetSemesterId = '';
+
+    if (ruleId === 'custom') {
+      const activeSemester = await prisma.semester.findFirst({
+        where: { isActive: true }
+      });
+      if (!activeSemester) {
+        return NextResponse.json({ message: '활성화된 학기가 존재하지 않습니다. 관리자에게 문의해 주세요.' }, { status: 400 });
+      }
+      targetSemesterId = activeSemester.id;
+      if (!customStartTime || !customEndTime) {
+        return NextResponse.json({ message: '대체일정의 시작 시간과 종료 시간을 입력해주세요.' }, { status: 400 });
+      }
+      targetStartTime = customStartTime;
+      targetEndTime = customEndTime;
+    } else {
+      const rule = await prisma.openLabGradeRule.findUnique({
+        where: { id: ruleId }
+      });
+      if (!rule) return NextResponse.json({ message: '유효하지 않은 운영시간입니다.' }, { status: 404 });
+      targetStartTime = rule.startTime;
+      targetEndTime = rule.endTime;
+      targetMaxCapacity = rule.maxCapacity;
+      targetSemesterId = rule.semesterId;
+    }
 
     targetDate.setHours(0, 0, 0, 0);
 
@@ -65,8 +91,8 @@ export async function POST(request: NextRequest) {
     let slot = await prisma.openLabSlot.findFirst({
       where: {
         date: targetDate,
-        startTime: rule.startTime,
-        endTime: rule.endTime,
+        startTime: targetStartTime,
+        endTime: targetEndTime,
         room: room,
         allowedGrade: grade
       },
@@ -81,13 +107,13 @@ export async function POST(request: NextRequest) {
     if (!slot) {
       slot = await prisma.openLabSlot.create({
         data: {
-          semesterId: rule.semesterId,
+          semesterId: targetSemesterId,
           allowedGrade: grade,
           date: targetDate,
-          startTime: rule.startTime,
-          endTime: rule.endTime,
+          startTime: targetStartTime,
+          endTime: targetEndTime,
           room: room,
-          maxCapacity: rule.maxCapacity,
+          maxCapacity: targetMaxCapacity,
         },
         include: {
           applications: {

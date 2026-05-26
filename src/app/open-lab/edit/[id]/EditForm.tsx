@@ -82,6 +82,7 @@ export default function EditForm({ user, application }: EditFormProps) {
   const [confirmedNotice] = useState(true);
   const [additionalRequest, setAdditionalRequest] = useState(application.additionalRequest || '');
   
+  const [skillSearchQuery, setSkillSearchQuery] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
   // Initial Fetch
@@ -90,7 +91,8 @@ export default function EditForm({ user, application }: EditFormProps) {
       try {
         const skillsRes = await fetch('/api/skills');
         const skillsData = await skillsRes.json();
-        setSkills([...skillsData, { id: 'other', name: '기타' }]);
+        const filteredDBData = skillsData.filter((s: Skill) => s.name !== '기타' && s.id !== 'other');
+        setSkills([...filteredDBData, { id: 'other', name: '기타' }]);
 
         const slotsRes = await fetch('/api/open-lab/available-slots');
         const slotsData = await slotsRes.json();
@@ -235,13 +237,26 @@ export default function EditForm({ user, application }: EditFormProps) {
       {/* Rest of the form is same as ApplyForm */}
       <section className="form-section">
         <h3 className="section-title">2. 실습 술기 수정</h3>
+        
+        <div style={{ marginBottom: '16px' }}>
+          <input 
+            type="text" 
+            placeholder="🔍 술기 이름 검색..." 
+            value={skillSearchQuery}
+            onChange={(e) => setSkillSearchQuery(e.target.value)}
+            style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.875rem', fontWeight: 600 }}
+          />
+        </div>
+
         <div className="skills-grid">
-          {skills.map(skill => (
-            <label key={skill.id} className={`skill-item ${selectedSkills.includes(skill.id) ? 'checked' : ''}`}>
-              <input type="checkbox" checked={selectedSkills.includes(skill.id)} onChange={() => handleSkillChange(skill.id)} />
-              <span>{skill.name}</span>
-            </label>
-          ))}
+          {skills
+            .filter(skill => skill.name.toLowerCase().includes(skillSearchQuery.toLowerCase()))
+            .map(skill => (
+              <label key={skill.id} className={`skill-item ${selectedSkills.includes(skill.id) ? 'checked' : ''}`}>
+                <input type="checkbox" checked={selectedSkills.includes(skill.id)} onChange={() => handleSkillChange(skill.id)} />
+                <span>{skill.name}</span>
+              </label>
+            ))}
         </div>
         {selectedSkills.includes('other') && (
           <div className="other-skill-input">
