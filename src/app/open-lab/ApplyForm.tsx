@@ -11,6 +11,7 @@ interface ApplyFormProps {
     studentId: string;
     phone: string;
     grade: number;
+    role?: string;
   } | null;
 }
 
@@ -34,6 +35,8 @@ interface Slot {
   grade: number;
   maxCapacity: number;
   remaining: number;
+  isAvailable?: boolean;
+  deadlineText?: string;
 }
 
 const GRADE_OPTIONS = ['2학년', '3학년', '4학년'];
@@ -166,8 +169,11 @@ export default function ApplyForm({ user }: ApplyFormProps) {
   }, [accompanyingNames]);
 
   // 3. Filter Logic
+  const isAdmin = user && (user.role === 'ADMIN' || user.role === 'ASSISTANT' || user.role === 'SUPER_ADMIN');
   const filteredSlots = allSlots.filter(slot => {
-    return slot.grade.toString() === gradeFilter;
+    const isMatchingGrade = slot.grade.toString() === gradeFilter;
+    if (isAdmin) return isMatchingGrade;
+    return isMatchingGrade && (slot.isAvailable ?? false);
   });
 
   const handleSkillChange = (skillId: string) => {
@@ -496,6 +502,11 @@ export default function ApplyForm({ user }: ApplyFormProps) {
                       본 사이트 작성: {slot.maxCapacity - slot.remaining}명
                     </div>
                   </div>
+                  {slot.deadlineText && (
+                    <div style={{ fontSize: '0.6875rem', color: '#ef4444', fontWeight: 700, marginTop: '8px', borderTop: '1px dashed #cbd5e1', paddingTop: '6px', width: '100%', textAlign: 'left' }}>
+                      신청 마감: {slot.deadlineText}
+                    </div>
+                  )}
                 </button>
               );
             })}

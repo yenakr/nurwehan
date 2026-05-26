@@ -42,7 +42,7 @@ export async function GET(request: Request) {
       }
     }
 
-    // 3. Enrich with remaining capacity
+    // 3. Enrich with remaining capacity, window status, and deadline text
     const enrichedSlots = await Promise.all(slots.map(async (slot) => {
       const startOfSlotDay = new Date(slot.date);
       startOfSlotDay.setHours(0,0,0,0);
@@ -63,9 +63,22 @@ export async function GET(request: Request) {
       });
 
       const usedCapacity = applications.reduce((sum, app) => sum + app.participants.length, 0);
+
+      const { start, end } = getApplicationWindow(startOfSlotDay);
+      const now = new Date();
+      const isAvailable = isAfter(now, start) && isBefore(now, end);
+
+      const deadlineMonth = end.getMonth() + 1;
+      const deadlineDay = end.getDate();
+      const deadlineHours = String(end.getHours()).padStart(2, '0');
+      const deadlineMinutes = String(end.getMinutes()).padStart(2, '0');
+      const deadlineText = `${deadlineMonth}월 ${deadlineDay}일 ${deadlineHours}:${deadlineMinutes}`;
+
       return {
         ...slot,
-        remaining: Math.max(0, slot.maxCapacity - usedCapacity)
+        remaining: Math.max(0, slot.maxCapacity - usedCapacity),
+        isAvailable,
+        deadlineText
       };
     }));
 

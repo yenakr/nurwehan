@@ -43,6 +43,7 @@ export default async function OpenLabApplyPage() {
     studentId: user.studentId,
     phone: user.phone || '',
     grade: user.grade || 1,
+    role: user.role
   } : null;
 
   return (

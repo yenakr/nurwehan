@@ -31,6 +31,7 @@ interface EditFormProps {
     studentId: string;
     phone: string;
     grade: number;
+    role?: string;
   };
   application: EditApplication;
 }
@@ -49,6 +50,8 @@ interface Slot {
   grade: number;
   maxCapacity: number;
   remaining: number;
+  isAvailable?: boolean;
+  deadlineText?: string;
 }
 
 const ROOM_OPTIONS = ['전체', '임상수기실습실 5층', '시뮬레이션실습실 6층'];
@@ -115,10 +118,12 @@ export default function EditForm({ user, application }: EditFormProps) {
     fetchInitialData();
   }, [application]);
 
+  const isAdmin = user && (user.role === 'ADMIN' || user.role === 'ASSISTANT' || user.role === 'SUPER_ADMIN');
   const filteredSlots = allSlots.filter(slot => {
     const gradeMatch = gradeFilter === '전체' || slot.grade.toString() === gradeFilter;
     const roomMatch = roomFilter === '전체' || slot.room === roomFilter;
-    return gradeMatch && roomMatch;
+    if (isAdmin) return gradeMatch && roomMatch;
+    return gradeMatch && roomMatch && (slot.isAvailable ?? false);
   });
 
   const handleSkillChange = (skillId: string) => {
@@ -226,6 +231,11 @@ export default function EditForm({ user, application }: EditFormProps) {
                   <div className="slot-footer" style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
                     <span className="slot-grade" style={{ fontWeight: 700 }}>{slot.grade}학년</span>
                     <span className="slot-capacity" style={{ fontSize: '0.75rem', color: '#64748b' }}>정원: {slot.maxCapacity}명 (본 사이트 작성: {slot.maxCapacity - slot.remaining}명)</span>
+                    {slot.deadlineText && (
+                      <span style={{ fontSize: '0.75rem', color: '#ef4444', fontWeight: 700, marginTop: '4px', borderTop: '1px dashed #cbd5e1', paddingTop: '4px' }}>
+                        신청 마감: {slot.deadlineText}
+                      </span>
+                    )}
                   </div>
                 </button>
               );
