@@ -81,18 +81,8 @@ export default function PrintableApplicationForm({ application, supplies }: Prin
     };
   });
 
-  const handlePrint = () => {
-    window.print();
-  };
-
   return (
     <div className="print-area-wrapper">
-      <div className="no-print print-btn-container">
-        <button onClick={handlePrint} className="btn-print-trigger">
-          🖨️ 신청서 PDF 다운로드 / 인쇄하기
-        </button>
-      </div>
-
       <div className="print-container">
         {/* Title */}
         <h1 className="form-title">한양대학교 간호대학 실습실 및 기자재 사용신청서</h1>

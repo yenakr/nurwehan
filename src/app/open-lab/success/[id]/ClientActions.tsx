@@ -11,6 +11,10 @@ interface ClientActionsProps {
 export default function ClientActions({ adminEmail, subject, body }: ClientActionsProps) {
   const [copied, setCopied] = useState(false);
 
+  const handlePrint = () => {
+    window.print();
+  };
+
   const handleSendEmail = () => {
     const mailtoUrl = `mailto:${adminEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
     window.location.href = mailtoUrl;
@@ -22,57 +26,84 @@ export default function ClientActions({ adminEmail, subject, body }: ClientActio
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
-      alert('클립보드 복사에 실패했습니다. 직접 복사해주세요.');
+      alert('복사에 실패했습니다. 본문 미리보기에서 직접 드래그하여 복사해 주세요.');
     }
   };
 
   return (
-    <>
+    <div className="action-buttons-wrap">
       <button 
-        onClick={handleSendEmail} 
-        className="btn-action-send"
+        onClick={handlePrint} 
+        className="btn-action-primary"
       >
-        📧 메일 즉시 전송 (기본 메일앱 실행)
+        신청서 PDF 다운로드
       </button>
 
-      <button 
-        onClick={handleCopyText} 
-        className="btn-action-copy"
-      >
-        {copied ? '✅ 복사 완료!' : '📋 메일 본문 복사하기'}
-      </button>
+      <div className="action-buttons-secondary">
+        <button 
+          onClick={handleSendEmail} 
+          className="btn-action-secondary"
+        >
+          메일 앱 열기
+        </button>
+
+        <button 
+          onClick={handleCopyText} 
+          className="btn-action-secondary"
+        >
+          {copied ? '복사 완료' : '메일 본문 복사'}
+        </button>
+      </div>
 
       <style jsx>{`
-        .btn-action-send {
-          background-color: #3b82f6;
-          color: white;
-          border: none;
-          padding: 12px;
-          border-radius: 8px;
-          font-weight: 700;
-          font-size: 0.875rem;
-          cursor: pointer;
-          transition: background-color 0.2s;
-        }
-        .btn-action-send:hover {
-          background-color: #2563eb;
+        .action-buttons-wrap {
+          display: flex;
+          flex-direction: column;
+          gap: 10px;
+          margin-top: 16px;
         }
 
-        .btn-action-copy {
+        .action-buttons-secondary {
+          display: flex;
+          gap: 10px;
+        }
+
+        .btn-action-primary {
+          background-color: #0E4A84;
+          color: white;
+          border: none;
+          padding: 14px;
+          border-radius: 8px;
+          font-weight: 700;
+          font-size: 0.9375rem;
+          cursor: pointer;
+          transition: background-color 0.2s;
+          text-align: center;
+          width: 100%;
+        }
+        .btn-action-primary:hover {
+          background-color: #0b3a66;
+        }
+
+        .btn-action-secondary {
+          flex: 1;
           background-color: white;
-          color: #4b5563;
-          border: 1px solid #d1d5db;
+          color: #475569;
+          border: 1px solid #cbd5e1;
           padding: 12px;
           border-radius: 8px;
           font-weight: 700;
           font-size: 0.875rem;
           cursor: pointer;
-          transition: background-color 0.2s;
+          transition: all 0.2s;
+          text-align: center;
         }
-        .btn-action-copy:hover {
-          background-color: #f3f4f6;
+        .btn-action-secondary:hover {
+          background-color: #f8fafc;
+          border-color: #94a3b8;
+          color: #1e293b;
         }
       `}</style>
-    </>
+    </div>
   );
 }
