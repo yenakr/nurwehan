@@ -79,7 +79,7 @@ export default function EditForm({ user, application }: EditFormProps) {
   });
   const [selectedSkills, setSelectedSkills] = useState<string[]>(application.skills.map(as => as.skillId) || []);
   const [otherSkillName, setOtherSkillName] = useState(application.otherSkillName || '');
-  const [confirmedNotice, setConfirmedNotice] = useState(application.confirmedNotice || false);
+  const [confirmedNotice] = useState(true);
   const [additionalRequest, setAdditionalRequest] = useState(application.additionalRequest || '');
   
   const [submitting, setSubmitting] = useState(false);
@@ -133,7 +133,7 @@ export default function EditForm({ user, application }: EditFormProps) {
     if (!selectedSlot) return alert('슬롯을 선택해주세요.');
     if (selectedSkills.length === 0) return alert('술기를 선택해주세요.');
     if (selectedSkills.includes('other') && !otherSkillName.trim()) return alert('기타 술기명을 입력해주세요.');
-    if (!confirmedNotice) return alert('이용 안내 확인이 필요합니다.');
+
     
     setSubmitting(true);
     try {
@@ -252,20 +252,13 @@ export default function EditForm({ user, application }: EditFormProps) {
       </section>
 
       <section className="form-section">
-        <h3 className="section-title">3. 추가 정보 및 요청사항</h3>
+        <h3 className="section-title">3. 관리자 전달사항 (이메일 본문 추가)</h3>
         <textarea 
-          placeholder="요청사항을 입력해주세요."
+          placeholder="추가로 필요한 물품이나 요청사항이 있으면 작성해주세요. 작성하신 내용은 신청 완료 후 메일 전송 화면의 이메일 본문 하단에 자동으로 추가됩니다. (예: 수액세트 2개 추가 요청합니다)"
           value={additionalRequest}
           onChange={(e) => setAdditionalRequest(e.target.value)}
           style={{ width: '100%', height: '100px', padding: '12px', border: '1px solid var(--border)', borderRadius: '8px' }}
         />
-      </section>
-
-      <section className="confirmation-section">
-        <label className="confirm-label">
-          <input type="checkbox" checked={confirmedNotice} onChange={(e) => setConfirmedNotice(e.target.checked)} />
-          <span>이용 안내 및 유의사항 확인 완료</span>
-        </label>
       </section>
 
       <div className="submit-area">

@@ -66,19 +66,10 @@ export default function ApplyForm({ user }: ApplyFormProps) {
   const [selectedSlot, setSelectedSlot] = useState<Slot | null>(null);
   const [selectedSkills, setSelectedSkills] = useState<string[]>([]);
   const [otherSkillName, setOtherSkillName] = useState('');
-  const [confirmedNotice, setConfirmedNotice] = useState(false);
+  const [confirmedNotice] = useState(true);
   const [additionalRequest, setAdditionalRequest] = useState('');
-  const [participants, setParticipants] = useState<Array<{ studentId: string; name: string }>>([]);
+  const [accompanyingNames, setAccompanyingNames] = useState('');
   const [submitting, setSubmitting] = useState(false);
-
-  // 1. Initialize participants & Sync Guest details
-  useEffect(() => {
-    if (user) {
-      setParticipants([{ studentId: user.studentId, name: user.name }]);
-    } else {
-      setParticipants([{ studentId: guestStudentId, name: guestName }]);
-    }
-  }, [user, guestName, guestStudentId]);
 
   // 2. Initial Data Fetch (Skills, Slots, and Templates if logged in)
   useEffect(() => {
@@ -136,21 +127,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
     }
   };
 
-  // Participant list actions
-  const addParticipant = () => {
-    setParticipants([...participants, { studentId: '', name: '' }]);
-  };
 
-  const handleParticipantChange = (index: number, field: 'studentId' | 'name', value: string) => {
-    const copy = [...participants];
-    copy[index][field] = value;
-    setParticipants(copy);
-  };
-
-  const removeParticipant = (index: number) => {
-    if (index === 0) return;
-    setParticipants(participants.filter((_, i) => i !== index));
-  };
 
   // Load past templates
   const handleLoadTemplate = (templateId: string) => {
@@ -162,9 +139,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
       setAdditionalRequest('');
       setSelectedSkills([]);
       setOtherSkillName('');
-      if (user) {
-        setParticipants([{ studentId: user.studentId, name: user.name }]);
-      }
+      setAccompanyingNames('');
       return;
     }
     const t = templates.find(temp => temp.id === templateId);
@@ -184,10 +159,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
     
     if (t.participants && t.participants.length > 0) {
       const others = t.participants.filter((p: any) => p.studentId !== user?.studentId);
-      setParticipants([
-        { studentId: user?.studentId || '', name: user?.name || '' },
-        ...others.map((o: any) => ({ studentId: o.studentId, name: o.name }))
-      ]);
+      setAccompanyingNames(others.map((o: any) => o.name).join(', '));
     }
   };
 
@@ -205,17 +177,26 @@ export default function ApplyForm({ user }: ApplyFormProps) {
     if (selectedSkills.length === 0) return alert('술기를 하나 이상 선택해주세요.');
     if (selectedSkills.includes('other') && !otherSkillName.trim()) return alert('기타 술기명을 입력해주세요.');
     
-    // Check if any participant fields are blank
-    for (let i = 0; i < participants.length; i++) {
-      if (!participants[i].name.trim() || !participants[i].studentId.trim()) {
-        return alert('참여 학생의 이름과 학번을 모두 올바르게 입력해주세요.');
-      }
-    }
-
-    if (!confirmedNotice) return alert('이용 안내 및 유의사항 확인이 필요합니다.');
-    
     setSubmitting(true);
     try {
+      const repName = user ? user.name : guestName;
+      const repStudentId = user ? user.studentId : guestStudentId;
+
+      const parsedAccompanying = accompanyingNames
+        .split(',')
+        .map(n => n.trim())
+        .filter(Boolean)
+        .filter(n => n !== repName)
+        .map((name, idx) => ({
+          studentId: `accompanying-${idx}-${name}`,
+          name
+        }));
+
+      const payloadParticipants = [
+        { studentId: repStudentId, name: repName },
+        ...parsedAccompanying
+      ];
+
       const payload = {
         ruleId: selectedSlot.ruleId,
         date: selectedSlot.date,
@@ -223,9 +204,9 @@ export default function ApplyForm({ user }: ApplyFormProps) {
         grade: selectedSlot.grade,
         skillIds: selectedSkills,
         otherSkillName: selectedSkills.includes('other') ? otherSkillName : undefined,
-        participants: participants.filter(p => p.studentId.trim() && p.name.trim()),
+        participants: payloadParticipants,
         additionalRequest,
-        confirmedNotice,
+        confirmedNotice: true,
         subject,
         professor,
         purpose,
@@ -476,88 +457,54 @@ export default function ApplyForm({ user }: ApplyFormProps) {
 
       {/* 5. Participants Management */}
       <section className="form-section">
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <h3 className="section-title" style={{ margin: 0 }}>5. 참여 학생 명단</h3>
-          <button 
-            type="button" 
-            onClick={addParticipant}
-            className="btn-add-p"
-          >
-            + 학생 추가
-          </button>
+        <h3 className="section-title">5. 동반 실습 학생</h3>
+        
+        <div className="input-group" style={{ marginBottom: '20px' }}>
+          <label style={{ fontSize: '0.8125rem', fontWeight: '700', color: 'var(--sub-text)', display: 'block', marginBottom: '6px' }}>대표 신청자</label>
+          <div className="info-value-box" style={{ 
+            padding: '12px 16px', 
+            background: '#f8fafc', 
+            borderRadius: '8px', 
+            fontSize: '0.9375rem', 
+            fontWeight: 700,
+            border: '1px solid var(--border)',
+            color: 'var(--primary)'
+          }}>
+            {user ? `${user.name} (${user.studentId})` : (guestName && guestStudentId ? `${guestName} (${guestStudentId})` : '신청자 정보(이름, 학번)를 입력해주세요.')}
+          </div>
         </div>
-        <p style={{ fontSize: '0.8125rem', color: 'var(--sub-text)', marginBottom: '16px' }}>
-          * 대표 신청자를 포함하여 실습실을 함께 사용하는 전원의 이름과 학번을 작성해주세요. (총 {participants.length}명)
-        </p>
 
-        <div className="participants-list">
-          {participants.map((p, index) => (
-            <div key={index} className="participant-row">
-              <span className="row-num">{index + 1}</span>
-              <div className="input-group">
-                <input 
-                  type="text" 
-                  placeholder="학번" 
-                  value={p.studentId}
-                  disabled={index === 0}
-                  onChange={(e) => handleParticipantChange(index, 'studentId', e.target.value)}
-                />
-              </div>
-              <div className="input-group">
-                <input 
-                  type="text" 
-                  placeholder="이름" 
-                  value={p.name}
-                  disabled={index === 0}
-                  onChange={(e) => handleParticipantChange(index, 'name', e.target.value)}
-                />
-              </div>
-              {index > 0 ? (
-                <button 
-                  type="button" 
-                  onClick={() => removeParticipant(index)}
-                  className="btn-remove-p"
-                >
-                  삭제
-                </button>
-              ) : (
-                <span className="rep-tag">대표</span>
-              )}
-            </div>
-          ))}
+        <div className="input-group">
+          <label style={{ fontSize: '0.8125rem', fontWeight: '700', color: 'var(--sub-text)', display: 'block', marginBottom: '6px' }}>동반 실습 학생 이름 (선택)</label>
+          <input 
+            type="text" 
+            placeholder="같이 실습하는 학생들의 이름을 쉼표(,)로 구분하여 입력해주세요. (예: 홍길동, 김철수)" 
+            value={accompanyingNames}
+            onChange={(e) => setAccompanyingNames(e.target.value)}
+          />
+          <p style={{ fontSize: '0.8125rem', color: 'var(--sub-text)', marginTop: '8px', margin: '8px 0 0 0' }}>
+            * 동반 실습 학생의 학번은 입력할 필요가 없으며, 대표 신청자 외에 함께 참여하는 학생의 이름만 작성해주세요.
+          </p>
         </div>
       </section>
 
       {/* 6. Additional Info */}
       <section className="form-section">
-        <h3 className="section-title">6. 추가 요청사항</h3>
+        <h3 className="section-title">6. 관리자 전달사항 (이메일 본문 추가)</h3>
         <div className="textarea-group">
-          <label>추가 요청사항</label>
+          <label style={{ fontSize: '0.8125rem', fontWeight: '700', color: 'var(--sub-text)', display: 'block', marginBottom: '6px' }}>전달사항 (선택)</label>
           <textarea 
-            placeholder="추가로 필요한 물품이나 요청사항이 있으면 작성해주세요."
+            placeholder="추가로 필요한 물품이나 요청사항이 있으면 작성해주세요. 작성하신 내용은 신청 완료 후 메일 전송 화면의 이메일 본문 하단에 자동으로 추가됩니다. (예: 수액세트 2개 추가 요청합니다)"
             value={additionalRequest}
             onChange={(e) => setAdditionalRequest(e.target.value)}
           />
         </div>
       </section>
 
-      {/* 7. Confirmation */}
-      <section className="confirmation-section">
-        <label className="confirm-label">
-          <input 
-            type="checkbox" 
-            checked={confirmedNotice} 
-            onChange={(e) => setConfirmedNotice(e.target.checked)}
-          />
-          <span>OPEN LAB 이용 안내 확인 (필수)</span>
-        </label>
-        <Link href="/notices" target="_blank" className="notice-link">이용 안내 전문 보기</Link>
-      </section>
-
       <div className="submit-area">
         <button 
           type="submit" 
-          disabled={submitting || !selectedSlot || selectedSkills.length === 0 || !confirmedNotice}
+          disabled={submitting || !selectedSlot || selectedSkills.length === 0}
           className="btn-submit"
         >
           {submitting ? '제출 중...' : '신청서 작성 완료 & PDF 출력 페이지로'}

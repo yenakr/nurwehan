@@ -61,8 +61,11 @@ export default function PrintableApplicationForm({ application, supplies }: Prin
   const slotDateObj = new Date(application.slot.date);
   const slotDateStr = `${slotDateObj.getFullYear()}년 ${slotDateObj.getMonth() + 1}월 ${slotDateObj.getDate()}일`;
 
-  // Participant names concatenated
-  const participantNames = application.participants.map(p => `${p.name}(${p.studentId})`).join(', ');
+  // Participant names concatenated (hiding dummy guest IDs)
+  const participantNames = application.participants.map(p => {
+    const isRealId = /^\d{8,10}$/.test(p.studentId);
+    return isRealId ? `${p.name}(${p.studentId})` : p.name;
+  }).join(', ');
 
   // Create exactly 17 rows for the supplies table
   const maxRows = 17;
