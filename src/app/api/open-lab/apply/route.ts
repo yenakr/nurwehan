@@ -136,25 +136,7 @@ export async function POST(request: NextRequest) {
       ...(user ? [] : [guestStudentId])
     ].filter(id => id && /^\d{8,10}$/.test(id))));
     
-    // Check for active restrictions
-    const activeRestrictions = await prisma.restriction.findMany({
-      where: {
-        studentId: { in: participantStudentIds as string[] },
-        isActive: true,
-        endDate: { gte: new Date() }
-      }
-    });
-
-    if (activeRestrictions.length > 0) {
-      const restrictedInfos = activeRestrictions.map(r => {
-        const dateStr = r.endDate ? ` (제한 종료일: ${new Date(r.endDate).toLocaleDateString('ko-KR')})` : ' (영구 제한)';
-        return `${r.studentName} 학생: ${r.reason}${dateStr}`;
-      }).join('\n');
-      
-      return NextResponse.json({ 
-        message: `신청 제한 상태인 학생이 포함되어 있습니다.\n${restrictedInfos}` 
-      }, { status: 400 });
-    }
+    // Check for active restrictions (Bypassed by request)
 
     // Check for duplicate application in the same week
     const weekStart = startOfWeek(targetDate, { weekStartsOn: 1 });

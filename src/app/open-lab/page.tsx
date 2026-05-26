@@ -16,18 +16,6 @@ export default async function OpenLabApplyPage() {
     });
 
     if (user) {
-      // Check for active restrictions by userId OR studentId
-      const activeRestrictions = await prisma.restriction.findMany({
-        where: {
-          OR: [
-            { userId: user.id },
-            { studentId: user.studentId }
-          ],
-          isActive: true,
-          endDate: { gte: new Date() }
-        }
-      });
-
       // Authorization Checks
       if (user.approvalStatus !== 'APPROVED') {
         let message = '관리자 승인 대기 중입니다.';
@@ -41,26 +29,6 @@ export default async function OpenLabApplyPage() {
                 <h2 style={{ color: '#B91C1C', marginBottom: '16px', fontSize: '1.25rem' }}>접근 제한</h2>
                 <p style={{ lineHeight: '1.6' }}>{message}</p>
                 <Link href="/" className="btn-primary" style={{ marginTop: '24px' }}>홈으로 이동</Link>
-              </div>
-            </div>
-          </main>
-        );
-      }
-
-      if (activeRestrictions.length > 0) {
-        const restriction = activeRestrictions[0];
-        return (
-          <main style={{ backgroundColor: 'var(--muted-background)', minHeight: 'calc(100vh - 64px)', padding: '60px 20px' }}>
-            <div className="container" style={{ maxWidth: '600px' }}>
-              <div className="card" style={{ textAlign: 'center' }}>
-                <h2 style={{ color: '#B91C1C', marginBottom: '16px', fontSize: '1.25rem' }}>OPEN LAB 신청 제한</h2>
-                <div style={{ marginBottom: '24px' }}>
-                  <p style={{ fontWeight: '700', marginBottom: '8px', fontSize: '1.125rem' }}>사유: {restriction.reason}</p>
-                  <p style={{ color: 'var(--sub-text)' }}>
-                    제한 기간: {new Date(restriction.startDate).toLocaleDateString('ko-KR')} ~ {restriction.endDate && new Date(restriction.endDate).getFullYear() < 9000 ? new Date(restriction.endDate).toLocaleDateString('ko-KR') : '영구'}
-                  </p>
-                </div>
-                <Link href="/" className="btn-primary">홈으로 이동</Link>
               </div>
             </div>
           </main>
