@@ -51,7 +51,7 @@ export default async function OpenLabSuccessPage({ params }: { params: Promise<{
   const timeStr = `${application.slot.startTime} ~ ${application.slot.endTime}`;
 
   const suppliesListStr = supplies.map(s => `   - ${s.name}: ${s.quantity}${s.unit}`).join('\n') || '   - 없음';
-  const participantsListStr = application.participants.map(p => `${p.name}(${p.studentId})`).join(', ');
+  const participantsListStr = application.participants.map(p => p.name).join(', ');
 
   const emailSubject = `[OPEN LAB 신청] ${repGrade}학년_${roomName}_${repName}`;
   const emailBody = `안녕하세요, OPEN LAB 사용 신청 내역입니다.
@@ -84,7 +84,7 @@ ${suppliesListStr}
             <div>
               <h4 style={{ margin: '0 0 6px 0', fontSize: '0.9375rem', fontWeight: '800', color: '#1e3a8a' }}>💡 회원가입 시 더 간편하게 신청하세요!</h4>
               <p style={{ margin: 0, fontSize: '0.8125rem', color: '#1e40af', lineHeight: '1.4' }}>
-                회원가입 후 로그인 상태에서 신청하시면 최근 신청 기록이 남아, 학년과 학번 입력 및 실습 상세 정보를 몇 번의 클릭만으로 자동 완성하실 수 있습니다.
+                회원가입 후 로그인 상태에서 신청하시면 최근 신청 기록이 남아, 학년 and 학번 입력 및 실습 상세 정보를 몇 번의 클릭만으로 자동 완성하실 수 있습니다.
               </p>
             </div>
             <Link href="/register" className="btn-banner-link">회원가입 하기</Link>
@@ -96,7 +96,7 @@ ${suppliesListStr}
           <div className="actions-panel no-print">
             <div className="card success-header-card">
               <span className="success-badge">신청 접수 완료</span>
-              <h2 style={{ fontSize: '1.35rem', fontWeight: '800', margin: '12px 0 6px 0' }}>OPEN LAB 신청이 완료되었습니다!</h2>
+              <h2 style={{ fontSize: '1.35rem', fontWeight: '800', margin: '12px 0 6px 0' }}>신청서 작성이 완료되었습니다!</h2>
               <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)', margin: 0, lineHeight: '1.5' }}>
                 아래 순서에 따라 신청서를 PDF로 저장하고 관리자 메일로 발송해 주세요.
               </p>
@@ -104,6 +104,21 @@ ${suppliesListStr}
 
             <div className="card instructions-card">
               <h3 className="card-title">📨 메일 발송 가이드</h3>
+              
+              <div style={{ 
+                backgroundColor: '#fff9db', 
+                border: '1px solid #ffe066', 
+                padding: '12px 16px', 
+                borderRadius: '8px', 
+                fontSize: '0.8125rem', 
+                color: '#664d03', 
+                marginBottom: '16px',
+                fontWeight: 600,
+                lineHeight: '1.4'
+              }}>
+                ⚠️ 브라우저 보안 정책상 다운로드한 PDF 파일이 메일에 자동으로 첨부되지 않습니다. 메일 창이 열리면 저장하신 PDF 파일을 꼭 [직접 첨부]하여 발송해 주세요!
+              </div>
+
               <ol className="guide-steps">
                 <li>오른쪽의 <strong>[신청서 PDF 다운로드 / 인쇄]</strong> 버튼을 눌러 PDF로 저장하거나 인쇄합니다.</li>
                 <li>아래 <strong>[메일 즉시 전송]</strong> 버튼을 누르면 이메일 클라이언트가 열리며 서식이 자동으로 작성됩니다.</li>

@@ -61,11 +61,8 @@ export default function PrintableApplicationForm({ application, supplies }: Prin
   const slotDateObj = new Date(application.slot.date);
   const slotDateStr = `${slotDateObj.getFullYear()}년 ${slotDateObj.getMonth() + 1}월 ${slotDateObj.getDate()}일`;
 
-  // Participant names concatenated (hiding dummy guest IDs)
-  const participantNames = application.participants.map(p => {
-    const isRealId = /^\d{8,10}$/.test(p.studentId);
-    return isRealId ? `${p.name}(${p.studentId})` : p.name;
-  }).join(', ');
+  // Participant names concatenated (showing only names, no parenthetical student IDs)
+  const participantNames = application.participants.map(p => p.name).join(', ');
 
   // Create exactly 17 rows for the supplies table
   const maxRows = 17;
@@ -100,8 +97,13 @@ export default function PrintableApplicationForm({ application, supplies }: Prin
         {/* Title */}
         <h1 className="form-title">한양대학교 간호대학 실습실 및 기자재 사용신청서</h1>
 
-        {/* Form Table */}
-        <table className="official-form-table">
+        <table className="official-form-table" style={{ tableLayout: 'fixed', width: '100%' }}>
+          <colgroup>
+            <col style={{ width: '15%' }} />
+            <col style={{ width: '35%' }} />
+            <col style={{ width: '15%' }} />
+            <col style={{ width: '35%' }} />
+          </colgroup>
           <tbody>
             <tr>
               <td className="label-cell" style={{ width: '15%' }}>실습실명</td>
