@@ -33,7 +33,7 @@ export default async function Home() {
             </Link>
 
             <p style={{ marginTop: '16px', fontSize: '0.875rem', color: 'var(--sub-text)' }}>
-              * 로그인 없이도 즉시 신청서를 생성하고 PDF로 인쇄/다운로드할 수 있습니다.
+              * 로그인 없이 즉시 신청 가능합니다. (로그인 시 신청서 생성 기록이 저장됩니다.)
             </p>
           </div>
 

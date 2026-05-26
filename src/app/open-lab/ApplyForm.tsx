@@ -499,7 +499,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
                   type="text" 
                   placeholder="학번" 
                   value={p.studentId}
-                  disabled={index === 0 && user !== null} // representative pre-filled for logged-in
+                  disabled={index === 0}
                   onChange={(e) => handleParticipantChange(index, 'studentId', e.target.value)}
                 />
               </div>
@@ -508,7 +508,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
                   type="text" 
                   placeholder="이름" 
                   value={p.name}
-                  disabled={index === 0 && user !== null}
+                  disabled={index === 0}
                   onChange={(e) => handleParticipantChange(index, 'name', e.target.value)}
                 />
               </div>

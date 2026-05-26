@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { decrypt, isAdminRole } from './lib/auth-core';
 
-const protectedRoutes = ['/open-lab', '/history', '/mypage', '/admin'];
+const protectedRoutes = ['/history', '/mypage', '/admin'];
 
 export async function proxy(req: NextRequest) {
   const path = req.nextUrl.pathname;
@@ -34,5 +34,5 @@ export async function proxy(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/open-lab/:path*', '/history/:path*', '/mypage/:path*', '/admin/:path*'],
+  matcher: ['/history/:path*', '/mypage/:path*', '/admin/:path*'],
 };

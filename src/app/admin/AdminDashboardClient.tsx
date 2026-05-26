@@ -19,7 +19,7 @@ export default function AdminDashboardClient({
   initialApplications,
   selectedDate
 }: Props) {
-  const [activeTab, setActiveTab] = useState('applications');
+  const [activeTab, setActiveTab] = useState('schedules');
   const [skills, setSkills] = useState(initialSkills);
   
   const router = useRouter();
@@ -27,12 +27,6 @@ export default function AdminDashboardClient({
   return (
     <div className="dashboard-container">
       <div className="tab-menu">
-        <button 
-          className={activeTab === 'applications' ? 'active' : ''} 
-          onClick={() => setActiveTab('applications')}
-        >
-          신청 현황
-        </button>
         <button 
           className={activeTab === 'schedules' ? 'active' : ''} 
           onClick={() => setActiveTab('schedules')}
@@ -43,16 +37,11 @@ export default function AdminDashboardClient({
           className={activeTab === 'skills' ? 'active' : ''} 
           onClick={() => setActiveTab('skills')}
         >
-          술기 및 준비물
+          술기 및 준비물 관리
         </button>
       </div>
 
       <div className="tab-content">
-        {activeTab === 'applications' && (
-          <div className="dashboard-section no-padding">
-            <ApplicationListClient initialApplications={initialApplications} />
-          </div>
-        )}
 
         {activeTab === 'schedules' && (
           <div className="dashboard-section">
