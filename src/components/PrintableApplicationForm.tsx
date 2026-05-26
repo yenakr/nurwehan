@@ -136,15 +136,27 @@ export default function PrintableApplicationForm({ application, supplies }: Prin
             </tr>
 
             <tr>
-              <td className="label-cell">실습날짜</td>
-              <td className="label-cell">실습시간</td>
-              <td className="label-cell" colSpan={2}>사용인원</td>
-            </tr>
-
-            <tr>
-              <td className="content-cell text-center">{slotDateStr}</td>
-              <td className="content-cell text-center">{application.slot.startTime} ~ {application.slot.endTime}</td>
-              <td className="content-cell text-center" colSpan={2}>{application.participants.length}명</td>
+              <td colSpan={4} style={{ padding: 0 }}>
+                <table style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed', border: 'none' }}>
+                  <colgroup>
+                    <col style={{ width: '33.33%' }} />
+                    <col style={{ width: '33.33%' }} />
+                    <col style={{ width: '33.33%' }} />
+                  </colgroup>
+                  <tbody>
+                    <tr>
+                      <td className="label-cell text-center" style={{ borderLeft: 'none', borderTop: 'none', borderRight: '1px solid #000', borderBottom: '1px solid #000' }}>실습날짜</td>
+                      <td className="label-cell text-center" style={{ borderLeft: 'none', borderTop: 'none', borderRight: '1px solid #000', borderBottom: '1px solid #000' }}>실습시간</td>
+                      <td className="label-cell text-center" style={{ borderLeft: 'none', borderTop: 'none', borderRight: 'none', borderBottom: '1px solid #000' }}>사용인원</td>
+                    </tr>
+                    <tr>
+                      <td className="content-cell text-center" style={{ borderLeft: 'none', borderTop: 'none', borderRight: '1px solid #000', borderBottom: 'none' }}>{slotDateStr}</td>
+                      <td className="content-cell text-center" style={{ borderLeft: 'none', borderTop: 'none', borderRight: '1px solid #000', borderBottom: 'none' }}>{application.slot.startTime} ~ {application.slot.endTime}</td>
+                      <td className="content-cell text-center" style={{ borderLeft: 'none', borderTop: 'none', borderRight: 'none', borderBottom: 'none' }}>{application.participants.length}명</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </td>
             </tr>
 
             <tr>

@@ -70,30 +70,10 @@ export async function PATCH(
       return NextResponse.json({ message: '수정할 수 있는 상태가 아닙니다.' }, { status: 400 });
     }
 
-    // 2. Validate Window
+    // 2. Validate Window (Bypassed by request)
     const targetDate = new Date(date);
-    if (!isWithinApplicationWindow(targetDate)) {
-      return NextResponse.json({ message: '현재 신청 가능 기간이 아닙니다.' }, { status: 400 });
-    }
 
-    // 2.1 Weekly Duplicate Check (Excluding current application)
-    const weekStart = startOfWeek(targetDate, { weekStartsOn: 1 });
-    const weekEnd = endOfWeek(targetDate, { weekStartsOn: 1 });
-
-    const existingAppsInWeek = await prisma.application.findFirst({
-      where: {
-        id: { not: id },
-        status: { in: ['PENDING', 'APPROVED'] },
-        slot: { date: { gte: weekStart, lte: weekEnd } },
-        participants: {
-          some: { studentId: session.user.studentId }
-        }
-      }
-    });
-
-    if (existingAppsInWeek) {
-      return NextResponse.json({ message: '해당 주에 이미 다른 신청 이력이 있습니다.' }, { status: 400 });
-    }
+    // 2.1 Weekly Duplicate Check (Bypassed by request)
 
     // 3. Find/Create Slot (Simplified for now, similar to apply route)
     const rule = await prisma.openLabGradeRule.findUnique({ where: { id: ruleId } });

@@ -84,6 +84,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
   const [confirmedNotice] = useState(true);
   const [additionalRequest, setAdditionalRequest] = useState('');
   const [accompanyingNames, setAccompanyingNames] = useState('');
+  const [totalCount, setTotalCount] = useState('1');
   
   // Custom schedule inputs
   const [customDate, setCustomDate] = useState('');
@@ -154,6 +155,15 @@ export default function ApplyForm({ user }: ApplyFormProps) {
       setSubject('');
     }
   }, [gradeFilter]);
+
+  // Dynamic totalCount synchronization based on accompanyingNames
+  useEffect(() => {
+    const accompanyingList = accompanyingNames
+      .split(',')
+      .map(n => n.trim())
+      .filter(Boolean);
+    setTotalCount((1 + accompanyingList.length).toString());
+  }, [accompanyingNames]);
 
   // 3. Filter Logic
   const filteredSlots = allSlots.filter(slot => {
@@ -230,15 +240,24 @@ export default function ApplyForm({ user }: ApplyFormProps) {
       const repName = user ? user.name : guestName;
       const repStudentId = user ? user.studentId : guestStudentId;
 
-      const parsedAccompanying = accompanyingNames
+      const accompanyingList = accompanyingNames
         .split(',')
         .map(n => n.trim())
         .filter(Boolean)
-        .filter(n => n !== repName)
-        .map((name, idx) => ({
-          studentId: `accompanying-${idx}-${name}`,
-          name
-        }));
+        .filter(n => n !== repName);
+
+      // Pad with dummy names if totalCount is greater than representative + accompanying list size
+      const totalEntered = 1 + accompanyingList.length;
+      const neededPadding = Math.max(0, parseInt(totalCount || '1') - totalEntered);
+      
+      for (let i = 0; i < neededPadding; i++) {
+        accompanyingList.push(`동반학생 ${i + 1}`);
+      }
+
+      const parsedAccompanying = accompanyingList.map((name, idx) => ({
+        studentId: `accompanying-${idx}-${name}`,
+        name
+      }));
 
       const payloadParticipants = [
         { studentId: repStudentId, name: repName },
@@ -458,27 +477,24 @@ export default function ApplyForm({ user }: ApplyFormProps) {
               const isSelected = selectedSlot?.ruleId === slot.ruleId && selectedSlot?.date === slot.date && selectedSlot?.room === slot.room;
               const dateObj = new Date(slot.date);
               const dateStr = dateObj.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' });
-              const isFull = slot.remaining <= 0;
-              
-              let capacityClass = 'high';
-              if (isFull) capacityClass = 'full';
-              else if (slot.remaining <= 3) capacityClass = 'low';
 
               return (
                 <button
                   key={`${slot.ruleId}-${slot.date}-${slot.room}`}
                   type="button"
                   onClick={() => setSelectedSlot(slot)}
-                  className={`slot-card ${isSelected ? 'selected' : ''} ${isFull ? 'disabled' : ''}`}
-                  disabled={isFull}
+                  className={`slot-card ${isSelected ? 'selected' : ''}`}
                 >
                   {isSelected && <span className="selection-badge">선택됨</span>}
                   <div className="slot-date">{dateStr}</div>
                   <div className="slot-time">{slot.startTime} ~ {slot.endTime}</div>
                   <div className="slot-room">{slot.room}</div>
                   
-                  <div className={`capacity-badge ${capacityClass}`}>
-                    {isFull ? `마감 ${slot.maxCapacity} / ${slot.maxCapacity}명` : `잔여 ${slot.remaining} / ${slot.maxCapacity}명`}
+                  <div className="capacity-badge" style={{ background: '#f1f5f9', color: '#475569', display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'flex-start', fontSize: '0.75rem', width: '100%', boxSizing: 'border-box' }}>
+                    <div>정원: {slot.maxCapacity}명</div>
+                    <div style={{ fontSize: '0.6875rem', color: '#64748b', fontWeight: 600 }}>
+                      본 사이트 작성: {slot.maxCapacity - slot.remaining}명
+                    </div>
                   </div>
                 </button>
               );
@@ -504,12 +520,16 @@ export default function ApplyForm({ user }: ApplyFormProps) {
               <div className="slot-date">기타 일정</div>
               <div className="slot-time" style={{ color: 'var(--sub-text)' }}>대체 일정 직접 입력</div>
               <div className="slot-room">공휴일/대체용</div>
-              <div className="capacity-badge high" style={{ background: '#f1f5f9', color: '#475569' }}>
+              <div className="capacity-badge" style={{ background: '#f1f5f9', color: '#475569', fontSize: '0.75rem' }}>
                 직접 설정
               </div>
             </button>
           </div>
         )}
+
+        <p style={{ fontSize: '0.8125rem', color: 'var(--sub-text)', marginTop: '16px', margin: '16px 0 0 0', lineHeight: '1.5' }}>
+          ※ 각 일별 표시되는 <strong>'본 사이트 작성 인원'</strong>은 본 웹사이트(NUR위한)를 통해 신청서를 작성한 내역만 집계한 수치입니다. 공식 예약 시스템의 실시간 신청 현황과 다를 수 있으므로, 실제 실습실 예약은 반드시 공식 채널을 확인하시기 바랍니다.
+        </p>
 
         {selectedSlot?.ruleId === 'custom' && (
           <div className="custom-schedule-inputs" style={{ marginTop: '24px', padding: '20px', background: '#f8fafc', borderRadius: '12px', border: '1px solid var(--border)' }}>
@@ -616,18 +636,32 @@ export default function ApplyForm({ user }: ApplyFormProps) {
       <section className="form-section">
         <h3 className="section-title">5. 동반 실습 학생</h3>
         
-        <div className="input-group" style={{ marginBottom: '20px' }}>
-          <label style={{ fontSize: '0.8125rem', fontWeight: '700', color: 'var(--sub-text)', display: 'block', marginBottom: '6px' }}>대표 신청자</label>
-          <div className="info-value-box" style={{ 
-            padding: '12px 16px', 
-            background: '#f8fafc', 
-            borderRadius: '8px', 
-            fontSize: '0.9375rem', 
-            fontWeight: 700,
-            border: '1px solid var(--border)',
-            color: 'var(--primary)'
-          }}>
-            {user ? `${user.name} (${user.studentId})` : (guestName && guestStudentId ? `${guestName} (${guestStudentId})` : '신청자 정보(이름, 학번)를 입력해주세요.')}
+        <div className="input-row" style={{ display: 'flex', gap: '16px', marginBottom: '20px' }}>
+          <div className="input-group" style={{ flex: 2 }}>
+            <label style={{ fontSize: '0.8125rem', fontWeight: '700', color: 'var(--sub-text)', display: 'block', marginBottom: '6px' }}>대표 신청자</label>
+            <div className="info-value-box" style={{ 
+              padding: '12px 16px', 
+              background: '#f8fafc', 
+              borderRadius: '8px', 
+              fontSize: '0.9375rem', 
+              fontWeight: 700,
+              border: '1px solid var(--border)',
+              color: 'var(--primary)'
+            }}>
+              {user ? `${user.name} (${user.studentId})` : (guestName && guestStudentId ? `${guestName} (${guestStudentId})` : '신청자 정보(이름, 학번)를 입력해주세요.')}
+            </div>
+          </div>
+
+          <div className="input-group" style={{ flex: 1 }}>
+            <label style={{ fontSize: '0.8125rem', fontWeight: '700', color: 'var(--sub-text)', display: 'block', marginBottom: '6px' }}>총 사용인원 (본인 포함) <span className="req">*</span></label>
+            <input 
+              type="number" 
+              min="1"
+              value={totalCount} 
+              onChange={(e) => setTotalCount(e.target.value)}
+              placeholder="예: 2"
+              style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', fontWeight: 600 }}
+            />
           </div>
         </div>
 
@@ -640,7 +674,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
             onChange={(e) => setAccompanyingNames(e.target.value)}
           />
           <p style={{ fontSize: '0.8125rem', color: 'var(--sub-text)', marginTop: '8px', margin: '8px 0 0 0' }}>
-            * 동반 실습 학생의 학번은 입력할 필요가 없으며, 대표 신청자 외에 함께 참여하는 학생의 이름만 작성해주세요.
+            * 동반 실습 학생의 학번은 입력할 필요가 없으며, 이름만 작성해주세요. 콤마로 이름이 구분되지 않으면 총 사용인원 수에 맞게 빈 동반 인원 정보가 자동으로 채워집니다.
           </p>
         </div>
       </section>

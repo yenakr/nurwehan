@@ -223,15 +223,18 @@ export default function EditForm({ user, application }: EditFormProps) {
                   <div className="slot-date">{new Date(slot.date).toLocaleDateString('ko-KR', { month: 'short', day: 'numeric', weekday: 'short' })}</div>
                   <div className="slot-time">{slot.startTime} ~ {slot.endTime}</div>
                   <div className="slot-room">{slot.room}</div>
-                  <div className="slot-footer">
-                    <span className="slot-grade">{slot.grade}학년</span>
-                    <span className="slot-capacity">{slot.remaining}명 가능</span>
+                  <div className="slot-footer" style={{ display: 'flex', flexDirection: 'column', gap: '4px', marginTop: '4px' }}>
+                    <span className="slot-grade" style={{ fontWeight: 700 }}>{slot.grade}학년</span>
+                    <span className="slot-capacity" style={{ fontSize: '0.75rem', color: '#64748b' }}>정원: {slot.maxCapacity}명 (본 사이트 작성: {slot.maxCapacity - slot.remaining}명)</span>
                   </div>
                 </button>
               );
             })}
           </div>
         )}
+        <p style={{ fontSize: '0.8125rem', color: 'var(--sub-text)', marginTop: '16px', margin: '16px 0 0 0', lineHeight: '1.5' }}>
+          ※ 각 일별 표시되는 <strong>'본 사이트 작성 인원'</strong>은 본 웹사이트(NUR위한)를 통해 신청서를 작성한 내역만 집계한 수치입니다. 공식 예약 시스템의 실시간 신청 현황과 다를 수 있으므로, 실제 실습실 예약은 반드시 공식 채널을 확인하시기 바랍니다.
+        </p>
       </section>
 
       {/* Rest of the form is same as ApplyForm */}

@@ -45,11 +45,8 @@ export async function POST(request: NextRequest) {
     // Bypass strict confirmedNotice requirement since it is checked automatically
     const isConfirmed = confirmedNotice !== undefined ? confirmedNotice : true;
 
-    // 1.1 Application Window Check
+    // 1.1 Application Window Check (Bypassed by request)
     const targetDate = new Date(date);
-    if (!isWithinApplicationWindow(targetDate)) {
-      return NextResponse.json({ message: '현재 신청 가능 기간이 아닙니다.' }, { status: 400 });
-    }
 
     if (skillIds.length > 2) {
       return NextResponse.json({ message: '한 타임에는 최대 2개 술기까지 신청할 수 있습니다.' }, { status: 400 });
@@ -124,11 +121,7 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // 4. Validate Capacity
-    const currentParticipantsCount = slot.applications?.reduce((acc, app) => acc + app.participants.length, 0) || 0;
-    if (currentParticipantsCount + participants.length > slot.maxCapacity) {
-      return NextResponse.json({ message: '잔여 인원이 부족합니다.' }, { status: 400 });
-    }
+    // 4. Validate Capacity (Bypassed by request)
 
     // 5. Validate Participants Eligibility (only for actual 8-10 digit student IDs)
     const participantStudentIds = Array.from(new Set([
@@ -138,23 +131,7 @@ export async function POST(request: NextRequest) {
     
     // Check for active restrictions (Bypassed by request)
 
-    // Check for duplicate application in the same week
-    const weekStart = startOfWeek(targetDate, { weekStartsOn: 1 });
-    const weekEnd = endOfWeek(targetDate, { weekStartsOn: 1 });
-
-    const existingAppsInWeek = await prisma.application.findFirst({
-      where: {
-        status: { in: ['PENDING', 'APPROVED'] },
-        slot: { date: { gte: weekStart, lte: weekEnd } },
-        participants: {
-          some: { studentId: { in: participantStudentIds as string[] } }
-        }
-      }
-    });
-
-    if (existingAppsInWeek) {
-      return NextResponse.json({ message: '참여자 중 해당 주에 이미 신청 이력이 있는 학생이 있습니다.' }, { status: 400 });
-    }
+    // Check for duplicate application in the same week (Bypassed by request)
 
     // Filter out 'other' skill ID for actual DB skills
     const actualSkillIds = skillIds.filter((id: string) => id !== 'other');

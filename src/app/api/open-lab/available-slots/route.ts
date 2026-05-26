@@ -29,20 +29,15 @@ export async function GET(request: Request) {
       for (let i = 0; i <= 14; i++) {
         const d = addDays(today, i);
         if (d.getDay() === rule.dayOfWeek) {
-          // Check application window
-          const { start, end } = getApplicationWindow(d);
-          
-          if (isAfter(now, start) && isBefore(now, end)) {
-            slots.push({
-              ruleId: rule.id,
-              date: format(d, 'yyyy-MM-dd'),
-              startTime: rule.startTime,
-              endTime: rule.endTime,
-              room: rule.room,
-              grade: rule.grade,
-              maxCapacity: rule.maxCapacity
-            });
-          }
+          slots.push({
+            ruleId: rule.id,
+            date: format(d, 'yyyy-MM-dd'),
+            startTime: rule.startTime,
+            endTime: rule.endTime,
+            room: rule.room,
+            grade: rule.grade,
+            maxCapacity: rule.maxCapacity
+          });
         }
       }
     }
