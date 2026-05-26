@@ -33,7 +33,7 @@ export default async function Home() {
             </Link>
 
             <p style={{ marginTop: '16px', fontSize: '0.875rem', color: 'var(--sub-text)' }}>
-              * 로그인이 필요한 서비스입니다.
+              * 로그인 없이도 즉시 신청서를 생성하고 PDF로 인쇄/다운로드할 수 있습니다.
             </p>
           </div>
 
@@ -97,9 +97,9 @@ export default async function Home() {
         <div className="container">
           <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'flex-end', gap: '24px' }}>
             <div>
-              <p style={{ fontWeight: '700', color: 'var(--text)', marginBottom: '8px', fontSize: '0.9375rem' }}>한양대학교 간호대학</p>
-              <p>서울특별시 성동구 왕십리로 222 한양대학교 간호대학 행정팀</p>
-              <p>© 2026 Hanyang University College of Nursing. All Rights Reserved.</p>
+              <p style={{ fontWeight: '700', color: 'var(--text)', marginBottom: '8px', fontSize: '0.9375rem' }}>NUR위한 (OPEN LAB 신청 도우미)</p>
+              <p>본 사이트는 간호대학 학생들의 편리한 실습실 및 기자재 신청서 작성을 돕기 위한 개별 유틸리티 서비스입니다.</p>
+              <p>© 2026 NUR위한. All Rights Reserved.</p>
             </div>
             <div style={{ display: 'flex', gap: '20px', fontWeight: '500' }}>
               <a href="#">개인정보처리방침</a>

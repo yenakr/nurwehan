@@ -13,57 +13,16 @@ export default async function AdminPage() {
     redirect('/login?redirect=/admin');
   }
 
-  // Fetch initial data for dashboard
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
   const [
-    allUsers,
-    allParticipants,
     skills,
     allApplications
   ] = await Promise.all([
-    // 1. All users for student management
-    prisma.user.findMany({
-      include: {
-        restrictions: {
-          where: { endDate: { gte: new Date() } }
-        },
-        warnings: true
-      },
-      orderBy: { createdAt: 'desc' }
-    }),
-    // 2. Today's participants for attendance management
-    prisma.applicationParticipant.findMany({
-      where: {
-        application: {
-          slot: {
-            date: {
-              gte: today,
-              lt: tomorrow
-            }
-          }
-        }
-      },
-      include: {
-        application: {
-          include: {
-            representativeUser: true,
-            slot: true,
-            skills: { include: { skill: true } },
-            usageLogs: true
-          }
-        }
-      }
-    }),
-    // 3. Skills and supplies
+    // 1. Skills and supplies
     prisma.skill.findMany({
       include: { supplies: true },
       orderBy: { name: 'asc' }
     }),
-    // 4. All applications for application management
+    // 2. All applications for application management
     prisma.application.findMany({
       include: {
         representativeUser: true,
@@ -85,11 +44,11 @@ export default async function AdminPage() {
         </div>
 
         <AdminDashboardClient 
-          initialUsers={allUsers as any}
-          initialParticipants={allParticipants as any}
+          initialUsers={[]}
+          initialParticipants={[]}
           initialSkills={skills}
           initialApplications={allApplications as any}
-          selectedDate={today.toISOString().split('T')[0]}
+          selectedDate={new Date().toISOString().split('T')[0]}
         />
       </div>
     </main>
