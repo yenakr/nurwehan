@@ -27,11 +27,10 @@ export default function ClientActions({
     const rawDate = new Date(date);
     const mm = String(rawDate.getMonth() + 1).padStart(2, '0');
     const dd = String(rawDate.getDate()).padStart(2, '0');
-    const formattedDate = `${mm}-${dd}`;
-    const cleanTime = startTime.replace(':', '_');
+    const formattedDate = `${mm}${dd}`;
     
     const originalTitle = document.title;
-    document.title = `${repName}_OPEN_LAB 신청서_${formattedDate}, ${cleanTime}`;
+    document.title = `[${repName}] OPEN LAB 신청서 ${formattedDate} ${startTime}`;
     window.print();
     document.title = originalTitle;
   };
