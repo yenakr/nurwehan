@@ -8,7 +8,6 @@ interface Props {
   applicationId: string;
   currentStatus: string;
   rejectedReason: string | null;
-  hasUsageLog: boolean;
   participants: any[];
 }
 
@@ -16,7 +15,6 @@ export default function ApplicationStatusActions({
   applicationId, 
   currentStatus, 
   rejectedReason,
-  hasUsageLog,
   participants
 }: Props) {
   const [loading, setLoading] = useState(false);
@@ -120,7 +118,7 @@ export default function ApplicationStatusActions({
             )}
           </div>
           
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', textAlign: 'left', marginBottom: '24px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '20px', textAlign: 'left', marginBottom: '24px' }}>
             <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
               <h4 style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '8px' }}>출석 및 정리 상태</h4>
               <ul style={{ listStyle: 'none', padding: 0, margin: 0, fontSize: '0.8125rem' }}>
@@ -139,27 +137,6 @@ export default function ApplicationStatusActions({
               <Link href={`/admin/attendance?appId=${applicationId}`} style={{ display: 'inline-block', marginTop: '12px', fontSize: '0.8125rem', color: 'var(--primary)', fontWeight: '600' }}>
                 출석부에서 관리하기 →
               </Link>
-            </div>
-            
-            <div style={{ padding: '16px', backgroundColor: '#f8fafc', borderRadius: '8px' }}>
-              <h4 style={{ fontSize: '0.875rem', fontWeight: '600', marginBottom: '8px' }}>실습 소감 제출 여부</h4>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ 
-                  padding: '4px 8px', 
-                  borderRadius: '4px', 
-                  fontSize: '0.75rem', 
-                  fontWeight: '700',
-                  backgroundColor: hasUsageLog ? '#dcfce7' : '#fee2e2',
-                  color: hasUsageLog ? '#166534' : '#991b1b'
-                }}>
-                  {hasUsageLog ? '제출 완료' : '미제출'}
-                </span>
-              </div>
-              {hasUsageLog && (
-                <Link href={`/admin/usage-logs?applicationId=${applicationId}`} style={{ display: 'inline-block', marginTop: '12px', fontSize: '0.8125rem', color: 'var(--primary)', fontWeight: '600' }}>
-                  소감 확인하기 →
-                </Link>
-              )}
             </div>
           </div>
 

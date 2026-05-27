@@ -30,9 +30,6 @@ export async function PATCH(request: NextRequest) {
 
     if (!currentUser) return NextResponse.json({ message: '사용자를 찾을 수 없습니다.' }, { status: 404 });
 
-    // If status is REJECTED, auto-reset to PENDING when user updates info
-    const newStatus = currentUser.approvalStatus === 'REJECTED' ? 'PENDING' : currentUser.approvalStatus;
-
     const updatedUser = await prisma.user.update({
       where: { id: user.id },
       data: {
@@ -40,8 +37,7 @@ export async function PATCH(request: NextRequest) {
         ...(studentId && { studentId }),
         grade,
         phone,
-        email,
-        approvalStatus: newStatus
+        email
       }
     });
 

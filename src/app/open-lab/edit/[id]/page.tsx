@@ -29,8 +29,8 @@ export default async function EditApplicationPage({ params }: { params: Promise<
     redirect('/history');
   }
 
-  // Security: Only PENDING can be edited
-  if (application.status !== 'PENDING') {
+  // Security: Only PENDING or APPROVED can be edited
+  if (application.status !== 'PENDING' && application.status !== 'APPROVED') {
     redirect(`/history/${id}`);
   }
 
@@ -39,7 +39,7 @@ export default async function EditApplicationPage({ params }: { params: Promise<
       <div className="container" style={{ maxWidth: '900px' }}>
         <div style={{ marginBottom: '32px' }}>
           <h1 style={{ fontSize: '1.75rem', fontWeight: '800' }}>신청 내용 수정</h1>
-          <p style={{ color: 'var(--sub-text)', marginTop: '8px' }}>승인 대기 중인 신청 건의 날짜, 시간, 술기 등을 변경할 수 있습니다.</p>
+          <p style={{ color: 'var(--sub-text)', marginTop: '8px' }}>작성하신 신청서의 날짜, 시간, 술기 등을 변경할 수 있습니다.</p>
         </div>
 
         <EditForm 

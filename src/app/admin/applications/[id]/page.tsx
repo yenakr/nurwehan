@@ -209,7 +209,6 @@ export default async function AdminApplicationDetailPage({ params }: { params: P
             applicationId={application.id} 
             currentStatus={application.status} 
             rejectedReason={application.rejectedReason} 
-            hasUsageLog={application.usageLogs.length > 0}
             participants={application.participants}
           />
         </div>

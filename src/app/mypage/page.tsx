@@ -116,7 +116,6 @@ export default async function MyPage() {
                     <th style={{ padding: '12px', fontSize: '0.8125rem' }}>시간</th>
                     <th style={{ padding: '12px', fontSize: '0.8125rem' }}>장소</th>
                     <th style={{ padding: '12px', fontSize: '0.8125rem' }}>술기</th>
-                    <th style={{ padding: '12px', fontSize: '0.8125rem' }}>상태</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -126,20 +125,14 @@ export default async function MyPage() {
                       <td style={{ padding: '12px', fontSize: '0.875rem' }}>{app.slot.startTime} ~ {app.slot.endTime}</td>
                       <td style={{ padding: '12px', fontSize: '0.875rem' }}>{app.slot.room}</td>
                       <td style={{ padding: '12px', fontSize: '0.875rem' }}>
-                        <div style={{ maxWidth: '150px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                        <div style={{ maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                           {app.skills.map(s => s.skill.name).join(', ')}
                         </div>
-                      </td>
-                      <td style={{ padding: '12px', fontSize: '0.875rem' }}>
-                        <span className={`badge badge-${app.status.toLowerCase()}`}>
-                          {app.status === 'PENDING' ? '대기' : app.status === 'APPROVED' ? '승인' : 
-                           app.status === 'REJECTED' ? '반려' : app.status}
-                        </span>
                       </td>
                     </tr>
                   )) : (
                     <tr>
-                      <td colSpan={5} style={{ padding: '24px', textAlign: 'center', color: 'var(--sub-text)', fontSize: '0.875rem' }}>신청 내역이 없습니다.</td>
+                      <td colSpan={4} style={{ padding: '24px', textAlign: 'center', color: 'var(--sub-text)', fontSize: '0.875rem' }}>작성 내역이 없습니다.</td>
                     </tr>
                   )}
                 </tbody>
@@ -153,14 +146,13 @@ export default async function MyPage() {
                   <div key={app.id} style={{ border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
                       <span style={{ fontWeight: '700', fontSize: '0.9375rem' }}>{new Date(app.slot.date).toLocaleDateString('ko-KR')}</span>
-                      <span className={`badge badge-${app.status.toLowerCase()}`}>{app.status}</span>
                     </div>
                     <div style={{ fontSize: '0.875rem', color: 'var(--sub-text)', marginBottom: '4px' }}>시간: {app.slot.startTime} ~ {app.slot.endTime}</div>
                     <div style={{ fontSize: '0.875rem', color: 'var(--sub-text)', marginBottom: '4px' }}>장소: {app.slot.room}</div>
                     <div style={{ fontSize: '0.875rem', color: 'var(--primary)', fontWeight: '500' }}>술기: {app.skills.map(s => s.skill.name).join(', ')}</div>
                   </div>
                 )) : (
-                  <p style={{ textAlign: 'center', padding: '20px', color: 'var(--sub-text)' }}>신청 내역이 없습니다.</p>
+                  <p style={{ textAlign: 'center', padding: '20px', color: 'var(--sub-text)' }}>작성 내역이 없습니다.</p>
                 )}
               </div>
             </div>
