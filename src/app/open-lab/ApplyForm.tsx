@@ -113,20 +113,29 @@ export default function ApplyForm({ user }: ApplyFormProps) {
     const fetchInitialData = async () => {
       try {
         const skillsRes = await fetch('/api/skills');
-        const skillsData = await skillsRes.json();
-        // Prevent duplicate "기타" skill
-        const filteredDBData = skillsData.filter((s: Skill) => s.name !== '기타' && s.id !== 'other');
-        setSkills([...filteredDBData, { id: 'other', name: '기타', supplies: [] }]);
+        if (skillsRes.ok) {
+          const skillsData = await skillsRes.json();
+          if (Array.isArray(skillsData)) {
+            const filteredDBData = skillsData.filter((s: Skill) => s.name !== '기타' && s.id !== 'other');
+            setSkills([...filteredDBData, { id: 'other', name: '기타', supplies: [] }]);
+          }
+        }
 
         const slotsRes = await fetch('/api/open-lab/available-slots');
-        const slotsData = await slotsRes.json();
-        setAllSlots(slotsData);
+        if (slotsRes.ok) {
+          const slotsData = await slotsRes.json();
+          if (Array.isArray(slotsData)) {
+            setAllSlots(slotsData);
+          }
+        }
 
         if (user) {
           const templatesRes = await fetch('/api/open-lab/templates');
-          const templatesData = await templatesRes.json();
-          if (Array.isArray(templatesData)) {
-            setTemplates(templatesData);
+          if (templatesRes.ok) {
+            const templatesData = await templatesRes.json();
+            if (Array.isArray(templatesData)) {
+              setTemplates(templatesData);
+            }
           }
         }
       } catch (err) {

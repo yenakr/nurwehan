@@ -93,22 +93,29 @@ export default function EditForm({ user, application }: EditFormProps) {
     const fetchInitialData = async () => {
       try {
         const skillsRes = await fetch('/api/skills');
-        const skillsData = await skillsRes.json();
-        const filteredDBData = skillsData.filter((s: Skill) => s.name !== '기타' && s.id !== 'other');
-        setSkills([...filteredDBData, { id: 'other', name: '기타' }]);
+        if (skillsRes.ok) {
+          const skillsData = await skillsRes.json();
+          if (Array.isArray(skillsData)) {
+            const filteredDBData = skillsData.filter((s: Skill) => s.name !== '기타' && s.id !== 'other');
+            setSkills([...filteredDBData, { id: 'other', name: '기타' }]);
+          }
+        }
 
         const slotsRes = await fetch('/api/open-lab/available-slots');
-        const slotsData = await slotsRes.json();
-        setAllSlots(slotsData);
-        
-        // Find matching slot in available slots if exists
-        const matching = slotsData.find((s: Slot) => 
-          s.date === application.slot.date.split('T')[0] && 
-          s.startTime === application.slot.startTime && 
-          s.room === application.slot.room
-        );
-        if (matching) setSelectedSlot(matching);
-        
+        if (slotsRes.ok) {
+          const slotsData = await slotsRes.json();
+          if (Array.isArray(slotsData)) {
+            setAllSlots(slotsData);
+            
+            // Find matching slot in available slots if exists
+            const matching = slotsData.find((s: Slot) => 
+              s.date === application.slot.date.split('T')[0] && 
+              s.startTime === application.slot.startTime && 
+              s.room === application.slot.room
+            );
+            if (matching) setSelectedSlot(matching);
+          }
+        }
       } catch (err) {
         console.error('Error fetching data:', err);
       } finally {

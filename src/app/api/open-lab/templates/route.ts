@@ -19,6 +19,7 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
       take: 5,
       include: {
+        slot: true,
         skills: { include: { skill: true } },
         participants: true
       }
