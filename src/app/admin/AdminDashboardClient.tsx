@@ -502,9 +502,10 @@ function ScheduleManagement() {
 function SkillManagement({ initialSkills }: { initialSkills: any[] }) {
   const [skills, setSkills] = useState(initialSkills);
   const [selectedSkill, setSelectedSkill] = useState<any>(initialSkills[0] || null);
-  const [isEditingSkill, setIsEditingSkill] = useState(false);
   const [isAddingSkill, setIsAddingSkill] = useState(false);
   const [newSkillName, setNewSkillName] = useState('');
+  const [editingSkillId, setEditingSkillId] = useState<string | null>(null);
+  const [editingSkillName, setEditingSkillName] = useState('');
 
   const refreshSkills = async () => {
     const res = await fetch('/api/admin/skills');
@@ -521,12 +522,28 @@ function SkillManagement({ initialSkills }: { initialSkills: any[] }) {
     const res = await fetch('/api/admin/skills', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ name: newSkillName })
+      body: JSON.stringify({ name: newSkillName.trim() })
     });
     if (res.ok) {
       setNewSkillName('');
       setIsAddingSkill(false);
       refreshSkills();
+    }
+  };
+
+  const handleSaveSkillName = async (skillId: string) => {
+    if (!editingSkillName.trim()) return;
+    const res = await fetch(`/api/admin/skills/${skillId}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: editingSkillName.trim() })
+    });
+    if (res.ok) {
+      setEditingSkillId(null);
+      refreshSkills();
+    } else {
+      const err = await res.json();
+      alert(err.message || '저장 중 오류가 발생했습니다.');
     }
   };
 
@@ -569,30 +586,72 @@ function SkillManagement({ initialSkills }: { initialSkills: any[] }) {
         )}
 
         <div className="skill-items">
-          {skills.map(skill => (
-            <div 
-              key={skill.id} 
-              className={`skill-item ${selectedSkill?.id === skill.id ? 'active' : ''}`}
-              onClick={() => setSelectedSkill(skill)}
-            >
-              <div className="skill-info">
-                <span className="skill-name">{skill.name}</span>
-                <span 
-                  className={`status-badge ${skill.isActive ? 'active' : 'inactive'}`}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    toggleSkillStatus(skill.id, skill.isActive);
-                  }}
-                  style={{ cursor: 'pointer' }}
-                >
-                  {skill.isActive ? '활성' : '비활성'}
-                </span>
+          {skills.map(skill => {
+            const isEditing = editingSkillId === skill.id;
+            const isSelected = selectedSkill?.id === skill.id;
+            return (
+              <div 
+                key={skill.id} 
+                className={`skill-item ${isSelected ? 'active' : ''} ${!skill.isActive ? 'inactive-skill' : ''}`}
+                onClick={() => setSelectedSkill(skill)}
+              >
+                {isEditing ? (
+                  <div className="skill-edit-form" onClick={(e) => e.stopPropagation()} style={{ width: '100%' }}>
+                    <input 
+                      type="text" 
+                      value={editingSkillName} 
+                      onChange={e => setEditingSkillName(e.target.value)}
+                      className="skill-name-input"
+                      autoFocus
+                      style={{
+                        width: '100%',
+                        padding: '8px',
+                        border: '1px solid var(--primary)',
+                        borderRadius: '6px',
+                        fontSize: '0.875rem'
+                      }}
+                    />
+                    <div style={{ display: 'flex', gap: '6px', marginTop: '8px', justifyContent: 'flex-end' }}>
+                      <button onClick={() => handleSaveSkillName(skill.id)} className="btn-small btn-primary" style={{ padding: '4px 8px', fontSize: '0.75rem' }}>저장</button>
+                      <button onClick={() => setEditingSkillId(null)} className="btn-small btn-outline" style={{ padding: '4px 8px', fontSize: '0.75rem' }}>취소</button>
+                    </div>
+                  </div>
+                ) : (
+                  <>
+                    <div className="skill-info" style={{ flex: 1 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                        <span className="skill-name">{skill.name}</span>
+                        <button 
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            setEditingSkillId(skill.id);
+                            setEditingSkillName(skill.name);
+                          }}
+                          className="skill-edit-btn"
+                          title="이름 수정"
+                        >
+                          ✏️
+                        </button>
+                      </div>
+                      <button 
+                        className={`status-badge ${skill.isActive ? 'active' : 'inactive'}`}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          toggleSkillStatus(skill.id, skill.isActive);
+                        }}
+                        style={{ cursor: 'pointer', border: 'none', textAlign: 'center' }}
+                      >
+                        {skill.isActive ? '활성' : '비활성'}
+                      </button>
+                    </div>
+                    <div className="skill-actions" onClick={(e) => e.stopPropagation()}>
+                      <button onClick={() => handleDeleteSkill(skill.id)} className="icon-btn" title="삭제">🗑️</button>
+                    </div>
+                  </>
+                )}
               </div>
-              <div className="skill-actions">
-                <button onClick={(e) => { e.stopPropagation(); handleDeleteSkill(skill.id); }} className="icon-btn">🗑️</button>
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
       </div>
       
@@ -665,6 +724,18 @@ function SkillManagement({ initialSkills }: { initialSkills: any[] }) {
           background: #f0f7ff;
           box-shadow: 0 2px 4px rgba(14, 74, 132, 0.1);
         }
+        .skill-item.inactive-skill {
+          opacity: 0.6;
+          background: #f1f5f9;
+        }
+        .skill-item.inactive-skill:hover {
+          opacity: 0.85;
+        }
+        .skill-item.active.inactive-skill {
+          border-color: var(--primary);
+          background: #f0f7ff;
+          opacity: 0.85;
+        }
         .skill-info {
           display: flex;
           flex-direction: column;
@@ -674,6 +745,20 @@ function SkillManagement({ initialSkills }: { initialSkills: any[] }) {
           font-weight: 700;
           font-size: 0.9375rem;
           color: var(--text);
+        }
+        .skill-edit-btn {
+          background: none;
+          border: none;
+          cursor: pointer;
+          font-size: 0.875rem;
+          padding: 2px 4px;
+          border-radius: 4px;
+          opacity: 0.4;
+          transition: all 0.2s;
+        }
+        .skill-edit-btn:hover {
+          opacity: 1;
+          background: #e2e8f0;
         }
         .status-badge {
           font-size: 0.6875rem;
@@ -715,9 +800,18 @@ function SkillManagement({ initialSkills }: { initialSkills: any[] }) {
   );
 }
 
+const DEFAULT_UNITS = ['개', '세트', 'mL', 'L', '장', '쌍', '통', '병', '롤', '팩'];
+
 function SupplyList({ skill, onUpdate }: { skill: any, onUpdate: () => void }) {
   const [isAdding, setIsAdding] = useState(false);
   const [newSupply, setNewSupply] = useState({
+    supplyName: '',
+    quantity: 1,
+    unit: '개',
+    note: '-'
+  });
+  const [editingSupplyId, setEditingSupplyId] = useState<string | null>(null);
+  const [editingSupplyData, setEditingSupplyData] = useState({
     supplyName: '',
     quantity: 1,
     unit: '개',
@@ -725,21 +819,71 @@ function SupplyList({ skill, onUpdate }: { skill: any, onUpdate: () => void }) {
   });
 
   const handleAdd = async () => {
-    if (!newSupply.supplyName) return;
+    if (!newSupply.supplyName.trim()) {
+      alert('품목명을 입력해주세요.');
+      return;
+    }
+    if (newSupply.quantity <= 0) {
+      alert('수량은 0보다 커야 합니다.');
+      return;
+    }
     const res = await fetch(`/api/admin/skills/${skill.id}/supplies`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(newSupply)
+      body: JSON.stringify({
+        ...newSupply,
+        supplyName: newSupply.supplyName.trim(),
+        note: newSupply.note.trim() || '-'
+      })
     });
     if (res.ok) {
-      setNewSupply({ supplyName: '', quantity: 1, unit: '개', note: '' });
+      setNewSupply({ supplyName: '', quantity: 1, unit: '개', note: '-' });
       setIsAdding(false);
       onUpdate();
+    } else {
+      alert('추가 실패');
+    }
+  };
+
+  const handleStartEditSupply = (supply: any) => {
+    setEditingSupplyId(supply.id);
+    setEditingSupplyData({
+      supplyName: supply.supplyName,
+      quantity: supply.quantity,
+      unit: supply.unit,
+      note: supply.note || '-'
+    });
+  };
+
+  const handleSaveSupply = async (id: string) => {
+    if (!editingSupplyData.supplyName.trim()) {
+      alert('품목명을 입력해주세요.');
+      return;
+    }
+    if (editingSupplyData.quantity <= 0) {
+      alert('수량은 0보다 커야 합니다.');
+      return;
+    }
+    const res = await fetch(`/api/admin/supplies/${id}`, {
+      method: 'PATCH',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        supplyName: editingSupplyData.supplyName.trim(),
+        quantity: editingSupplyData.quantity,
+        unit: editingSupplyData.unit.trim(),
+        note: editingSupplyData.note.trim() || '-'
+      })
+    });
+    if (res.ok) {
+      setEditingSupplyId(null);
+      onUpdate();
+    } else {
+      alert('저장 실패');
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('이 준비물을 삭제하시겠습니까?')) return;
+    if (!confirm('정말 삭제하시겠습니까?')) return;
     const res = await fetch(`/api/admin/supplies/${id}`, { method: 'DELETE' });
     if (res.ok) onUpdate();
   };
@@ -757,16 +901,52 @@ function SupplyList({ skill, onUpdate }: { skill: any, onUpdate: () => void }) {
         <div className="supply-form-card">
           <div className="form-grid">
             <div className="form-item">
-              <label>품목명</label>
-              <input value={newSupply.supplyName} onChange={e => setNewSupply({...newSupply, supplyName: e.target.value})} />
+              <label>품목명 *</label>
+              <input 
+                value={newSupply.supplyName} 
+                onChange={e => setNewSupply({...newSupply, supplyName: e.target.value})} 
+                placeholder="예: 알코올 솜"
+              />
             </div>
             <div className="form-item">
-              <label>수량</label>
-              <input type="number" value={newSupply.quantity} onChange={e => setNewSupply({...newSupply, quantity: parseInt(e.target.value)})} />
+              <label>수량 *</label>
+              <input 
+                type="number" 
+                value={newSupply.quantity} 
+                onChange={e => setNewSupply({...newSupply, quantity: parseInt(e.target.value) || 0})} 
+                min="1"
+              />
             </div>
             <div className="form-item">
-              <label>단위</label>
-              <input value={newSupply.unit} onChange={e => setNewSupply({...newSupply, unit: e.target.value})} />
+              <label>단위 *</label>
+              <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                <select 
+                  value={DEFAULT_UNITS.includes(newSupply.unit) ? newSupply.unit : 'custom'} 
+                  onChange={e => {
+                    const val = e.target.value;
+                    if (val === 'custom') {
+                      setNewSupply({...newSupply, unit: ''});
+                    } else {
+                      setNewSupply({...newSupply, unit: val});
+                    }
+                  }}
+                  style={{ padding: '10px', border: '1px solid var(--border)', borderRadius: '8px', fontSize: '0.875rem', background: 'white' }}
+                >
+                  {DEFAULT_UNITS.map(u => (
+                    <option key={u} value={u}>{u}</option>
+                  ))}
+                  <option value="custom">직접 입력</option>
+                </select>
+                {!DEFAULT_UNITS.includes(newSupply.unit) && (
+                  <input 
+                    type="text" 
+                    placeholder="단위 입력"
+                    value={newSupply.unit} 
+                    onChange={e => setNewSupply({...newSupply, unit: e.target.value})} 
+                    style={{ width: '100px', padding: '10px', border: '1px solid var(--border)', borderRadius: '8px' }}
+                  />
+                )}
+              </div>
             </div>
             <div className="form-item wide">
               <label>비고</label>
@@ -775,7 +955,10 @@ function SupplyList({ skill, onUpdate }: { skill: any, onUpdate: () => void }) {
           </div>
           <div style={{ display: 'flex', gap: '8px', marginTop: '16px', justifyContent: 'flex-end' }}>
             <button onClick={handleAdd} className="btn-small btn-primary">저장</button>
-            <button onClick={() => setIsAdding(false)} className="btn-small btn-outline">취소</button>
+            <button onClick={() => {
+              setIsAdding(false);
+              setNewSupply({ supplyName: '', quantity: 1, unit: '개', note: '-' });
+            }} className="btn-small btn-outline">취소</button>
           </div>
         </div>
       )}
@@ -792,17 +975,106 @@ function SupplyList({ skill, onUpdate }: { skill: any, onUpdate: () => void }) {
             </tr>
           </thead>
           <tbody>
-            {skill.supplies.map((supply: any) => (
-              <tr key={supply.id}>
-                <td style={{ fontWeight: '600' }}>{supply.supplyName}</td>
-                <td>{supply.quantity}</td>
-                <td>{supply.unit}</td>
-                <td style={{ color: 'var(--sub-text)', fontSize: '0.8125rem' }}>{supply.note || '-'}</td>
-                <td style={{ textAlign: 'right' }}>
-                  <button onClick={() => handleDelete(supply.id)} className="icon-btn">🗑️</button>
-                </td>
-              </tr>
-            ))}
+            {skill.supplies.map((supply: any) => {
+              const isEditing = editingSupplyId === supply.id;
+              if (isEditing) {
+                return (
+                  <tr key={supply.id}>
+                    <td>
+                      <input 
+                        type="text" 
+                        value={editingSupplyData.supplyName} 
+                        onChange={e => setEditingSupplyData({...editingSupplyData, supplyName: e.target.value})} 
+                        style={{ width: '100%', padding: '6px 10px', border: '1px solid var(--primary)', borderRadius: '6px' }}
+                        placeholder="품목명 입력"
+                      />
+                    </td>
+                    <td>
+                      <input 
+                        type="number" 
+                        value={editingSupplyData.quantity} 
+                        onChange={e => setEditingSupplyData({...editingSupplyData, quantity: parseInt(e.target.value) || 0})} 
+                        style={{ width: '80px', padding: '6px 10px', border: '1px solid var(--primary)', borderRadius: '6px' }}
+                        min="1"
+                      />
+                    </td>
+                    <td>
+                      <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
+                        <select 
+                          value={DEFAULT_UNITS.includes(editingSupplyData.unit) ? editingSupplyData.unit : 'custom'} 
+                          onChange={e => {
+                            const val = e.target.value;
+                            if (val === 'custom') {
+                              setEditingSupplyData({...editingSupplyData, unit: ''});
+                            } else {
+                              setEditingSupplyData({...editingSupplyData, unit: val});
+                            }
+                          }}
+                          style={{ padding: '6px 10px', border: '1px solid var(--primary)', borderRadius: '6px', fontSize: '0.875rem', background: 'white' }}
+                        >
+                          {DEFAULT_UNITS.map(u => (
+                            <option key={u} value={u}>{u}</option>
+                          ))}
+                          <option value="custom">직접 입력</option>
+                        </select>
+                        {!DEFAULT_UNITS.includes(editingSupplyData.unit) && (
+                          <input 
+                            type="text" 
+                            placeholder="단위"
+                            value={editingSupplyData.unit} 
+                            onChange={e => setEditingSupplyData({...editingSupplyData, unit: e.target.value})} 
+                            style={{ width: '80px', padding: '6px 10px', border: '1px solid var(--primary)', borderRadius: '6px' }}
+                          />
+                        )}
+                      </div>
+                    </td>
+                    <td>
+                      <input 
+                        type="text" 
+                        value={editingSupplyData.note} 
+                        onChange={e => setEditingSupplyData({...editingSupplyData, note: e.target.value})} 
+                        style={{ width: '100%', padding: '6px 10px', border: '1px solid var(--primary)', borderRadius: '6px' }}
+                      />
+                    </td>
+                    <td style={{ textAlign: 'right' }}>
+                      <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                        <button onClick={() => handleSaveSupply(supply.id)} className="btn-small btn-primary" style={{ padding: '6px 12px' }}>저장</button>
+                        <button onClick={() => setEditingSupplyId(null)} className="btn-small btn-outline" style={{ padding: '6px 12px' }}>취소</button>
+                      </div>
+                    </td>
+                  </tr>
+                );
+              }
+
+              return (
+                <tr key={supply.id}>
+                  <td style={{ fontWeight: '600' }}>{supply.supplyName}</td>
+                  <td>{supply.quantity}</td>
+                  <td>{supply.unit}</td>
+                  <td style={{ color: 'var(--sub-text)', fontSize: '0.8125rem' }}>{supply.note || '-'}</td>
+                  <td style={{ textAlign: 'right' }}>
+                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                      <button 
+                        onClick={() => handleStartEditSupply(supply)} 
+                        className="icon-btn" 
+                        title="수정"
+                        style={{ fontSize: '1rem' }}
+                      >
+                        ✏️
+                      </button>
+                      <button 
+                        onClick={() => handleDelete(supply.id)} 
+                        className="icon-btn" 
+                        title="삭제"
+                        style={{ fontSize: '1rem' }}
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </td>
+                </tr>
+              );
+            })}
             {skill.supplies.length === 0 && !isAdding && (
               <tr>
                 <td colSpan={5} style={{ textAlign: 'center', padding: '60px', color: 'var(--sub-text)' }}>
@@ -824,7 +1096,7 @@ function SupplyList({ skill, onUpdate }: { skill: any, onUpdate: () => void }) {
         }
         .form-grid {
           display: grid;
-          grid-template-columns: 2fr 1fr 1fr;
+          grid-template-columns: 2fr 1fr 1.5fr;
           gap: 16px;
         }
         .form-item.wide {
