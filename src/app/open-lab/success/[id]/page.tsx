@@ -70,7 +70,7 @@ ${suppliesListStr}
 
 * 위 서식에 서명(또는 인)이 완료된 신청서 PDF 파일을 첨부하여 송신해주시기 바랍니다.`;
 
-  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'nursing_lab@hanyang.ac.kr';
+  const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'rnassist@hanyang.ac.kr';
 
   const isGuest = !application.representativeUserId;
 
