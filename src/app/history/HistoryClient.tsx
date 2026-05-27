@@ -40,16 +40,7 @@ export default function HistoryClient({ initialApplications, currentUser }: Hist
   const [loading, setLoading] = useState<string | null>(null);
   const router = useRouter();
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'PENDING': return '승인 대기';
-      case 'APPROVED': return '승인 완료';
-      case 'REJECTED': return '거절됨';
-      case 'COMPLETED': return '참여 완료';
-      case 'CANCELLED': return '취소됨';
-      default: return status;
-    }
-  };
+
 
   const handleCancel = async (appId: string) => {
     if (!confirm('정말로 신청을 취소하시겠습니까?')) return;

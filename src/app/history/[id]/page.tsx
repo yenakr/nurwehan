@@ -52,16 +52,7 @@ export default async function HistoryDetailPage({ params }: { params: Promise<{ 
     ...data
   }));
 
-  const getStatusText = (status: string) => {
-    switch (status) {
-      case 'PENDING': return '승인 대기';
-      case 'APPROVED': return '승인 완료';
-      case 'REJECTED': return '반려됨';
-      case 'COMPLETED': return '이용 완료';
-      case 'CANCELLED': return '취소됨';
-      default: return status;
-    }
-  };
+
 
   return (
     <main style={{ backgroundColor: 'var(--muted-background)', padding: '40px 0', flex: 1 }}>
