@@ -689,23 +689,23 @@ export default function ApplyForm({ user }: ApplyFormProps) {
           <label style={{ fontSize: '0.8125rem', fontWeight: '700', color: 'var(--sub-text)', display: 'block', marginBottom: '6px' }}>동반 실습 학생 이름 (선택)</label>
           <input 
             type="text" 
-            placeholder="같이 실습하는 학생들의 이름을 쉼표(,)로 구분하여 입력해주세요. (예: 홍길동, 김철수)" 
+            placeholder="예: 김민지, 이서연" 
             value={accompanyingNames}
             onChange={(e) => setAccompanyingNames(e.target.value)}
           />
           <p style={{ fontSize: '0.8125rem', color: 'var(--sub-text)', marginTop: '8px', margin: '8px 0 0 0' }}>
-            * 동반 실습 학생의 학번은 입력할 필요가 없으며, 이름만 작성해주세요. 콤마로 이름이 구분되지 않으면 총 사용인원 수에 맞게 빈 동반 인원 정보가 자동으로 채워집니다.
+            동반 학생 이름만 입력해주세요. 예: 김민지, 이서연
           </p>
         </div>
       </section>
 
       {/* 6. Additional Info */}
       <section className="form-section">
-        <h3 className="section-title">6. 관리자 전달사항 (이메일 본문 추가)</h3>
+        <h3 className="section-title">6. 전달사항</h3>
         <div className="textarea-group">
           <label style={{ fontSize: '0.8125rem', fontWeight: '700', color: 'var(--sub-text)', display: 'block', marginBottom: '6px' }}>전달사항 (선택)</label>
           <textarea 
-            placeholder="추가로 필요한 물품이나 요청사항이 있으면 작성해주세요. 작성하신 내용은 신청 완료 후 메일 전송 화면의 이메일 본문 하단에 자동으로 추가됩니다. (예: 수액세트 2개 추가 요청합니다)"
+            placeholder="추가 요청사항을 입력해주세요. (메일 전송 시 추가되는 내용입니다)"
             value={additionalRequest}
             onChange={(e) => setAdditionalRequest(e.target.value)}
           />

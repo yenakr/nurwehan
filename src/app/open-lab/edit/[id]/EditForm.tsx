@@ -287,9 +287,9 @@ export default function EditForm({ user, application }: EditFormProps) {
       </section>
 
       <section className="form-section">
-        <h3 className="section-title">3. 관리자 전달사항 (이메일 본문 추가)</h3>
+        <h3 className="section-title">3. 전달사항</h3>
         <textarea 
-          placeholder="추가로 필요한 물품이나 요청사항이 있으면 작성해주세요. 작성하신 내용은 신청 완료 후 메일 전송 화면의 이메일 본문 하단에 자동으로 추가됩니다. (예: 수액세트 2개 추가 요청합니다)"
+          placeholder="추가 요청사항을 입력해주세요. (메일 전송 시 추가되는 내용입니다)"
           value={additionalRequest}
           onChange={(e) => setAdditionalRequest(e.target.value)}
           style={{ width: '100%', height: '100px', padding: '12px', border: '1px solid var(--border)', borderRadius: '8px' }}
