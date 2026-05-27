@@ -6,13 +6,35 @@ interface ClientActionsProps {
   adminEmail: string;
   subject: string;
   body: string;
+  repName: string;
+  date: Date | string;
+  startTime: string;
+  endTime: string;
 }
 
-export default function ClientActions({ adminEmail, subject, body }: ClientActionsProps) {
+export default function ClientActions({ 
+  adminEmail, 
+  subject, 
+  body,
+  repName,
+  date,
+  startTime,
+  endTime
+}: ClientActionsProps) {
   const [copied, setCopied] = useState(false);
 
   const handlePrint = () => {
+    const rawDate = new Date(date);
+    const yyyy = rawDate.getFullYear();
+    const mm = String(rawDate.getMonth() + 1).padStart(2, '0');
+    const dd = String(rawDate.getDate()).padStart(2, '0');
+    const formattedDate = `${yyyy}-${mm}-${dd}`;
+    const cleanTime = `${startTime}~${endTime}`.replace(/\s+/g, '');
+    
+    const originalTitle = document.title;
+    document.title = `${repName}_${formattedDate}_${cleanTime} 한양대학교 간호대학 실습실 및 기자재 사용신청서`;
     window.print();
+    document.title = originalTitle;
   };
 
   const handleSendEmail = () => {

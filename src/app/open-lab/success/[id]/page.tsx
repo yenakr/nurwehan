@@ -135,6 +135,10 @@ ${suppliesListStr}
                 adminEmail={adminEmail} 
                 subject={emailSubject} 
                 body={emailBody} 
+                repName={repName}
+                date={application.slot.date}
+                startTime={application.slot.startTime}
+                endTime={application.slot.endTime}
               />
 
               <details className="email-preview-details">
