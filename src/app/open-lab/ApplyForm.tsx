@@ -313,7 +313,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
       
       const data = await res.json();
       if (res.ok) {
-        alert('신청이 완료되었습니다. 신청서 페이지로 이동합니다.');
+        alert('신청서 생성이 완료되었습니다.');
         router.push(`/open-lab/success/${data.id}`);
       } else {
         alert(data.message || '신청에 실패했습니다.');

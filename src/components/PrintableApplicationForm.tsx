@@ -113,16 +113,16 @@ export default function PrintableApplicationForm({ application, supplies }: Prin
 
             <tr>
               <td className="label-cell">실습과목</td>
-              <td className="content-cell" style={{ width: '35%' }}>{application.subject || '-'}</td>
+              <td className="content-cell" contentEditable={true} suppressContentEditableWarning={true} style={{ width: '35%', outline: 'none' }}>{application.subject || '-'}</td>
               <td className="label-cell" style={{ width: '15%' }}>담당교수</td>
-              <td className="content-cell" style={{ width: '35%' }}>{application.professor || '-'}</td>
+              <td className="content-cell" contentEditable={true} suppressContentEditableWarning={true} style={{ width: '35%', outline: 'none' }}>{application.professor || '-'}</td>
             </tr>
 
             <tr>
               <td className="label-cell">실습담당자</td>
-              <td className="content-cell">{repName} ({repStudentId})</td>
+              <td className="content-cell" contentEditable={true} suppressContentEditableWarning={true} style={{ outline: 'none' }}>{repName} ({repStudentId})</td>
               <td className="label-cell">연락처</td>
-              <td className="content-cell">{repPhone}</td>
+              <td className="content-cell" contentEditable={true} suppressContentEditableWarning={true} style={{ outline: 'none' }}>{repPhone}</td>
             </tr>
 
             <tr>
@@ -140,9 +140,9 @@ export default function PrintableApplicationForm({ application, supplies }: Prin
                       <td className="label-cell text-center" style={{ borderLeft: 'none', borderTop: 'none', borderRight: 'none', borderBottom: '1px solid #000' }}>사용인원</td>
                     </tr>
                     <tr>
-                      <td className="content-cell text-center" style={{ borderLeft: 'none', borderTop: 'none', borderRight: '1px solid #000', borderBottom: 'none' }}>{slotDateStr}</td>
-                      <td className="content-cell text-center" style={{ borderLeft: 'none', borderTop: 'none', borderRight: '1px solid #000', borderBottom: 'none' }}>{application.slot.startTime} ~ {application.slot.endTime}</td>
-                      <td className="content-cell text-center" style={{ borderLeft: 'none', borderTop: 'none', borderRight: 'none', borderBottom: 'none' }}>{application.participants.length}명</td>
+                      <td className="content-cell text-center" contentEditable={true} suppressContentEditableWarning={true} style={{ borderLeft: 'none', borderTop: 'none', borderRight: '1px solid #000', borderBottom: 'none', outline: 'none' }}>{slotDateStr}</td>
+                      <td className="content-cell text-center" contentEditable={true} suppressContentEditableWarning={true} style={{ borderLeft: 'none', borderTop: 'none', borderRight: '1px solid #000', borderBottom: 'none', outline: 'none' }}>{application.slot.startTime} ~ {application.slot.endTime}</td>
+                      <td className="content-cell text-center" contentEditable={true} suppressContentEditableWarning={true} style={{ borderLeft: 'none', borderTop: 'none', borderRight: 'none', borderBottom: 'none', outline: 'none' }}>{application.participants.length}명</td>
                     </tr>
                   </tbody>
                 </table>
@@ -151,14 +151,14 @@ export default function PrintableApplicationForm({ application, supplies }: Prin
 
             <tr>
               <td className="label-cell">실습학생이름</td>
-              <td className="content-cell" colSpan={3} style={{ fontSize: '0.8125rem', whiteSpace: 'pre-wrap', lineHeight: '1.4' }}>
+              <td className="content-cell" contentEditable={true} suppressContentEditableWarning={true} colSpan={3} style={{ fontSize: '0.8125rem', whiteSpace: 'pre-wrap', lineHeight: '1.4', outline: 'none' }}>
                 {participantNames}
               </td>
             </tr>
 
             <tr>
               <td className="label-cell">목적</td>
-              <td className="content-cell" colSpan={3}>{application.purpose || '-'}</td>
+              <td className="content-cell" contentEditable={true} suppressContentEditableWarning={true} colSpan={3} style={{ outline: 'none' }}>{application.purpose || '-'}</td>
             </tr>
 
             {/* Merged supplies table */}
@@ -181,10 +181,10 @@ export default function PrintableApplicationForm({ application, supplies }: Prin
                         <td className="sub-num-cell" style={{ borderLeft: 'none', borderBottom: row.num === 17 ? 'none' : '1px solid #000' }}>
                           {row.num}
                         </td>
-                        <td className="sub-content-cell" style={{ borderBottom: row.num === 17 ? 'none' : '1px solid #000' }}>
+                        <td className="sub-content-cell" contentEditable={true} suppressContentEditableWarning={true} style={{ borderBottom: row.num === 17 ? 'none' : '1px solid #000', outline: 'none' }}>
                           {row.name}
                         </td>
-                        <td className="sub-content-cell text-center" style={{ borderRight: 'none', borderBottom: row.num === 17 ? 'none' : '1px solid #000' }}>
+                        <td className="sub-content-cell text-center" contentEditable={true} suppressContentEditableWarning={true} style={{ borderRight: 'none', borderBottom: row.num === 17 ? 'none' : '1px solid #000', outline: 'none' }}>
                           {row.quantity}
                         </td>
                       </tr>

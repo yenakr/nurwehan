@@ -19,7 +19,10 @@ export async function PATCH(
     
     const skill = await prisma.skill.update({
       where: { id },
-      data: { name, isActive }
+      data: {
+        name: name !== undefined ? name : undefined,
+        isActive: isActive !== undefined ? isActive : undefined
+      }
     });
 
     return NextResponse.json(skill);

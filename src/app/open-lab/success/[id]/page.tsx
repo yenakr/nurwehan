@@ -121,6 +121,10 @@ ${suppliesListStr}
                 PDF 파일은 메일에 자동 첨부되지 않으니 직접 첨부해 주세요.
               </div>
 
+              <div className="warning-note" style={{ backgroundColor: '#f0fdf4', borderColor: '#bbf7d0', color: '#166534' }}>
+                참고: 오른쪽 신청서 양식의 각 칸(과목, 이름, 목적, 필요물품 등)을 직접 클릭하여 인쇄 전에 자유롭게 수정하실 수 있습니다.
+              </div>
+
               <ol className="guide-steps">
                 <li><strong>신청서 PDF 다운로드</strong>: 아래 버튼을 클릭하여 작성된 신청서를 PDF로 저장합니다.</li>
                 <li><strong>제출 이메일 준비</strong>: 메일 앱을 열거나 본문을 복사하여 제출용 이메일을 준비합니다.</li>
