@@ -213,9 +213,6 @@ export default async function HistoryDetailPage({ params }: { params: Promise<{ 
              (application.representativeUserId === session.user.id || application.guestStudentId === session.user.studentId) && (
               <Link href={`/open-lab/edit/${application.id}`} className="btn btn-primary">수정하기</Link>
             )}
-            {(application.status === 'APPROVED' || application.status === 'COMPLETED') && application.usageLogs.length === 0 && (
-              <Link href={`/usage-logs/new?applicationId=${application.id}`} className="btn btn-primary">실습 소감 작성하기</Link>
-            )}
             <Link href="/history" className="btn btn-outline">목록으로</Link>
           </div>
         </div>

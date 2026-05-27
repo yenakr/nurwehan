@@ -44,7 +44,7 @@ export async function POST(request: Request) {
         phone,
         password: hashedPassword,
         role: 'STUDENT',
-        approvalStatus: 'PENDING',
+        approvalStatus: 'APPROVED',
       },
     });
 
@@ -65,7 +65,7 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(
-      { message: '회원가입 신청이 완료되었습니다. 관리자 승인 후 이용 가능합니다.', userId: user.id },
+      { message: '회원가입이 완료되었습니다.', userId: user.id },
       { status: 201 }
     );
   } catch (error) {

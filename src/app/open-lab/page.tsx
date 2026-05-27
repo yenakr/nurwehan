@@ -17,17 +17,13 @@ export default async function OpenLabApplyPage() {
 
     if (user) {
       // Authorization Checks
-      if (user.approvalStatus !== 'APPROVED') {
-        let message = '관리자 승인 대기 중입니다.';
-        if (user.approvalStatus === 'REJECTED') message = '회원 승인이 반려되어 신청할 수 없습니다. 사유: ' + (user.rejectedReason || '없음');
-        if (user.approvalStatus === 'SUSPENDED') message = '이용이 제한된 계정입니다.';
-        
+      if (user.approvalStatus === 'SUSPENDED') {
         return (
           <main style={{ backgroundColor: 'var(--muted-background)', minHeight: 'calc(100vh - 64px)', padding: '60px 20px' }}>
             <div className="container" style={{ maxWidth: '600px' }}>
               <div className="card" style={{ textAlign: 'center' }}>
                 <h2 style={{ color: '#B91C1C', marginBottom: '16px', fontSize: '1.25rem' }}>접근 제한</h2>
-                <p style={{ lineHeight: '1.6' }}>{message}</p>
+                <p style={{ lineHeight: '1.6' }}>이용이 제한된 계정입니다.</p>
                 <Link href="/" className="btn-primary" style={{ marginTop: '24px' }}>홈으로 이동</Link>
               </div>
             </div>
