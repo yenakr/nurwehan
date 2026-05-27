@@ -25,14 +25,13 @@ export default function ClientActions({
 
   const handlePrint = () => {
     const rawDate = new Date(date);
-    const yyyy = rawDate.getFullYear();
     const mm = String(rawDate.getMonth() + 1).padStart(2, '0');
     const dd = String(rawDate.getDate()).padStart(2, '0');
-    const formattedDate = `${yyyy}-${mm}-${dd}`;
-    const cleanTime = `${startTime}~${endTime}`.replace(/\s+/g, '');
+    const formattedDate = `${mm}-${dd}`;
+    const cleanTime = startTime.replace(':', '_');
     
     const originalTitle = document.title;
-    document.title = `${repName}_${formattedDate}_${cleanTime} 한양대학교 간호대학 실습실 및 기자재 사용신청서`;
+    document.title = `${repName}_OPEN_LAB 신청서_${formattedDate}, ${cleanTime}`;
     window.print();
     document.title = originalTitle;
   };
