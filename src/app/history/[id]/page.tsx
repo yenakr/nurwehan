@@ -74,10 +74,7 @@ export default async function HistoryDetailPage({ params }: { params: Promise<{ 
 
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: '800' }}>신청 상세 정보</h1>
-            <span className={`status-badge ${application.status.toLowerCase()}`}>
-              {getStatusText(application.status)}
-            </span>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: '800' }}>신청서 작성 상세 정보</h1>
           </div>
 
           {application.status === 'REJECTED' && application.rejectedReason && (

@@ -35,7 +35,7 @@ export default async function HistoryPage() {
       <div className="container">
         <div style={{ marginBottom: '32px' }}>
           <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--text)' }}>
-            신청 내역
+            신청서 작성 내역
           </h1>
         </div>
 

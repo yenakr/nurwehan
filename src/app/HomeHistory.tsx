@@ -54,7 +54,7 @@ export default function HomeHistory() {
   if (data.length === 0) {
     return (
       <div style={{ textAlign: 'center', padding: '32px 0', color: 'var(--sub-text)' }}>
-        <p style={{ fontSize: '0.875rem' }}>신청 내역 없음</p>
+        <p style={{ fontSize: '0.875rem' }}>작성 내역 없음</p>
       </div>
     );
   }
@@ -71,9 +71,6 @@ export default function HomeHistory() {
           return (
             <Link href={`/history/${app.id}`} key={app.id} className="history-row">
               <div className="row-content">
-                <span className={`status-dot ${app.status.toLowerCase()}`}>
-                  {getStatusText(app.status)}
-                </span>
                 <div className="info-wrap">
                   <span className="date-time">
                     {formatDate(app.slot.date)} {app.slot.startTime}
@@ -88,7 +85,7 @@ export default function HomeHistory() {
       </div>
       
       <div className="view-all-container">
-        <Link href="/history" className="view-all-link">전체 내역 보기 →</Link>
+        <Link href="/history" className="view-all-link">전체 작성 내역 보기 →</Link>
       </div>
 
       <style jsx>{`

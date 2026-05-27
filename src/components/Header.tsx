@@ -57,8 +57,8 @@ export default function Header() {
           
           <nav className="desktop-nav">
             <ul>
-              <li><Link href="/open-lab">OPEN LAB 신청</Link></li>
-              <li><Link href="/history">신청 내역</Link></li>
+              <li><Link href="/open-lab">OPEN LAB 신청서 작성</Link></li>
+              <li><Link href="/history">신청서 작성 내역</Link></li>
               <li><Link href="/notices">공지사항</Link></li>
               <li><Link href="/mypage">마이페이지</Link></li>
               {isAdmin && <li><Link href="/admin" className="admin-link">관리자</Link></li>}
@@ -99,8 +99,8 @@ export default function Header() {
         <div className="mobile-menu">
           <nav>
             <ul>
-              <li><Link href="/open-lab">OPEN LAB 신청</Link></li>
-              <li><Link href="/history">신청 내역</Link></li>
+              <li><Link href="/open-lab">OPEN LAB 신청서 작성</Link></li>
+              <li><Link href="/history">신청서 작성 내역</Link></li>
               <li><Link href="/notices">공지사항</Link></li>
               <li><Link href="/mypage">마이페이지</Link></li>
               {isAdmin && <li><Link href="/admin" className="admin-link">관리자</Link></li>}

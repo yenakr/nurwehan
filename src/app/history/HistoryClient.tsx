@@ -79,15 +79,12 @@ export default function HistoryClient({ initialApplications, currentUser }: Hist
     <div className="history-list">
       {applications.length === 0 ? (
         <div className="empty-state">
-          신청 내역 없음
+          작성 내역 없음
         </div>
       ) : (
         applications.map(app => (
           <div key={app.id} className="history-card">
-            <div className="card-header">
-              <span className={`status-badge ${app.status.toLowerCase()}`}>
-                {getStatusText(app.status)}
-              </span>
+            <div className="card-header" style={{ justifyContent: 'flex-start' }}>
               <span className="date-text">
                 {new Date(app.slot.date).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'short' })}
               </span>
