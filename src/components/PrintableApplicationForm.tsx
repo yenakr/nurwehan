@@ -163,7 +163,7 @@ export default function PrintableApplicationForm({ application, supplies }: Prin
 
             {/* Merged supplies table */}
             <tr>
-              <td className="label-cell vertical-text" style={{ padding: '20px 0' }}>
+              <td className="label-cell" style={{ padding: '20px 0' }}>
                 필요물품
               </td>
               <td colSpan={3} style={{ padding: 0, overflow: 'hidden' }}>
