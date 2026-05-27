@@ -48,6 +48,11 @@ export async function DELETE(
       where: { skillId: id }
     });
 
+    // Cascade delete application-skill mapping rows first
+    await prisma.applicationSkill.deleteMany({
+      where: { skillId: id }
+    });
+
     await prisma.skill.delete({
       where: { id }
     });
