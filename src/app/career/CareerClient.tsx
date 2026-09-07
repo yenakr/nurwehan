@@ -59,20 +59,6 @@ export default function CareerClient({ careerInfos, user }: CareerClientProps) {
           <PreparingBadge variant="badge" text="준비 중" />
         </div>
 
-        <div
-          style={{
-            padding: '16px',
-            backgroundColor: '#F8FAFC',
-            border: '1px solid var(--border)',
-            borderRadius: '6px',
-            marginBottom: '20px',
-            fontSize: '0.875rem',
-            color: 'var(--sub-text)',
-          }}
-        >
-          <strong>공식 데이터 안내:</strong> 병원별 채용 일정, 지원요건, 어학 성적 인정 유효기간 및 국시 일정은 매년 공식 발표 후 관리자가 등록할 예정입니다.
-        </div>
-
         {filteredInfos.length > 0 ? (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '16px' }}>
             {filteredInfos.map(info => (
@@ -84,16 +70,12 @@ export default function CareerClient({ careerInfos, user }: CareerClientProps) {
                   <PreparingBadge variant="badge" size="sm" text="준비 중" />
                 </div>
                 <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '6px' }}>{info.title}</h4>
-                <p style={{ fontSize: '0.84rem', color: 'var(--sub-text)' }}>{info.description || '상세 일정 및 요건 데이터 준비 중'}</p>
+                <p style={{ fontSize: '0.84rem', color: 'var(--sub-text)' }}>{info.description || '준비 중'}</p>
               </div>
             ))}
           </div>
         ) : (
-          <EmptyState
-            type="preparing"
-            title="취업 및 채용 일정 정보 준비 중"
-            description="현재 병원별 공식 채용 및 자격 요건 데이터를 준비 중입니다."
-          />
+          <EmptyState type="preparing" />
         )}
       </div>
     </div>

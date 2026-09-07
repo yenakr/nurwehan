@@ -140,11 +140,7 @@ export default function HomeDashboardClient({
               </Link>
             </div>
           ) : (
-            <EmptyState
-              type="preparing"
-              title="등록된 가까운 주요 일정이 없습니다."
-              description="관리자가 학사일정 및 실습 오리엔테이션 일정을 게시 준비 중입니다."
-            />
+            <EmptyState type="preparing" />
           )}
         </div>
 
@@ -185,10 +181,7 @@ export default function HomeDashboardClient({
             </h3>
             <PreparingBadge variant="badge" text="준비 중" />
           </div>
-          <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)', marginBottom: '12px' }}>
-            예방접종 및 검사 등 세부 요구사항 기준을 준비 중입니다.
-          </p>
-          <Link href="/clinical" className="btn-outline" style={{ width: '100%', textAlign: 'center', fontSize: '0.84rem' }}>
+          <Link href="/clinical" className="btn-outline" style={{ width: '100%', textAlign: 'center', fontSize: '0.84rem', marginTop: '12px' }}>
             임상실습 가이드 확인 →
           </Link>
         </div>
@@ -225,11 +218,7 @@ export default function HomeDashboardClient({
             ))}
           </div>
         ) : (
-          <EmptyState
-            type="preparing"
-            title={`${selectedGrade}학년 추천 항목을 준비 중입니다.`}
-            description="관리자가 해당 학년의 로드맵 가이드 데이터를 등록 준비 중입니다."
-          />
+          <EmptyState type="preparing" />
         )}
       </section>
 

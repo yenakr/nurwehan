@@ -352,11 +352,7 @@ export default function CalendarClient({
               </table>
             </div>
           ) : (
-            <EmptyState
-              type="preparing"
-              title="등록된 학사/실습 일정이 없습니다."
-              description="관리자가 해당 학년 및 카테고리의 공식 일정을 등록 준비 중입니다."
-            />
+            <EmptyState type="preparing" />
           )}
         </div>
       )}

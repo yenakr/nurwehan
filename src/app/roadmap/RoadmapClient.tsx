@@ -95,7 +95,7 @@ export default function RoadmapClient({ initialItems, user }: RoadmapClientProps
                     {item.title}
                   </h4>
                   <p style={{ fontSize: '0.84rem', color: 'var(--sub-text)', marginBottom: '12px', lineHeight: 1.4 }}>
-                    {item.description || '상세 가이드 준비 중'}
+                    {item.description || '준비 중'}
                   </p>
                 </div>
 
@@ -115,11 +115,7 @@ export default function RoadmapClient({ initialItems, user }: RoadmapClientProps
             ))}
           </div>
         ) : (
-          <EmptyState
-            type="preparing"
-            title={`${gradeNum}학년 세부 로드맵 항목을 준비 중입니다.`}
-            description="관리자가 해당 학년의 권장 학업, 실습 및 취업 준비 로드맵 데이터를 등록 준비 중입니다."
-          />
+          <EmptyState type="preparing" />
         )}
       </div>
     );

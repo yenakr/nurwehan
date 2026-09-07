@@ -54,21 +54,6 @@ export default function ClinicalClient({ healthRequirements, user }: ClinicalCli
             <PreparingBadge variant="badge" text="준비 중" />
           </div>
 
-          <div
-            style={{
-              padding: '16px',
-              backgroundColor: '#EFF6FF',
-              border: '1px solid #BFDBFE',
-              borderRadius: '6px',
-              marginBottom: '20px',
-              fontSize: '0.875rem',
-              color: '#1E3A8A',
-            }}
-          >
-            <strong>💡 안내:</strong> 대학 및 각 병원 실습기관별 정확한 예방접종 차수, 항체검사 세부 기준 및 제출 마감일은 관리자가 공식 등록 준비 중입니다. 
-            확인되지 않은 의료적 기준을 추정하여 제공하지 않으며, 기준 등록 시 개인 준비 상태 판정이 활성화됩니다.
-          </div>
-
           {healthRequirements && healthRequirements.length > 0 ? (
             <div className="table-container">
               <table>
@@ -91,7 +76,7 @@ export default function ClinicalClient({ healthRequirements, user }: ClinicalCli
                         <PreparingBadge variant="badge" text="준비 중" />
                       </td>
                       <td style={{ color: 'var(--sub-text)', fontSize: '0.8125rem' }}>
-                        {req.studentDisplayText || '세부 제출 기준 입력 준비 중입니다.'}
+                        {req.studentDisplayText || '준비 중'}
                       </td>
                     </tr>
                   ))}
@@ -99,11 +84,7 @@ export default function ClinicalClient({ healthRequirements, user }: ClinicalCli
               </table>
             </div>
           ) : (
-            <EmptyState
-              type="preparing"
-              title="임상실습 건강요건 세부 기준 준비 중"
-              description="현재 간호대학 학년별/병원별 예방접종 및 항체검사 필수 제출 기준을 등록 준비 중입니다."
-            />
+            <EmptyState type="preparing" />
           )}
         </div>
       )}

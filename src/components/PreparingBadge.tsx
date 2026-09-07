@@ -60,11 +60,8 @@ export default function PreparingBadge({
         >
           📋
         </div>
-        <p style={{ fontWeight: 700, fontSize: '0.9375rem', color: '#334155', marginBottom: '4px' }}>
+        <p style={{ fontWeight: 700, fontSize: '0.9375rem', color: '#334155' }}>
           {text}
-        </p>
-        <p style={{ fontSize: '0.8125rem', color: '#94A3B8' }}>
-          현재 세부 공식 정보 및 관리자 기준을 등록 준비 중입니다.
         </p>
       </div>
     );

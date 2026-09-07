@@ -76,16 +76,12 @@ export default function CampusClient({ campusActivities, user }: CampusClientPro
                   <PreparingBadge variant="badge" size="sm" text="준비 중" />
                 </div>
                 <h4 style={{ fontSize: '1rem', fontWeight: 700, marginBottom: '6px' }}>{act.title}</h4>
-                <p style={{ fontSize: '0.84rem', color: 'var(--sub-text)' }}>{act.description || '모집 세부 일정 준비 중'}</p>
+                <p style={{ fontSize: '0.84rem', color: 'var(--sub-text)' }}>{act.description || '준비 중'}</p>
               </div>
             ))}
           </div>
         ) : (
-          <EmptyState
-            type="preparing"
-            title="교내·외 모집 및 장학 일정 준비 중"
-            description="현재 학부연구생 모집, 연구실 Open Lab, 장학금 신청 세부 공지 데이터를 준비 중입니다."
-          />
+          <EmptyState type="preparing" />
         )}
       </div>
     </div>
