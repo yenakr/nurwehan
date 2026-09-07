@@ -63,12 +63,9 @@ export default function HomeDashboardClient({
             <div style={{ fontSize: '0.875rem', opacity: 0.85, marginBottom: '6px' }}>
               오늘은 {todayStr} 입니다
             </div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '8px' }}>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '4px' }}>
               {user ? `${user.name}님, 오늘 해야 할 학업·실습 일정을 확인하세요.` : '한양대학교 간호대학 통합 학업·실습·진로 로드맵'}
             </h1>
-            <p style={{ fontSize: '0.9375rem', opacity: 0.9 }}>
-              1학년부터 4학년까지 학사일정, 임상실습, OPEN LAB, 취업 준비를 안내합니다.
-            </p>
           </div>
 
           {/* Grade Selector */}
@@ -152,17 +149,11 @@ export default function HomeDashboardClient({
             backgroundColor: '#F0F9FF',
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--primary)' }}>
               OPEN LAB 신청
             </h3>
-            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--accent-hover)', backgroundColor: '#E0F2FE', padding: '2px 8px', borderRadius: '4px' }}>
-              핵심간호술기
-            </span>
           </div>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text)', marginBottom: '16px' }}>
-            실습실 자율연습 슬롯 확인, 핵심간호술기 및 기자재 수량 자동 신청서를 즉시 작성할 수 있습니다.
-          </p>
           <div style={{ display: 'flex', gap: '10px' }}>
             <Link href="/open-lab" className="btn-accent" style={{ flex: 1, textAlign: 'center' }}>
               신청서 작성하기
