@@ -68,10 +68,10 @@ export default function AdminClinicalClient({ initialRequirements }: AdminClinic
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)' }}>
-              🩺 관리자 임상실습 건강요건 (Health Requirements Rule Engine) 설정
+              🩺 임상실습 건강요건 관리
             </h2>
             <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>
-              예방접종(A/B형 간염, MMR, 수두) 및 결핵/항체검사 세부 요건과 판정 규칙을 등록합니다.
+              예방접종 및 항체검사 세부 요건과 판정 규칙을 등록합니다.
             </p>
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
@@ -98,17 +98,17 @@ export default function AdminClinicalClient({ initialRequirements }: AdminClinic
               <div>
                 <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>구분</label>
                 <select value={category} onChange={e => setCategory(e.target.value)} style={{ width: '100%' }}>
-                  <option value="VACCINATION">예방접종 (VACCINATION)</option>
-                  <option value="LAB_TEST">항체/혈액/결핵검사 (LAB_TEST)</option>
-                  <option value="DOCUMENT">증빙서류 (DOCUMENT)</option>
+                  <option value="VACCINATION">예방접종</option>
+                  <option value="LAB_TEST">항체/혈액/결핵검사</option>
+                  <option value="DOCUMENT">증빙서류</option>
                 </select>
               </div>
 
               <div>
                 <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>게시 상태</label>
                 <select value={status} onChange={e => setStatus(e.target.value as any)} style={{ width: '100%' }}>
-                  <option value="PUBLISHED">공개 (PUBLISHED)</option>
-                  <option value="DRAFT">임시저장 (DRAFT - 준비 중 비노출)</option>
+                  <option value="PUBLISHED">공개</option>
+                  <option value="DRAFT">임시저장</option>
                 </select>
               </div>
             </div>
@@ -165,7 +165,7 @@ export default function AdminClinicalClient({ initialRequirements }: AdminClinic
                           color: req.status === 'PUBLISHED' ? '#166534' : '#92400E',
                         }}
                       >
-                        {req.status === 'PUBLISHED' ? '공개' : '임시저장 (준비 중)'}
+                        {req.status === 'PUBLISHED' ? '공개' : '임시저장'}
                       </span>
                     </td>
                     <td>
@@ -180,7 +180,7 @@ export default function AdminClinicalClient({ initialRequirements }: AdminClinic
           </div>
         ) : (
           <div style={{ padding: '32px', textAlign: 'center', color: 'var(--sub-text)' }}>
-            등록된 건강요건 기준이 없습니다. (현재 학생 화면에는 "준비 중"으로 표시됩니다)
+            등록된 건강요건 기준이 없습니다.
           </div>
         )}
       </div>

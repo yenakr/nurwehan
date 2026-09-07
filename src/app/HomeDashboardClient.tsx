@@ -18,7 +18,7 @@ export default function HomeDashboardClient({
   publishedRoadmaps,
   notices,
 }: HomeDashboardClientProps) {
-  const [selectedGrade, setSelectedGrade] = useState<number>(user?.grade || 3); // Default 3rd grade if guest
+  const [selectedGrade, setSelectedGrade] = useState<number>(user?.grade || 3);
   const todayStr = new Date().toLocaleDateString('ko-KR', {
     year: 'numeric',
     month: 'long',
@@ -26,13 +26,11 @@ export default function HomeDashboardClient({
     weekday: 'short',
   });
 
-  // Filter events targeted for selected grade
   const gradeEvents = publishedEvents.filter(e => {
     if (e.isCommon) return true;
     return e.applicableGrades?.includes(selectedGrade);
   });
 
-  // Find nearest event with valid date
   const now = new Date();
   const futureEvents = gradeEvents
     .filter(e => new Date(e.startDateTime) >= now)
@@ -46,7 +44,6 @@ export default function HomeDashboardClient({
     dDayText = diffDays === 0 ? 'D-Day' : `D-${diffDays}`;
   }
 
-  // Filter roadmap items for selected grade
   const gradeRoadmaps = publishedRoadmaps.filter(r => r.recommendedGrade === selectedGrade);
 
   return (
@@ -64,13 +61,13 @@ export default function HomeDashboardClient({
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
           <div>
             <div style={{ fontSize: '0.875rem', opacity: 0.85, marginBottom: '6px' }}>
-              📅 오늘은 {todayStr} 입니다
+              오늘은 {todayStr} 입니다
             </div>
             <h1 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '8px' }}>
-              {user ? `${user.name}님, 오늘 해야 할 학업·실습 일정을 확인하세요!` : '한양대학교 간호대학 통합 학업·실습·진로 로드맵'}
+              {user ? `${user.name}님, 오늘 해야 할 학업·실습 일정을 확인하세요.` : '한양대학교 간호대학 통합 학업·실습·진로 로드맵'}
             </h1>
             <p style={{ fontSize: '0.9375rem', opacity: 0.9 }}>
-              1학년부터 4학년까지의 학사일정, 임상실습, OPEN LAB, 취업 준비를 하나의 흐름으로 안내합니다.
+              1학년부터 4학년까지 학사일정, 임상실습, OPEN LAB, 취업 준비를 안내합니다.
             </p>
           </div>
 
@@ -118,7 +115,7 @@ export default function HomeDashboardClient({
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text)' }}>
-              🎯 가장 가까운 주요 일정
+              가장 가까운 주요 일정
             </h3>
             {nearestEvent ? (
               <span className="badge btn-accent" style={{ color: '#FFFFFF', padding: '4px 10px' }}>
@@ -146,7 +143,7 @@ export default function HomeDashboardClient({
             <EmptyState
               type="preparing"
               title="등록된 가까운 주요 일정이 없습니다."
-              description="관리자가 학사일정 및 실습 OT 일정을 게시 준비 중입니다."
+              description="관리자가 학사일정 및 실습 오리엔테이션 일정을 게시 준비 중입니다."
             />
           )}
         </div>
@@ -161,7 +158,7 @@ export default function HomeDashboardClient({
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--primary)' }}>
-              🧪 OPEN LAB 신청
+              OPEN LAB 신청
             </h3>
             <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--accent-hover)', backgroundColor: '#E0F2FE', padding: '2px 8px', borderRadius: '4px' }}>
               핵심간호술기
@@ -184,15 +181,15 @@ export default function HomeDashboardClient({
         <div className="card">
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
             <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text)' }}>
-              🩺 임상실습 건강요건 준비상태
+              임상실습 건강요건 준비상태
             </h3>
             <PreparingBadge variant="badge" text="준비 중" />
           </div>
           <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)', marginBottom: '12px' }}>
-            예방접종(A/B형 간염, MMR, 수두) 및 결핵검사 등 세부 요구사항 기준을 준비 중입니다.
+            예방접종 및 검사 등 세부 요구사항 기준을 준비 중입니다.
           </p>
           <Link href="/clinical" className="btn-outline" style={{ width: '100%', textAlign: 'center', fontSize: '0.84rem' }}>
-            임상실습 준비가이드 확인 →
+            임상실습 가이드 확인 →
           </Link>
         </div>
       </div>
@@ -200,7 +197,7 @@ export default function HomeDashboardClient({
       {/* Recommended Activities for Current Grade */}
       <section>
         <div className="section-title">
-          <span>🚩 {selectedGrade}학년 추천 학업·진로 로드맵</span>
+          <span>{selectedGrade}학년 추천 학업·진로 로드맵</span>
           <Link href="/roadmap" style={{ fontSize: '0.84rem', fontWeight: 600, color: 'var(--primary)' }}>
             전체 4년 로드맵 보기 →
           </Link>
@@ -240,7 +237,7 @@ export default function HomeDashboardClient({
       {notices && notices.length > 0 && (
         <section>
           <div className="section-title">
-            <span>📢 주요 공지사항</span>
+            <span>주요 공지사항</span>
             <Link href="/notices" style={{ fontSize: '0.84rem', fontWeight: 600, color: 'var(--primary)' }}>
               전체 공지 보기 →
             </Link>

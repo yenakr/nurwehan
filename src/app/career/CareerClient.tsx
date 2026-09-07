@@ -14,11 +14,11 @@ export default function CareerClient({ careerInfos, user }: CareerClientProps) {
 
   const categories = [
     { key: 'all', label: '전체' },
-    { key: 'LANGUAGE', label: '어학 (TOEIC/OPIc)' },
+    { key: 'LANGUAGE', label: '어학 성적' },
     { key: 'HOSPITAL', label: '병원 채용 일정' },
     { key: 'INTERNSHIP', label: '인턴십 및 병원 프로그램' },
-    { key: 'APTITUDE', label: '적성검사 / AI면접' },
-    { key: 'NCLEX', label: '국가고시 / NCLEX' },
+    { key: 'APTITUDE', label: '적성검사 및 면접' },
+    { key: 'NCLEX', label: '국가고시' },
   ];
 
   const filteredInfos = careerInfos.filter(info => {
@@ -30,10 +30,10 @@ export default function CareerClient({ careerInfos, user }: CareerClientProps) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div className="card" style={{ padding: '20px' }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '6px' }}>
-          💼 CAREER (간호대학생 취업 & 진로 준비 Hub)
+          💼 취업 준비
         </h2>
         <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)', marginBottom: '16px' }}>
-          어학 성적 유효기간 관리부터 주요 병원 채용 일정, 자기소개서, AI 면접 및 국가고시 대비 흐름을 안내합니다.
+          어학 성적 유효기간 관리부터 주요 병원 채용 일정, 자기소개서, 면접 및 국가고시 대비 흐름을 안내합니다.
         </p>
 
         {/* Filters */}
@@ -54,7 +54,7 @@ export default function CareerClient({ careerInfos, user }: CareerClientProps) {
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text)' }}>
-            📌 취업 & 진로 준비 가이드
+            취업 및 진로 준비 가이드
           </h3>
           <PreparingBadge variant="badge" text="준비 중" />
         </div>
@@ -70,8 +70,7 @@ export default function CareerClient({ careerInfos, user }: CareerClientProps) {
             color: 'var(--sub-text)',
           }}
         >
-          <strong>💡 공식 데이터 안내:</strong> 병원별 채용 일정, 지원요건, 어학 성적 인정 유효기간 및 국시 일정은 매년 공식 발표 후 관리자가 등록할 예정입니다.
-          공식 미확인 시 일관되게 <strong>"준비 중"</strong>으로 표시됩니다.
+          <strong>공식 데이터 안내:</strong> 병원별 채용 일정, 지원요건, 어학 성적 인정 유효기간 및 국시 일정은 매년 공식 발표 후 관리자가 등록할 예정입니다.
         </div>
 
         {filteredInfos.length > 0 ? (
@@ -93,7 +92,7 @@ export default function CareerClient({ careerInfos, user }: CareerClientProps) {
           <EmptyState
             type="preparing"
             title="취업 및 채용 일정 정보 준비 중"
-            description="현재 2026-2027 학년도 병원별 공식 채용 및 자격 요건 데이터를 준비 중입니다."
+            description="현재 병원별 공식 채용 및 자격 요건 데이터를 준비 중입니다."
           />
         )}
       </div>

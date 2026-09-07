@@ -79,7 +79,7 @@ export default function AdminRoadmapClient({ initialItems }: AdminRoadmapClientP
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)' }}>
-              🧭 관리자 로드맵 (MY ROADMAP) 관리
+              🧭 로드맵 관리
             </h2>
             <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>
               1~4학년별 추천 학업, 실습, 어학, 취업 로드맵 가이드 항목을 추가 및 Draft/Publish 상태로 관리합니다.
@@ -130,8 +130,8 @@ export default function AdminRoadmapClient({ initialItems }: AdminRoadmapClientP
               <div>
                 <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>게시 상태</label>
                 <select value={status} onChange={e => setStatus(e.target.value as any)} style={{ width: '100%' }}>
-                  <option value="PUBLISHED">공개 (PUBLISHED)</option>
-                  <option value="DRAFT">임시저장 (DRAFT - 비노출)</option>
+                  <option value="PUBLISHED">공개</option>
+                  <option value="DRAFT">임시저장</option>
                 </select>
               </div>
             </div>
@@ -186,7 +186,7 @@ export default function AdminRoadmapClient({ initialItems }: AdminRoadmapClientP
                           cursor: 'pointer',
                         }}
                       >
-                        {item.status === 'PUBLISHED' ? '공개 (PUBLISHED)' : '임시저장 (DRAFT)'}
+                        {item.status === 'PUBLISHED' ? '공개' : '임시저장'}
                       </button>
                     </td>
                     <td>

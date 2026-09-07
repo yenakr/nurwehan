@@ -18,7 +18,7 @@ export default function ClinicalClient({ healthRequirements, user }: ClinicalCli
       {/* Header */}
       <div className="card" style={{ padding: '20px' }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '6px' }}>
-          🩺 CLINICAL (임상실습 통합 관리 Hub)
+          🩺 임상실습 가이드
         </h2>
         <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)', marginBottom: '16px' }}>
           임상실습 전 예방접종 및 항체/결핵검사 건강요건 준비부터 실습 중 학습 목표 및 실습 후 자율연습까지 원스톱으로 관리합니다.
@@ -151,7 +151,7 @@ export default function ClinicalClient({ healthRequirements, user }: ClinicalCli
               fontSize: '0.875rem',
             }}
           >
-            <strong>⚠️ 개인정보 보호 수칙 (필독):</strong> 실습 중 기록 및 학습 메모 작성 시 
+            <strong>⚠️ 개인정보 보호 수칙:</strong> 실습 중 기록 및 학습 메모 작성 시 
             환자의 이름, 등록번호, 병실 번호, 생년월일 등 <strong>실제 환자를 식별할 수 있는 어떠한 개인정보(PHI)도 저장이 엄격히 금지</strong>됩니다.
           </div>
 

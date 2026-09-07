@@ -74,7 +74,7 @@ export default function AdminCalendarClient({ initialEvents }: AdminCalendarClie
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)' }}>
-              📅 관리자 캘린더 (CALENDAR) 관리
+              📅 캘린더 관리
             </h2>
             <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>
               학년별 학사일정, 중간/기말고사, 임상실습 OT, 취업 채용 일정을 관리합니다.
@@ -122,8 +122,8 @@ export default function AdminCalendarClient({ initialEvents }: AdminCalendarClie
               <div>
                 <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>게시 상태</label>
                 <select value={status} onChange={e => setStatus(e.target.value as any)} style={{ width: '100%' }}>
-                  <option value="PUBLISHED">공개 (PUBLISHED)</option>
-                  <option value="DRAFT">임시저장 (DRAFT)</option>
+                  <option value="PUBLISHED">공개</option>
+                  <option value="DRAFT">임시저장</option>
                 </select>
               </div>
             </div>

@@ -17,14 +17,12 @@ export default function RoadmapClient({ initialItems, user }: RoadmapClientProps
 
   const categories = ['all', '대학생활/학업', 'OPEN LAB/술기', '임상실습/건강요건', '어학/취업', '비교과/연구'];
 
-  // Filter items
   const filteredItems = initialItems.filter(item => {
     if (selectedGrade !== 'all' && item.recommendedGrade !== selectedGrade) return false;
     if (selectedCategory !== 'all' && item.category !== selectedCategory) return false;
     return true;
   });
 
-  // Group by grade for 4-year timeline
   const grade1Items = filteredItems.filter(i => i.recommendedGrade === 1);
   const grade2Items = filteredItems.filter(i => i.recommendedGrade === 2);
   const grade3Items = filteredItems.filter(i => i.recommendedGrade === 3);
@@ -97,7 +95,7 @@ export default function RoadmapClient({ initialItems, user }: RoadmapClientProps
                     {item.title}
                   </h4>
                   <p style={{ fontSize: '0.84rem', color: 'var(--sub-text)', marginBottom: '12px', lineHeight: 1.4 }}>
-                    {item.description || '상세 세부 가이드 준비 중'}
+                    {item.description || '상세 가이드 준비 중'}
                   </p>
                 </div>
 
@@ -134,10 +132,10 @@ export default function RoadmapClient({ initialItems, user }: RoadmapClientProps
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
           <div>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)' }}>
-              🧭 MY ROADMAP (간호대학 1~4학년 통합 로드맵)
+              MY ROADMAP
             </h2>
             <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>
-              입학부터 졸업 및 병원 취업, 국가고시까지 흐름에 맞춰 무엇을 준비해야 하는지 한눈에 파악하세요.
+              입학부터 졸업 및 병원 취업, 국가고시까지 흐름에 맞춰 무엇을 준비해야 하는지 확인하세요.
             </p>
           </div>
 
@@ -205,8 +203,8 @@ export default function RoadmapClient({ initialItems, user }: RoadmapClientProps
       {/* Render Roadmap Blocks */}
       {(selectedGrade === 'all' || selectedGrade === 1) && renderGradeBlock(1, grade1Items, '대학생활 적응, 기초 전공 탐색, 동아리 및 비교과 활동')}
       {(selectedGrade === 'all' || selectedGrade === 2) && renderGradeBlock(2, grade2Items, '전공 기초 강화, 핵심간호술기 시작, OPEN LAB 활용, 어학 준비')}
-      {(selectedGrade === 'all' || selectedGrade === 3) && renderGradeBlock(3, grade3Items, '임상실습 OT 및 건강요건(접종/검사), 병원실습, 어학성적, 취업 준비')}
-      {(selectedGrade === 'all' || selectedGrade === 4) && renderGradeBlock(4, grade4Items, '병원 채용 (서류/적성/면접), 국가고시 대비, 졸업 준비')}
+      {(selectedGrade === 'all' || selectedGrade === 3) && renderGradeBlock(3, grade3Items, '임상실습 오리엔테이션 및 건강요건, 병원실습, 어학성적, 취업 준비')}
+      {(selectedGrade === 'all' || selectedGrade === 4) && renderGradeBlock(4, grade4Items, '병원 채용 서류 및 면접, 국가고시 대비, 졸업 준비')}
     </div>
   );
 }

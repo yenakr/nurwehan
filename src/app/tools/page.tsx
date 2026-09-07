@@ -6,10 +6,10 @@ export default function ToolsPage() {
       <div className="container" style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
         <div className="card">
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '6px' }}>
-            🛠️ NUR Tools (간호대 학생 지원 유틸리티 도구 모음)
+            🛠️ 유틸리티 도구
           </h2>
           <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>
-            OPEN LAB 실습 신청서 자동작성처럼 학생들의 번거로운 작성 업무와 준비를 도와주는 유틸리티 모음입니다.
+            OPEN LAB 실습 신청서 작성 등 학생들의 작성 업무와 준비를 도와주는 유틸리티 모음입니다.
           </p>
         </div>
 
@@ -32,10 +32,10 @@ export default function ToolsPage() {
           <div className="card" style={{ borderLeft: '4px solid var(--primary)' }}>
             <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>🔬</div>
             <h3 style={{ fontSize: '1.0625rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '6px' }}>
-              연구실 OPEN LAB / 학부연구생 지원서 작성 도우미
+              연구실 OPEN LAB 및 학부연구생 지원서 작성 도우미
             </h3>
             <p style={{ fontSize: '0.84rem', color: 'var(--sub-text)', marginBottom: '16px' }}>
-              관심 연구분야, 지원동기, 관련 경험 및 배우고 싶은 내용을 정돈된 공식 지원서 템플릿으로 생성해 줍니다.
+              관심 연구분야, 지원동기, 관련 경험 및 배우고 싶은 내용을 정돈된 공식 지원서 템플릿으로 생성합니다.
             </p>
             <Link href="/tools/lab-apply-helper" className="btn-primary" style={{ fontSize: '0.84rem' }}>
               작성 도우미 실행 →
@@ -46,10 +46,10 @@ export default function ToolsPage() {
           <div className="card" style={{ backgroundColor: '#F8FAFC', opacity: 0.8 }}>
             <div style={{ fontSize: '1.5rem', marginBottom: '8px' }}>✉️</div>
             <h3 style={{ fontSize: '1.0625rem', fontWeight: 700, color: 'var(--sub-text)', marginBottom: '6px' }}>
-              교수님 문의 메일 작성 도우미 (확장 준비 중)
+              교수님 문의 메일 작성 도우미
             </h3>
             <p style={{ fontSize: '0.84rem', color: '#94A3B8', marginBottom: '16px' }}>
-              면담 신청, 연구실 문의, 과제 관련 문의 이메일 정중한 양식 템플릿 생성기
+              면담 신청, 연구실 문의, 과제 관련 문의 이메일 템플릿 생성기
             </p>
             <span className="badge" style={{ backgroundColor: '#E2E8F0', color: '#64748B' }}>
               준비 중

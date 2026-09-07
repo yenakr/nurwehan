@@ -16,10 +16,10 @@ export default function CampusClient({ campusActivities, user }: CampusClientPro
   const categories = [
     { key: 'all', label: '전체' },
     { key: 'RESEARCH_LAB', label: '연구실 Open Lab' },
-    { key: 'UNDERGRAD_RESEARCH', label: '학부연구생 모집' },
-    { key: 'SCHOLARSHIP', label: '장학금 안내' },
-    { key: 'COMPETITION', label: '학술대회 / 공모전' },
-    { key: 'VOLUNTEER', label: '봉사 / 해외 프로그램' },
+    { key: 'UNDERGRAD_RESEARCH', label: '학부연구생' },
+    { key: 'SCHOLARSHIP', label: '장학금' },
+    { key: 'COMPETITION', label: '학술대회 및 공모전' },
+    { key: 'VOLUNTEER', label: '봉사 및 국제 프로그램' },
   ];
 
   const filteredActivities = campusActivities.filter(act => {
@@ -32,14 +32,14 @@ export default function CampusClient({ campusActivities, user }: CampusClientPro
       <div className="card" style={{ padding: '20px' }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)' }}>
-            🏛️ CAMPUS / ACTIVITY (교내·외 학술 및 비교과 활동)
+            🏛️ 학부연구 & 비교과
           </h2>
           <Link href="/tools/lab-apply-helper" className="btn-accent" style={{ fontSize: '0.84rem' }}>
-            ✏️ 연구실/학부연구생 신청서 작성 보조 Tool →
+            ✏️ 연구실 지원서 작성 도우미 →
           </Link>
         </div>
         <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)', marginBottom: '16px' }}>
-          간호대학 연구실 탐색, 학부연구생 모집, 학술대회, 장학금 및 봉사/국제 프로그램 활동을 확인하세요.
+          간호대학 연구실 탐색, 학부연구생 모집, 학술대회, 장학금 및 봉사 활동을 확인하세요.
         </p>
 
         {/* Filters */}
@@ -60,7 +60,7 @@ export default function CampusClient({ campusActivities, user }: CampusClientPro
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
           <h3 style={{ fontSize: '1.125rem', fontWeight: 700, color: 'var(--text)' }}>
-            📣 비교과 및 학술 연구 활동 모집
+            비교과 및 학술 연구 활동 모집
           </h3>
           <PreparingBadge variant="badge" text="준비 중" />
         </div>

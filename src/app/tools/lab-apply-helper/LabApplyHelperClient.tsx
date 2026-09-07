@@ -70,10 +70,10 @@ ${goals || '입력 없음'}
       <div className="card">
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)' }}>
-            🔬 연구실 OPEN LAB / 학부연구생 지원서 작성 도우미
+            🔬 연구실 지원서 작성 도우미
           </h2>
           <Link href="/tools" className="btn-outline" style={{ fontSize: '0.8125rem' }}>
-            ← NUR Tools 목록
+            ← 유틸리티 도구 목록
           </Link>
         </div>
         <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>

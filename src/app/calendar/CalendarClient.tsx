@@ -137,7 +137,7 @@ export default function CalendarClient({
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
           <div>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)' }}>
-              📅 학년별 통합 캘린더 (CALENDAR)
+              📅 통합 캘린더
             </h2>
             <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>
               학사일정, 중간/기말고사, 임상실습 OT, OPEN LAB 일정 및 개인 시험 일정을 관리하세요.
