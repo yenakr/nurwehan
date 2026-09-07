@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import PreparingBadge from '@/components/PreparingBadge';
 import EmptyState from '@/components/EmptyState';
+import { isAdminRole } from '@/lib/auth-core';
 
 interface CalendarClientProps {
   initialOfficialEvents: any[];
@@ -18,6 +19,9 @@ export default function CalendarClient({
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'agenda' | 'semester'>('month');
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   
+  // Official events
+  const [officialEvents, setOfficialEvents] = useState<any[]>(initialOfficialEvents);
+
   // Personal events
   const [personalEvents, setPersonalEvents] = useState<any[]>([]);
   const [showAddModal, setShowAddModal] = useState(false);
@@ -26,6 +30,15 @@ export default function CalendarClient({
   const [newCategory, setNewCategory] = useState('PERSONAL');
   const [newMemo, setNewMemo] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  // Admin event modal
+  const [showAdminAddModal, setShowAdminAddModal] = useState(false);
+  const [adminTitle, setAdminTitle] = useState('');
+  const [adminDate, setAdminDate] = useState('');
+  const [adminCategory, setAdminCategory] = useState('OFFICIAL');
+  const [adminTargetGrade, setAdminTargetGrade] = useState<'all' | '1' | '2' | '3' | '4'>('all');
+  const [adminMemo, setAdminMemo] = useState('');
+  const [adminSubmitting, setAdminSubmitting] = useState(false);
 
   useEffect(() => {
     if (user) {
@@ -68,6 +81,45 @@ export default function CalendarClient({
     }
   };
 
+  const handleAddOfficialEvent = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!adminTitle || !adminDate) return;
+    setAdminSubmitting(true);
+    try {
+      const isCommon = adminTargetGrade === 'all';
+      const applicableGrades = isCommon ? [1, 2, 3, 4] : [Number(adminTargetGrade)];
+
+      const res = await fetch('/api/admin/calendar', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          title: adminTitle,
+          startDateTime: adminDate,
+          category: adminCategory,
+          academicYear: 2026,
+          applicableGrades,
+          isCommon,
+          description: adminMemo,
+          status: 'PUBLISHED',
+        }),
+      });
+      const data = await res.json();
+      if (data.event) {
+        setOfficialEvents(prev => [...prev, data.event]);
+        setAdminTitle('');
+        setAdminDate('');
+        setAdminMemo('');
+        setShowAdminAddModal(false);
+      } else {
+        alert('행사 일정 등록에 실패했습니다.');
+      }
+    } catch (err) {
+      alert('일정 등록 중 오류가 발생했습니다.');
+    } finally {
+      setAdminSubmitting(false);
+    }
+  };
+
   const handleDeletePersonalEvent = async (id: string) => {
     if (!confirm('이 개인 일정을 삭제하시겠습니까?')) return;
     try {
@@ -80,7 +132,7 @@ export default function CalendarClient({
 
   // Combine official & personal events
   const allCombinedEvents = [
-    ...initialOfficialEvents.map(e => ({ ...e, isPersonal: false })),
+    ...officialEvents.map(e => ({ ...e, isPersonal: false })),
     ...personalEvents.map(e => ({ ...e, isPersonal: true })),
   ];
 
@@ -100,6 +152,8 @@ export default function CalendarClient({
   // Category labels map
   const categoryLabels: Record<string, string> = {
     all: '전체 카테고리',
+    OFFICIAL: '공식 행사',
+    STUDENT_COUNCIL: '학생회 행사',
     ACADEMIC: '수업/학업',
     EXAM: '시험',
     CLINICAL: '실습',
@@ -145,6 +199,15 @@ export default function CalendarClient({
           </div>
 
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+            {isAdminRole(user?.role) && (
+              <button
+                onClick={() => setShowAdminAddModal(true)}
+                className="btn-primary"
+                style={{ fontSize: '0.84rem' }}
+              >
+                + 공식/행사 일정 추가 (관리자)
+              </button>
+            )}
             {user && (
               <button
                 onClick={() => setShowAddModal(true)}
@@ -437,6 +500,114 @@ export default function CalendarClient({
                   disabled={submitting}
                 >
                   {submitting ? '저장 중...' : '저장'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+      {/* Admin Add Event Modal */}
+      {showAdminAddModal && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+          }}
+        >
+          <div className="card" style={{ maxWidth: '500px', width: '100%', padding: '24px' }}>
+            <h3 style={{ fontSize: '1.125rem', fontWeight: 800, marginBottom: '16px', color: 'var(--primary)' }}>
+              📢 공식/행사 일정 등록 (관리자)
+            </h3>
+            <form onSubmit={handleAddOfficialEvent} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div>
+                <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>일정 제목 *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="예: 3학년 학과 나이팅게일 선서식, 학생회 개강총회"
+                  value={adminTitle}
+                  onChange={e => setAdminTitle(e.target.value)}
+                  style={{ width: '100%' }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div>
+                  <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>날짜 *</label>
+                  <input
+                    type="date"
+                    required
+                    value={adminDate}
+                    onChange={e => setAdminDate(e.target.value)}
+                    style={{ width: '100%' }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>대상 학년 *</label>
+                  <select
+                    value={adminTargetGrade}
+                    onChange={e => setAdminTargetGrade(e.target.value as any)}
+                    style={{ width: '100%' }}
+                  >
+                    <option value="all">전체학년</option>
+                    <option value="1">1학년</option>
+                    <option value="2">2학년</option>
+                    <option value="3">3학년</option>
+                    <option value="4">4학년</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>카테고리 *</label>
+                <select
+                  value={adminCategory}
+                  onChange={e => setAdminCategory(e.target.value)}
+                  style={{ width: '100%' }}
+                >
+                  <option value="OFFICIAL">공식 행사 / 학과 행사</option>
+                  <option value="STUDENT_COUNCIL">학생회 행사</option>
+                  <option value="ACADEMIC">수업 / 학업</option>
+                  <option value="EXAM">중간 / 기말고사</option>
+                  <option value="CLINICAL">임상실습</option>
+                  <option value="HEALTH">건강요건</option>
+                  <option value="OPEN_LAB">OPEN LAB</option>
+                  <option value="CAREER">취업 / 채용</option>
+                  <option value="CAMPUS">비교과 / 연구</option>
+                </select>
+              </div>
+
+              <div>
+                <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>상세 설명 (선택)</label>
+                <textarea
+                  rows={3}
+                  placeholder="행사 준비사항 및 상세 안내"
+                  value={adminMemo}
+                  onChange={e => setAdminMemo(e.target.value)}
+                  style={{ width: '100%' }}
+                />
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '12px' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowAdminAddModal(false)}
+                  className="btn-outline"
+                >
+                  취소
+                </button>
+                <button
+                  type="submit"
+                  className="btn-primary"
+                  disabled={adminSubmitting}
+                >
+                  {adminSubmitting ? '등록 중...' : '등록 완료'}
                 </button>
               </div>
             </form>

@@ -459,6 +459,8 @@ enum EventCategory {
   CAREER
   CAMPUS
   PERSONAL
+  OFFICIAL
+  STUDENT_COUNCIL
 }
 
 enum ReadinessStatus {

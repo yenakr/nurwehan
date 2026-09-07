@@ -99,14 +99,14 @@ export default function Header() {
           justifyContent: 'space-between',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '28px' }}>
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
             <Logo width={110} />
             <span className="logo-text">NUR위한</span>
           </Link>
 
           <nav className="desktop-nav">
-            <ul style={{ display: 'flex', gap: '20px', listStyle: 'none', margin: 0, padding: 0, alignItems: 'center' }}>
+            <ul style={{ display: 'flex', gap: '8px', listStyle: 'none', margin: 0, padding: 0, alignItems: 'center' }}>
               <li>
                 <Link
                   href="/"
@@ -268,21 +268,23 @@ export default function Header() {
           letter-spacing: -0.02em;
           border-left: 1px solid var(--border);
           padding-left: 10px;
+          white-space: nowrap;
         }
         .desktop-nav {
           display: none;
         }
         .desktop-nav :global(.nav-btn) {
-          font-size: 0.9375rem;
+          font-size: 0.875rem;
           font-weight: 700;
           color: var(--text);
           background: none;
           border: none;
-          padding: 8px 12px;
+          padding: 6px 10px;
           border-radius: 6px;
           cursor: pointer;
           transition: all 0.2s;
           text-decoration: none;
+          white-space: nowrap;
         }
         .desktop-nav :global(.nav-btn:hover) {
           color: var(--primary);
@@ -297,7 +299,7 @@ export default function Header() {
           position: absolute;
           top: 100%;
           left: 0;
-          width: 240px;
+          width: 220px;
           background: white;
           border: 1px solid var(--border);
           border-radius: 8px;
@@ -311,7 +313,7 @@ export default function Header() {
         .desktop-nav :global(.dropdown-item) {
           display: flex;
           flex-direction: column;
-          padding: 10px 12px;
+          padding: 8px 10px;
           border-radius: 6px;
           text-decoration: none;
           transition: background-color 0.2s;
@@ -320,25 +322,28 @@ export default function Header() {
           background-color: var(--muted-background);
         }
         .desktop-nav :global(.dropdown-label) {
-          font-size: 0.875rem;
+          font-size: 0.84rem;
           font-weight: 700;
           color: var(--text);
         }
         .desktop-nav :global(.dropdown-desc) {
-          font-size: 0.75rem;
+          font-size: 0.72rem;
           color: var(--sub-text);
           margin-top: 2px;
         }
         .admin-link {
           color: #DC2626 !important;
           font-weight: 800 !important;
-          font-size: 0.875rem;
-          padding: 8px 12px;
+          font-size: 0.84rem;
+          padding: 6px 10px;
+          white-space: nowrap;
         }
         .user-name-label {
           display: none;
-          font-size: 0.875rem;
-          font-weight: 500;
+          font-size: 0.8125rem;
+          font-weight: 600;
+          color: var(--sub-text);
+          white-space: nowrap;
         }
         .mobile-toggle {
           display: flex;
@@ -365,12 +370,12 @@ export default function Header() {
           overflow-y: auto;
         }
         
-        @media (min-width: 900px) {
+        @media (min-width: 992px) {
           .desktop-nav { display: block; }
           .mobile-toggle { display: none; }
           .user-name-label { display: inline; }
         }
-        @media (max-width: 480px) {
+        @media (max-width: 520px) {
           .logo-text { display: none; }
         }
       `}</style>

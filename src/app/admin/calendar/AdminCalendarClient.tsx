@@ -14,10 +14,9 @@ export default function AdminCalendarClient({ initialEvents }: AdminCalendarClie
   const [title, setTitle] = useState('');
   const [description, setDescription] = useState('');
   const [startDateTime, setStartDateTime] = useState('');
-  const [category, setCategory] = useState('ACADEMIC');
+  const [category, setCategory] = useState('OFFICIAL');
   const [academicYear, setAcademicYear] = useState(2026);
-  const [applicableGrades, setApplicableGrades] = useState<number[]>([1, 2, 3, 4]);
-  const [isCommon, setIsCommon] = useState(false);
+  const [targetGrade, setTargetGrade] = useState<'all' | '1' | '2' | '3' | '4'>('all');
   const [status, setStatus] = useState<'PUBLISHED' | 'DRAFT'>('PUBLISHED');
   const [submitting, setSubmitting] = useState(false);
 
@@ -32,6 +31,9 @@ export default function AdminCalendarClient({ initialEvents }: AdminCalendarClie
     if (!title || !startDateTime) return;
     setSubmitting(true);
     try {
+      const isCommon = targetGrade === 'all';
+      const applicableGrades = isCommon ? [1, 2, 3, 4] : [Number(targetGrade)];
+
       const res = await fetch('/api/admin/calendar', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -77,7 +79,7 @@ export default function AdminCalendarClient({ initialEvents }: AdminCalendarClie
               📅 캘린더 관리
             </h2>
             <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>
-              학년별 학사일정, 중간/기말고사, 임상실습 OT, 취업 채용 일정을 관리합니다.
+              학년별 학사일정, 중간/기말고사, 임상실습 OT, 학생회/공식행사 일정을 관리합니다.
             </p>
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
@@ -85,7 +87,7 @@ export default function AdminCalendarClient({ initialEvents }: AdminCalendarClie
               ← 관리자 메인
             </Link>
             <button onClick={() => setIsAdding(!isAdding)} className="btn-primary" style={{ fontSize: '0.84rem' }}>
-              {isAdding ? '닫기' : '+ 새 학사 일정 추가'}
+              {isAdding ? '닫기' : '+ 새 공식 일정 추가'}
             </button>
           </div>
         </div>
@@ -97,18 +99,31 @@ export default function AdminCalendarClient({ initialEvents }: AdminCalendarClie
           <form onSubmit={handleAdd} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div>
               <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>일정명 *</label>
-              <input type="text" required value={title} onChange={e => setTitle(e.target.value)} placeholder="예: 3학년 임상실습 OT" style={{ width: '100%' }} />
+              <input type="text" required value={title} onChange={e => setTitle(e.target.value)} placeholder="예: 3학년 임상실습 OT, 학생회 총회" style={{ width: '100%' }} />
             </div>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '12px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr 1fr', gap: '12px' }}>
               <div>
                 <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>날짜 *</label>
                 <input type="date" required value={startDateTime} onChange={e => setStartDateTime(e.target.value)} style={{ width: '100%' }} />
               </div>
 
               <div>
+                <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>대상 학년</label>
+                <select value={targetGrade} onChange={e => setTargetGrade(e.target.value as any)} style={{ width: '100%' }}>
+                  <option value="all">전체학년</option>
+                  <option value="1">1학년</option>
+                  <option value="2">2학년</option>
+                  <option value="3">3학년</option>
+                  <option value="4">4학년</option>
+                </select>
+              </div>
+
+              <div>
                 <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>카테고리</label>
                 <select value={category} onChange={e => setCategory(e.target.value)} style={{ width: '100%' }}>
+                  <option value="OFFICIAL">공식 행사</option>
+                  <option value="STUDENT_COUNCIL">학생회 행사</option>
                   <option value="ACADEMIC">수업/학업</option>
                   <option value="EXAM">시험</option>
                   <option value="CLINICAL">실습</option>
