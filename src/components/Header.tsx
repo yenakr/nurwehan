@@ -6,6 +6,7 @@ import Logo from './Logo';
 import { isAdminRole } from '@/lib/auth-core';
 import LogoutButton from './LogoutButton';
 import { usePathname } from 'next/navigation';
+
 export default function Header() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
@@ -35,37 +36,69 @@ export default function Header() {
   const isAdmin = isAdminRole(user?.role);
   const userName = user?.name || '';
 
+  const navItems = [
+    { label: 'HOME', href: '/' },
+    { label: 'MY ROADMAP', href: '/roadmap' },
+    { label: 'CALENDAR', href: '/calendar' },
+    { label: 'CLINICAL', href: '/clinical' },
+    { label: 'OPEN LAB', href: '/open-lab', highlight: true },
+    { label: 'CAREER', href: '/career' },
+    { label: 'CAMPUS', href: '/campus' },
+    { label: 'TOOLS', href: '/tools' },
+    { label: 'MY PAGE', href: '/mypage' },
+  ];
+
   return (
-    <header style={{
-      borderBottom: '1px solid var(--border)',
-      backgroundColor: 'var(--white)',
-      position: 'sticky',
-      top: 0,
-      zIndex: 1000
-    }}>
-      <div className="container" style={{
-        height: '64px',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-      }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '32px' }}>
+    <header
+      style={{
+        borderBottom: '1px solid var(--border)',
+        backgroundColor: 'var(--white)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 1000,
+      }}
+    >
+      <div
+        className="container"
+        style={{
+          height: '64px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '20px' }}>
           <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-            <Logo width={120} />
+            <Logo width={110} />
             <span className="logo-text">NUR위한</span>
           </Link>
-          
+
           <nav className="desktop-nav">
             <ul>
-              <li><Link href="/open-lab">OPEN LAB 신청서 작성</Link></li>
-              <li><Link href="/history">신청서 작성 내역</Link></li>
-              <li><Link href="/notices">공지사항</Link></li>
-              <li><Link href="/mypage">마이페이지</Link></li>
-              {isAdmin && <li><Link href="/admin" className="admin-link">관리자</Link></li>}
+              {navItems.map(item => {
+                const isActive = pathname === item.href || (item.href !== '/' && pathname?.startsWith(item.href));
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      className={`nav-item ${isActive ? 'active' : ''} ${item.highlight ? 'highlight-item' : ''}`}
+                    >
+                      {item.label}
+                    </Link>
+                  </li>
+                );
+              })}
+              {isAdmin && (
+                <li>
+                  <Link href="/admin" className="admin-link">
+                    관리자
+                  </Link>
+                </li>
+              )}
             </ul>
           </nav>
         </div>
-        
+
         <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
           {!loading && (
             isLoggedIn ? (
@@ -83,8 +116,8 @@ export default function Header() {
               </Link>
             )
           )}
-          
-          <button 
+
+          <button
             className="mobile-toggle"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Menu"
@@ -99,13 +132,28 @@ export default function Header() {
         <div className="mobile-menu">
           <nav>
             <ul>
-              <li><Link href="/open-lab">OPEN LAB 신청서 작성</Link></li>
+              {navItems.map(item => {
+                const isActive = pathname === item.href || (item.href !== '/' && pathname?.startsWith(item.href));
+                return (
+                  <li key={item.href}>
+                    <Link
+                      href={item.href}
+                      style={{
+                        color: isActive ? 'var(--primary)' : 'var(--text)',
+                        fontWeight: isActive ? 800 : 600,
+                      }}
+                    >
+                      {item.label}
+                      {item.highlight && <span style={{ fontSize: '0.75rem', marginLeft: '6px', color: 'var(--primary)' }}>(실습실 신청)</span>}
+                    </Link>
+                  </li>
+                );
+              })}
               <li><Link href="/history">신청서 작성 내역</Link></li>
               <li><Link href="/notices">공지사항</Link></li>
-              <li><Link href="/mypage">마이페이지</Link></li>
-              {isAdmin && <li><Link href="/admin" className="admin-link">관리자</Link></li>}
+              {isAdmin && <li><Link href="/admin" className="admin-link">관리자 대시보드</Link></li>}
               {isLoggedIn && (
-                <li style={{ marginTop: '20px', borderTop: '1px solid var(--border)', paddingTop: '20px' }}>
+                <li style={{ marginTop: '16px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
                   <LogoutButton />
                 </li>
               )}
@@ -121,31 +169,46 @@ export default function Header() {
           color: var(--primary);
           letter-spacing: -0.02em;
           border-left: 1px solid var(--border);
-          padding-left: 12px;
+          padding-left: 10px;
         }
         .desktop-nav {
           display: none;
         }
         .desktop-nav ul {
           display: flex;
-          gap: 24px;
+          gap: 16px;
           list-style: none;
           padding: 0;
           margin: 0;
+          align-items: center;
         }
-        .desktop-nav a {
-          font-size: 0.9375rem;
+        .desktop-nav :global(.nav-item) {
+          font-size: 0.84rem;
           font-weight: 600;
           color: var(--sub-text);
           text-decoration: none;
-          transition: color 0.2s;
+          transition: all 0.2s;
+          padding: 4px 6px;
+          border-radius: 4px;
         }
-        .desktop-nav a:hover {
+        .desktop-nav :global(.nav-item:hover) {
           color: var(--primary);
         }
+        .desktop-nav :global(.nav-item.active) {
+          color: var(--primary);
+          font-weight: 800;
+          border-bottom: 2px solid var(--primary);
+        }
+        .desktop-nav :global(.highlight-item) {
+          color: var(--primary);
+          font-weight: 700;
+          background-color: rgba(56, 189, 248, 0.1);
+          padding: 4px 8px;
+        }
         .admin-link {
-          color: var(--primary) !important;
+          color: #DC2626 !important;
           font-weight: 800 !important;
+          font-size: 0.84rem;
         }
         .user-name-label {
           display: none;
@@ -171,8 +234,10 @@ export default function Header() {
           right: 0;
           background: white;
           border-bottom: 1px solid var(--border);
-          padding: 24px;
+          padding: 20px 24px;
           box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1);
+          max-height: calc(100vh - 64px);
+          overflow-y: auto;
         }
         .mobile-menu ul {
           list-style: none;
@@ -180,17 +245,17 @@ export default function Header() {
           margin: 0;
           display: flex;
           flex-direction: column;
-          gap: 20px;
+          gap: 16px;
         }
         .mobile-menu a {
-          font-size: 1.125rem;
+          font-size: 1rem;
           font-weight: 700;
           color: var(--text);
           text-decoration: none;
           display: block;
         }
         
-        @media (min-width: 768px) {
+        @media (min-width: 992px) {
           .desktop-nav { display: block; }
           .mobile-toggle { display: none; }
           .user-name-label { display: inline; }

@@ -10,25 +10,33 @@ datasource db {
 }
 
 model User {
-  id               String            @id @default(cuid())
-  studentId        String            @unique // 학번
-  name             String
-  grade            Int?              // 학년
-  email            String?           @unique
-  phone            String?
-  password         String
-  role             Role              @default(STUDENT)
-  approvalStatus   ApprovalStatus    @default(PENDING)
-  rejectedReason   String?
-  createdAt        DateTime          @default(now())
-  updatedAt        DateTime          @updatedAt
+  id                  String            @id @default(cuid())
+  studentId           String            @unique // 학번
+  name                String
+  grade               Int?              // 학년
+  email               String?           @unique
+  phone               String?
+  password            String
+  role                Role              @default(STUDENT)
+  approvalStatus      ApprovalStatus    @default(PENDING)
+  rejectedReason      String?
+  admissionYear       Int?              // 입학연도
+  currentSemester     Int?              // 현재 학기 (1 또는 2)
+  targetCareer        String?           // 관심 진로
+  targetHospital      String?           // 목표 병원
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
   
-  applications     Application[]     @relation("RepresentedApplications")
-  participations   ApplicationParticipant[]
-  restrictions     Restriction[]     @relation("UserRestrictions")
+  applications        Application[]     @relation("RepresentedApplications")
+  participations      ApplicationParticipant[]
+  restrictions        Restriction[]     @relation("UserRestrictions")
   createdRestrictions Restriction[]  @relation("AdminCreatedRestrictions")
-  notices          Notice[]
-  warnings         CleanupWarning[]
+  notices             Notice[]
+  warnings            CleanupWarning[]
+  personalEvents      PersonalCalendarEvent[]
+  roadmapProgresses   UserRoadmapProgress[]
+  healthRecords       StudentHealthRecord[]
+  healthReadinesses   StudentHealthReadiness[]
 }
 
 model Semester {
@@ -45,18 +53,18 @@ model Semester {
 }
 
 model OpenLabGradeRule {
-  id         String   @id @default(cuid())
-  semesterId String
-  semester   Semester @relation(fields: [semesterId], references: [id])
-  grade      Int
-  dayOfWeek  Int      // 0-6 (Sunday-Saturday)
-  startTime  String   // HH:mm
-  endTime    String   // HH:mm
-  room       String
+  id          String   @id @default(cuid())
+  semesterId  String
+  semester    Semester @relation(fields: [semesterId], references: [id])
+  grade       Int
+  dayOfWeek   Int      // 0-6 (Sunday-Saturday)
+  startTime   String   // HH:mm
+  endTime     String   // HH:mm
+  room        String
   maxCapacity Int
-  isActive   Boolean  @default(true)
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
 
 model OpenLabSlot {
@@ -216,6 +224,192 @@ model Notice {
   updatedAt   DateTime @updatedAt
 }
 
+// ----------------------------------------------------
+// NUR위한 Roadmap / Calendar / Clinical / Career Models
+// ----------------------------------------------------
+
+model Course {
+  id           String   @id @default(cuid())
+  courseName   String
+  courseCode   String?
+  grade        Int      // 1, 2, 3, 4
+  semester     Int      // 1, 2
+  academicYear Int
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  events       CalendarEvent[]
+}
+
+model CalendarEvent {
+  id                   String            @id @default(cuid())
+  title                String
+  description          String?
+  startDateTime        DateTime
+  endDateTime          DateTime?
+  allDay               Boolean           @default(true)
+  category             EventCategory     @default(ACADEMIC)
+  academicYear         Int
+  semester             Int?
+  applicableGrades     Int[]
+  isCommon             Boolean           @default(false)
+  courseId             String?
+  course               Course?           @relation(fields: [courseId], references: [id])
+  priority             Int               @default(0)
+  relatedRoadmapItemId String?
+  relatedInternalUrl   String?
+  externalUrl          String?
+  status               PublicationStatus @default(PUBLISHED)
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  roadmapItems         RoadmapItem[]
+}
+
+model PersonalCalendarEvent {
+  id            String        @id @default(cuid())
+  userId        String
+  user          User          @relation(fields: [userId], references: [id], onDelete: Cascade)
+  title         String
+  description   String?
+  startDateTime DateTime
+  endDateTime   DateTime?
+  allDay        Boolean       @default(true)
+  category      EventCategory @default(PERSONAL)
+  isReminder    Boolean       @default(false)
+  createdAt     DateTime      @default(now())
+  updatedAt     DateTime      @updatedAt
+}
+
+model RoadmapItem {
+  id                   String            @id @default(cuid())
+  title                String
+  description          String?
+  category             String            // 학업, 실습, 어학, 취업, 비교과 등
+  recommendedGrade     Int               // 1, 2, 3, 4
+  recommendedSemester  Int?              // 1, 2
+  recommendedStartDate DateTime?
+  deadline             DateTime?
+  priority             Int               @default(0)
+  isRequired           Boolean           @default(true)
+  relatedEventId       String?
+  relatedEvent         CalendarEvent?    @relation(fields: [relatedEventId], references: [id])
+  relatedInternalUrl   String?
+  externalUrl          String?
+  checklistItems       String[]          // sub-task titles
+  status               PublicationStatus @default(PUBLISHED)
+  createdAt            DateTime          @default(now())
+  updatedAt            DateTime          @updatedAt
+
+  userProgresses       UserRoadmapProgress[]
+}
+
+model UserRoadmapProgress {
+  id            String      @id @default(cuid())
+  userId        String
+  user          User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  roadmapItemId String
+  roadmapItem   RoadmapItem @relation(fields: [roadmapItemId], references: [id], onDelete: Cascade)
+  status        String      // NOT_STARTED, IN_PROGRESS, COMPLETED, ATTENTION_REQUIRED, PREPARING
+  completedAt   DateTime?
+  notes         String?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
+
+  @@unique([userId, roadmapItemId])
+}
+
+model HealthRequirement {
+  id                  String            @id @default(cuid())
+  name                String            // 예: A형 간염, 결핵검사 등
+  category            String            // VACCINATION, LAB_TEST, DOCUMENT
+  applicableGrades    Int[]
+  applicableSemesters Int[]
+  description         String?
+  studentDisplayText  String?
+  isRequired          Boolean           @default(true)
+  status              PublicationStatus @default(PUBLISHED)
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  rules               HealthRequirementRule[]
+  records             StudentHealthRecord[]
+  readinesses         StudentHealthReadiness[]
+}
+
+model HealthRequirementRule {
+  id                      String            @id @default(cuid())
+  requirementId           String
+  requirement             HealthRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  inputType               String            // DATE, DOSE, TEST_RESULT
+  conditionType           String            // EQUAL, GREATER_THAN, POSITIVE, NEGATIVE
+  conditionValue          String?
+  resultStatus            ReadinessStatus
+  nextActionPrompt        String?           // "2차 접종 필요", "추가 검사 권장" 등
+  minIntervalDays         Int?
+  recommendedIntervalDays Int?
+  priority                Int               @default(0)
+  active                  Boolean           @default(true)
+  createdAt               DateTime          @default(now())
+  updatedAt               DateTime          @updatedAt
+}
+
+model StudentHealthRecord {
+  id              String            @id @default(cuid())
+  userId          String
+  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  requirementId   String
+  requirement     HealthRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  testDate        DateTime?
+  resultType      String?           // POSITIVE, NEGATIVE, NUMERIC, TEXT
+  resultValue     String?
+  vaccinationDate DateTime?
+  doseNumber      Int?
+  documentStatus  String?           // HELD, SUBMITTED, NOT_HELD
+  memo            String?
+  createdAt       DateTime          @default(now())
+  updatedAt       DateTime          @updatedAt
+}
+
+model StudentHealthReadiness {
+  id            String            @id @default(cuid())
+  userId        String
+  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  requirementId String
+  requirement   HealthRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
+  status        ReadinessStatus   @default(PREPARING)
+  nextAction    String?
+  nextDueDate   DateTime?
+  calculatedAt  DateTime          @default(now())
+  adminMemo     String?
+
+  @@unique([userId, requirementId])
+}
+
+model CareerInfo {
+  id            String            @id @default(cuid())
+  title         String
+  category      String            // LANGUAGE, HOSPITAL, INTERNSHIP, APTITUDE, NCLEX
+  description   String?
+  targetGrade   Int?
+  externalUrl   String?
+  status        PublicationStatus @default(PUBLISHED)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+}
+
+model CampusActivity {
+  id            String            @id @default(cuid())
+  title         String
+  category      String            // RESEARCH_LAB, UNDERGRAD_RESEARCH, SCHOLARSHIP, COMPETITION, VOLUNTEER, INTERNATIONAL
+  description   String?
+  targetGrade   Int?
+  externalUrl   String?
+  status        PublicationStatus @default(PUBLISHED)
+  createdAt     DateTime          @default(now())
+  updatedAt     DateTime          @updatedAt
+}
+
 enum Role {
   STUDENT
   ADMIN
@@ -249,4 +443,28 @@ enum AttendanceStatus {
   PRESENT
   ABSENT
   LATE_30
+}
+
+enum PublicationStatus {
+  DRAFT
+  PUBLISHED
+}
+
+enum EventCategory {
+  ACADEMIC
+  EXAM
+  CLINICAL
+  HEALTH
+  OPEN_LAB
+  CAREER
+  CAMPUS
+  PERSONAL
+}
+
+enum ReadinessStatus {
+  SATISFIED
+  IN_PROGRESS
+  ATTENTION_REQUIRED
+  INCOMPLETE
+  PREPARING
 }

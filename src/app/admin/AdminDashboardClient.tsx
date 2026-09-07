@@ -31,13 +31,22 @@ export default function AdminDashboardClient({
           className={activeTab === 'schedules' ? 'active' : ''} 
           onClick={() => setActiveTab('schedules')}
         >
-          운영시간(시간표) 관리
+          OPEN LAB 시간표
         </button>
         <button 
           className={activeTab === 'skills' ? 'active' : ''} 
           onClick={() => setActiveTab('skills')}
         >
-          술기 및 준비물 관리
+          술기 및 준비물
+        </button>
+        <button onClick={() => router.push('/admin/roadmap')}>
+          🧭 MY ROADMAP 관리
+        </button>
+        <button onClick={() => router.push('/admin/calendar')}>
+          📅 통합 CALENDAR 관리
+        </button>
+        <button onClick={() => router.push('/admin/clinical')}>
+          🩺 건강요건 Rule 관리
         </button>
       </div>
 
