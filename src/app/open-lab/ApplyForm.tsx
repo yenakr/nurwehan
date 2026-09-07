@@ -718,7 +718,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
           disabled={submitting || !selectedSlot || selectedSkills.length === 0}
           className="btn-submit"
         >
-          {submitting ? '제출 중...' : '신청서 작성 완료 & PDF 출력 페이지로'}
+          {submitting ? '생성 중...' : '신청서 작성 완료 & PDF 출력 페이지로'}
         </button>
       </div>
 

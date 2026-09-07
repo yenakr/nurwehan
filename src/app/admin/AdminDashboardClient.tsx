@@ -809,7 +809,7 @@ function SkillManagement({ initialSkills }: { initialSkills: any[] }) {
   );
 }
 
-const DEFAULT_UNITS = ['개', '세트', 'mL', 'L', '장', '쌍', '통', '병', '롤', '팩'];
+const DEFAULT_UNITS = ['개'];
 
 function SupplyList({ skill, onUpdate }: { skill: any, onUpdate: () => void }) {
   const [isAdding, setIsAdding] = useState(false);
