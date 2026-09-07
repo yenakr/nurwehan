@@ -1,10 +1,10 @@
 import Link from 'next/link';
 
 const MOCK_NOTICES = [
-  { id: 1, title: '2026학년도 1학기 OPEN LAB 운영 안내', date: '2026-05-10', important: true },
-  { id: 2, title: '실습실 기자재 사용 후 정리 정돈 협조 요청', date: '2026-05-08', important: false },
-  { id: 3, title: '5월 중순 실습실 소독 작업 일정 안내', date: '2026-05-05', important: false },
-  { id: 4, title: '간호대학 학생회 공지: 실습복 공동구매', date: '2026-05-02', important: false },
+  { id: 'official-guide', title: '2026학년도 2학기 OPEN LAB 운영 안내', date: '2026-09-01', important: true },
+  { id: 2, title: '실습실 기자재 사용 후 정리 정돈 협조 요청', date: '2026-09-01', important: false },
+  { id: 3, title: '2학기 실습실 소독 작업 일정 안내', date: '2026-09-01', important: false },
+  { id: 4, title: '간호대학 학생회 공지: 2학기 오픈랩 이용 안내', date: '2026-09-01', important: false },
 ];
 
 export default function NoticeList() {

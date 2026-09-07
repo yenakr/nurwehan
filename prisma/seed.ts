@@ -480,37 +480,67 @@ async function main() {
 
   // 3. Create Official Notice
   await prisma.notice.deleteMany({});
-  const noticeTitle = 'OPEN LAB 이용 안내';
+  const noticeTitle = '2026학년도 2학기 OPEN LAB 운영 안내';
   const noticeContent = `
-1. 신청 방법
-- Open lab은 학생 개별적으로 신청합니다. 동반 학생이 있을 경우 각각 신청해야 합니다.
-- 한 타임에 최대 2가지 술기까지 신청 가능합니다.
-- 학생 1명당 주 1회 오픈랩 신청이 가능합니다. 예: 동일 학생이 월요일, 수요일 2개 타임 모두 신청은 불가합니다.
-- 신청은 최대 신청 가능 인원 내에서 신청서 제출 및 접수 완료되는 순서대로 선착순 마감됩니다.
-- 신청 후 참여하지 않거나 Open lab 시작 30분 이후에 참여하는 경우에는 2주 동안 Open lab 신청 및 참여가 불가합니다.
+2026학년도 2학기 OPEN LAB 운영 일정
 
-2. 신청기간
-- 신청서는 Open lab 날짜 일주일 전부터 공휴일 제외 이틀 전까지 행정실 근무시간 오후 5시 30분 내에 제출합니다.
-- 기간 내에 신청서를 제출하지 않은 경우 오픈랩 이용이 불가합니다.
-- 예외: 월요일 Open lab 신청은 전 주 금요일 오전까지 제출 가능합니다.
+1. 운영기간 : 2026년 9월 1일 ~ 종강 시까지 (중간고사, 기말고사 및 평가 기간에는 변동 될 수 있음)
 
-3. 신청 시 유의사항
-- 신청서 제출 후 반드시 승인 여부를 확인하십시오.
-- 신청이 불가능한 경우 반려 사유가 표시됩니다.
-- 기자재 신청 수량은 실습실 물품 재고를 고려하여 신청 수량보다 적게 준비될 수 있습니다.
+2. 운영시간 및 인원
+[2학년]
+화요일
+- 09:00 – 10:00 (최대 신청 가능 인원 16명)
+- 10:00 – 11:00 (최대 신청 가능 인원 16명)
+수요일
+- 09:00 – 10:00 (최대 신청 가능 인원 16명)
+- 10:00 – 11:00 (최대 신청 가능 인원 16명)
 
-4. Open lab 이용
-- Open lab 종료 전 Open lab 사용일지를 학생별로 작성하여 제출합니다.
-- 사용일지 미작성 시 참여하지 않은 것으로 간주하여 2주간 Open lab 신청 및 참여가 불가합니다.
+[3학년]
+월요일
+- 09:00 – 10:00 (최대 신청 가능 인원 16명)
+- 10:00 – 11:00 (최대 신청 가능 인원 16명)
+화요일
+- 13:00 – 14:00 (최대 신청 가능 인원 16명)
+금요일
+- 09:00 – 10:00 (최대 신청 가능 인원 16명)
 
-5. Open lab 시 유의사항
-- 마지막 10분은 정리를 실시합니다.
-- 정리 상태 불량 3회 적발 시 해당 조원 모두 Open lab 이용이 불가합니다.
+[4학년]
+월요일
+- 11:00 – 12:00 (최대 신청 가능 인원 16명)
+- 13:00 – 14:00 (최대 신청 가능 인원 16명)
+수요일
+- 11:00 – 12:00 (최대 신청 가능 인원 16명)
+- 13:00 – 14:00 (최대 신청 가능 인원 16명)
+
+3. 신청 방법
+- 임상실습행정실 메일(rnassist@hanyang.ac.kr)로 신청서를 작성하여 제출합니다. (첨부파일 신청서 예시 참고)
+Open lab 진행할 인원을 모아 조를 구성하고, 한 명이 대표로 신청서를 제출합니다.
+- 한 타임에 최대 2가지 술기까지 신청가능 합니다.
+- 학생 1명당 주 1회 오픈랩 신청이 가능합니다. (예시 : 동일 학생이 월요일, 수요일 2개 타임 모두 신청은 불가)
+희망하는 모든 학생들이 Open lab에 참여할 수 있도록 조끼리 소통하여 신청이 겹치지 않도록 소통해주십시오.
+(★예외 : 2학년은 주 1회(목요일) 수업을 고려해 <(금주)목요일~(차주)목요일> 오픈랩 중 1회만 신청 가능)
+- 신청은 최대 신청 가능 인원 내에서, 신청서 제출 및 접수 완료되는 순서대로 선착순 마감됩니다.
+신청 후 참여하지 않은 경우, 신청 시간 기준 30분 이후에 참여하는 경우 2주 동안 Open lab 신청 및 참여 불가합니다.
+
+4. 신청기간
+- 신청서는 Open lab 날짜 <일주일 전 ~ 공휴일 제외 이틀 전> 행정실 근무시간(~오후 5시30분) 내에 제출합니다.
+(기간 내에 신청서 제출하지 않은 경우 오픈랩 불가. 기간 엄수.)
+(★예외 : <월요일> Open lab 신청은 전 주 <금요일 오전>까지 제출 가능)
+
+5. 신청 시 유의사항
+- 신청서 제출 후 반드시 메일 답변을 확인하십시오. (신청 불가능한 경우 그 사유를 답변드립니다.)
+- 기자재 신청 수량은 실습실 물품 재고 고려하여, 임의로 신청한 수량보다 적게 준비될 수 있습니다.
+
+6. Open lab 이용
+- Open lab 시작 전 출력된 신청서 하단에 신청자가 직접 서명합니다. (전자 서명하여 신청서 제출 시 제외)
+- Open lab 종료 전 Open lab 사용일지를 학생별로 작성하여 제출합니다. 사용일지 미작성 시 참여하지 않은 것으로 간주하여 2주간 Open lab 신청 및 참여가 불가합니다.
+
+7. Open lab 시 유의사항
+- 마지막 10분은 정리를 실시합니다. 정리 상태 불량 3회 적발 시 해당 조원 모두 Open lab 이용 불가합니다.
 - 사용한 물품을 처음과 동일한 상태로 정리하고, 일반의료 폐기물과 손상성 폐기물을 반드시 구별하여 버립니다.
-- 일반의료 폐기물/일반 쓰레기: 제품 포장지, 알콜솜을 포함한 거의 모든 물품
-- 손상성 폐기물: 바늘류 및 앰플, 바이알 등 유리류
-- 손상성 폐기물 박스에 알콜솜, 주사기 몸통 등은 폐기하지 않습니다.
-- 뚜껑이 있는 생수 또는 밀폐되는 텀블러를 제외한 음료는 실습실 내 반입 및 섭취를 금지합니다.
+* 일반의료 폐기물/일반 쓰레기 : 제품 포장지, 알콜솜을 포함한 거의 모든 물품
+* 손상성 폐기물 : 바늘류 및 앰플, 바이알 등 유리류 (손상성 폐기물 박스에 알콜솜, 주사기 몸통 등 폐기 금지)
+- 뚜껑이 있는 생수 또는 밀폐되는 텀블러를 제외한 음료(테이크아웃 컵 등)를 실습실 내 반입 및 섭취 금지합니다.
   `;
 
   await prisma.notice.create({
@@ -525,33 +555,39 @@ async function main() {
   console.log('Official notice seeded');
 
   // 4. Create Semester and Grade Rules
+  // Deactivate old semesters
+  await prisma.semester.updateMany({
+    data: { isActive: false }
+  });
+
   const semester = await prisma.semester.upsert({
-    where: { id: 'sem-2026-1' },
-    update: { isActive: true },
+    where: { id: 'sem-2026-2' },
+    update: { isActive: true, name: '2026학년도 2학기' },
     create: {
-      id: 'sem-2026-1',
-      name: '2026학년도 1학기',
-      startDate: new Date('2026-03-02'),
-      endDate: new Date('2026-06-20'),
+      id: 'sem-2026-2',
+      name: '2026학년도 2학기',
+      startDate: new Date('2026-09-01'),
+      endDate: new Date('2026-12-31'),
       isActive: true,
     },
   });
 
   const gradeRules = [
-    // 2nd Year
-    { grade: 2, dayOfWeek: 1, startTime: '09:00', endTime: '10:00', room: '임상수기실습실 5층', maxCapacity: 16 },
-    { grade: 2, dayOfWeek: 1, startTime: '10:00', endTime: '11:00', room: '임상수기실습실 5층', maxCapacity: 16 },
-    { grade: 2, dayOfWeek: 4, startTime: '09:00', endTime: '10:00', room: '임상수기실습실 5층', maxCapacity: 16 },
-    { grade: 2, dayOfWeek: 4, startTime: '10:00', endTime: '11:00', room: '임상수기실습실 5층', maxCapacity: 16 },
-    // 3rd Year
-    { grade: 3, dayOfWeek: 2, startTime: '09:00', endTime: '10:00', room: '임상수기실습실 5층', maxCapacity: 16 },
-    { grade: 3, dayOfWeek: 2, startTime: '10:00', endTime: '11:00', room: '임상수기실습실 5층', maxCapacity: 16 },
-    { grade: 3, dayOfWeek: 3, startTime: '09:00', endTime: '10:00', room: '임상수기실습실 5층', maxCapacity: 16 },
-    { grade: 3, dayOfWeek: 3, startTime: '10:00', endTime: '11:00', room: '임상수기실습실 5층', maxCapacity: 16 },
-    // 4th Year
+    // 2학년: 화요일 9-10, 10-11 / 수요일 9-10, 10-11 (16명)
+    { grade: 2, dayOfWeek: 2, startTime: '09:00', endTime: '10:00', room: '임상수기실습실 5층', maxCapacity: 16 },
+    { grade: 2, dayOfWeek: 2, startTime: '10:00', endTime: '11:00', room: '임상수기실습실 5층', maxCapacity: 16 },
+    { grade: 2, dayOfWeek: 3, startTime: '09:00', endTime: '10:00', room: '임상수기실습실 5층', maxCapacity: 16 },
+    { grade: 2, dayOfWeek: 3, startTime: '10:00', endTime: '11:00', room: '임상수기실습실 5층', maxCapacity: 16 },
+    // 3학년: 월요일 9-10, 10-11 / 화요일 13-14 / 금요일 9-10 (16명)
+    { grade: 3, dayOfWeek: 1, startTime: '09:00', endTime: '10:00', room: '임상수기실습실 5층', maxCapacity: 16 },
+    { grade: 3, dayOfWeek: 1, startTime: '10:00', endTime: '11:00', room: '임상수기실습실 5층', maxCapacity: 16 },
+    { grade: 3, dayOfWeek: 2, startTime: '13:00', endTime: '14:00', room: '임상수기실습실 5층', maxCapacity: 16 },
+    { grade: 3, dayOfWeek: 5, startTime: '09:00', endTime: '10:00', room: '임상수기실습실 5층', maxCapacity: 16 },
+    // 4학년: 월요일 11-12, 13-14 / 수요일 11-12, 13-14 (16명)
     { grade: 4, dayOfWeek: 1, startTime: '11:00', endTime: '12:00', room: '시뮬레이션실습실 6층', maxCapacity: 16 },
-    { grade: 4, dayOfWeek: 2, startTime: '11:00', endTime: '12:00', room: '시뮬레이션실습실 6층', maxCapacity: 16 },
-    { grade: 4, dayOfWeek: 4, startTime: '11:00', endTime: '12:00', room: '시뮬레이션실습실 6층', maxCapacity: 16 },
+    { grade: 4, dayOfWeek: 1, startTime: '13:00', endTime: '14:00', room: '시뮬레이션실습실 6층', maxCapacity: 16 },
+    { grade: 4, dayOfWeek: 3, startTime: '11:00', endTime: '12:00', room: '시뮬레이션실습실 6층', maxCapacity: 16 },
+    { grade: 4, dayOfWeek: 3, startTime: '13:00', endTime: '14:00', room: '시뮬레이션실습실 6층', maxCapacity: 16 },
   ];
 
   await prisma.openLabGradeRule.deleteMany({ where: { semesterId: semester.id } });

@@ -56,9 +56,9 @@ export async function POST(request: NextRequest) {
     if (!semester) {
       semester = await prisma.semester.create({
         data: {
-          name: '2026학년도 1학기',
-          startDate: new Date('2026-03-01'),
-          endDate: new Date('2026-08-31'),
+          name: '2026학년도 2학기',
+          startDate: new Date('2026-09-01'),
+          endDate: new Date('2026-12-31'),
           isActive: true
         }
       });
