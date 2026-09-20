@@ -1007,9 +1007,6 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
 
                   {/* Question Prompt Box */}
                   <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', padding: '20px', borderRadius: '10px', marginBottom: '20px' }}>
-                    <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--sub-text)', marginBottom: '8px' }}>
-                      다음 문제/정의에 해당하는 올바른 용어/답을 타이핑하세요:
-                    </div>
                     <h3 style={{ fontSize: '1.125rem', fontWeight: 800, color: '#1E293B', lineHeight: 1.6, margin: 0 }}>
                       {currentTypingTerm.definition}
                     </h3>
@@ -1027,14 +1024,20 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                   {/* Typing Input */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                     <div>
-                      <label style={{ fontSize: '0.84rem', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
-                        정답 타이핑 입력 (엔터로 제출/다음):
-                      </label>
+                      {/* Faint Gray Answer Preview to type along */}
+                      <div style={{ backgroundColor: '#F1F5F9', border: '1px solid #E2E8F0', padding: '10px 14px', borderRadius: '8px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '0.8125rem', fontWeight: 800, color: '#94A3B8', whiteSpace: 'nowrap' }}>정답:</span>
+                        <span style={{ fontSize: '1rem', fontWeight: 800, color: '#64748B', letterSpacing: '0.02em' }}>
+                          {currentTypingTerm.answer || currentTypingTerm.term}
+                          {currentTypingTerm.englishTerm ? ` (${currentTypingTerm.englishTerm})` : ''}
+                        </span>
+                      </div>
+
                       <input
                         type="text"
                         autoFocus
                         disabled={isTypingSubmitted}
-                        placeholder="정답 입력 후 [Enter]를 누르세요"
+                        placeholder={currentTypingTerm.answer || currentTypingTerm.term}
                         value={typingInput}
                         onChange={e => setTypingInput(e.target.value)}
                         onKeyDown={e => {
