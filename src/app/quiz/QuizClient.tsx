@@ -62,6 +62,20 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   const [hideDefinition, setHideDefinition] = useState<boolean>(false);
   const [revealedCardIds, setRevealedCardIds] = useState<Record<string, boolean>>({});
 
+  // Study View Sub-Modes: 'grid' | 'flashcard' | 'typing'
+  const [studyViewMode, setStudyViewMode] = useState<'flashcard' | 'typing' | 'grid'>('flashcard');
+
+  // Flashcard Mode State
+  const [flashcardIndex, setFlashcardIndex] = useState<number>(0);
+  const [isCardFlipped, setIsCardFlipped] = useState<boolean>(false);
+
+  // Typing Mode State
+  const [typingIndex, setTypingIndex] = useState<number>(0);
+  const [typingInput, setTypingInput] = useState<string>('');
+  const [isTypingSubmitted, setIsTypingSubmitted] = useState<boolean>(false);
+  const [typingCorrectCount, setTypingCorrectCount] = useState<number>(0);
+  const [typingHistory, setTypingHistory] = useState<Record<number, boolean>>({});
+
   // Quiz Setup States
   const [quizSubject, setQuizSubject] = useState<string>('간호관리학');
   const [quizCategory, setQuizCategory] = useState<string>('all');
@@ -134,6 +148,52 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
       return true;
     });
   }, [termsList, studySubject, studyCategory, searchTerm]);
+
+  // Reset Flashcard & Typing Indices when filteredStudyTerms change
+  useEffect(() => {
+    setFlashcardIndex(0);
+    setIsCardFlipped(false);
+    setTypingIndex(0);
+    setTypingInput('');
+    setIsTypingSubmitted(false);
+    setTypingCorrectCount(0);
+    setTypingHistory({});
+  }, [studySubject, studyCategory]);
+
+  // Keyboard navigation for Flashcard mode (Space/Enter to flip, Arrow/Enter to next)
+  useEffect(() => {
+    if (activeTab !== 'study' || studyViewMode !== 'flashcard') return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeEl = document.activeElement;
+      const isInputActive = activeEl && (activeEl.tagName === 'INPUT' || activeEl.tagName === 'TEXTAREA');
+      if (isInputActive) return;
+
+      if (e.key === ' ' || e.code === 'Space') {
+        e.preventDefault();
+        setIsCardFlipped(prev => !prev);
+      } else if (e.key === 'Enter') {
+        e.preventDefault();
+        if (!isCardFlipped) {
+          setIsCardFlipped(true);
+        } else {
+          setIsCardFlipped(false);
+          setFlashcardIndex(prev => Math.min(prev + 1, filteredStudyTerms.length - 1));
+        }
+      } else if (e.key === 'ArrowRight') {
+        e.preventDefault();
+        setIsCardFlipped(false);
+        setFlashcardIndex(prev => Math.min(prev + 1, filteredStudyTerms.length - 1));
+      } else if (e.key === 'ArrowLeft') {
+        e.preventDefault();
+        setIsCardFlipped(false);
+        setFlashcardIndex(prev => Math.max(prev - 1, 0));
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [activeTab, studyViewMode, isCardFlipped, filteredStudyTerms.length]);
 
   // Start Quiz
   const handleStartQuiz = (customTermsList?: NursingTerm[]) => {
@@ -258,6 +318,29 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
       setIsAnswerSubmitted(false);
     } else {
       setActiveTab('quiz_result');
+    }
+  };
+
+  // Typing practice handlers
+  const currentTypingTerm = filteredStudyTerms[typingIndex];
+  
+  const handleTypingSubmit = () => {
+    if (!currentTypingTerm || isTypingSubmitted) return;
+    const isCorr = checkAnswerCorrectness(typingInput, currentTypingTerm);
+    setIsTypingSubmitted(true);
+    setTypingHistory(prev => ({ ...prev, [typingIndex]: isCorr }));
+    if (isCorr) {
+      setTypingCorrectCount(prev => prev + 1);
+    }
+  };
+
+  const handleTypingNext = () => {
+    if (typingIndex + 1 < filteredStudyTerms.length) {
+      setTypingIndex(prev => prev + 1);
+      setTypingInput('');
+      setIsTypingSubmitted(false);
+    } else {
+      alert('모든 학습 문항 연습을 완료했습니다! 🎉');
     }
   };
 
@@ -612,7 +695,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                 fontWeight: 700,
               }}
             >
-              문제 / 용어 목록
+              📖 학습 센터
             </button>
             <button
               onClick={() => setActiveTab('quiz_setup')}
@@ -625,16 +708,16 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                 fontWeight: 700,
               }}
             >
-              퀴즈 테스트
+              ✍️ 퀴즈 테스트
             </button>
           </div>
         </div>
       </div>
 
-      {/* VIEW 1: 용어 / 문제 목록 (Study Mode) */}
+      {/* VIEW 1: 학습 센터 (Study Mode with Quizlet Flashcard & Typing Practice Modes) */}
       {activeTab === 'study' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {/* Controls & Filters */}
+          {/* Controls & Filters Header */}
           <div className="card" style={{ padding: '20px' }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'space-between', alignItems: 'center' }}>
               {/* Subject Tabs */}
@@ -655,33 +738,60 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                 ))}
               </div>
 
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                {isAdmin && (
-                  <button
-                    onClick={handleOpenCreateModal}
-                    className="btn-primary"
-                    style={{ fontSize: '0.8125rem' }}
-                  >
-                    + 새 문항 추가
-                  </button>
-                )}
-
+              {/* Study Mode Selector Sub-Tabs */}
+              <div style={{ display: 'flex', gap: '6px', backgroundColor: '#F1F5F9', padding: '4px', borderRadius: '8px' }}>
                 <button
-                  onClick={() => setHideDefinition(!hideDefinition)}
-                  className="btn-outline"
+                  onClick={() => setStudyViewMode('flashcard')}
                   style={{
+                    padding: '6px 14px',
+                    borderRadius: '6px',
                     fontSize: '0.8125rem',
-                    backgroundColor: hideDefinition ? '#FEF3C7' : '#FFFFFF',
-                    color: hideDefinition ? '#92400E' : 'var(--text)',
-                    borderColor: hideDefinition ? '#F59E0B' : 'var(--border)',
+                    fontWeight: 700,
+                    border: 'none',
+                    backgroundColor: studyViewMode === 'flashcard' ? '#0E4A84' : 'transparent',
+                    color: studyViewMode === 'flashcard' ? '#FFFFFF' : '#475569',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
                   }}
                 >
-                  {hideDefinition ? '👁️ 정답/뜻 보이기' : '🙈 정답/뜻 가리기'}
+                  🎴 플래시 카드 모드
+                </button>
+                <button
+                  onClick={() => setStudyViewMode('typing')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '6px',
+                    fontSize: '0.8125rem',
+                    fontWeight: 700,
+                    border: 'none',
+                    backgroundColor: studyViewMode === 'typing' ? '#0E4A84' : 'transparent',
+                    color: studyViewMode === 'typing' ? '#FFFFFF' : '#475569',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  ⌨️ 주관식 타이핑 연습
+                </button>
+                <button
+                  onClick={() => setStudyViewMode('grid')}
+                  style={{
+                    padding: '6px 14px',
+                    borderRadius: '6px',
+                    fontSize: '0.8125rem',
+                    fontWeight: 700,
+                    border: 'none',
+                    backgroundColor: studyViewMode === 'grid' ? '#0E4A84' : 'transparent',
+                    color: studyViewMode === 'grid' ? '#FFFFFF' : '#475569',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                  }}
+                >
+                  📋 전체 목록
                 </button>
               </div>
             </div>
 
-            {/* Category Sub-Filters & Search */}
+            {/* Category Sub-Filters & Search (For Grid View & Filters) */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', marginTop: '16px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
                 <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--sub-text)' }}>카테고리:</span>
@@ -704,123 +814,416 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                 ))}
               </div>
 
-              <div style={{ marginLeft: 'auto', flex: '1 1 200px', maxWidth: '300px' }}>
-                <input
-                  type="text"
-                  placeholder="🔍 검색..."
-                  value={searchTerm}
-                  onChange={e => setSearchTerm(e.target.value)}
-                  style={{ width: '100%', fontSize: '0.84rem' }}
-                />
-              </div>
+              {studyViewMode === 'grid' && (
+                <div style={{ marginLeft: 'auto', flex: '1 1 200px', maxWidth: '300px' }}>
+                  <input
+                    type="text"
+                    placeholder="🔍 검색..."
+                    value={searchTerm}
+                    onChange={e => setSearchTerm(e.target.value)}
+                    style={{ width: '100%', fontSize: '0.84rem' }}
+                  />
+                </div>
+              )}
             </div>
           </div>
 
-          {/* Terms / Exam Questions Grid List */}
-          {filteredStudyTerms.length > 0 ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '16px' }}>
-              {filteredStudyTerms.map((t, idx) => {
-                const isRevealed = revealedCardIds[t.id];
-                const isHidden = hideDefinition && !isRevealed;
-                const isStructuredQuestion = t.options && t.options.length > 0;
-
-                return (
-                  <div
-                    key={t.id}
-                    className="card"
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      justifyContent: 'space-between',
-                      borderLeft: '4px solid var(--primary)',
-                      padding: '18px',
-                    }}
-                  >
-                    <div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                        <span style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--primary)', backgroundColor: '#EFF6FF', padding: '2px 8px', borderRadius: '6px' }}>
-                          #{idx + 1}
-                        </span>
-
-                        {isAdmin && (
-                          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                            <button
-                              onClick={() => handleOpenEditModal(t)}
-                              style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 700 }}
-                            >
-                              ✏️ 수정
-                            </button>
-                            <button
-                              onClick={() => handleDeleteTerm(t.id, t.term)}
-                              style={{ background: 'none', border: 'none', color: '#DC2626', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 700 }}
-                            >
-                              🗑️ 삭제
-                            </button>
-                          </div>
-                        )}
-                      </div>
-
-                      <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '8px', lineHeight: 1.5 }}>
-                        {t.term}
-                      </h3>
-                      {t.englishTerm && (
-                        <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--sub-text)', marginBottom: '10px' }}>
-                          {t.englishTerm}
-                        </div>
-                      )}
-
-                      {/* Options rendering for structured multiple-choice / true-false items */}
-                      {isStructuredQuestion && (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '12px' }}>
-                          {t.options!.map((opt, oIdx) => (
-                            <div key={oIdx} style={{ fontSize: '0.84rem', color: '#334155', backgroundColor: '#F8FAFC', padding: '8px 12px', borderRadius: '6px', border: '1px solid #E2E8F0' }}>
-                              ● {opt}
-                            </div>
-                          ))}
-                        </div>
-                      )}
-
-                      <div
+          {/* MODE 1: QUIZLET FLASHCARD FLIP MODE (플래시 카드 모드) */}
+          {studyViewMode === 'flashcard' && (
+            <div style={{ maxWidth: '640px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {filteredStudyTerms.length > 0 ? (
+                <>
+                  {/* Progress Header */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--sub-text)' }}>
+                      카드 {flashcardIndex + 1} / {filteredStudyTerms.length}
+                    </span>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
                         onClick={() => {
-                          if (hideDefinition) {
-                            setRevealedCardIds(prev => ({ ...prev, [t.id]: !prev[t.id] }));
-                          }
+                          const shuffled = [...filteredStudyTerms].sort(() => Math.random() - 0.5);
+                          setTermsList(shuffled);
+                          setFlashcardIndex(0);
+                          setIsCardFlipped(false);
                         }}
+                        className="btn-outline"
+                        style={{ fontSize: '0.78125rem', padding: '4px 10px' }}
+                      >
+                        🔀 카드 섞기
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div style={{ width: '100%', height: '6px', backgroundColor: '#E2E8F0', borderRadius: '3px', overflow: 'hidden' }}>
+                    <div
+                      style={{
+                        width: `${((flashcardIndex + 1) / filteredStudyTerms.length) * 100}%`,
+                        height: '100%',
+                        backgroundColor: 'var(--primary)',
+                        transition: 'width 0.3s ease',
+                      }}
+                    />
+                  </div>
+
+                  {/* Big Flashcard Box */}
+                  {(() => {
+                    const currentCard = filteredStudyTerms[flashcardIndex];
+                    if (!currentCard) return null;
+
+                    return (
+                      <div
+                        onClick={() => setIsCardFlipped(!isCardFlipped)}
                         style={{
-                          backgroundColor: isHidden ? '#F1F5F9' : (isStructuredQuestion ? '#F0FDF4' : '#F8FAFC'),
-                          padding: '12px',
-                          borderRadius: '6px',
-                          border: `1px solid ${isHidden ? '#E2E8F0' : (isStructuredQuestion ? '#86EFAC' : '#E2E8F0')}`,
-                          minHeight: '48px',
-                          cursor: hideDefinition ? 'pointer' : 'default',
-                          transition: 'all 0.2s',
+                          backgroundColor: isCardFlipped ? '#F0F9FF' : '#FFFFFF',
+                          border: `2px solid ${isCardFlipped ? '#38BDF8' : 'var(--primary)'}`,
+                          borderRadius: '16px',
+                          padding: '40px 28px',
+                          minHeight: '280px',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'center',
+                          alignItems: 'center',
+                          textAlign: 'center',
+                          cursor: 'pointer',
+                          boxShadow: '0 8px 24px rgba(0,0,0,0.06)',
+                          transition: 'all 0.25s ease',
+                          position: 'relative',
                         }}
                       >
-                        {isHidden ? (
-                          <div style={{ textAlign: 'center', color: '#64748B', fontSize: '0.84rem', fontWeight: 600 }}>
-                            🔒 클릭하여 정답/뜻 확인
-                          </div>
-                        ) : (
+                        <div style={{ position: 'absolute', top: '16px', left: '16px', fontSize: '0.8125rem', fontWeight: 800, color: 'var(--primary)', backgroundColor: '#EFF6FF', padding: '2px 8px', borderRadius: '6px' }}>
+                          #{flashcardIndex + 1}
+                        </div>
+
+                        {!isCardFlipped ? (
+                          /* FRONT SIDE OF CARD */
                           <div>
-                            {t.answer && (
-                              <div style={{ fontSize: '0.875rem', fontWeight: 800, color: '#166534', marginBottom: '4px' }}>
-                                정답: {t.answer}
+                            <h2 style={{ fontSize: '1.625rem', fontWeight: 900, color: 'var(--primary)', marginBottom: '8px' }}>
+                              {currentCard.term}
+                            </h2>
+                            {currentCard.englishTerm && (
+                              <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--sub-text)' }}>
+                                ({currentCard.englishTerm})
                               </div>
                             )}
-                            <p style={{ fontSize: '0.875rem', color: '#1E293B', lineHeight: 1.5, margin: 0 }}>
-                              {t.definition}
+
+                            {currentCard.options && currentCard.options.length > 0 && (
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginTop: '16px' }}>
+                                {currentCard.options.map((opt, oIdx) => (
+                                  <span key={oIdx} style={{ fontSize: '0.8125rem', backgroundColor: '#F1F5F9', color: '#475569', padding: '4px 10px', borderRadius: '12px' }}>
+                                    ● {opt}
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        ) : (
+                          /* BACK SIDE OF CARD (REVEALED) */
+                          <div>
+                            {currentCard.answer && (
+                              <div style={{ fontSize: '1.125rem', fontWeight: 900, color: '#0369A1', marginBottom: '10px' }}>
+                                정답: {currentCard.answer}
+                              </div>
+                            )}
+                            <p style={{ fontSize: '1.0625rem', color: '#1E293B', fontWeight: 600, lineHeight: 1.6, margin: 0, maxWidth: '520px' }}>
+                              {currentCard.definition}
                             </p>
                           </div>
                         )}
+
+                        <div style={{ position: 'absolute', bottom: '16px', fontSize: '0.78125rem', color: '#94A3B8', fontWeight: 600 }}>
+                          {!isCardFlipped
+                            ? '💡 카드 또는 [Space / Enter] 키를 누르면 뒤집어집니다'
+                            : '➡️ [Enter / →] 키를 누르면 다음 카드로 넘어갑니다'}
+                        </div>
                       </div>
+                    );
+                  })()}
+
+                  {/* Navigation Buttons (Prev / Next) */}
+                  <div style={{ display: 'flex', gap: '12px', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
+                    <button
+                      onClick={() => {
+                        setIsCardFlipped(false);
+                        setFlashcardIndex(prev => Math.max(prev - 1, 0));
+                      }}
+                      disabled={flashcardIndex === 0}
+                      className="btn-outline"
+                      style={{ flex: 1, padding: '12px', fontSize: '0.9375rem', fontWeight: 700 }}
+                    >
+                      ⬅️ 이전 카드 (←)
+                    </button>
+
+                    <button
+                      onClick={() => {
+                        if (!isCardFlipped) {
+                          setIsCardFlipped(true);
+                        } else {
+                          setIsCardFlipped(false);
+                          setFlashcardIndex(prev => Math.min(prev + 1, filteredStudyTerms.length - 1));
+                        }
+                      }}
+                      className="btn-primary"
+                      style={{ flex: 1, padding: '12px', fontSize: '0.9375rem', fontWeight: 800 }}
+                    >
+                      {!isCardFlipped ? '👁️ 정답 확인 (Space)' : '다음 카드 ➡️ (Enter)'}
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <div className="card" style={{ padding: '40px', textAlign: 'center', color: 'var(--sub-text)' }}>
+                  해당 카테고리에 플래시 카드가 없습니다.
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* MODE 2: QUIZLET TYPING PRACTICE MODE (주관식 타이핑 연습) */}
+          {studyViewMode === 'typing' && (
+            <div style={{ maxWidth: '680px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+              {filteredStudyTerms.length > 0 && currentTypingTerm ? (
+                <div className="card" style={{ padding: '28px' }}>
+                  {/* Header Progress */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                    <span style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--primary)' }}>
+                      연습 {typingIndex + 1} / {filteredStudyTerms.length}
+                    </span>
+                    <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#10B981', backgroundColor: '#ECFDF5', padding: '4px 10px', borderRadius: '12px' }}>
+                      맞은 개수: {typingCorrectCount}개
+                    </span>
+                  </div>
+
+                  {/* Progress Bar */}
+                  <div style={{ width: '100%', height: '6px', backgroundColor: '#E2E8F0', borderRadius: '3px', overflow: 'hidden', marginBottom: '24px' }}>
+                    <div
+                      style={{
+                        width: `${((typingIndex + 1) / filteredStudyTerms.length) * 100}%`,
+                        height: '100%',
+                        backgroundColor: 'var(--primary)',
+                        transition: 'width 0.3s ease',
+                      }}
+                    />
+                  </div>
+
+                  {/* Question Prompt Box */}
+                  <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', padding: '20px', borderRadius: '10px', marginBottom: '20px' }}>
+                    <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--sub-text)', marginBottom: '8px' }}>
+                      다음 문제/정의에 해당하는 올바른 용어/답을 타이핑하세요:
+                    </div>
+                    <h3 style={{ fontSize: '1.125rem', fontWeight: 800, color: '#1E293B', lineHeight: 1.6, margin: 0 }}>
+                      {currentTypingTerm.definition}
+                    </h3>
+                    {currentTypingTerm.options && currentTypingTerm.options.length > 0 && (
+                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
+                        {currentTypingTerm.options.map((opt, oIdx) => (
+                          <span key={oIdx} style={{ fontSize: '0.8125rem', backgroundColor: '#FFFFFF', border: '1px solid #CBD5E1', padding: '4px 10px', borderRadius: '6px', color: '#334155' }}>
+                            ● {opt}
+                          </span>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Typing Input */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                    <div>
+                      <label style={{ fontSize: '0.84rem', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
+                        정답 타이핑 입력 (엔터로 제출/다음):
+                      </label>
+                      <input
+                        type="text"
+                        autoFocus
+                        disabled={isTypingSubmitted}
+                        placeholder="정답 입력 후 [Enter]를 누르세요"
+                        value={typingInput}
+                        onChange={e => setTypingInput(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            if (!isTypingSubmitted) {
+                              if (typingInput.trim()) handleTypingSubmit();
+                            } else {
+                              handleTypingNext();
+                            }
+                          }
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '14px',
+                          fontSize: '1.0625rem',
+                          fontWeight: 700,
+                          borderColor: isTypingSubmitted
+                            ? typingHistory[typingIndex] ? '#22C55E' : '#EF4444'
+                            : 'var(--border)',
+                          backgroundColor: isTypingSubmitted
+                            ? typingHistory[typingIndex] ? '#F0FDF4' : '#FEF2F2'
+                            : '#FFFFFF',
+                        }}
+                      />
+                    </div>
+
+                    {/* Instant Feedback Result */}
+                    {isTypingSubmitted && (
+                      <div>
+                        {typingHistory[typingIndex] ? (
+                          <div style={{ backgroundColor: '#DCFCE7', border: '1px solid #86EFAC', padding: '16px', borderRadius: '8px', color: '#166534' }}>
+                            <div style={{ fontWeight: 800, fontSize: '1.0625rem', marginBottom: '4px' }}>🎉 정답입니다!</div>
+                            <div style={{ fontSize: '0.875rem' }}>
+                              <strong>올바른 답:</strong> {currentTypingTerm.answer || currentTypingTerm.term}
+                            </div>
+                          </div>
+                        ) : (
+                          <div style={{ backgroundColor: '#FEE2E2', border: '1px solid #FCA5A5', padding: '16px', borderRadius: '8px', color: '#991B1B' }}>
+                            <div style={{ fontWeight: 800, fontSize: '1.0625rem', marginBottom: '4px' }}>❌ 오답입니다</div>
+                            <div style={{ fontSize: '0.875rem' }}>
+                              <strong>정답:</strong> <span style={{ fontWeight: 900, color: '#B91C1C' }}>{currentTypingTerm.answer || currentTypingTerm.term}</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Action Buttons */}
+                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '8px' }}>
+                      {!isTypingSubmitted ? (
+                        <button
+                          type="button"
+                          onClick={handleTypingSubmit}
+                          disabled={!typingInput.trim()}
+                          className="btn-primary"
+                          style={{ width: '100%', padding: '12px', fontSize: '1rem', fontWeight: 800 }}
+                        >
+                          제출 (Enter)
+                        </button>
+                      ) : (
+                        <button
+                          type="button"
+                          onClick={handleTypingNext}
+                          className="btn-accent"
+                          style={{ width: '100%', padding: '12px', fontSize: '1rem', fontWeight: 800 }}
+                        >
+                          {typingIndex + 1 < filteredStudyTerms.length ? '다음 문제 → (Enter)' : '🎉 타이핑 연습 완료'}
+                        </button>
+                      )}
                     </div>
                   </div>
-                );
-              })}
+                </div>
+              ) : (
+                <div className="card" style={{ padding: '40px', textAlign: 'center', color: 'var(--sub-text)' }}>
+                  해당 카테고리에 문항이 없습니다.
+                </div>
+              )}
             </div>
-          ) : (
-            <div className="card" style={{ padding: '40px', textAlign: 'center', color: 'var(--sub-text)' }}>
-              검색 조건에 해당되는 항목이 없습니다.
+          )}
+
+          {/* MODE 3: GRID LIST VIEW (전체 목록 보기) */}
+          {studyViewMode === 'grid' && (
+            <div>
+              {filteredStudyTerms.length > 0 ? (
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '16px' }}>
+                  {filteredStudyTerms.map((t, idx) => {
+                    const isRevealed = revealedCardIds[t.id];
+                    const isHidden = hideDefinition && !isRevealed;
+                    const isStructuredQuestion = t.options && t.options.length > 0;
+
+                    return (
+                      <div
+                        key={t.id}
+                        className="card"
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          borderLeft: '4px solid var(--primary)',
+                          padding: '18px',
+                        }}
+                      >
+                        <div>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                            <span style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--primary)', backgroundColor: '#EFF6FF', padding: '2px 8px', borderRadius: '6px' }}>
+                              #{idx + 1}
+                            </span>
+
+                            {isAdmin && (
+                              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                                <button
+                                  onClick={() => handleOpenEditModal(t)}
+                                  style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 700 }}
+                                >
+                                  ✏️ 수정
+                                </button>
+                                <button
+                                  onClick={() => handleDeleteTerm(t.id, t.term)}
+                                  style={{ background: 'none', border: 'none', color: '#DC2626', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 700 }}
+                                >
+                                  🗑️ 삭제
+                                </button>
+                              </div>
+                            )}
+                          </div>
+
+                          <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '8px', lineHeight: 1.5 }}>
+                            {t.term}
+                          </h3>
+                          {t.englishTerm && (
+                            <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--sub-text)', marginBottom: '10px' }}>
+                              {t.englishTerm}
+                            </div>
+                          )}
+
+                          {isStructuredQuestion && (
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '12px' }}>
+                              {t.options!.map((opt, oIdx) => (
+                                <div key={oIdx} style={{ fontSize: '0.84rem', color: '#334155', backgroundColor: '#F8FAFC', padding: '8px 12px', borderRadius: '6px', border: '1px solid #E2E8F0' }}>
+                                  ● {opt}
+                                </div>
+                              ))}
+                            </div>
+                          )}
+
+                          <div
+                            onClick={() => {
+                              if (hideDefinition) {
+                                setRevealedCardIds(prev => ({ ...prev, [t.id]: !prev[t.id] }));
+                              }
+                            }}
+                            style={{
+                              backgroundColor: isHidden ? '#F1F5F9' : (isStructuredQuestion ? '#F0FDF4' : '#F8FAFC'),
+                              padding: '12px',
+                              borderRadius: '6px',
+                              border: `1px solid ${isHidden ? '#E2E8F0' : (isStructuredQuestion ? '#86EFAC' : '#E2E8F0')}`,
+                              minHeight: '48px',
+                              cursor: hideDefinition ? 'pointer' : 'default',
+                              transition: 'all 0.2s',
+                            }}
+                          >
+                            {isHidden ? (
+                              <div style={{ textAlign: 'center', color: '#64748B', fontSize: '0.84rem', fontWeight: 600 }}>
+                                🔒 클릭하여 정답/뜻 확인
+                              </div>
+                            ) : (
+                              <div>
+                                {t.answer && (
+                                  <div style={{ fontSize: '0.875rem', fontWeight: 800, color: '#166534', marginBottom: '4px' }}>
+                                    정답: {t.answer}
+                                  </div>
+                                )}
+                                <p style={{ fontSize: '0.875rem', color: '#1E293B', lineHeight: 1.5, margin: 0 }}>
+                                  {t.definition}
+                                </p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="card" style={{ padding: '40px', textAlign: 'center', color: 'var(--sub-text)' }}>
+                  검색 조건에 해당되는 항목이 없습니다.
+                </div>
+              )}
             </div>
           )}
         </div>
