@@ -80,6 +80,11 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
 
   // TTS (Text-To-Speech) Web Speech API State & Helpers
   const [autoTTS, setAutoTTS] = useState<boolean>(true);
+  const [ttsRate, setTtsRate] = useState<number>(1.0);
+
+  // Flashcard Auto-Play State
+  const [isAutoPlay, setIsAutoPlay] = useState<boolean>(false);
+  const [autoPlayIntervalSec, setAutoPlayIntervalSec] = useState<number>(4);
 
   const speakText = useCallback((text: string) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
@@ -88,9 +93,9 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
     const utterance = new SpeechSynthesisUtterance(text);
     const isEng = /^[A-Za-z0-9\s.,?!'()-]+$/.test(text.trim());
     utterance.lang = isEng ? 'en-US' : 'ko-KR';
-    utterance.rate = 0.95;
+    utterance.rate = ttsRate;
     window.speechSynthesis.speak(utterance);
-  }, []);
+  }, [ttsRate]);
 
   // Quiz Setup States
   const [quizSubject, setQuizSubject] = useState<string>('간호관리학');
@@ -197,6 +202,23 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
       speakText(text);
     }
   }, [flashcardIndex, isCardFlipped, flashcardDirection, studyViewMode, autoTTS, filteredStudyTerms, speakText]);
+
+  // Auto-play timer effect for Flashcard mode
+  useEffect(() => {
+    if (activeTab !== 'study' || studyViewMode !== 'flashcard' || !isAutoPlay) return;
+    if (filteredStudyTerms.length === 0) return;
+
+    const timer = setTimeout(() => {
+      if (!isCardFlipped) {
+        setIsCardFlipped(true);
+      } else {
+        setIsCardFlipped(false);
+        setFlashcardIndex(prev => (prev + 1) % filteredStudyTerms.length);
+      }
+    }, autoPlayIntervalSec * 1000);
+
+    return () => clearTimeout(timer);
+  }, [activeTab, studyViewMode, isAutoPlay, isCardFlipped, flashcardIndex, autoPlayIntervalSec, filteredStudyTerms.length]);
 
   // Keyboard navigation for Flashcard mode (Space/Enter to flip, Arrow/Enter to next)
   useEffect(() => {
@@ -870,24 +892,47 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                 >
                   📋 목록
                 </button>
-                <button
-                  onClick={() => setAutoTTS(!autoTTS)}
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: '6px',
-                    fontSize: '0.8125rem',
-                    fontWeight: 700,
-                    border: 'none',
-                    backgroundColor: autoTTS ? '#10B981' : '#CBD5E1',
-                    color: '#FFFFFF',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                    marginLeft: 'auto',
-                  }}
-                  title="음성 읽기 ON/OFF"
-                >
-                  {autoTTS ? '🔊 음성 ON' : '🔇 음성 OFF'}
-                </button>
+                <div style={{ marginLeft: 'auto', display: 'flex', gap: '6px', alignItems: 'center' }}>
+                  <button
+                    onClick={() => setAutoTTS(!autoTTS)}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      fontSize: '0.8125rem',
+                      fontWeight: 700,
+                      border: 'none',
+                      backgroundColor: autoTTS ? '#10B981' : '#CBD5E1',
+                      color: '#FFFFFF',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                    }}
+                    title="음성 읽기 ON/OFF"
+                  >
+                    {autoTTS ? '🔊 음성 ON' : '🔇 음성 OFF'}
+                  </button>
+
+                  <select
+                    value={ttsRate}
+                    onChange={e => setTtsRate(parseFloat(e.target.value))}
+                    style={{
+                      fontSize: '0.8125rem',
+                      fontWeight: 700,
+                      padding: '5px 8px',
+                      borderRadius: '6px',
+                      border: '1px solid #CBD5E1',
+                      backgroundColor: '#FFFFFF',
+                      color: '#1E293B',
+                      cursor: 'pointer',
+                    }}
+                    title="TTS 읽기 배속"
+                  >
+                    <option value={0.75}>⚡ 0.75x</option>
+                    <option value={1.0}>⚡ 1.0x</option>
+                    <option value={1.25}>⚡ 1.25x</option>
+                    <option value={1.5}>⚡ 1.5x</option>
+                    <option value={2.0}>⚡ 2.0x</option>
+                  </select>
+                </div>
 
                 {isAdmin && (
                   <button
@@ -957,7 +1002,47 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                     <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--sub-text)' }}>
                       카드 {flashcardIndex + 1} / {filteredStudyTerms.length}
                     </span>
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                      <button
+                        onClick={() => setIsAutoPlay(prev => !prev)}
+                        className="btn-outline"
+                        style={{
+                          fontSize: '0.78125rem',
+                          padding: '4px 10px',
+                          backgroundColor: isAutoPlay ? '#10B981' : '#FFFFFF',
+                          color: isAutoPlay ? '#FFFFFF' : '#0E4A84',
+                          borderColor: isAutoPlay ? '#10B981' : '#BFDBFE',
+                          fontWeight: 800,
+                          cursor: 'pointer',
+                        }}
+                      >
+                        {isAutoPlay ? '⏸️ 일시정지' : '▶️ 자동재생'}
+                      </button>
+
+                      {isAutoPlay && (
+                        <select
+                          value={autoPlayIntervalSec}
+                          onChange={e => setAutoPlayIntervalSec(Number(e.target.value))}
+                          style={{
+                            fontSize: '0.78125rem',
+                            fontWeight: 700,
+                            padding: '4px 6px',
+                            borderRadius: '6px',
+                            border: '1px solid #10B981',
+                            backgroundColor: '#ECFDF5',
+                            color: '#065F46',
+                            cursor: 'pointer',
+                          }}
+                          title="카드 전환 간격"
+                        >
+                          <option value={3}>⏱️ 3초</option>
+                          <option value={4}>⏱️ 4초</option>
+                          <option value={5}>⏱️ 5초</option>
+                          <option value={7}>⏱️ 7초</option>
+                          <option value={10}>⏱️ 10초</option>
+                        </select>
+                      )}
+
                       <button
                         onClick={() => {
                           setFlashcardDirection(prev => (prev === 'term_first' ? 'def_first' : 'term_first'));
