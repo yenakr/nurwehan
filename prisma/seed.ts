@@ -681,6 +681,14 @@ Open lab 진행할 인원을 모아 조를 구성하고, 한 명이 대표로 �
     { subject: '간호관리학', category: '퀴즈 1', itemType: 'TERM', term: '프로젝트 조직', englishTerm: 'project organization', definition: '특정 과업 달성을 위해 각 부서에서 전문요원을 차출하여 구성하는 한시적 조직' },
     { subject: '간호관리학', category: '퀴즈 1', itemType: 'TERM', term: '매트릭스 조직', englishTerm: 'matrix organization', definition: '기존 라인 조직에 프로젝트 조직을 결합시킨 형태' },
     { subject: '간호관리학', category: '퀴즈 1', itemType: 'TERM', term: '위원회 조직', englishTerm: 'commission organization', definition: '둘 이상의 사람이 모여 의사결정을 하는 조직 형태' },
+    { subject: '간호관리학', category: '퀴즈 1', itemType: 'TERM', term: '기획', englishTerm: 'planning', definition: '조직이 달성해야 할 목표를 설정하고 이를 달성하기 위해 여러 대안 중 가장 좋은 안을 선택하는 과정' },
+    { subject: '간호관리학', category: '퀴즈 1', itemType: 'TERM', term: '비전', englishTerm: 'vision', definition: '조직의 장래 목적과 지향점에 대한 진술로서, 조직구성원들이 함께 성취하기 원하는 것에 대한 청사진' },
+    { subject: '간호관리학', category: '퀴즈 1', itemType: 'TERM', term: '사명', englishTerm: 'mission', definition: '조직이 존재하는 목적, 존재 이유, 사명 또는 임무' },
+    { subject: '간호관리학', category: '퀴즈 1', itemType: 'TERM', term: '철학', englishTerm: 'philosophy', definition: '조직의 목적을 달성하기 위하여 조직의 행동을 이끌어가는 가치 또는 신념' },
+    { subject: '간호관리학', category: '퀴즈 1', itemType: 'TERM', term: '목적과 목표', englishTerm: 'goal and objectives', definition: '목적은 기대하는 최종산물이며 목표는 목적을 실천하기 위해 일정 기간 내에 달성해야 할 바람직한 수준' },
+    { subject: '간호관리학', category: '퀴즈 1', itemType: 'TERM', term: '정책', englishTerm: 'policies', definition: '목표달성을 위한 지침 또는 수단' },
+    { subject: '간호관리학', category: '퀴즈 1', itemType: 'TERM', term: '절차', englishTerm: 'procedure', definition: '정책에 근거한 보다 구체적인 행동방식으로 표준화된 처리순서 또는 방법' },
+    { subject: '간호관리학', category: '퀴즈 1', itemType: 'TERM', term: '규칙', englishTerm: 'rule', definition: '규칙은 일반적인 업무처리 기준이며, 구체적이고 명확한 행동을 요구하는 지침' },
 
     // 여성의부인과적장애와간호 (카테고리: 중간고사 복습 퀴즈)
     {
