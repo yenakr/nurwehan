@@ -257,8 +257,10 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
         optionsMap[idx] = q.options;
       } else {
         const correct = q.term;
-        const distractors = allPossibleTerms
-          .filter(t => t !== correct)
+        const sameSubjectTerms = termsList
+          .filter(t => t.subject === q.subject && t.term !== correct)
+          .map(t => t.term);
+        const distractors = sameSubjectTerms
           .sort(() => Math.random() - 0.5)
           .slice(0, 3);
         const fourChoices = [correct, ...distractors].sort(() => Math.random() - 0.5);
@@ -1782,15 +1784,15 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
         </div>
       )}
 
-      {/* VIEW 3-B: 전체 단어장 시험 모드 (Worksheet Exam Mode) */}
+      {/* VIEW 3-B: 전체 단어장 시험 모드 (Worksheet Table Mode) */}
       {activeTab === 'quiz_play' && quizFormat === 'worksheet' && quizQuestions.length > 0 && (
-        <div style={{ maxWidth: '780px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div className="card" style={{ padding: '28px' }}>
-            {/* Header Info & Change Format Button */}
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', borderBottom: '2px solid #E2E8F0', paddingBottom: '16px' }}>
+        <div style={{ maxWidth: '840px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="card" style={{ padding: '24px' }}>
+            {/* Header Info */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
               <div>
                 <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0E4A84', margin: 0 }}>
-                  📝 전체 단어장 시험
+                  📝 전체 단어장 시험 (주관식)
                 </h2>
                 <div style={{ fontSize: '0.84rem', color: '#64748B', marginTop: '4px' }}>
                   출제 과목: {quizSubject} | 총 {quizQuestions.length}문항
@@ -1806,77 +1808,68 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
               </button>
             </div>
 
-            {/* Questions List */}
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+            {/* Vocabulary Table (Matching User Screenshot) */}
+            <div
+              style={{
+                border: '1px solid #CBD5E1',
+                borderRadius: '8px',
+                overflow: 'hidden',
+                backgroundColor: '#FFFFFF',
+              }}
+            >
               {quizQuestions.map((q, idx) => {
                 const userAns = worksheetAnswers[idx] || '';
                 return (
                   <div
                     key={q.id || idx}
                     style={{
-                      backgroundColor: '#F8FAFC',
-                      border: '1px solid #CBD5E1',
-                      borderRadius: '10px',
-                      padding: '20px',
+                      display: 'grid',
+                      gridTemplateColumns: 'minmax(180px, 35%) 1fr',
+                      borderBottom: idx < quizQuestions.length - 1 ? '1px solid #CBD5E1' : 'none',
+                      minHeight: '64px',
                     }}
                   >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                      <span style={{ fontWeight: 900, fontSize: '0.9375rem', color: '#0E4A84', backgroundColor: '#EFF6FF', padding: '2px 8px', borderRadius: '4px' }}>
-                        #{idx + 1}
-                      </span>
-                      <span style={{ fontSize: '0.78125rem', color: '#64748B' }}>
-                        {q.subject} {q.category ? `• ${q.category}` : ''}
-                      </span>
-                    </div>
-
-                    {/* Question Prompt / Definition */}
-                    <div style={{ fontSize: '1.0625rem', fontWeight: 800, color: '#1E293B', lineHeight: 1.6, marginBottom: '12px' }}>
-                      {q.definition}
-                    </div>
-
-                    {/* Options Pill List if present */}
-                    {((q.options && q.options.length > 0) || (mcOptionsMap[idx] && mcOptionsMap[idx].length > 0)) && (
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginBottom: '12px' }}>
-                        {(mcOptionsMap[idx] || q.options || []).map((opt, oIdx) => (
-                          <button
-                            key={oIdx}
-                            type="button"
-                            onClick={() => setWorksheetAnswers(prev => ({ ...prev, [idx]: opt }))}
-                            style={{
-                              fontSize: '0.8125rem',
-                              padding: '6px 12px',
-                              borderRadius: '6px',
-                              border: userAns === opt ? '2px solid #0E4A84' : '1px solid #CBD5E1',
-                              backgroundColor: userAns === opt ? '#EFF6FF' : '#FFFFFF',
-                              color: userAns === opt ? '#0E4A84' : '#334155',
-                              fontWeight: userAns === opt ? 800 : 600,
-                              cursor: 'pointer',
-                              transition: 'all 0.15s ease',
-                            }}
-                          >
-                            ● {opt}
-                          </button>
-                        ))}
-                      </div>
-                    )}
-
-                    {/* Answer Blank Input */}
-                    <div>
+                    {/* Left Column: Blank Answer Input Box */}
+                    <div
+                      style={{
+                        padding: '12px 14px',
+                        borderRight: '1px solid #CBD5E1',
+                        backgroundColor: userAns ? '#F0F9FF' : '#FFFFFF',
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                    >
                       <input
                         type="text"
-                        placeholder="[빈칸] 정답을 입력하세요"
+                        placeholder={`#${idx + 1} 정답 입력...`}
                         value={userAns}
                         onChange={e => setWorksheetAnswers(prev => ({ ...prev, [idx]: e.target.value }))}
                         style={{
                           width: '100%',
-                          padding: '12px 14px',
-                          fontSize: '1rem',
+                          padding: '10px 12px',
+                          fontSize: '0.95rem',
                           fontWeight: 700,
-                          borderColor: userAns ? '#0E4A84' : '#CBD5E1',
-                          backgroundColor: userAns ? '#FFFFFF' : '#FAFAFA',
-                          borderRadius: '8px',
+                          borderColor: userAns ? '#0E4A84' : '#E2E8F0',
+                          backgroundColor: '#FFFFFF',
+                          borderRadius: '6px',
+                          color: '#0F172A',
                         }}
                       />
+                    </div>
+
+                    {/* Right Column: Definition / Prompt Text */}
+                    <div
+                      style={{
+                        padding: '14px 16px',
+                        fontSize: '0.9375rem',
+                        fontWeight: 600,
+                        color: '#334155',
+                        lineHeight: 1.6,
+                        display: 'flex',
+                        alignItems: 'center',
+                      }}
+                    >
+                      {q.definition}
                     </div>
                   </div>
                 );
@@ -1884,7 +1877,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
             </div>
 
             {/* Grade All Button */}
-            <div style={{ marginTop: '32px', paddingTop: '20px', borderTop: '2px solid #E2E8F0' }}>
+            <div style={{ marginTop: '24px' }}>
               <button
                 type="button"
                 onClick={() => handleGradeWorksheet()}
