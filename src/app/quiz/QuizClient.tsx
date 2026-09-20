@@ -85,6 +85,9 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
     Array<{ term: NursingTerm; userAns: string; isCorrect: boolean; overrideCorrect?: boolean }>
   >([]);
 
+  // PDF Export Mode: 'wrong_only' | 'all'
+  const [pdfExportMode, setPdfExportMode] = useState<'wrong_only' | 'all'>('wrong_only');
+
   // Admin Term Modal States
   const [showTermModal, setShowTermModal] = useState(false);
   const [editingTerm, setEditingTerm] = useState<NursingTerm | null>(null);
@@ -256,6 +259,188 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
     } else {
       setActiveTab('quiz_result');
     }
+  };
+
+  // PDF EXPORT FUNCTION
+  const handleExportPDF = () => {
+    const exportItems = pdfExportMode === 'wrong_only'
+      ? quizResults.filter(r => !(r.overrideCorrect !== undefined ? r.overrideCorrect : r.isCorrect))
+      : quizResults;
+
+    if (exportItems.length === 0) {
+      alert('내보낼 오답 항목이 없습니다! (전체 정답입니다 🎉)');
+      return;
+    }
+
+    const printWindow = window.open('', '_blank');
+    if (!printWindow) {
+      alert('팝업이 차단되었습니다. 팝업 허용 후 다시 시도해주세요.');
+      return;
+    }
+
+    const today = new Date().toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: 'long',
+      day: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+
+    const htmlContent = `
+      <!DOCTYPE html>
+      <html>
+      <head>
+        <meta charset="utf-8" />
+        <title>NUR위한 QUIZ - 오답노트 & 결과 리포트</title>
+        <style>
+          body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            color: #1E293B;
+            padding: 24px;
+            max-width: 800px;
+            margin: 0 auto;
+            line-height: 1.5;
+          }
+          h1 {
+            font-size: 20px;
+            font-weight: 900;
+            color: #0E4A84;
+            margin-bottom: 4px;
+          }
+          .header-info {
+            font-size: 13px;
+            color: #64748B;
+            border-bottom: 2px solid #E2E8F0;
+            padding-bottom: 12px;
+            margin-bottom: 20px;
+          }
+          .score-badge {
+            display: inline-block;
+            background-color: #EFF6FF;
+            color: #1E40AF;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-weight: 800;
+            font-size: 14px;
+            margin-bottom: 16px;
+            border: 1px solid #BFDBFE;
+          }
+          .item-card {
+            border: 1px solid #CBD5E1;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            page-break-inside: avoid;
+          }
+          .item-card.wrong {
+            background-color: #FEF2F2 !important;
+            border-color: #FCA5A5 !important;
+            border-left: 6px solid #EF4444 !important;
+          }
+          .item-card.correct {
+            background-color: #F8FAFC;
+            border-color: #E2E8F0;
+            border-left: 6px solid #22C55E;
+          }
+          .status-badge {
+            font-weight: 800;
+            font-size: 13px;
+            padding: 3px 8px;
+            border-radius: 4px;
+            display: inline-block;
+          }
+          .status-badge.wrong {
+            background-color: #FEE2E2;
+            color: #991B1B;
+          }
+          .status-badge.correct {
+            background-color: #DCFCE7;
+            color: #166534;
+          }
+          .question-title {
+            font-size: 15px;
+            font-weight: 800;
+            color: #0F172A;
+            margin: 8px 0;
+          }
+          .answer-box {
+            background-color: #FFFFFF;
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 13px;
+            border: 1px solid #E2E8F0;
+            margin-top: 8px;
+          }
+          .meta-tag {
+            font-size: 12px;
+            color: #64748B;
+          }
+          @media print {
+            body { padding: 0; }
+            .no-print { display: none; }
+          }
+        </style>
+      </head>
+      <body>
+        <div class="no-print" style="margin-bottom: 20px; text-align: right;">
+          <button onclick="window.print()" style="padding: 10px 20px; background-color: #0E4A84; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">
+            🖨️ PDF로 저장 / 인쇄하기
+          </button>
+        </div>
+
+        <h1>NUR위한 (NURWEHAN) - QUIZ 오답노트 & 학습 리포트</h1>
+        <div class="header-info">
+          일시: ${today} | 출제과목: ${quizSubject} ${quizCategory !== 'all' ? `(${quizCategory})` : ''} | 모드: ${pdfExportMode === 'wrong_only' ? '❌ 오답 모음' : '📋 전체 문항 리포트 (오답 하이라이트)'}
+        </div>
+
+        <div class="score-badge">
+          총 ${totalQuizCount}문제 중 ${correctCount}문제 정답 (${scorePercent}점)
+        </div>
+
+        <div>
+          ${exportItems.map((res, i) => {
+            const isCorr = res.overrideCorrect !== undefined ? res.overrideCorrect : res.isCorrect;
+            return `
+              <div class="item-card ${isCorr ? 'correct' : 'wrong'}">
+                <div style="display: flex; justify-content: space-between; align-items: center;">
+                  <span class="status-badge ${isCorr ? 'correct' : 'wrong'}">
+                    #${i + 1} ${isCorr ? '⭕ 정답' : '❌ 오답'}
+                  </span>
+                  <span class="meta-tag">${res.term.subject} ${res.term.category ? `• ${res.term.category}` : ''}</span>
+                </div>
+                <div class="question-title">${res.term.term}</div>
+                ${res.term.options && res.term.options.length > 0 ? `
+                  <div style="font-size: 12px; color: #475569; margin: 4px 0 8px 0; background: rgba(255,255,255,0.7); padding: 6px 10px; border-radius: 4px;">
+                    ${res.term.options.map(o => `• ${o}`).join(' &nbsp;|&nbsp; ')}
+                  </div>
+                ` : ''}
+                <div class="answer-box">
+                  <div><strong>내 작성 답안:</strong> ${res.userAns || '(미입력)'}</div>
+                  <div style="margin-top: 4px; color: ${isCorr ? '#166534' : '#B91C1C'};">
+                    <strong>정답:</strong> ${res.term.answer || res.term.term}
+                  </div>
+                  <div style="margin-top: 4px; color: #475569;">
+                    <strong>뜻 / 해설:</strong> ${res.term.definition}
+                  </div>
+                </div>
+              </div>
+            `;
+          }).join('')}
+        </div>
+
+        <script>
+          window.onload = function() {
+            setTimeout(function() {
+              window.print();
+            }, 300);
+          };
+        </script>
+      </body>
+      </html>
+    `;
+
+    printWindow.document.write(htmlContent);
+    printWindow.document.close();
   };
 
   const handleOpenCreateModal = () => {
@@ -1047,7 +1232,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
         </div>
       )}
 
-      {/* VIEW 4: 퀴즈 결과 & 오답 노트 */}
+      {/* VIEW 4: 퀴즈 결과 & 오답 노트 & PDF 내보내기 */}
       {activeTab === 'quiz_result' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
           {/* Score Summary Card */}
@@ -1082,6 +1267,68 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                   ✏️ 오답 {wrongResults.length}개 다시 풀기
                 </button>
               )}
+            </div>
+          </div>
+
+          {/* PDF Export Toolbar Card */}
+          <div className="card" style={{ padding: '20px', backgroundColor: '#F0F9FF', border: '1px solid #BAE6FD' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
+              <div>
+                <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#0369A1', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <span>📄</span> PDF 내보내기 설정
+                </h4>
+                <p style={{ fontSize: '0.8125rem', color: '#0284C7', margin: '4px 0 0 0' }}>
+                  퀴즈 결과 오답노트 및 풀이 내역을 PDF로 저장 또는 인쇄합니다.
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ display: 'flex', gap: '4px', backgroundColor: '#FFFFFF', padding: '4px', borderRadius: '8px', border: '1px solid #7DD3FC' }}>
+                  <button
+                    type="button"
+                    onClick={() => setPdfExportMode('wrong_only')}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      fontSize: '0.8125rem',
+                      fontWeight: 700,
+                      border: 'none',
+                      backgroundColor: pdfExportMode === 'wrong_only' ? '#0284C7' : 'transparent',
+                      color: pdfExportMode === 'wrong_only' ? '#FFFFFF' : '#0369A1',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    ❌ 틀린 것만 ({wrongResults.length}개)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => setPdfExportMode('all')}
+                    style={{
+                      padding: '6px 12px',
+                      borderRadius: '6px',
+                      fontSize: '0.8125rem',
+                      fontWeight: 700,
+                      border: 'none',
+                      backgroundColor: pdfExportMode === 'all' ? '#0284C7' : 'transparent',
+                      color: pdfExportMode === 'all' ? '#FFFFFF' : '#0369A1',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                    }}
+                  >
+                    📋 전체 ({quizResults.length}개 - 오답 하이라이트)
+                  </button>
+                </div>
+
+                <button
+                  type="button"
+                  onClick={handleExportPDF}
+                  className="btn-accent"
+                  style={{ padding: '8px 16px', fontSize: '0.875rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px' }}
+                >
+                  🖨️ PDF 다운로드/인쇄
+                </button>
+              </div>
             </div>
           </div>
 
