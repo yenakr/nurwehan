@@ -627,6 +627,51 @@ Open lab 진행할 인원을 모아 조를 구성하고, 한 명이 대표로 �
   }
   console.log('Initial slots for next week generated');
 
+  // Seed Nursing Terms for 간호관리학
+  await prisma.nursingTerm.deleteMany({});
+  const nursingTermsData = [
+    { subject: '간호관리학', category: '기획', term: 'POSDCORB', englishTerm: 'POSDCORB', definition: '기획(P), 조직(O), 인사(S), 지휘(D), 조정(CO), 보고(R), 예산(B)으로 구성된 최고관리자의 관리과정 7단계' },
+    { subject: '간호관리학', category: '기획', term: '비전', englishTerm: 'Vision', definition: '조직이 장기적으로 지향하는 바람직한 미래상과 궁극적 성취 목표를 명시한 구체적 서술서' },
+    { subject: '간호관리학', category: '기획', term: '미션', englishTerm: 'Mission', definition: '조직의 존재 이유, 사회적 본질적 목적 및 기본 역할을 명시한 사명서' },
+    { subject: '간호관리학', category: '기획', term: '전략적 기획', englishTerm: 'Strategic Planning', definition: '최고관리자가 외부 환경 변화 분석을 바탕으로 조직 전체의 장기적 목표와 방향을 설정하는 기획' },
+    { subject: '간호관리학', category: '기획', term: '전술적 기획', englishTerm: 'Tactical Planning', definition: '중간관리자가 전략적 기획을 달성하기 위해 부서별 단위 목표 및 자원 배분을 계획하는 중기 기획' },
+    { subject: '간호관리학', category: '기획', term: '운영적 기획', englishTerm: 'Operational Planning', definition: '일선관리자가 일상적인 간호 업무 수행을 위해 구체적인 단기 행동 계획, 규칙 및 수순을 수립하는 기획' },
+    { subject: '간호관리학', category: '기획', term: 'SWOT 분석', englishTerm: 'SWOT Analysis', definition: '조직의 내부 환경인 강점(S), 약점(W)과 외부 환경인 기회(O), 위협(T)을 평가하여 최적의 전략을 도출하는 분석 도구' },
+    { subject: '간호관리학', category: '기획', term: '목표관리', englishTerm: 'MBO', definition: '상급자와 하급자가 공동 참여하여 명확한 목표를 설정하고 결과를 주도적으로 측정·평가하는 관리 방법' },
+    { subject: '간호관리학', category: '조직', term: '권한', englishTerm: 'Authority', definition: '합법적인 직위나 위치에 부여되어 타인의 행동을 요구하고 지시할 수 있는 공식적인 정당한 권리' },
+    { subject: '간호관리학', category: '조직', term: '권력', englishTerm: 'Power', definition: '직위에 관계없이 타인의 행동이나 의사결정에 영향을 미칠 수 있는 인과적 역량' },
+    { subject: '간호관리학', category: '조직', term: '위임', englishTerm: 'Delegation', definition: '상급자가 간호 업무 수행에 필요한 권한과 책임을 하급 간호사에게 부여하고 결과를 감독하는 과정' },
+    { subject: '간호관리학', category: '조직', term: '직무분석', englishTerm: 'Job Analysis', definition: '특정 직무의 임무, 책임, 작업 조건 및 인적 자격요건에 관한 자료를 체계적으로 수집·분석하는 과정' },
+    { subject: '간호관리학', category: '조직', term: '직무기술서', englishTerm: 'Job Description', definition: '직무 분석 결과를 바탕으로 직무의 성격, 위치, 주요 과업, 책임 및 작업 환경 등을 기록한 공식 문서' },
+    { subject: '간호관리학', category: '조직', term: '직무명세서', englishTerm: 'Job Specification', definition: '특정 직무를 성공적으로 수행하는 데 요구되는 개인의 학력, 경험, 자격, 지식 등 인적 조건에 초점을 맞춰 작성한 문서' },
+    { subject: '간호관리학', category: '조직', term: '라인 조직', englishTerm: 'Line Organization', definition: '최고경영자부터 일선 직원까지 지휘 명령 계통이 단일 직선 형태로 이루어진 고전적 조직 구조' },
+    { subject: '간호관리학', category: '조직', term: '매트릭스 조직', englishTerm: 'Matrix Organization', definition: '기존 기능별 조직과 프로젝트(프로그램) 조직을 통합하여 2명의 상급자에게 보고하는 격자형 구조' },
+    { subject: '간호관리학', category: '인사', term: '환자분류체계', englishTerm: 'Patient Classification System', definition: '환자의 간호 요구도와 질병 중증도를 수치화하여 필요한 간호 인력 수요를 산정하는 도구' },
+    { subject: '간호관리학', category: '인사', term: '사기', englishTerm: 'Morale', definition: '조직 구성원들이 목표 달성을 향해 발휘하는 집단적 열의, 협동심 및 사명감' },
+    { subject: '간호관리학', category: '인사', term: '직무만족', englishTerm: 'Job Satisfaction', definition: '간호사가 자신의 직무 환경과 업무 경험 평가에서 느끼는 긍정적이고 유쾌한 감정 상태' },
+    { subject: '간호관리학', category: '인사', term: '이직률', englishTerm: 'Turnover Rate', definition: '일정 기간(예: 1년) 동안 조직을 퇴직하거나 이동한 간호사의 비율' },
+    { subject: '간호관리학', category: '지휘', term: '변혁적 리더십', englishTerm: 'Transformational Leadership', definition: '리더가 구성원에게 영감을 주고 자아실현을 유도하여 기대 이상의 성과를 창출하는 리더십' },
+    { subject: '간호관리학', category: '지휘', term: '거래적 리더십', englishTerm: 'Transactional Leadership', definition: '리더와 구성원 간의 성과 보상 계약과 통제를 바탕으로 목표를 달성하는 리더십' },
+    { subject: '간호관리학', category: '지휘', term: '서번트 리더십', englishTerm: 'Servant Leadership', definition: '구성원에 대한 섬김과 헌신, 배려를 최우선으로 두어 구성원의 성장을 돕는 리더십' },
+    { subject: '간호관리학', category: '지휘', term: '동기부여', englishTerm: 'Motivation', definition: '특정 목표를 달성하도록 인간의 행동을 자극하고 방향을 유도하며 지속시키는 내적 상태' },
+    { subject: '간호관리학', category: '지휘', term: '임파워먼트', englishTerm: 'Empowerment', definition: '구성원에게 의사결정 재량권과 자율성을 부여하여 주도적으로 업무를 수행하게 하는 권한 부여 과정' },
+    { subject: '간호관리학', category: '통제', term: '질 향상', englishTerm: 'QI', definition: '간호 서비스 과정 및 결과를 체계적으로 평가하고 표준화하여 간호 품질을 지속 개선하는 활동' },
+    { subject: '간호관리학', category: '통제', term: '환자안전', englishTerm: 'Patient Safety', definition: '의료 서비스 제공 과정에서 발생하는 부작용, 오류 및 손상 위험을 최소화하여 환자를 보호하는 것' },
+    { subject: '간호관리학', category: '통제', term: '린 6시그마', englishTerm: 'Lean Six Sigma', definition: '업무 공정상의 불필요한 낭비를 제거(Lean)하고 변동성 및 결함을 최소화(Six Sigma)하는 품질 통제 기법' },
+    { subject: '간호관리학', category: '통제', term: '위해사건', englishTerm: 'Adverse Event', definition: '의료 행위 과정에서 질병 자체가 아닌 의료 관리상 문제로 인해 환자에게 발생한 상해나 불상사' },
+    { subject: '간호관리학', category: '통제', term: '적신호사건', englishTerm: 'Sentinel Event', definition: '환자의 사망 또는 심각한 신체적·정신적 손상을 유발하여 즉각적인 원인 조사와 대책 마련이 필요한 중대한 위해 사건' },
+    { subject: '간호관리학', category: '간호윤리', term: '자율성 존중의 원칙', englishTerm: 'Autonomy', definition: '환자가 자신의 치료 과정에 대해 충분한 정보를 바탕으로 스스로 결정권을 행사하도록 보장하는 윤리 원칙' },
+    { subject: '간호관리학', category: '간호윤리', term: '선행의 원칙', englishTerm: 'Beneficence', definition: '환자의 안녕과 이익을 도모하고 선을 적극적으로 행해야 하는 윤리 원칙' },
+    { subject: '간호관리학', category: '간호윤리', term: '악행금지의 원칙', englishTerm: 'Non-maleficence', definition: '환자에게 신체적·정신적 해를 가하거나 위험을 초래하지 말아야 하는 윤리 원칙' },
+    { subject: '간호관리학', category: '간호윤리', term: '정의의 원칙', englishTerm: 'Justice', definition: '공정성과 평등성에 기반하여 의료 자원과 간호 서비스를 합리적으로 배분하는 윤리 원칙' },
+    { subject: '간호관리학', category: '간호윤리', term: '설명 및 동의', englishTerm: 'Informed Consent', definition: '의료진이 진단, 치료계획, 위험성 등을 충분히 설명한 후 환자로부터 자발적 승낙을 받아야 하는 법적·윤리적 의무' },
+  ];
+
+  await prisma.nursingTerm.createMany({
+    data: nursingTermsData,
+  });
+  console.log(`Nursing terms seeded (${nursingTermsData.length} items)`);
+
   console.log('Seeding completed successfully.');
 }
 

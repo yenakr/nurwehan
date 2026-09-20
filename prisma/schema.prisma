@@ -470,3 +470,15 @@ enum ReadinessStatus {
   INCOMPLETE
   PREPARING
 }
+
+model NursingTerm {
+  id           String   @id @default(cuid())
+  subject      String   // 과목 (예: 간호관리학, 성인간호학)
+  term         String   // 용어 (예: 기획)
+  englishTerm  String?  // 영문 용어/약어 (예: Planning)
+  definition   String   // 뜻 / 정의
+  example      String?  // 비고/예시
+  category     String?  // 세부 카테고리 (예: 기획, 조직, 인사, 지휘, 통제, 윤리)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}

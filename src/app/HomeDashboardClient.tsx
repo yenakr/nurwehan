@@ -176,6 +176,23 @@ export default function HomeDashboardClient({
             임상실습 가이드 확인 →
           </Link>
         </div>
+
+        {/* Widget 4: Nursing Terminology Quiz Quick Access */}
+        <div className="card" style={{ borderLeft: '4px solid var(--primary)', backgroundColor: '#F8FAFC' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--primary)' }}>
+              📚 전공용어 퀴즈 센터
+            </h3>
+            <span className="badge" style={{ backgroundColor: '#DBEAFE', color: '#1E40AF', fontSize: '0.75rem' }}>
+              간호관리학 35개 용어
+            </span>
+          </div>
+          <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
+            <Link href="/quiz" className="btn-primary" style={{ flex: 1, textAlign: 'center', fontSize: '0.84rem' }}>
+              퀴즈 풀이 / 용어 암기 →
+            </Link>
+          </div>
+        </div>
       </div>
 
       {/* Recommended Activities for Current Grade */}
