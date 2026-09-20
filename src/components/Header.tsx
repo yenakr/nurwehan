@@ -57,7 +57,7 @@ export default function Header() {
       items: [
         { label: 'MY ROADMAP', href: '/roadmap', desc: '1~4학년 학업·진로 로드맵' },
         { label: '캘린더', href: '/calendar', desc: '통합 학사 및 시험 일정' },
-        { label: '전공용어 퀴즈', href: '/quiz', desc: '간호관리학 등 용어 암기 & 테스트' },
+        { label: 'QUIZ', href: '/quiz', desc: 'QUIZ' },
       ],
     },
     {
