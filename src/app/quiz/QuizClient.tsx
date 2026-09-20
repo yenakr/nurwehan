@@ -294,6 +294,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeTab, studyViewMode, isCardFlipped, filteredStudyTerms.length]);
 
+
   // Start Quiz
   const handleStartQuiz = (customTermsList?: NursingTerm[]) => {
     let pool = customTermsList || termsList.filter(t => {
@@ -425,7 +426,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
     });
   };
 
-  const handleNextQuestion = () => {
+  const handleNextQuestion = useCallback(() => {
     if (currentIndex + 1 < quizQuestions.length) {
       setCurrentIndex(prev => prev + 1);
       setUserAnswer('');
@@ -435,7 +436,22 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
     } else {
       setActiveTab('quiz_result');
     }
-  };
+  }, [currentIndex, quizQuestions.length]);
+
+  // Keyboard navigation for Single Question Quiz Play mode (Enter key advances to next question when answer is submitted)
+  useEffect(() => {
+    if (activeTab !== 'quiz_play' || quizFormat !== 'single' || !isAnswerSubmitted) return;
+
+    const handleQuizKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Enter') {
+        e.preventDefault();
+        handleNextQuestion();
+      }
+    };
+
+    window.addEventListener('keydown', handleQuizKeyDown);
+    return () => window.removeEventListener('keydown', handleQuizKeyDown);
+  }, [activeTab, quizFormat, isAnswerSubmitted, handleNextQuestion]);
 
   // Typing practice handlers
   const currentTypingTerm = filteredStudyTerms[typingIndex];
