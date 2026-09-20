@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { isAdminRole } from '@/lib/auth-core';
 
 interface NursingTerm {
@@ -123,6 +123,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   const [selectedChoiceIndex, setSelectedChoiceIndex] = useState<number | null>(null);
   const [showHint, setShowHint] = useState<boolean>(false);
   const [isAnswerSubmitted, setIsAnswerSubmitted] = useState<boolean>(false);
+  const submitTimestampRef = useRef<number>(0);
   
   // Generated Multiple-Choice Options
   const [mcOptionsMap, setMcOptionsMap] = useState<Record<number, string[]>>({});
@@ -386,6 +387,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   const handleSubmitAnswer = () => {
     if (!currentQuestion || isAnswerSubmitted) return;
 
+    submitTimestampRef.current = Date.now();
     const isCorrect = checkAnswerCorrectness(userAnswer, currentQuestion);
 
     const resultItem = {
@@ -401,6 +403,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   const handleSelectMultipleChoice = (choiceText: string, choiceIndex: number) => {
     if (!currentQuestion || isAnswerSubmitted) return;
 
+    submitTimestampRef.current = Date.now();
     setSelectedChoiceIndex(choiceIndex);
     setUserAnswer(choiceText);
 
@@ -444,6 +447,10 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
 
     const handleQuizKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
+        // Prevent instant skip on the same keypress / IME composition submit (400ms guard)
+        if (e.isComposing || Date.now() - submitTimestampRef.current < 400) {
+          return;
+        }
         e.preventDefault();
         handleNextQuestion();
       }
