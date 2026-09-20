@@ -676,6 +676,25 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
     }
   };
 
+  const handleMoveTerm = (filteredIdx: number, direction: 'up' | 'down') => {
+    const targetTerm = filteredStudyTerms[filteredIdx];
+    if (!targetTerm) return;
+    const targetIndexInMain = termsList.findIndex(t => t.id === targetTerm.id);
+    if (targetIndexInMain === -1) return;
+
+    const swapFilteredIdx = direction === 'up' ? filteredIdx - 1 : filteredIdx + 1;
+    if (swapFilteredIdx < 0 || swapFilteredIdx >= filteredStudyTerms.length) return;
+    const swapTerm = filteredStudyTerms[swapFilteredIdx];
+    const swapIndexInMain = termsList.findIndex(t => t.id === swapTerm.id);
+    if (swapIndexInMain === -1) return;
+
+    const newList = [...termsList];
+    const temp = newList[targetIndexInMain];
+    newList[targetIndexInMain] = newList[swapIndexInMain];
+    newList[swapIndexInMain] = temp;
+    setTermsList(newList);
+  };
+
   const correctCount = quizResults.filter(r => (r.overrideCorrect !== undefined ? r.overrideCorrect : r.isCorrect)).length;
   const totalQuizCount = quizQuestions.length;
   const scorePercent = totalQuizCount > 0 ? Math.round((correctCount / totalQuizCount) * 100) : 0;
@@ -869,6 +888,25 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                 >
                   {autoTTS ? '🔊 음성 ON' : '🔇 음성 OFF'}
                 </button>
+
+                {isAdmin && (
+                  <button
+                    onClick={handleOpenCreateModal}
+                    className="btn-primary"
+                    style={{
+                      padding: '6px 14px',
+                      fontSize: '0.8125rem',
+                      fontWeight: 800,
+                      backgroundColor: '#2563EB',
+                      color: '#FFFFFF',
+                      border: 'none',
+                      borderRadius: '6px',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    ➕ 새 문항 추가
+                  </button>
+                )}
               </div>
             </div>
 
@@ -1255,7 +1293,23 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                             </span>
 
                             {isAdmin && (
-                              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                                <button
+                                  onClick={() => handleMoveTerm(idx, 'up')}
+                                  disabled={idx === 0}
+                                  style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '0.85rem', cursor: idx === 0 ? 'not-allowed' : 'pointer', opacity: idx === 0 ? 0.3 : 1 }}
+                                  title="위로 이동"
+                                >
+                                  🔼
+                                </button>
+                                <button
+                                  onClick={() => handleMoveTerm(idx, 'down')}
+                                  disabled={idx === filteredStudyTerms.length - 1}
+                                  style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '0.85rem', cursor: idx === filteredStudyTerms.length - 1 ? 'not-allowed' : 'pointer', opacity: idx === filteredStudyTerms.length - 1 ? 0.3 : 1 }}
+                                  title="아래로 이동"
+                                >
+                                  🔽
+                                </button>
                                 <button
                                   onClick={() => handleOpenEditModal(t)}
                                   style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 700 }}

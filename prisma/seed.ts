@@ -670,6 +670,17 @@ Open lab 진행할 인원을 모아 조를 구성하고, 한 명이 대표로 �
     { subject: '간호관리학', category: '퀴즈 1', itemType: 'TERM', term: '집단', englishTerm: 'group', definition: '두 사람 이상이 모여 공동목표를 달성하기 위해 공통의 규범, 서로의 역할과 신분을 인정하고 상호작용하며, 유기적인 관계를 형성하는 개인들의 집합체' },
     { subject: '간호관리학', category: '퀴즈 1', itemType: 'TERM', term: '공식적 집단', englishTerm: 'formal group', definition: '조직 내에 지위, 부서, 계층 등을 가지고 형성된 집단으로 조직의 특정한 과업을 수행하기 위하여 이루어진 집단' },
     { subject: '간호관리학', category: '퀴즈 1', itemType: 'TERM', term: '비공식적 집단', englishTerm: 'informal group', definition: '조직 내에서 공식목표나 과업에 관계없이 자연적으로 형성된 집단' },
+    { subject: '간호관리학', category: '퀴즈 1', itemType: 'TERM', term: '조직구조', englishTerm: 'organizational structure', definition: '조직의 경영활동을 위해 필요한 일과 부서, 직위 및 권한관계 등을 안정적으로 짜놓은 틀' },
+    { subject: '간호관리학', category: '퀴즈 1', itemType: 'TERM', term: '집권화', englishTerm: 'centralization', definition: '의사결정의 권한이 중앙 또는 상위기관에서 이루어지는 것' },
+    { subject: '간호관리학', category: '퀴즈 1', itemType: 'TERM', term: '분권화', englishTerm: 'decentralization', definition: '의사결정의 권한이 지방 또는 하급기관으로 위임되어 있는 것' },
+    { subject: '간호관리학', category: '퀴즈 1', itemType: 'TERM', term: '공식적 조직', englishTerm: 'formal organization', definition: '공식적으로 만들어진 조직 내의 의도적인 역할구조' },
+    { subject: '간호관리학', category: '퀴즈 1', itemType: 'TERM', term: '비공식적 조직', englishTerm: 'informal organization', definition: '자생적으로 형성된 개인적이고 사회적인 관계의 네트워크' },
+    { subject: '간호관리학', category: '퀴즈 1', itemType: 'TERM', term: '라인 조직', englishTerm: 'line organization', definition: '명령이나 권한이 조직의 상층에서 이루어지는 명령형태' },
+    { subject: '간호관리학', category: '퀴즈 1', itemType: 'TERM', term: '라인-스태프 조직', englishTerm: 'line-staff organization', definition: '조언기능을 발휘하여 라인업무를 효과적으로 지원할 수 있는 스태프 부서를 둔 조직' },
+    { subject: '간호관리학', category: '퀴즈 1', itemType: 'TERM', term: '기능적 조직', englishTerm: 'functional organization', definition: '각 분야의 전문가를 두어 집행부서에 대한 지도 및 조언을 직접 할 수 있게 만든 조직' },
+    { subject: '간호관리학', category: '퀴즈 1', itemType: 'TERM', term: '프로젝트 조직', englishTerm: 'project organization', definition: '특정 과업 달성을 위해 각 부서에서 전문요원을 차출하여 구성하는 한시적 조직' },
+    { subject: '간호관리학', category: '퀴즈 1', itemType: 'TERM', term: '매트릭스 조직', englishTerm: 'matrix organization', definition: '기존 라인 조직에 프로젝트 조직을 결합시킨 형태' },
+    { subject: '간호관리학', category: '퀴즈 1', itemType: 'TERM', term: '위원회 조직', englishTerm: 'commission organization', definition: '둘 이상의 사람이 모여 의사결정을 하는 조직 형태' },
 
     // 여성의부인과적장애와간호 (카테고리: 중간고사 복습 퀴즈)
     {
