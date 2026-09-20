@@ -1769,17 +1769,26 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
           </div>
 
           {/* Question Box */}
-          <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', padding: '24px', borderRadius: '10px', marginBottom: '24px' }}>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 800, color: '#1E293B', lineHeight: 1.6, margin: 0 }}>
-              {currentQuestion.term}
-            </h3>
+          {(() => {
+            const isStructured = (currentQuestion.options && currentQuestion.options.length > 0) || currentQuestion.itemType === 'MULTIPLE_CHOICE';
+            const showTermAsQuestion = isStructured || quizType === 'term_to_def';
+            const promptText = showTermAsQuestion ? currentQuestion.term : currentQuestion.definition;
+            const subText = showTermAsQuestion ? currentQuestion.englishTerm : null;
 
-            {currentQuestion.englishTerm && (
-              <div style={{ fontSize: '0.875rem', color: 'var(--sub-text)', marginTop: '6px' }}>
-                ({currentQuestion.englishTerm})
+            return (
+              <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', padding: '24px', borderRadius: '10px', marginBottom: '24px' }}>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: 800, color: '#1E293B', lineHeight: 1.6, margin: 0 }}>
+                  {promptText}
+                </h3>
+
+                {subText && (
+                  <div style={{ fontSize: '0.875rem', color: 'var(--sub-text)', marginTop: '6px' }}>
+                    ({subText})
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+            );
+          })()}
 
           {/* MULTIPLE CHOICE / STRUCTURED OPTIONS VIEW */}
           {(currentQuestion.options && currentQuestion.options.length > 0) || quizType === 'multiple_choice' ? (
