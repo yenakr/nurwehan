@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect } from 'react';
+import { useState, useMemo, useEffect, useCallback } from 'react';
 import { isAdminRole } from '@/lib/auth-core';
 
 interface NursingTerm {
@@ -76,6 +76,20 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   const [isTypingSubmitted, setIsTypingSubmitted] = useState<boolean>(false);
   const [typingCorrectCount, setTypingCorrectCount] = useState<number>(0);
   const [typingHistory, setTypingHistory] = useState<Record<number, boolean>>({});
+
+  // TTS (Text-To-Speech) Web Speech API State & Helpers
+  const [autoTTS, setAutoTTS] = useState<boolean>(true);
+
+  const speakText = useCallback((text: string) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    window.speechSynthesis.cancel();
+    if (!text) return;
+    const utterance = new SpeechSynthesisUtterance(text);
+    const isEng = /^[A-Za-z0-9\s.,?!'()-]+$/.test(text.trim());
+    utterance.lang = isEng ? 'en-US' : 'ko-KR';
+    utterance.rate = 0.95;
+    window.speechSynthesis.speak(utterance);
+  }, []);
 
   // Quiz Setup States
   const [quizSubject, setQuizSubject] = useState<string>('간호관리학');
@@ -160,6 +174,22 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
     setTypingCorrectCount(0);
     setTypingHistory({});
   }, [studySubject, studyCategory]);
+
+  // Auto TTS effect for Typing Practice Mode
+  useEffect(() => {
+    if (studyViewMode === 'typing' && autoTTS && filteredStudyTerms[typingIndex]) {
+      speakText(filteredStudyTerms[typingIndex].definition);
+    }
+  }, [typingIndex, studyViewMode, autoTTS, filteredStudyTerms, speakText]);
+
+  // Auto TTS effect for Flashcard Mode
+  useEffect(() => {
+    if (studyViewMode === 'flashcard' && autoTTS && filteredStudyTerms[flashcardIndex]) {
+      const card = filteredStudyTerms[flashcardIndex];
+      const text = isCardFlipped ? card.definition : (card.answer || card.term);
+      speakText(text);
+    }
+  }, [flashcardIndex, isCardFlipped, studyViewMode, autoTTS, filteredStudyTerms, speakText]);
 
   // Keyboard navigation for Flashcard mode (Space/Enter to flip, Arrow/Enter to next)
   useEffect(() => {
@@ -797,6 +827,24 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                 >
                   📋 전체 목록
                 </button>
+                <button
+                  onClick={() => setAutoTTS(!autoTTS)}
+                  style={{
+                    padding: '6px 12px',
+                    borderRadius: '6px',
+                    fontSize: '0.8125rem',
+                    fontWeight: 700,
+                    border: 'none',
+                    backgroundColor: autoTTS ? '#10B981' : '#CBD5E1',
+                    color: '#FFFFFF',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    marginLeft: 'auto',
+                  }}
+                  title="자동 음성 읽기 (TTS) ON/OFF"
+                >
+                  {autoTTS ? '🔊 자동 음성 ON' : '🔇 자동 음성 OFF'}
+                </button>
               </div>
             </div>
 
@@ -1032,15 +1080,19 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
 
                   {/* SECTION 1: TERM / ANSWER TYPING (용어/정답 타자 연습) */}
                   <div style={{ marginBottom: '24px' }}>
-                    <div style={{ fontSize: '0.8125rem', fontWeight: 800, color: '#0E4A84', marginBottom: '6px' }}>
-                      ✏️ 용어 / 정답 타자 연습
-                    </div>
-                    {/* Target Term Gray Preview Box */}
-                    <div style={{ backgroundColor: '#F1F5F9', border: '1px solid #CBD5E1', padding: '12px 16px', borderRadius: '8px', marginBottom: '8px' }}>
-                      <div style={{ fontSize: '1.0625rem', fontWeight: 800, color: '#475569', letterSpacing: '0.01em', lineHeight: 1.5 }}>
-                        {currentTypingTerm.answer || currentTypingTerm.term}
-                        {currentTypingTerm.englishTerm ? ` (${currentTypingTerm.englishTerm})` : ''}
-                      </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '0.8125rem', fontWeight: 800, color: '#0E4A84' }}>
+                        ✏️ 용어 / 정답 타자 연습
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => speakText(currentTypingTerm.answer || currentTypingTerm.term)}
+                        className="btn-outline"
+                        style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: '6px' }}
+                        title="음성으로 들려주기"
+                      >
+                        🔊 용어 읽기
+                      </button>
                     </div>
                     <input
                       type="text"
@@ -1069,8 +1121,19 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
 
                   {/* SECTION 2: DEFINITION TYPING (뜻 / 해설 타자 연습) */}
                   <div style={{ marginBottom: '24px' }}>
-                    <div style={{ fontSize: '0.8125rem', fontWeight: 800, color: '#0E4A84', marginBottom: '6px' }}>
-                      📖 뜻 / 해설 타자 연습
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                      <span style={{ fontSize: '0.8125rem', fontWeight: 800, color: '#0E4A84' }}>
+                        📖 뜻 / 해설 타자 연습
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => speakText(currentTypingTerm.definition)}
+                        className="btn-outline"
+                        style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: '6px' }}
+                        title="음성으로 들려주기"
+                      >
+                        🔊 뜻 읽기
+                      </button>
                     </div>
                     {/* Target Definition Gray Preview Box */}
                     <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #CBD5E1', padding: '14px 16px', borderRadius: '8px', marginBottom: '8px' }}>
