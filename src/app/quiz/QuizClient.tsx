@@ -793,7 +793,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                     transition: 'all 0.2s',
                   }}
                 >
-                  🎴 플래시 카드 모드
+                  🎴 플래시카드
                 </button>
                 <button
                   onClick={() => setStudyViewMode('typing')}
@@ -809,7 +809,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                     transition: 'all 0.2s',
                   }}
                 >
-                  ⌨️ 주관식 타이핑 연습
+                  ⌨️ 타이핑
                 </button>
                 <button
                   onClick={() => setStudyViewMode('grid')}
@@ -825,7 +825,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                     transition: 'all 0.2s',
                   }}
                 >
-                  📋 전체 목록
+                  📋 목록
                 </button>
                 <button
                   onClick={() => setAutoTTS(!autoTTS)}
@@ -841,9 +841,9 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                     transition: 'all 0.2s',
                     marginLeft: 'auto',
                   }}
-                  title="자동 음성 읽기 (TTS) ON/OFF"
+                  title="음성 읽기 ON/OFF"
                 >
-                  {autoTTS ? '🔊 자동 음성 ON' : '🔇 자동 음성 OFF'}
+                  {autoTTS ? '🔊 음성 ON' : '🔇 음성 OFF'}
                 </button>
               </div>
             </div>
@@ -988,11 +988,6 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                           </div>
                         )}
 
-                        <div style={{ position: 'absolute', bottom: '16px', fontSize: '0.78125rem', color: '#94A3B8', fontWeight: 600 }}>
-                          {!isCardFlipped
-                            ? '💡 카드 또는 [Space / Enter] 키를 누르면 뒤집어집니다'
-                            : '➡️ [Enter / →] 키를 누르면 다음 카드로 넘어갑니다'}
-                        </div>
                       </div>
                     );
                   })()}
@@ -1008,7 +1003,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                       className="btn-outline"
                       style={{ flex: 1, padding: '12px', fontSize: '0.9375rem', fontWeight: 700 }}
                     >
-                      ⬅️ 이전 카드 (←)
+                      ⬅️ 이전
                     </button>
 
                     <button
@@ -1023,7 +1018,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                       className="btn-primary"
                       style={{ flex: 1, padding: '12px', fontSize: '0.9375rem', fontWeight: 800 }}
                     >
-                      {!isCardFlipped ? '👁️ 정답 확인 (Space)' : '다음 카드 ➡️ (Enter)'}
+                      {!isCardFlipped ? '정답 확인' : '➡️ (Enter)'}
                     </button>
                   </div>
                 </>
@@ -1043,7 +1038,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                   {/* Header Progress & Prev/Next Buttons */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                     <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--primary)' }}>
-                      타자 연습 {typingIndex + 1} / {filteredStudyTerms.length}
+                      {typingIndex + 1} / {filteredStudyTerms.length}
                     </span>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button
@@ -1053,7 +1048,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                         className="btn-secondary"
                         style={{ padding: '6px 14px', fontSize: '0.8125rem', fontWeight: 700 }}
                       >
-                        ← 이전
+                        ←
                       </button>
                       <button
                         type="button"
@@ -1061,7 +1056,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                         className="btn-primary"
                         style={{ padding: '6px 16px', fontSize: '0.8125rem', fontWeight: 800 }}
                       >
-                        {typingIndex + 1 < filteredStudyTerms.length ? '다음 → (Enter)' : '완료 🎉'}
+                        {typingIndex + 1 < filteredStudyTerms.length ? '➡️ (Enter)' : '완료 🎉'}
                       </button>
                     </div>
                   </div>
@@ -1078,11 +1073,11 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                     />
                   </div>
 
-                  {/* SECTION 1: TERM / ANSWER TYPING (용어/정답 타자 연습) */}
+                  {/* SECTION 1: TERM / ANSWER TYPING */}
                   <div style={{ marginBottom: '24px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                       <span style={{ fontSize: '0.8125rem', fontWeight: 800, color: '#0E4A84' }}>
-                        ✏️ 용어 / 정답 타자 연습
+                        용어
                       </span>
                       <button
                         type="button"
@@ -1119,11 +1114,11 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                     />
                   </div>
 
-                  {/* SECTION 2: DEFINITION TYPING (뜻 / 해설 타자 연습) */}
+                  {/* SECTION 2: DEFINITION TYPING */}
                   <div style={{ marginBottom: '24px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                       <span style={{ fontSize: '0.8125rem', fontWeight: 800, color: '#0E4A84' }}>
-                        📖 뜻 / 해설 타자 연습
+                        뜻
                       </span>
                       <button
                         type="button"
@@ -1177,17 +1172,14 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                   </div>
 
                   {/* Action / Navigation Bar */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', borderTop: '1px solid #E2E8F0', paddingTop: '16px' }}>
-                    <span style={{ fontSize: '0.8125rem', color: '#64748B', fontWeight: 600 }}>
-                      💡 타자를 다 치지 않아도 <kbd style={{ background: '#E2E8F0', padding: '2px 6px', borderRadius: '4px', color: '#334155' }}>Enter</kbd>를 누르면 언제든지 다음 문제로 넘어갑니다.
-                    </span>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginTop: '16px', borderTop: '1px solid #E2E8F0', paddingTop: '16px' }}>
                     <button
                       type="button"
                       onClick={handleTypingNext}
                       className="btn-accent"
                       style={{ padding: '12px 24px', fontSize: '0.95rem', fontWeight: 800 }}
                     >
-                      {typingIndex + 1 < filteredStudyTerms.length ? '다음 항목으로 → (Enter)' : '🎉 타자 연습 완료'}
+                      {typingIndex + 1 < filteredStudyTerms.length ? '➡️ (Enter)' : '🎉 완료'}
                     </button>
                   </div>
                 </div>
