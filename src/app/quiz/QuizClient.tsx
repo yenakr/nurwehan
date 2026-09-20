@@ -68,6 +68,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   // Flashcard Mode State
   const [flashcardIndex, setFlashcardIndex] = useState<number>(0);
   const [isCardFlipped, setIsCardFlipped] = useState<boolean>(false);
+  const [flashcardDirection, setFlashcardDirection] = useState<'term_first' | 'def_first'>('term_first');
 
   // Typing Mode State
   const [typingIndex, setTypingIndex] = useState<number>(0);
@@ -188,10 +189,14 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   useEffect(() => {
     if (studyViewMode === 'flashcard' && autoTTS && filteredStudyTerms[flashcardIndex]) {
       const card = filteredStudyTerms[flashcardIndex];
-      const text = isCardFlipped ? card.definition : (card.answer || card.term);
+      const showTermOnFront = flashcardDirection === 'term_first';
+      const isFront = !isCardFlipped;
+      const text = (isFront === showTermOnFront)
+        ? (card.answer || card.term)
+        : card.definition;
       speakText(text);
     }
-  }, [flashcardIndex, isCardFlipped, studyViewMode, autoTTS, filteredStudyTerms, speakText]);
+  }, [flashcardIndex, isCardFlipped, flashcardDirection, studyViewMode, autoTTS, filteredStudyTerms, speakText]);
 
   // Keyboard navigation for Flashcard mode (Space/Enter to flip, Arrow/Enter to next)
   useEffect(() => {
@@ -917,6 +922,17 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button
                         onClick={() => {
+                          setFlashcardDirection(prev => (prev === 'term_first' ? 'def_first' : 'term_first'));
+                          setIsCardFlipped(false);
+                        }}
+                        className="btn-outline"
+                        style={{ fontSize: '0.78125rem', padding: '4px 10px', color: '#0E4A84', borderColor: '#BFDBFE', backgroundColor: '#EFF6FF', fontWeight: 700 }}
+                        title="앞면/뒷면 표시 순서 변경"
+                      >
+                        🔄 {flashcardDirection === 'term_first' ? '용어 ➔ 뜻' : '뜻 ➔ 용어'}
+                      </button>
+                      <button
+                        onClick={() => {
                           const shuffled = [...filteredStudyTerms].sort(() => Math.random() - 0.5);
                           setTermsList(shuffled);
                           setFlashcardIndex(0);
@@ -947,6 +963,8 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                     const currentCard = filteredStudyTerms[flashcardIndex];
                     if (!currentCard) return null;
 
+                    const showTerm = flashcardDirection === 'term_first' ? !isCardFlipped : isCardFlipped;
+
                     return (
                       <div
                         onClick={() => setIsCardFlipped(!isCardFlipped)}
@@ -971,11 +989,15 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                           #{flashcardIndex + 1}
                         </div>
 
-                        {!isCardFlipped ? (
-                          /* FRONT SIDE OF CARD */
+                        <div style={{ position: 'absolute', top: '16px', right: '16px', fontSize: '0.78125rem', fontWeight: 700, color: '#64748B', backgroundColor: '#F1F5F9', padding: '2px 8px', borderRadius: '6px' }}>
+                          {showTerm ? '용어' : '뜻 / 해설'}
+                        </div>
+
+                        {showTerm ? (
+                          /* TERM SIDE OF CARD */
                           <div>
                             <h2 style={{ fontSize: '1.625rem', fontWeight: 900, color: 'var(--primary)', marginBottom: '8px' }}>
-                              {currentCard.term}
+                              {currentCard.answer || currentCard.term}
                             </h2>
                             {currentCard.englishTerm && (
                               <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--sub-text)' }}>
@@ -994,19 +1016,13 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                             )}
                           </div>
                         ) : (
-                          /* BACK SIDE OF CARD (REVEALED) */
+                          /* DEFINITION SIDE OF CARD */
                           <div>
-                            {currentCard.answer && (
-                              <div style={{ fontSize: '1.125rem', fontWeight: 900, color: '#0369A1', marginBottom: '10px' }}>
-                                정답: {currentCard.answer}
-                              </div>
-                            )}
-                            <p style={{ fontSize: '1.0625rem', color: '#1E293B', fontWeight: 600, lineHeight: 1.6, margin: 0, maxWidth: '520px' }}>
+                            <p style={{ fontSize: '1.125rem', color: '#1E293B', fontWeight: 700, lineHeight: 1.6, margin: 0, maxWidth: '520px' }}>
                               {currentCard.definition}
                             </p>
                           </div>
                         )}
-
                       </div>
                     );
                   })()}
