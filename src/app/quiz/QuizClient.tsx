@@ -72,6 +72,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   // Typing Mode State
   const [typingIndex, setTypingIndex] = useState<number>(0);
   const [typingInput, setTypingInput] = useState<string>('');
+  const [typingDefInput, setTypingDefInput] = useState<string>('');
   const [isTypingSubmitted, setIsTypingSubmitted] = useState<boolean>(false);
   const [typingCorrectCount, setTypingCorrectCount] = useState<number>(0);
   const [typingHistory, setTypingHistory] = useState<Record<number, boolean>>({});
@@ -338,9 +339,17 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
     if (typingIndex + 1 < filteredStudyTerms.length) {
       setTypingIndex(prev => prev + 1);
       setTypingInput('');
-      setIsTypingSubmitted(false);
+      setTypingDefInput('');
     } else {
-      alert('모든 학습 문항 연습을 완료했습니다! 🎉');
+      alert('모든 학습 문항 타자 연습을 완료했습니다! 🎉');
+    }
+  };
+
+  const handleTypingPrev = () => {
+    if (typingIndex > 0) {
+      setTypingIndex(prev => prev - 1);
+      setTypingInput('');
+      setTypingDefInput('');
     }
   };
 
@@ -978,19 +987,35 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
             </div>
           )}
 
-          {/* MODE 2: QUIZLET TYPING PRACTICE MODE (주관식 타이핑 연습) */}
+          {/* MODE 2: TYPING PRACTICE MODE (타자 연습 모드) */}
           {studyViewMode === 'typing' && (
-            <div style={{ maxWidth: '680px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ maxWidth: '720px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}>
               {filteredStudyTerms.length > 0 && currentTypingTerm ? (
                 <div className="card" style={{ padding: '28px' }}>
-                  {/* Header Progress */}
+                  {/* Header Progress & Prev/Next Buttons */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-                    <span style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--primary)' }}>
-                      연습 {typingIndex + 1} / {filteredStudyTerms.length}
+                    <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--primary)' }}>
+                      타자 연습 {typingIndex + 1} / {filteredStudyTerms.length}
                     </span>
-                    <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#10B981', backgroundColor: '#ECFDF5', padding: '4px 10px', borderRadius: '12px' }}>
-                      맞은 개수: {typingCorrectCount}개
-                    </span>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button
+                        type="button"
+                        onClick={handleTypingPrev}
+                        disabled={typingIndex === 0}
+                        className="btn-secondary"
+                        style={{ padding: '6px 14px', fontSize: '0.8125rem', fontWeight: 700 }}
+                      >
+                        ← 이전
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleTypingNext}
+                        className="btn-primary"
+                        style={{ padding: '6px 16px', fontSize: '0.8125rem', fontWeight: 800 }}
+                      >
+                        {typingIndex + 1 < filteredStudyTerms.length ? '다음 → (Enter)' : '완료 🎉'}
+                      </button>
+                    </div>
                   </div>
 
                   {/* Progress Bar */}
@@ -1005,110 +1030,102 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                     />
                   </div>
 
-                  {/* Question Prompt Box */}
-                  <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', padding: '20px', borderRadius: '10px', marginBottom: '20px' }}>
-                    <h3 style={{ fontSize: '1.125rem', fontWeight: 800, color: '#1E293B', lineHeight: 1.6, margin: 0 }}>
-                      {currentTypingTerm.definition}
-                    </h3>
-                    {currentTypingTerm.options && currentTypingTerm.options.length > 0 && (
-                      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '12px' }}>
-                        {currentTypingTerm.options.map((opt, oIdx) => (
-                          <span key={oIdx} style={{ fontSize: '0.8125rem', backgroundColor: '#FFFFFF', border: '1px solid #CBD5E1', padding: '4px 10px', borderRadius: '6px', color: '#334155' }}>
-                            ● {opt}
-                          </span>
-                        ))}
+                  {/* SECTION 1: TERM / ANSWER TYPING (용어/정답 타자 연습) */}
+                  <div style={{ marginBottom: '24px' }}>
+                    <div style={{ fontSize: '0.8125rem', fontWeight: 800, color: '#0E4A84', marginBottom: '6px' }}>
+                      ✏️ 용어 / 정답 타자 연습
+                    </div>
+                    {/* Target Term Gray Preview Box */}
+                    <div style={{ backgroundColor: '#F1F5F9', border: '1px solid #CBD5E1', padding: '12px 16px', borderRadius: '8px', marginBottom: '8px' }}>
+                      <div style={{ fontSize: '1.0625rem', fontWeight: 800, color: '#475569', letterSpacing: '0.01em', lineHeight: 1.5 }}>
+                        {currentTypingTerm.answer || currentTypingTerm.term}
+                        {currentTypingTerm.englishTerm ? ` (${currentTypingTerm.englishTerm})` : ''}
                       </div>
-                    )}
+                    </div>
+                    <input
+                      type="text"
+                      autoFocus
+                      placeholder={currentTypingTerm.answer || currentTypingTerm.term}
+                      value={typingInput}
+                      onChange={e => setTypingInput(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault();
+                          handleTypingNext();
+                        }
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '14px',
+                        fontSize: '1.0625rem',
+                        fontWeight: 700,
+                        color: '#0F172A',
+                        backgroundColor: '#FFFFFF',
+                        borderColor: 'var(--border)',
+                        borderRadius: '8px',
+                      }}
+                    />
                   </div>
 
-                  {/* Typing Input */}
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                    <div>
-                      {/* Faint Gray Answer Preview to type along */}
-                      <div style={{ backgroundColor: '#F1F5F9', border: '1px solid #E2E8F0', padding: '10px 14px', borderRadius: '8px', marginBottom: '10px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '0.8125rem', fontWeight: 800, color: '#94A3B8', whiteSpace: 'nowrap' }}>정답:</span>
-                        <span style={{ fontSize: '1rem', fontWeight: 800, color: '#64748B', letterSpacing: '0.02em' }}>
-                          {currentTypingTerm.answer || currentTypingTerm.term}
-                          {currentTypingTerm.englishTerm ? ` (${currentTypingTerm.englishTerm})` : ''}
-                        </span>
-                      </div>
-
-                      <input
-                        type="text"
-                        autoFocus
-                        disabled={isTypingSubmitted}
-                        placeholder={currentTypingTerm.answer || currentTypingTerm.term}
-                        value={typingInput}
-                        onChange={e => setTypingInput(e.target.value)}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            if (!isTypingSubmitted) {
-                              if (typingInput.trim()) handleTypingSubmit();
-                            } else {
-                              handleTypingNext();
-                            }
-                          }
-                        }}
-                        style={{
-                          width: '100%',
-                          padding: '14px',
-                          fontSize: '1.0625rem',
-                          fontWeight: 700,
-                          borderColor: isTypingSubmitted
-                            ? typingHistory[typingIndex] ? '#22C55E' : '#EF4444'
-                            : 'var(--border)',
-                          backgroundColor: isTypingSubmitted
-                            ? typingHistory[typingIndex] ? '#F0FDF4' : '#FEF2F2'
-                            : '#FFFFFF',
-                        }}
-                      />
+                  {/* SECTION 2: DEFINITION TYPING (뜻 / 해설 타자 연습) */}
+                  <div style={{ marginBottom: '24px' }}>
+                    <div style={{ fontSize: '0.8125rem', fontWeight: 800, color: '#0E4A84', marginBottom: '6px' }}>
+                      📖 뜻 / 해설 타자 연습
                     </div>
-
-                    {/* Instant Feedback Result */}
-                    {isTypingSubmitted && (
-                      <div>
-                        {typingHistory[typingIndex] ? (
-                          <div style={{ backgroundColor: '#DCFCE7', border: '1px solid #86EFAC', padding: '16px', borderRadius: '8px', color: '#166534' }}>
-                            <div style={{ fontWeight: 800, fontSize: '1.0625rem', marginBottom: '4px' }}>🎉 정답입니다!</div>
-                            <div style={{ fontSize: '0.875rem' }}>
-                              <strong>올바른 답:</strong> {currentTypingTerm.answer || currentTypingTerm.term}
-                            </div>
-                          </div>
-                        ) : (
-                          <div style={{ backgroundColor: '#FEE2E2', border: '1px solid #FCA5A5', padding: '16px', borderRadius: '8px', color: '#991B1B' }}>
-                            <div style={{ fontWeight: 800, fontSize: '1.0625rem', marginBottom: '4px' }}>❌ 오답입니다</div>
-                            <div style={{ fontSize: '0.875rem' }}>
-                              <strong>정답:</strong> <span style={{ fontWeight: 900, color: '#B91C1C' }}>{currentTypingTerm.answer || currentTypingTerm.term}</span>
-                            </div>
-                          </div>
-                        )}
+                    {/* Target Definition Gray Preview Box */}
+                    <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #CBD5E1', padding: '14px 16px', borderRadius: '8px', marginBottom: '8px' }}>
+                      <div style={{ fontSize: '1rem', fontWeight: 700, color: '#64748B', lineHeight: 1.6 }}>
+                        {currentTypingTerm.definition}
                       </div>
-                    )}
-
-                    {/* Action Buttons */}
-                    <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '8px' }}>
-                      {!isTypingSubmitted ? (
-                        <button
-                          type="button"
-                          onClick={handleTypingSubmit}
-                          disabled={!typingInput.trim()}
-                          className="btn-primary"
-                          style={{ width: '100%', padding: '12px', fontSize: '1rem', fontWeight: 800 }}
-                        >
-                          제출 (Enter)
-                        </button>
-                      ) : (
-                        <button
-                          type="button"
-                          onClick={handleTypingNext}
-                          className="btn-accent"
-                          style={{ width: '100%', padding: '12px', fontSize: '1rem', fontWeight: 800 }}
-                        >
-                          {typingIndex + 1 < filteredStudyTerms.length ? '다음 문제 → (Enter)' : '🎉 타이핑 연습 완료'}
-                        </button>
+                      {currentTypingTerm.options && currentTypingTerm.options.length > 0 && (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '10px' }}>
+                          {currentTypingTerm.options.map((opt, oIdx) => (
+                            <span key={oIdx} style={{ fontSize: '0.8125rem', backgroundColor: '#FFFFFF', border: '1px solid #CBD5E1', padding: '3px 8px', borderRadius: '6px', color: '#475569' }}>
+                              ● {opt}
+                            </span>
+                          ))}
+                        </div>
                       )}
                     </div>
+                    <textarea
+                      rows={3}
+                      placeholder={currentTypingTerm.definition}
+                      value={typingDefInput}
+                      onChange={e => setTypingDefInput(e.target.value)}
+                      onKeyDown={e => {
+                        if (e.key === 'Enter' && !e.shiftKey) {
+                          e.preventDefault();
+                          handleTypingNext();
+                        }
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '14px',
+                        fontSize: '0.95rem',
+                        fontWeight: 600,
+                        color: '#0F172A',
+                        backgroundColor: '#FFFFFF',
+                        borderColor: 'var(--border)',
+                        borderRadius: '8px',
+                        lineHeight: 1.6,
+                        resize: 'vertical',
+                      }}
+                    />
+                  </div>
+
+                  {/* Action / Navigation Bar */}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '16px', borderTop: '1px solid #E2E8F0', paddingTop: '16px' }}>
+                    <span style={{ fontSize: '0.8125rem', color: '#64748B', fontWeight: 600 }}>
+                      💡 타자를 다 치지 않아도 <kbd style={{ background: '#E2E8F0', padding: '2px 6px', borderRadius: '4px', color: '#334155' }}>Enter</kbd>를 누르면 언제든지 다음 문제로 넘어갑니다.
+                    </span>
+                    <button
+                      type="button"
+                      onClick={handleTypingNext}
+                      className="btn-accent"
+                      style={{ padding: '12px 24px', fontSize: '0.95rem', fontWeight: 800 }}
+                    >
+                      {typingIndex + 1 < filteredStudyTerms.length ? '다음 항목으로 → (Enter)' : '🎉 타자 연습 완료'}
+                    </button>
                   </div>
                 </div>
               ) : (
