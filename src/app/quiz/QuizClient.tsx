@@ -11,6 +11,9 @@ interface NursingTerm {
   definition: string;
   example?: string | null;
   category?: string | null;
+  itemType?: string | null;
+  options?: string[];
+  answer?: string | null;
 }
 
 interface QuizClientProps {
@@ -64,7 +67,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   const [quizCategory, setQuizCategory] = useState<string>('all');
   const [quizType, setQuizType] = useState<'def_to_term' | 'term_to_def' | 'multiple_choice'>('def_to_term');
   const [quizOrder, setQuizOrder] = useState<'shuffle' | 'normal'>('shuffle');
-  const [quizCount, setQuizCount] = useState<number | 'all'>(10);
+  const [quizCount, setQuizCount] = useState<number | 'all'>('all');
 
   // Active Quiz State
   const [quizQuestions, setQuizQuestions] = useState<NursingTerm[]>([]);
@@ -138,7 +141,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
     });
 
     if (pool.length === 0) {
-      alert('조건에 맞는 용어가 없습니다.');
+      alert('조건에 맞는 문항이 없습니다.');
       return;
     }
 
@@ -151,9 +154,12 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
     }
 
     const optionsMap: Record<number, string[]> = {};
-    if (quizType === 'multiple_choice') {
-      const allPossibleTerms = termsList.map(t => t.term);
-      pool.forEach((q, idx) => {
+    const allPossibleTerms = termsList.map(t => t.term);
+
+    pool.forEach((q, idx) => {
+      if (q.options && q.options.length > 0) {
+        optionsMap[idx] = q.options;
+      } else {
         const correct = q.term;
         const distractors = allPossibleTerms
           .filter(t => t !== correct)
@@ -161,8 +167,8 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
           .slice(0, 3);
         const fourChoices = [correct, ...distractors].sort(() => Math.random() - 0.5);
         optionsMap[idx] = fourChoices;
-      });
-    }
+      }
+    });
 
     setMcOptionsMap(optionsMap);
     setQuizQuestions(pool);
@@ -180,6 +186,11 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   const checkAnswerCorrectness = (input: string, term: NursingTerm) => {
     const cleanInput = input.trim().toLowerCase().replace(/\s+/g, '');
     if (!cleanInput) return false;
+
+    if (term.answer) {
+      const cleanAnswer = term.answer.trim().toLowerCase().replace(/\s+/g, '');
+      if (cleanInput === cleanAnswer) return true;
+    }
 
     const cleanKorean = term.term.trim().toLowerCase().replace(/\s+/g, '');
     const cleanEng = term.englishTerm?.trim().toLowerCase().replace(/\s+/g, '') || '';
@@ -213,7 +224,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
     setSelectedChoiceIndex(choiceIndex);
     setUserAnswer(choiceText);
 
-    const isCorrect = choiceText.trim().toLowerCase() === currentQuestion.term.trim().toLowerCase();
+    const isCorrect = checkAnswerCorrectness(choiceText, currentQuestion);
 
     const resultItem = {
       term: currentQuestion,
@@ -416,7 +427,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                 fontWeight: 700,
               }}
             >
-              용어 목록
+              문제 / 용어 목록
             </button>
             <button
               onClick={() => setActiveTab('quiz_setup')}
@@ -435,14 +446,14 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
         </div>
       </div>
 
-      {/* VIEW 1: 용어 목록 (Study Mode) */}
+      {/* VIEW 1: 용어 / 문제 목록 (Study Mode) */}
       {activeTab === 'study' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* Controls & Filters */}
           <div className="card" style={{ padding: '20px' }}>
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'space-between', alignItems: 'center' }}>
               {/* Subject Tabs */}
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--sub-text)' }}>과목:</span>
                 {subjects.map(subj => (
                   <button
@@ -466,7 +477,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                     className="btn-primary"
                     style={{ fontSize: '0.8125rem' }}
                   >
-                    + 새 용어 추가
+                    + 새 문항 추가
                   </button>
                 )}
 
@@ -480,7 +491,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                     borderColor: hideDefinition ? '#F59E0B' : 'var(--border)',
                   }}
                 >
-                  {hideDefinition ? '👁️ 뜻 보이기' : '🙈 뜻 가리기'}
+                  {hideDefinition ? '👁️ 정답/뜻 보이기' : '🙈 정답/뜻 가리기'}
                 </button>
               </div>
             </div>
@@ -488,7 +499,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
             {/* Category Sub-Filters & Search */}
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', marginTop: '16px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--sub-text)' }}>단원:</span>
+                <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--sub-text)' }}>카테고리:</span>
                 <button
                   onClick={() => setStudyCategory('all')}
                   className={studyCategory === 'all' ? 'btn-accent' : 'btn-outline'}
@@ -511,7 +522,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
               <div style={{ marginLeft: 'auto', flex: '1 1 200px', maxWidth: '300px' }}>
                 <input
                   type="text"
-                  placeholder="🔍 용어 검색..."
+                  placeholder="🔍 검색..."
                   value={searchTerm}
                   onChange={e => setSearchTerm(e.target.value)}
                   style={{ width: '100%', fontSize: '0.84rem' }}
@@ -520,12 +531,13 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
             </div>
           </div>
 
-          {/* Terms Grid List */}
+          {/* Terms / Exam Questions Grid List */}
           {filteredStudyTerms.length > 0 ? (
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '16px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '16px' }}>
               {filteredStudyTerms.map((t, idx) => {
                 const isRevealed = revealedCardIds[t.id];
                 const isHidden = hideDefinition && !isRevealed;
+                const isStructuredQuestion = t.options && t.options.length > 0;
 
                 return (
                   <div
@@ -536,7 +548,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                       flexDirection: 'column',
                       justifyContent: 'space-between',
                       borderLeft: '4px solid var(--primary)',
-                      padding: '16px',
+                      padding: '18px',
                     }}
                   >
                     <div>
@@ -563,12 +575,23 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                         )}
                       </div>
 
-                      <h3 style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '4px' }}>
+                      <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '8px', lineHeight: 1.5 }}>
                         {t.term}
                       </h3>
                       {t.englishTerm && (
                         <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--sub-text)', marginBottom: '10px' }}>
                           {t.englishTerm}
+                        </div>
+                      )}
+
+                      {/* Options rendering for structured multiple-choice / true-false items */}
+                      {isStructuredQuestion && (
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '12px' }}>
+                          {t.options!.map((opt, oIdx) => (
+                            <div key={oIdx} style={{ fontSize: '0.84rem', color: '#334155', backgroundColor: '#F8FAFC', padding: '8px 12px', borderRadius: '6px', border: '1px solid #E2E8F0' }}>
+                              ● {opt}
+                            </div>
+                          ))}
                         </div>
                       )}
 
@@ -579,23 +602,30 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                           }
                         }}
                         style={{
-                          backgroundColor: isHidden ? '#F1F5F9' : '#F8FAFC',
+                          backgroundColor: isHidden ? '#F1F5F9' : (isStructuredQuestion ? '#F0FDF4' : '#F8FAFC'),
                           padding: '12px',
                           borderRadius: '6px',
-                          border: '1px solid #E2E8F0',
-                          minHeight: '60px',
+                          border: `1px solid ${isHidden ? '#E2E8F0' : (isStructuredQuestion ? '#86EFAC' : '#E2E8F0')}`,
+                          minHeight: '48px',
                           cursor: hideDefinition ? 'pointer' : 'default',
                           transition: 'all 0.2s',
                         }}
                       >
                         {isHidden ? (
                           <div style={{ textAlign: 'center', color: '#64748B', fontSize: '0.84rem', fontWeight: 600 }}>
-                            🔒 클릭하여 뜻 확인
+                            🔒 클릭하여 정답/뜻 확인
                           </div>
                         ) : (
-                          <p style={{ fontSize: '0.875rem', color: '#1E293B', lineHeight: 1.5, margin: 0 }}>
-                            {t.definition}
-                          </p>
+                          <div>
+                            {t.answer && (
+                              <div style={{ fontSize: '0.875rem', fontWeight: 800, color: '#166534', marginBottom: '4px' }}>
+                                정답: {t.answer}
+                              </div>
+                            )}
+                            <p style={{ fontSize: '0.875rem', color: '#1E293B', lineHeight: 1.5, margin: 0 }}>
+                              {t.definition}
+                            </p>
+                          </div>
                         )}
                       </div>
                     </div>
@@ -605,7 +635,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
             </div>
           ) : (
             <div className="card" style={{ padding: '40px', textAlign: 'center', color: 'var(--sub-text)' }}>
-              검색 조건에 해당되는 용어가 없습니다.
+              검색 조건에 해당되는 항목이 없습니다.
             </div>
           )}
         </div>
@@ -645,7 +675,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
             {/* 2. Category */}
             <div>
               <label style={{ fontSize: '0.875rem', fontWeight: 700, display: 'block', marginBottom: '8px' }}>
-                2. 단원 선택
+                2. 카테고리 선택
               </label>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 <button
@@ -673,26 +703,9 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
             {/* 3. Quiz Type */}
             <div>
               <label style={{ fontSize: '0.875rem', fontWeight: 700, display: 'block', marginBottom: '8px' }}>
-                3. 문제 유형 선택
+                3. 문제 풀이 방식
               </label>
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
-                <button
-                  type="button"
-                  onClick={() => setQuizType('def_to_term')}
-                  style={{
-                    padding: '14px',
-                    borderRadius: '8px',
-                    border: quizType === 'def_to_term' ? '2px solid var(--primary)' : '1px solid var(--border)',
-                    backgroundColor: quizType === 'def_to_term' ? '#EFF6FF' : '#FFFFFF',
-                    color: quizType === 'def_to_term' ? 'var(--primary)' : 'var(--text)',
-                    fontWeight: 700,
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <div style={{ fontSize: '0.9375rem', marginBottom: '4px' }}>✍️ 뜻 보고 용어 쓰기</div>
-                </button>
-
                 <button
                   type="button"
                   onClick={() => setQuizType('multiple_choice')}
@@ -707,24 +720,30 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                     cursor: 'pointer',
                   }}
                 >
-                  <div style={{ fontSize: '0.9375rem', marginBottom: '4px' }}>🎯 객관식 (4지선다)</div>
+                  <div style={{ fontSize: '0.9375rem', marginBottom: '4px' }}>🎯 객관식 / 선택형 퀴즈</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--sub-text)', fontWeight: 400 }}>
+                    제시된 보기 중에서 올바른 정답을 선택합니다.
+                  </div>
                 </button>
 
                 <button
                   type="button"
-                  onClick={() => setQuizType('term_to_def')}
+                  onClick={() => setQuizType('def_to_term')}
                   style={{
                     padding: '14px',
                     borderRadius: '8px',
-                    border: quizType === 'term_to_def' ? '2px solid var(--primary)' : '1px solid var(--border)',
-                    backgroundColor: quizType === 'term_to_def' ? '#EFF6FF' : '#FFFFFF',
-                    color: quizType === 'term_to_def' ? 'var(--primary)' : 'var(--text)',
+                    border: quizType === 'def_to_term' ? '2px solid var(--primary)' : '1px solid var(--border)',
+                    backgroundColor: quizType === 'def_to_term' ? '#EFF6FF' : '#FFFFFF',
+                    color: quizType === 'def_to_term' ? 'var(--primary)' : 'var(--text)',
                     fontWeight: 700,
                     textAlign: 'left',
                     cursor: 'pointer',
                   }}
                 >
-                  <div style={{ fontSize: '0.9375rem', marginBottom: '4px' }}>📖 용어 보고 뜻 쓰기</div>
+                  <div style={{ fontSize: '0.9375rem', marginBottom: '4px' }}>✍️ 주관식 단답형 퀴즈</div>
+                  <div style={{ fontSize: '0.75rem', color: 'var(--sub-text)', fontWeight: 400 }}>
+                    질문 및 정의를 확인하고 직접 답을 작성합니다.
+                  </div>
                 </button>
               </div>
             </div>
@@ -795,7 +814,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
 
       {/* VIEW 3: 퀴즈 풀이 (Quiz Play Mode) */}
       {activeTab === 'quiz_play' && currentQuestion && (
-        <div className="card" style={{ maxWidth: '700px', margin: '0 auto', width: '100%', padding: '28px' }}>
+        <div className="card" style={{ maxWidth: '720px', margin: '0 auto', width: '100%', padding: '28px' }}>
           {/* Progress Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
             <span className="badge" style={{ backgroundColor: '#EFF6FF', color: '#1E40AF', fontSize: '0.8125rem' }}>
@@ -820,23 +839,24 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
 
           {/* Question Box */}
           <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', padding: '24px', borderRadius: '10px', marginBottom: '24px' }}>
-            <h3 style={{ fontSize: quizType === 'term_to_def' ? '1.375rem' : '1.0625rem', fontWeight: 800, color: '#1E293B', lineHeight: 1.6, margin: 0 }}>
-              {quizType === 'term_to_def' ? currentQuestion.term : currentQuestion.definition}
+            <h3 style={{ fontSize: '1.125rem', fontWeight: 800, color: '#1E293B', lineHeight: 1.6, margin: 0 }}>
+              {currentQuestion.term}
             </h3>
 
-            {quizType === 'term_to_def' && currentQuestion.englishTerm && (
-              <div style={{ fontSize: '0.875rem', color: 'var(--sub-text)', marginTop: '4px' }}>
+            {currentQuestion.englishTerm && (
+              <div style={{ fontSize: '0.875rem', color: 'var(--sub-text)', marginTop: '6px' }}>
                 ({currentQuestion.englishTerm})
               </div>
             )}
           </div>
 
-          {/* MULTIPLE CHOICE MODE VIEW */}
-          {quizType === 'multiple_choice' ? (
+          {/* MULTIPLE CHOICE / STRUCTURED OPTIONS VIEW */}
+          {(currentQuestion.options && currentQuestion.options.length > 0) || quizType === 'multiple_choice' ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {mcOptionsMap[currentIndex]?.map((choiceText, cIdx) => {
+              {(mcOptionsMap[currentIndex] || currentQuestion.options || []).map((choiceText, cIdx) => {
                 const isSelected = selectedChoiceIndex === cIdx;
-                const isCorrectChoice = choiceText.trim().toLowerCase() === currentQuestion.term.trim().toLowerCase();
+                const targetAnswer = currentQuestion.answer || currentQuestion.term;
+                const isCorrectChoice = choiceText.trim().toLowerCase() === targetAnswer.trim().toLowerCase();
 
                 let btnBg = '#FFFFFF';
                 let btnBorder = '1px solid var(--border)';
@@ -892,6 +912,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                         justifyContent: 'center',
                         fontSize: '0.75rem',
                         fontWeight: 800,
+                        flexShrink: 0,
                       }}
                     >
                       {cIdx + 1}
@@ -902,7 +923,10 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
               })}
 
               {isAnswerSubmitted && (
-                <div style={{ marginTop: '16px' }}>
+                <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div style={{ fontSize: '0.875rem', color: '#475569', backgroundColor: '#F1F5F9', padding: '14px', borderRadius: '8px', border: '1px solid #CBD5E1' }}>
+                    <strong>해설/뜻:</strong> {currentQuestion.definition}
+                  </div>
                   <button
                     type="button"
                     onClick={handleNextQuestion}
@@ -937,7 +961,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
               </div>
 
               {/* Hint Section */}
-              {quizType === 'def_to_term' && !isAnswerSubmitted && (
+              {!isAnswerSubmitted && (
                 <div>
                   <button
                     type="button"
@@ -948,7 +972,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                   </button>
                   {showHint && (
                     <div style={{ fontSize: '0.8125rem', color: '#059669', backgroundColor: '#ECFDF5', padding: '8px 12px', borderRadius: '6px', marginTop: '6px', border: '1px solid #A7F3D0' }}>
-                      <strong>힌트:</strong> 첫 글자: [{currentQuestion.term[0]}]{currentQuestion.englishTerm ? ` / 영문: ${currentQuestion.englishTerm}` : ''}
+                      <strong>힌트:</strong> 첫 글자: [{(currentQuestion.answer || currentQuestion.term)[0]}]{currentQuestion.englishTerm ? ` / 영문: ${currentQuestion.englishTerm}` : ''}
                     </div>
                   )}
                 </div>
@@ -961,17 +985,17 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                     <div style={{ backgroundColor: '#DCFCE7', border: '1px solid #86EFAC', padding: '16px', borderRadius: '8px', color: '#166534' }}>
                       <div style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '4px' }}>🎉 정답입니다!</div>
                       <div style={{ fontSize: '0.875rem' }}>
-                        <strong>정식 용어:</strong> {currentQuestion.term} {currentQuestion.englishTerm && `(${currentQuestion.englishTerm})`}
+                        <strong>정식 정답:</strong> {currentQuestion.answer || currentQuestion.term}
                       </div>
                     </div>
                   ) : (
                     <div style={{ backgroundColor: '#FEE2E2', border: '1px solid #FCA5A5', padding: '16px', borderRadius: '8px', color: '#991B1B' }}>
                       <div style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '4px' }}>❌ 오답입니다</div>
                       <div style={{ fontSize: '0.875rem', marginBottom: '6px' }}>
-                        <strong>정답:</strong> <span style={{ fontWeight: 800, color: '#B91C1C' }}>{currentQuestion.term}</span> {currentQuestion.englishTerm && `(${currentQuestion.englishTerm})`}
+                        <strong>정답:</strong> <span style={{ fontWeight: 800, color: '#B91C1C' }}>{currentQuestion.answer || currentQuestion.term}</span>
                       </div>
                       <div style={{ fontSize: '0.8125rem', color: '#7F1D1D' }}>
-                        <strong>뜻:</strong> {currentQuestion.definition}
+                        <strong>뜻/해설:</strong> {currentQuestion.definition}
                       </div>
                     </div>
                   )}
@@ -1100,7 +1124,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                     </div>
 
                     <p style={{ fontSize: '0.875rem', color: '#475569', marginBottom: '10px', lineHeight: 1.5 }}>
-                      <strong>뜻:</strong> {res.term.definition}
+                      <strong>정답/해설:</strong> {res.term.answer || res.term.term} — {res.term.definition}
                     </p>
 
                     <div style={{ fontSize: '0.8125rem', backgroundColor: '#FFFFFF', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border)' }}>
@@ -1129,7 +1153,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
         >
           <div className="card" style={{ maxWidth: '550px', width: '100%', padding: '24px' }}>
             <h3 style={{ fontSize: '1.125rem', fontWeight: 800, marginBottom: '16px', color: 'var(--primary)' }}>
-              {editingTerm ? '✏️ 용어 및 정답 수정' : '➕ 새 전공 용어 추가'}
+              {editingTerm ? '✏️ 문항 수정' : '➕ 새 문항 추가'}
             </h3>
             <form onSubmit={handleSaveTerm} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
@@ -1140,17 +1164,17 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                     required
                     value={formSubject}
                     onChange={e => setFormSubject(e.target.value)}
-                    placeholder="예: 간호관리학"
+                    placeholder="예: 여성의부인과적장애와간호"
                     style={{ width: '100%' }}
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>단원</label>
+                  <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>카테고리</label>
                   <input
                     type="text"
                     value={formCategory}
                     onChange={e => setFormCategory(e.target.value)}
-                    placeholder="예: 퀴즈 1"
+                    placeholder="예: 중간고사 복습 퀴즈"
                     style={{ width: '100%' }}
                   />
                 </div>
@@ -1158,18 +1182,18 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>용어명 (한글) *</label>
+                  <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>용어/질문 *</label>
                   <input
                     type="text"
                     required
                     value={formTerm}
                     onChange={e => setFormTerm(e.target.value)}
-                    placeholder="용어 입력"
+                    placeholder="용어 또는 질문 내용"
                     style={{ width: '100%' }}
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>영문명/약어</label>
+                  <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>영문/약어</label>
                   <input
                     type="text"
                     value={formEngTerm}
@@ -1181,13 +1205,13 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
               </div>
 
               <div>
-                <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>뜻 / 정의 *</label>
+                <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>정답 및 해설 *</label>
                 <textarea
                   rows={4}
                   required
                   value={formDefinition}
                   onChange={e => setFormDefinition(e.target.value)}
-                  placeholder="용어의 정의 작성"
+                  placeholder="정답 및 상세 해설 작성"
                   style={{ width: '100%' }}
                 />
               </div>

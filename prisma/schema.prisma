@@ -473,12 +473,15 @@ enum ReadinessStatus {
 
 model NursingTerm {
   id           String   @id @default(cuid())
-  subject      String   // 과목 (예: 간호관리학, 성인간호학)
-  term         String   // 용어 (예: 기획)
-  englishTerm  String?  // 영문 용어/약어 (예: Planning)
-  definition   String   // 뜻 / 정의
+  subject      String   // 과목 (예: 간호관리학, 여성의부인과적장애와간호)
+  term         String   // 용어 또는 문제 질문 (Question)
+  englishTerm  String?  // 영문 용어/약어
+  definition   String   // 뜻/정의 또는 문제 설명/해설/번역
   example      String?  // 비고/예시
-  category     String?  // 세부 카테고리 (예: 기획, 조직, 인사, 지휘, 통제, 윤리)
+  category     String?  // 세부 카테고리 (예: 퀴즈 1, 중간고사 복습 퀴즈)
+  itemType     String?  @default("TERM") // "TERM" | "MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER"
+  options      String[] @default([]) // 객관식 보기도 포함
+  answer       String?  // 정답
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
 }
