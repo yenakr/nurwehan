@@ -86,14 +86,24 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   const [isAutoPlay, setIsAutoPlay] = useState<boolean>(false);
   const [autoPlayIntervalSec, setAutoPlayIntervalSec] = useState<number>(4);
 
-  const speakText = useCallback((text: string) => {
-    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+  const speakText = useCallback((text: string, onEnd?: () => void) => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
+      if (onEnd) onEnd();
+      return;
+    }
     window.speechSynthesis.cancel();
-    if (!text) return;
+    if (!text) {
+      if (onEnd) onEnd();
+      return;
+    }
     const utterance = new SpeechSynthesisUtterance(text);
     const isEng = /^[A-Za-z0-9\s.,?!'()-]+$/.test(text.trim());
     utterance.lang = isEng ? 'en-US' : 'ko-KR';
     utterance.rate = ttsRate;
+    if (onEnd) {
+      utterance.onend = () => onEnd();
+      utterance.onerror = () => onEnd();
+    }
     window.speechSynthesis.speak(utterance);
   }, [ttsRate]);
 
@@ -190,9 +200,9 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
     }
   }, [typingIndex, studyViewMode, autoTTS, filteredStudyTerms, speakText]);
 
-  // Auto TTS effect for Flashcard Mode
+  // Auto TTS effect for Flashcard Mode (manual mode when auto-play is OFF)
   useEffect(() => {
-    if (studyViewMode === 'flashcard' && autoTTS && filteredStudyTerms[flashcardIndex]) {
+    if (studyViewMode === 'flashcard' && autoTTS && !isAutoPlay && filteredStudyTerms[flashcardIndex]) {
       const card = filteredStudyTerms[flashcardIndex];
       const showTermOnFront = flashcardDirection === 'term_first';
       const isFront = !isCardFlipped;
@@ -201,24 +211,53 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
         : card.definition;
       speakText(text);
     }
-  }, [flashcardIndex, isCardFlipped, flashcardDirection, studyViewMode, autoTTS, filteredStudyTerms, speakText]);
+  }, [flashcardIndex, isCardFlipped, flashcardDirection, studyViewMode, autoTTS, isAutoPlay, filteredStudyTerms, speakText]);
 
-  // Auto-play timer effect for Flashcard mode
+  // Synchronized Auto-play effect for Flashcard mode (waits for TTS completion)
   useEffect(() => {
     if (activeTab !== 'study' || studyViewMode !== 'flashcard' || !isAutoPlay) return;
     if (filteredStudyTerms.length === 0) return;
 
-    const timer = setTimeout(() => {
+    let timerId: NodeJS.Timeout | null = null;
+    let cancelled = false;
+
+    const currentCard = filteredStudyTerms[flashcardIndex];
+    if (!currentCard) return;
+
+    const showTermOnFront = flashcardDirection === 'term_first';
+    const isFront = !isCardFlipped;
+    const text = (isFront === showTermOnFront)
+      ? (currentCard.answer || currentCard.term)
+      : currentCard.definition;
+
+    const advanceNext = () => {
+      if (cancelled) return;
       if (!isCardFlipped) {
         setIsCardFlipped(true);
       } else {
         setIsCardFlipped(false);
         setFlashcardIndex(prev => (prev + 1) % filteredStudyTerms.length);
       }
-    }, autoPlayIntervalSec * 1000);
+    };
 
-    return () => clearTimeout(timer);
-  }, [activeTab, studyViewMode, isAutoPlay, isCardFlipped, flashcardIndex, autoPlayIntervalSec, filteredStudyTerms.length]);
+    if (autoTTS) {
+      speakText(text, () => {
+        if (!cancelled) {
+          timerId = setTimeout(advanceNext, 1200); // 1.2s buffer pause after speech finishes
+        }
+      });
+    } else {
+      timerId = setTimeout(advanceNext, autoPlayIntervalSec * 1000);
+    }
+
+    return () => {
+      cancelled = true;
+      if (timerId) clearTimeout(timerId);
+      if (typeof window !== 'undefined' && 'speechSynthesis' in window) {
+        window.speechSynthesis.cancel();
+      }
+    };
+  }, [activeTab, studyViewMode, isAutoPlay, isCardFlipped, flashcardIndex, autoPlayIntervalSec, autoTTS, flashcardDirection, filteredStudyTerms, speakText]);
 
   // Keyboard navigation for Flashcard mode (Space/Enter to flip, Arrow/Enter to next)
   useEffect(() => {
