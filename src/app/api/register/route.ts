@@ -44,7 +44,7 @@ export async function POST(request: Request) {
         phone,
         password: hashedPassword,
         role: 'STUDENT',
-        approvalStatus: 'APPROVED',
+        approvalStatus: 'PENDING',
       },
     });
 

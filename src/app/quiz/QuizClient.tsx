@@ -25,32 +25,6 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   const isAdmin = isAdminRole(user?.role);
   const [termsList, setTermsList] = useState<NursingTerm[]>(initialTerms);
 
-  // Passcode Lock State (1225)
-  const [isPasscodeUnlocked, setIsPasscodeUnlocked] = useState<boolean>(false);
-  const [passcodeInput, setPasscodeInput] = useState<string>('');
-  const [passcodeError, setPasscodeError] = useState<boolean>(false);
-
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      const unlocked = sessionStorage.getItem('quiz_passcode_unlocked');
-      if (unlocked === 'true') {
-        setIsPasscodeUnlocked(true);
-      }
-    }
-  }, []);
-
-  const handleVerifyPasscode = (e?: React.FormEvent) => {
-    if (e) e.preventDefault();
-    if (passcodeInput.trim() === '1225') {
-      setIsPasscodeUnlocked(true);
-      if (typeof window !== 'undefined') {
-        sessionStorage.setItem('quiz_passcode_unlocked', 'true');
-      }
-      setPasscodeError(false);
-    } else {
-      setPasscodeError(true);
-    }
-  };
 
   // Navigation tab: 'study' | 'quiz_setup' | 'quiz_play' | 'quiz_result'
   const [activeTab, setActiveTab] = useState<'study' | 'quiz_setup' | 'quiz_play' | 'quiz_result'>('study');
@@ -808,47 +782,59 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   const scorePercent = totalQuizCount > 0 ? Math.round((correctCount / totalQuizCount) * 100) : 0;
   const wrongResults = quizResults.filter(r => !(r.overrideCorrect !== undefined ? r.overrideCorrect : r.isCorrect));
 
-  // PASSCODE LOCK SCREEN (1225)
-  if (!isPasscodeUnlocked) {
+  // USER AUTHENTICATION & APPROVAL CHECK
+  if (!user) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', padding: '20px' }}>
-        <div className="card" style={{ maxWidth: '380px', width: '100%', padding: '32px', textAlign: 'center' }}>
-          <div style={{ fontSize: '2.5rem', marginBottom: '12px' }}>🔒</div>
-          <h2 style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--primary)', marginBottom: '8px', letterSpacing: '1px' }}>
-            QUIZ
+        <div className="card" style={{ maxWidth: '420px', width: '100%', padding: '36px 28px', textAlign: 'center' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🔒</div>
+          <h2 style={{ fontSize: '1.375rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '12px' }}>
+            로그인이 필요한 서비스입니다
           </h2>
-          <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)', marginBottom: '24px' }}>
-            비밀번호를 입력하세요.
+          <p style={{ fontSize: '0.9375rem', color: 'var(--sub-text)', marginBottom: '28px', lineHeight: 1.6 }}>
+            퀴즈 및 단어장 서비스를 이용하시려면 먼저 로그인해 주세요.
           </p>
+          <a
+            href="/login"
+            className="btn-primary"
+            style={{ display: 'inline-block', width: '100%', padding: '14px', fontSize: '1rem', fontWeight: 700, textDecoration: 'none', textAlign: 'center', borderRadius: '8px' }}
+          >
+            로그인하러 가기
+          </a>
+        </div>
+      </div>
+    );
+  }
 
-          <form onSubmit={handleVerifyPasscode} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            <input
-              type="password"
-              placeholder="비밀번호 입력"
-              value={passcodeInput}
-              onChange={(e) => {
-                setPasscodeInput(e.target.value);
-                setPasscodeError(false);
-              }}
-              style={{
-                width: '100%',
-                padding: '12px',
-                fontSize: '1rem',
-                textAlign: 'center',
-                letterSpacing: '4px',
-                borderColor: passcodeError ? '#EF4444' : 'var(--border)'
-              }}
-              autoFocus
-            />
-            {passcodeError && (
-              <div style={{ color: '#EF4444', fontSize: '0.8125rem', fontWeight: 600 }}>
-                비밀번호가 올바르지 않습니다.
-              </div>
-            )}
-            <button type="submit" className="btn-primary" style={{ width: '100%', padding: '12px', fontSize: '0.9375rem', fontWeight: 700 }}>
-              확인
-            </button>
-          </form>
+  const isApproved = user.approvalStatus === 'APPROVED' || isAdmin;
+  if (!isApproved) {
+    return (
+      <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', padding: '20px' }}>
+        <div className="card" style={{ maxWidth: '440px', width: '100%', padding: '36px 28px', textAlign: 'center' }}>
+          <div style={{ fontSize: '3rem', marginBottom: '16px' }}>⏳</div>
+          <h2 style={{ fontSize: '1.375rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '12px' }}>
+            회원가입 승인 대기 중입니다
+          </h2>
+          <p style={{ fontSize: '0.9375rem', color: 'var(--sub-text)', marginBottom: '28px', lineHeight: 1.6 }}>
+            현재 계정이 승인 대기(또는 미승인) 상태입니다.<br />
+            관리자의 승인이 완료된 후 퀴즈 서비스를 이용하실 수 있습니다.
+          </p>
+          <div style={{ display: 'flex', gap: '12px' }}>
+            <a
+              href="/mypage"
+              className="btn-outline"
+              style={{ flex: 1, padding: '12px', fontSize: '0.9375rem', fontWeight: 700, textDecoration: 'none', textAlign: 'center', borderRadius: '8px' }}
+            >
+              마이페이지
+            </a>
+            <a
+              href="/"
+              className="btn-primary"
+              style={{ flex: 1, padding: '12px', fontSize: '0.9375rem', fontWeight: 700, textDecoration: 'none', textAlign: 'center', borderRadius: '8px' }}
+            >
+              메인으로
+            </a>
+          </div>
         </div>
       </div>
     );
