@@ -15,7 +15,9 @@ export default async function AdminUsersPage() {
 
   const users = await prisma.user.findMany({
     where: {
-      role: 'STUDENT'
+      role: {
+        notIn: ['ADMIN', 'SUPER_ADMIN']
+      }
     },
     include: {
       restrictions: {

@@ -9,6 +9,7 @@ interface Props {
   initialParticipants: any[];
   initialSkills: any[];
   initialApplications: any[];
+  pendingUsersCount?: number;
   selectedDate: string;
 }
 
@@ -17,6 +18,7 @@ export default function AdminDashboardClient({
   initialParticipants,
   initialSkills,
   initialApplications,
+  pendingUsersCount = 0,
   selectedDate
 }: Props) {
   const [activeTab, setActiveTab] = useState('schedules');
@@ -26,7 +28,74 @@ export default function AdminDashboardClient({
 
   return (
     <div className="dashboard-container">
+      {pendingUsersCount > 0 && (
+        <div
+          style={{
+            backgroundColor: '#FEF2F2',
+            border: '1px solid #FECACA',
+            borderRadius: '16px',
+            padding: '20px 24px',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            gap: '16px',
+            boxShadow: '0 4px 12px rgba(239, 68, 68, 0.08)',
+            flexWrap: 'wrap'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+            <span style={{ fontSize: '1.75rem' }}>⏳</span>
+            <div>
+              <div style={{ fontWeight: 800, color: '#991B1B', fontSize: '1.0625rem', marginBottom: '4px' }}>
+                회원가입 승인 대기중인 학생이 {pendingUsersCount}명 있습니다!
+              </div>
+              <div style={{ fontSize: '0.875rem', color: '#B91C1C' }}>
+                관리자가 가입을 승인해야 학생이 퀴즈 및 서비스를 정상적으로 이용할 수 있습니다.
+              </div>
+            </div>
+          </div>
+          <button
+            onClick={() => router.push('/admin/users?tab=pending')}
+            style={{
+              backgroundColor: '#DC2626',
+              color: 'white',
+              border: 'none',
+              padding: '10px 20px',
+              borderRadius: '10px',
+              fontWeight: 800,
+              fontSize: '0.9375rem',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              boxShadow: '0 2px 6px rgba(220, 38, 38, 0.25)'
+            }}
+          >
+            가입 승인하러 가기 →
+          </button>
+        </div>
+      )}
+
       <div className="tab-menu">
+        <button 
+          onClick={() => router.push('/admin/users')}
+          style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+        >
+          👥 학생 관리 & 가입 승인
+          {pendingUsersCount > 0 && (
+            <span
+              style={{
+                backgroundColor: '#EF4444',
+                color: '#FFFFFF',
+                borderRadius: '12px',
+                padding: '2px 8px',
+                fontSize: '0.75rem',
+                fontWeight: 800,
+                lineHeight: 1,
+              }}
+            >
+              {pendingUsersCount}건 대기
+            </span>
+          )}
+        </button>
         <button 
           className={activeTab === 'schedules' ? 'active' : ''} 
           onClick={() => setActiveTab('schedules')}

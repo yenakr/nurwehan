@@ -15,7 +15,8 @@ export default async function AdminPage() {
 
   const [
     skills,
-    allApplications
+    allApplications,
+    pendingUsersCount
   ] = await Promise.all([
     // 1. Skills and supplies
     prisma.skill.findMany({
@@ -31,6 +32,10 @@ export default async function AdminPage() {
         participants: true
       },
       orderBy: { createdAt: 'desc' }
+    }),
+    // 3. Count of users pending approval
+    prisma.user.count({
+      where: { approvalStatus: 'PENDING' }
     })
   ]);
 
@@ -48,6 +53,7 @@ export default async function AdminPage() {
           initialParticipants={[]}
           initialSkills={skills}
           initialApplications={allApplications as any}
+          pendingUsersCount={pendingUsersCount}
           selectedDate={new Date().toISOString().split('T')[0]}
         />
       </div>
