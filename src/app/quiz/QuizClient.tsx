@@ -58,6 +58,8 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   // Term filters for Study Mode
   const [studySubject, setStudySubject] = useState<string>('간호관리학');
   const [studyCategory, setStudyCategory] = useState<string>('all');
+  // Term vs Exam Quiz filter for Study Mode
+  const [contentTypeFilter, setContentTypeFilter] = useState<'all' | 'TERM' | 'MULTIPLE_CHOICE'>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [hideDefinition, setHideDefinition] = useState<boolean>(false);
   const [revealedCardIds, setRevealedCardIds] = useState<Record<string, boolean>>({});
@@ -157,6 +159,20 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
     return Array.from(new Set(termsList.map(t => t.subject).filter(Boolean)));
   }, [termsList]);
 
+  const filteredSubjects = useMemo(() => {
+    if (contentTypeFilter === 'all') {
+      return subjects;
+    }
+    return Array.from(
+      new Set(
+        termsList
+          .filter(t => (t.itemType || 'TERM') === contentTypeFilter)
+          .map(t => t.subject)
+          .filter(Boolean)
+      )
+    );
+  }, [termsList, subjects, contentTypeFilter]);
+
   const categories = useMemo(() => {
     const targetSubjectTerms = termsList.filter(t => t.subject === studySubject);
     return Array.from(new Set(targetSubjectTerms.map(t => t.category).filter(Boolean) as string[]));
@@ -170,8 +186,16 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   // Filtered terms for study list
   const filteredStudyTerms = useMemo(() => {
     return termsList.filter(t => {
+      const itemType = t.itemType || 'TERM';
+      if (contentTypeFilter !== 'all' && itemType !== contentTypeFilter) return false;
       if (studySubject !== 'all' && t.subject !== studySubject) return false;
       if (studyCategory !== 'all' && t.category !== studyCategory) return false;
+
+      // In Flashcard or Typing mode, automatically filter out MULTIPLE_CHOICE exam questions
+      if ((studyViewMode === 'flashcard' || studyViewMode === 'typing') && contentTypeFilter === 'all') {
+        if (itemType === 'MULTIPLE_CHOICE') return false;
+      }
+
       if (searchTerm.trim()) {
         const q = searchTerm.toLowerCase().trim();
         const termMatch = t.term.toLowerCase().includes(q);
@@ -181,7 +205,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
       }
       return true;
     });
-  }, [termsList, studySubject, studyCategory, searchTerm]);
+  }, [termsList, studySubject, studyCategory, contentTypeFilter, studyViewMode, searchTerm]);
 
   // Reset Flashcard & Typing Indices when filteredStudyTerms change
   useEffect(() => {
@@ -885,23 +909,99 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* Controls & Filters Header */}
           <div className="card" style={{ padding: '20px' }}>
+            {/* Top Content-Type Distinction Tabs */}
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '16px', borderBottom: '1px solid var(--border)', paddingBottom: '14px' }}>
+              <button
+                onClick={() => {
+                  setContentTypeFilter('all');
+                  setStudyCategory('all');
+                }}
+                style={{
+                  padding: '7px 16px',
+                  borderRadius: '8px',
+                  fontSize: '0.85rem',
+                  fontWeight: 800,
+                  border: 'none',
+                  backgroundColor: contentTypeFilter === 'all' ? '#0E4A84' : '#F1F5F9',
+                  color: contentTypeFilter === 'all' ? '#FFFFFF' : '#475569',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+              >
+                📚 전체 보기
+              </button>
+              <button
+                onClick={() => {
+                  setContentTypeFilter('TERM');
+                  setStudyCategory('all');
+                  if (!termsList.some(t => t.subject === studySubject && (t.itemType || 'TERM') === 'TERM')) {
+                    const termSubj = termsList.find(t => (t.itemType || 'TERM') === 'TERM')?.subject;
+                    if (termSubj) setStudySubject(termSubj);
+                  }
+                }}
+                style={{
+                  padding: '7px 16px',
+                  borderRadius: '8px',
+                  fontSize: '0.85rem',
+                  fontWeight: 800,
+                  border: 'none',
+                  backgroundColor: contentTypeFilter === 'TERM' ? '#2563EB' : '#F1F5F9',
+                  color: contentTypeFilter === 'TERM' ? '#FFFFFF' : '#475569',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+              >
+                📖 용어/단어장 (Flashcard / Typing)
+              </button>
+              <button
+                onClick={() => {
+                  setContentTypeFilter('MULTIPLE_CHOICE');
+                  setStudyCategory('all');
+                  setStudyViewMode('grid');
+                  if (!termsList.some(t => t.subject === studySubject && t.itemType === 'MULTIPLE_CHOICE')) {
+                    const mcSubj = termsList.find(t => t.itemType === 'MULTIPLE_CHOICE')?.subject;
+                    if (mcSubj) setStudySubject(mcSubj);
+                  }
+                }}
+                style={{
+                  padding: '7px 16px',
+                  borderRadius: '8px',
+                  fontSize: '0.85rem',
+                  fontWeight: 800,
+                  border: 'none',
+                  backgroundColor: contentTypeFilter === 'MULTIPLE_CHOICE' ? '#7C3AED' : '#F1F5F9',
+                  color: contentTypeFilter === 'MULTIPLE_CHOICE' ? '#FFFFFF' : '#475569',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+              >
+                📝 객관식/시험 퀴즈 (Exam Practice)
+              </button>
+            </div>
+
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'space-between', alignItems: 'center' }}>
               {/* Subject Tabs */}
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--sub-text)' }}>과목:</span>
-                {subjects.map(subj => (
-                  <button
-                    key={subj}
-                    onClick={() => {
-                      setStudySubject(subj);
-                      setStudyCategory('all');
-                    }}
-                    className={studySubject === subj ? 'btn-primary' : 'btn-outline'}
-                    style={{ fontSize: '0.84rem', padding: '6px 14px' }}
-                  >
-                    {subj}
-                  </button>
-                ))}
+                {filteredSubjects.map(subj => {
+                  const isMcSubj = termsList.some(t => t.subject === subj && t.itemType === 'MULTIPLE_CHOICE');
+                  return (
+                    <button
+                      key={subj}
+                      onClick={() => {
+                        setStudySubject(subj);
+                        setStudyCategory('all');
+                      }}
+                      className={studySubject === subj ? 'btn-primary' : 'btn-outline'}
+                      style={{ fontSize: '0.84rem', padding: '6px 14px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <span>{subj}</span>
+                      <span style={{ fontSize: '0.7rem', padding: '1px 5px', borderRadius: '4px', backgroundColor: isMcSubj ? '#EDE9FE' : '#EFF6FF', color: isMcSubj ? '#6D28D9' : '#1D4ED8', fontWeight: 800 }}>
+                        {isMcSubj ? '📝 퀴즈' : '📖 용어'}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
 
               {/* Study Mode Selector Sub-Tabs */}
@@ -1554,20 +1654,31 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                 1. 과목 선택
               </label>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                {subjects.map(subj => (
-                  <button
-                    key={subj}
-                    type="button"
-                    onClick={() => {
-                      setQuizSubject(subj);
-                      setQuizCategory('all');
-                    }}
-                    className={quizSubject === subj ? 'btn-primary' : 'btn-outline'}
-                    style={{ fontSize: '0.875rem', padding: '8px 16px' }}
-                  >
-                    {subj}
-                  </button>
-                ))}
+                {subjects.map(subj => {
+                  const isMcSubj = termsList.some(t => t.subject === subj && t.itemType === 'MULTIPLE_CHOICE');
+                  return (
+                    <button
+                      key={subj}
+                      type="button"
+                      onClick={() => {
+                        setQuizSubject(subj);
+                        setQuizCategory('all');
+                        if (isMcSubj) {
+                          setQuizType('multiple_choice');
+                        } else {
+                          setQuizType('def_to_term');
+                        }
+                      }}
+                      className={quizSubject === subj ? 'btn-primary' : 'btn-outline'}
+                      style={{ fontSize: '0.875rem', padding: '8px 16px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <span>{subj}</span>
+                      <span style={{ fontSize: '0.72rem', padding: '2px 6px', borderRadius: '4px', backgroundColor: isMcSubj ? '#EDE9FE' : '#EFF6FF', color: isMcSubj ? '#6D28D9' : '#1D4ED8', fontWeight: 800 }}>
+                        {isMcSubj ? '📝 퀴즈' : '📖 용어'}
+                      </span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
