@@ -123,10 +123,13 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   const [editingTerm, setEditingTerm] = useState<NursingTerm | null>(null);
   const [formSubject, setFormSubject] = useState('간호관리학');
   const [formCategory, setFormCategory] = useState('퀴즈 1');
+  const [formItemType, setFormItemType] = useState<'TERM' | 'MULTIPLE_CHOICE'>('TERM');
   const [formTerm, setFormTerm] = useState('');
   const [formEngTerm, setFormEngTerm] = useState('');
   const [formDefinition, setFormDefinition] = useState('');
   const [formExample, setFormExample] = useState('');
+  const [formOptions, setFormOptions] = useState<string[]>(['', '', '', '', '']);
+  const [formAnswer, setFormAnswer] = useState('');
   const [adminSubmitting, setAdminSubmitting] = useState(false);
 
   // Sync termsList when initialTerms prop changes
@@ -786,47 +789,79 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
 
   const handleOpenCreateModal = () => {
     setEditingTerm(null);
-    setFormSubject('간호관리학');
-    setFormCategory('퀴즈 1');
+    const activeSubj = studySubject !== 'all' ? studySubject : (subjects[0] || '간호관리학');
+    const isMcSubj = termsList.some(t => t.subject === activeSubj && (t.itemType === 'MULTIPLE_CHOICE' || (t.options && t.options.length > 0)));
+
+    setFormSubject(activeSubj);
+    setFormCategory(studyCategory !== 'all' ? studyCategory : '1주차 퀴즈');
+    setFormItemType(isMcSubj ? 'MULTIPLE_CHOICE' : 'TERM');
     setFormTerm('');
     setFormEngTerm('');
     setFormDefinition('');
     setFormExample('');
+    setFormOptions(['', '', '', '', '']);
+    setFormAnswer('');
     setShowTermModal(true);
   };
 
   const handleOpenEditModal = (t: NursingTerm) => {
     setEditingTerm(t);
     setFormSubject(t.subject);
-    setFormCategory(t.category || '퀴즈 1');
+    setFormCategory(t.category || '기타');
+    const isMc = t.itemType === 'MULTIPLE_CHOICE' || (t.options && t.options.length > 0);
+    setFormItemType(isMc ? 'MULTIPLE_CHOICE' : 'TERM');
     setFormTerm(t.term);
     setFormEngTerm(t.englishTerm || '');
     setFormDefinition(t.definition);
     setFormExample(t.example || '');
+
+    const opts = t.options && t.options.length > 0 ? [...t.options] : ['', '', '', '', ''];
+    while (opts.length < 5) opts.push('');
+    setFormOptions(opts);
+    setFormAnswer(t.answer || (t.options && t.options[0]) || '');
     setShowTermModal(true);
   };
 
   const handleSaveTerm = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formTerm || !formDefinition) {
-      alert('용어명과 뜻은 필수 입력사항입니다.');
+      alert('질문/용어명과 정답/해설은 필수 입력사항입니다.');
       return;
     }
+
+    let cleanedOptions: string[] = [];
+    let finalAnswer = formAnswer;
+
+    if (formItemType === 'MULTIPLE_CHOICE') {
+      cleanedOptions = formOptions.map(o => o.trim()).filter(Boolean);
+      if (cleanedOptions.length < 2) {
+        alert('객관식 문항은 최소 2개 이상의 선택지 보기가 필요합니다.');
+        return;
+      }
+      if (!finalAnswer && cleanedOptions.length > 0) {
+        finalAnswer = cleanedOptions[0];
+      }
+    }
+
     setAdminSubmitting(true);
     try {
+      const payload = {
+        subject: formSubject,
+        category: formCategory,
+        term: formTerm,
+        englishTerm: formEngTerm,
+        definition: formDefinition,
+        example: formExample,
+        itemType: formItemType,
+        options: cleanedOptions,
+        answer: finalAnswer,
+      };
+
       if (editingTerm) {
         const res = await fetch('/api/admin/quiz/terms', {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            id: editingTerm.id,
-            subject: formSubject,
-            category: formCategory,
-            term: formTerm,
-            englishTerm: formEngTerm,
-            definition: formDefinition,
-            example: formExample,
-          }),
+          body: JSON.stringify({ id: editingTerm.id, ...payload }),
         });
         const data = await res.json();
         if (data.term) {
@@ -837,14 +872,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
         const res = await fetch('/api/admin/quiz/terms', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            subject: formSubject,
-            category: formCategory,
-            term: formTerm,
-            englishTerm: formEngTerm,
-            definition: formDefinition,
-            example: formExample,
-          }),
+          body: JSON.stringify(payload),
         });
         const data = await res.json();
         if (data.term) {
@@ -853,7 +881,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
         }
       }
     } catch {
-      alert('용어 저장 중 오류가 발생했습니다.');
+      alert('문항 저장 중 오류가 발생했습니다.');
     } finally {
       setAdminSubmitting(false);
     }
@@ -2857,22 +2885,65 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
             alignItems: 'center',
             justifyContent: 'center',
             zIndex: 2000,
+            padding: '20px',
           }}
         >
-          <div className="card" style={{ maxWidth: '550px', width: '100%', padding: '24px' }}>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 800, marginBottom: '16px', color: 'var(--primary)' }}>
-              {editingTerm ? '✏️ 문항 수정' : '➕ 새 문항 추가'}
+          <div className="card" style={{ maxWidth: '640px', width: '100%', padding: '28px', maxHeight: '90vh', overflowY: 'auto' }}>
+            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '20px', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span>{editingTerm ? '✏️ 문항 수정' : '➕ 새 문항 추가'}</span>
             </h3>
-            <form onSubmit={handleSaveTerm} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+
+            {/* Type Switcher: TERM vs MULTIPLE_CHOICE */}
+            <div style={{ display: 'flex', gap: '8px', marginBottom: '20px', backgroundColor: '#F1F5F9', padding: '4px', borderRadius: '8px' }}>
+              <button
+                type="button"
+                onClick={() => setFormItemType('MULTIPLE_CHOICE')}
+                style={{
+                  flex: 1,
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  fontSize: '0.875rem',
+                  fontWeight: 800,
+                  border: 'none',
+                  backgroundColor: formItemType === 'MULTIPLE_CHOICE' ? '#7C3AED' : 'transparent',
+                  color: formItemType === 'MULTIPLE_CHOICE' ? '#FFFFFF' : '#475569',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+              >
+                📝 객관식 퀴즈 문항
+              </button>
+              <button
+                type="button"
+                onClick={() => setFormItemType('TERM')}
+                style={{
+                  flex: 1,
+                  padding: '8px 12px',
+                  borderRadius: '6px',
+                  fontSize: '0.875rem',
+                  fontWeight: 800,
+                  border: 'none',
+                  backgroundColor: formItemType === 'TERM' ? '#2563EB' : 'transparent',
+                  color: formItemType === 'TERM' ? '#FFFFFF' : '#475569',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                }}
+              >
+                📖 의학 용어 / 단어장
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveTerm} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* Subject & Category */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
-                  <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>과목 *</label>
+                  <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>과목명 *</label>
                   <input
                     type="text"
                     required
                     value={formSubject}
                     onChange={e => setFormSubject(e.target.value)}
-                    placeholder="예: 여성의부인과적장애와간호"
+                    placeholder="예: 성인간호학:인지조절"
                     style={{ width: '100%' }}
                   />
                 </div>
@@ -2882,48 +2953,122 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                     type="text"
                     value={formCategory}
                     onChange={e => setFormCategory(e.target.value)}
-                    placeholder="예: 중간고사 복습 퀴즈"
+                    placeholder="예: 5주차 퀴즈"
                     style={{ width: '100%' }}
                   />
                 </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div>
-                  <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>용어/질문 *</label>
-                  <input
-                    type="text"
-                    required
-                    value={formTerm}
-                    onChange={e => setFormTerm(e.target.value)}
-                    placeholder="용어 또는 질문 내용"
-                    style={{ width: '100%' }}
-                  />
+              {/* Question / Term Title */}
+              <div>
+                <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                  {formItemType === 'MULTIPLE_CHOICE' ? '문제 질문 (발문) *' : '용어명 / 키워드 *'}
+                </label>
+                <textarea
+                  rows={formItemType === 'MULTIPLE_CHOICE' ? 2 : 1}
+                  required
+                  value={formTerm}
+                  onChange={e => setFormTerm(e.target.value)}
+                  placeholder={
+                    formItemType === 'MULTIPLE_CHOICE'
+                      ? '예: 1. 우측 슬관절에 퇴행성 관절염을 앓고 있는 노인에게 시행할 간호로 부적절한 것은?'
+                      : '예: Heberden\'s node (헤베르덴 결절)'
+                  }
+                  style={{ width: '100%', resize: 'vertical' }}
+                />
+              </div>
+
+              {/* MULTIPLE CHOICE OPTIONS EDITING */}
+              {formItemType === 'MULTIPLE_CHOICE' && (
+                <div style={{ backgroundColor: '#F8FAFC', padding: '16px', borderRadius: '8px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label style={{ fontSize: '0.84rem', fontWeight: 800, color: '#475569' }}>
+                      🎯 객관식 선택지 보기 (① ~ ⑤) & 정답 지정
+                    </label>
+                    <span style={{ fontSize: '0.75rem', color: '#64748B' }}>
+                      ※ 정답 라디오 버튼을 선택해주세요.
+                    </span>
+                  </div>
+
+                  {formOptions.map((opt, idx) => {
+                    const circleNum = ['①', '②', '③', '④', '⑤'][idx] || `${idx + 1}.`;
+                    const isAnswer = formAnswer === opt && opt.trim() !== '';
+
+                    return (
+                      <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                        <input
+                          type="radio"
+                          name="correctAnswerChoice"
+                          checked={isAnswer}
+                          onChange={() => setFormAnswer(opt)}
+                          style={{ cursor: 'pointer', width: '18px', height: '18px' }}
+                          title="정답으로 지정"
+                        />
+                        <span style={{ fontSize: '0.875rem', fontWeight: 800, color: '#334155', minWidth: '24px' }}>
+                          {circleNum}
+                        </span>
+                        <input
+                          type="text"
+                          value={opt}
+                          onChange={e => {
+                            const newOpts = [...formOptions];
+                            newOpts[idx] = e.target.value;
+                            setFormOptions(newOpts);
+                            if (isAnswer) setFormAnswer(e.target.value);
+                          }}
+                          placeholder={`보기 ${circleNum} 내용 입력`}
+                          style={{
+                            flex: 1,
+                            borderColor: isAnswer ? '#22C55E' : '#E2E8F0',
+                            backgroundColor: isAnswer ? '#F0FDF4' : '#FFFFFF',
+                            fontWeight: isAnswer ? 700 : 500,
+                          }}
+                        />
+                        {isAnswer && (
+                          <span style={{ fontSize: '0.75rem', color: '#15803D', fontWeight: 800, padding: '2px 6px', backgroundColor: '#DCFCE7', borderRadius: '4px' }}>
+                            ✓ 정답
+                          </span>
+                        )}
+                      </div>
+                    );
+                  })}
                 </div>
+              )}
+
+              {/* Eng Term for Term type */}
+              {formItemType === 'TERM' && (
                 <div>
                   <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>영문/약어</label>
                   <input
                     type="text"
                     value={formEngTerm}
                     onChange={e => setFormEngTerm(e.target.value)}
-                    placeholder="영문/약어 입력"
+                    placeholder="예: OA (Osteoarthritis)"
                     style={{ width: '100%' }}
                   />
                 </div>
-              </div>
+              )}
 
+              {/* Definition / Explanation */}
               <div>
-                <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>정답 및 해설 *</label>
+                <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
+                  {formItemType === 'MULTIPLE_CHOICE' ? '문제 해설 및 정답 설명 *' : '한글 뜻 / 상세 정의 *'}
+                </label>
                 <textarea
-                  rows={4}
+                  rows={3}
                   required
                   value={formDefinition}
                   onChange={e => setFormDefinition(e.target.value)}
-                  placeholder="정답 및 상세 해설 작성"
+                  placeholder={
+                    formItemType === 'MULTIPLE_CHOICE'
+                      ? '예: 관절의 부동은 관절 가동성 감소와 강직을 유발하므로 부적절함.'
+                      : '상세한 한글 뜻 및 정의 입력'
+                  }
                   style={{ width: '100%' }}
                 />
               </div>
 
+              {/* Submit Buttons */}
               <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '12px' }}>
                 <button
                   type="button"

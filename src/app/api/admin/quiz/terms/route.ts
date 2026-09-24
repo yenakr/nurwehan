@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { subject, category, term, englishTerm, definition, example } = body;
+    const { subject, category, term, englishTerm, definition, example, itemType, options, answer } = body;
 
     if (!term || !definition) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -25,6 +25,9 @@ export async function POST(req: Request) {
         englishTerm: englishTerm?.trim() || null,
         definition: definition.trim(),
         example: example?.trim() || null,
+        itemType: itemType || (options && options.length > 0 ? 'MULTIPLE_CHOICE' : 'TERM'),
+        options: Array.isArray(options) ? options.map((o: string) => o.trim()).filter(Boolean) : [],
+        answer: answer?.trim() || null,
       },
     });
 
@@ -42,7 +45,7 @@ export async function PUT(req: Request) {
     }
 
     const body = await req.json();
-    const { id, subject, category, term, englishTerm, definition, example } = body;
+    const { id, subject, category, term, englishTerm, definition, example, itemType, options, answer } = body;
 
     if (!id || !term || !definition) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -57,6 +60,9 @@ export async function PUT(req: Request) {
         englishTerm: englishTerm?.trim() || null,
         definition: definition.trim(),
         example: example?.trim() || null,
+        itemType: itemType || (options && options.length > 0 ? 'MULTIPLE_CHOICE' : 'TERM'),
+        options: Array.isArray(options) ? options.map((o: string) => o.trim()).filter(Boolean) : [],
+        answer: answer?.trim() || null,
       },
     });
 
