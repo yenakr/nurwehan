@@ -2530,7 +2530,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                   className="btn-accent"
                   style={{ width: '100%', padding: '16px', fontSize: '1.125rem', fontWeight: 900, textAlign: 'center' }}
                 >
-                  📝 {isMcSheet ? '모의고사 제출 및 한번에 채점하기' : '단어장 시험 제출 및 한번에 채점하기'} ({Object.keys(worksheetAnswers).filter(k => worksheetAnswers[Number(k)]?.trim()).length} / {quizQuestions.length} 답안 작성 완료)
+                  📝 채점하기 ({Object.keys(worksheetAnswers).filter(k => worksheetAnswers[Number(k)]?.trim()).length} / {quizQuestions.length})
                 </button>
               </div>
             </div>
