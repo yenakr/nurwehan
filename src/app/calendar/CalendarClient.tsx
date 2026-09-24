@@ -365,9 +365,6 @@ export default function CalendarClient({
             <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)' }}>
               📅 통합 캘린더
             </h2>
-            <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>
-              학사일정, 중간/기말고사, 임상실습 OT, OPEN LAB 일정 및 개인 시험 일정을 관리하세요. (일정을 클릭하면 상세정보 및 수정을 진행할 수 있습니다)
-            </p>
           </div>
 
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
@@ -521,7 +518,7 @@ export default function CalendarClient({
                         : 'var(--text)',
                     }}
                   >
-                    {!cell.isCurrentMonth ? `${cell.monthNumber}/${cell.dayNumber}일` : `${cell.dayNumber}일`}
+                    {!cell.isCurrentMonth ? `${cell.monthNumber}/${cell.dayNumber}` : `${cell.dayNumber}`}
                   </div>
 
                   {dayEvents.map(e => (
