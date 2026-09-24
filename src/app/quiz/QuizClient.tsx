@@ -26,6 +26,8 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   const [termsList, setTermsList] = useState<NursingTerm[]>(initialTerms);
 
 
+  const [isGridEditMode, setIsGridEditMode] = useState<boolean>(false);
+
   // Navigation tab: 'study' | 'quiz_setup' | 'quiz_play' | 'quiz_result' | 'my_history'
   const [activeTab, setActiveTab] = useState<'study' | 'quiz_setup' | 'quiz_play' | 'quiz_result' | 'my_history'>('study');
   const [myAttempts, setMyAttempts] = useState<any[]>([]);
@@ -1610,12 +1612,59 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
           {/* MODE 3: GRID LIST VIEW (전체 목록 보기) */}
           {studyViewMode === 'grid' && (
             <div>
+              {isAdmin && (
+                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginBottom: '16px' }}>
+                  <button
+                    onClick={() => setIsGridEditMode(prev => !prev)}
+                    style={{
+                      padding: '8px 16px',
+                      borderRadius: '8px',
+                      fontSize: '0.84rem',
+                      fontWeight: 800,
+                      border: isGridEditMode ? '1px solid #DC2626' : '1px solid #0E4A84',
+                      backgroundColor: isGridEditMode ? '#FEF2F2' : '#FFFFFF',
+                      color: isGridEditMode ? '#DC2626' : '#0E4A84',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                    }}
+                  >
+                    {isGridEditMode ? '🔒 편집 완료 (버튼 숨기기)' : '⚙️ 문항 편집/순서 관리'}
+                  </button>
+                  <button
+                    onClick={() => handleOpenCreateModal()}
+                    className="btn-primary"
+                    style={{ fontSize: '0.84rem', padding: '8px 16px' }}
+                  >
+                    ➕ 새 문항 추가
+                  </button>
+                </div>
+              )}
+
               {filteredStudyTerms.length > 0 ? (
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '16px' }}>
                   {filteredStudyTerms.map((t, idx) => {
                     const isRevealed = revealedCardIds[t.id];
                     const isHidden = hideDefinition && !isRevealed;
                     const isStructuredQuestion = t.options && t.options.length > 0;
+
+                    const checkOptionIsCorrect = (opt: string, answer?: string | null, definition?: string | null) => {
+                      const targetAns = answer || definition || '';
+                      if (!targetAns) return false;
+
+                      const cleanOpt = opt.trim().replace(/^\([0-9]\)|^[①-⑤]/, '').trim();
+                      const cleanAns = targetAns.replace(/^정답:\s*/, '').trim().replace(/^\([0-9]\)|^[①-⑤]/, '').trim();
+
+                      const optNumMatch = opt.match(/^([①-⑤]|\([1-5]\))/);
+                      const ansNumMatch = targetAns.match(/^([①-⑤]|\([1-5]\))/);
+                      if (optNumMatch && ansNumMatch && optNumMatch[1] === ansNumMatch[1]) {
+                        return true;
+                      }
+
+                      return cleanOpt === cleanAns || (cleanAns.length > 3 && cleanOpt.includes(cleanAns)) || (cleanOpt.length > 3 && cleanAns.includes(cleanOpt));
+                    };
+
+                    const hasMatchingOption = isStructuredQuestion && t.options!.some(opt => checkOptionIsCorrect(opt, t.answer, t.definition));
 
                     return (
                       <div
@@ -1635,7 +1684,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                               #{idx + 1}
                             </span>
 
-                            {isAdmin && (
+                            {isAdmin && isGridEditMode && (
                               <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
                                 <button
                                   onClick={() => handleMoveTerm(idx, 'up')}
@@ -1680,47 +1729,73 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
 
                           {isStructuredQuestion && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '12px' }}>
-                              {t.options!.map((opt, oIdx) => (
-                                <div key={oIdx} style={{ fontSize: '0.84rem', color: '#334155', backgroundColor: '#F8FAFC', padding: '8px 12px', borderRadius: '6px', border: '1px solid #E2E8F0' }}>
-                                  ● {opt}
-                                </div>
-                              ))}
+                              {t.options!.map((opt, oIdx) => {
+                                const isCorrectOpt = !isHidden && checkOptionIsCorrect(opt, t.answer, t.definition);
+                                return (
+                                  <div
+                                    key={oIdx}
+                                    style={{
+                                      fontSize: '0.85rem',
+                                      color: isCorrectOpt ? '#15803D' : '#334155',
+                                      backgroundColor: isCorrectOpt ? '#F0FDF4' : '#F8FAFC',
+                                      padding: '9px 13px',
+                                      borderRadius: '8px',
+                                      border: isCorrectOpt ? '2px solid #22C55E' : '1px solid #E2E8F0',
+                                      fontWeight: isCorrectOpt ? 800 : 500,
+                                      display: 'flex',
+                                      justifyContent: 'space-between',
+                                      alignItems: 'center',
+                                      transition: 'all 0.2s',
+                                    }}
+                                  >
+                                    <span>● {opt}</span>
+                                    {isCorrectOpt && (
+                                      <span style={{ fontSize: '0.75rem', backgroundColor: '#22C55E', color: '#FFFFFF', padding: '2px 8px', borderRadius: '4px', fontWeight: 800 }}>
+                                        ✓ 정답
+                                      </span>
+                                    )}
+                                  </div>
+                                );
+                              })}
                             </div>
                           )}
 
-                          <div
-                            onClick={() => {
-                              if (hideDefinition) {
-                                setRevealedCardIds(prev => ({ ...prev, [t.id]: !prev[t.id] }));
-                              }
-                            }}
-                            style={{
-                              backgroundColor: isHidden ? '#F1F5F9' : (isStructuredQuestion ? '#F0FDF4' : '#F8FAFC'),
-                              padding: '12px',
-                              borderRadius: '6px',
-                              border: `1px solid ${isHidden ? '#E2E8F0' : (isStructuredQuestion ? '#86EFAC' : '#E2E8F0')}`,
-                              minHeight: '48px',
-                              cursor: hideDefinition ? 'pointer' : 'default',
-                              transition: 'all 0.2s',
-                            }}
-                          >
-                            {isHidden ? (
-                              <div style={{ textAlign: 'center', color: '#64748B', fontSize: '0.84rem', fontWeight: 600 }}>
-                                🔒 클릭하여 정답/뜻 확인
-                              </div>
-                            ) : (
-                              <div>
-                                {t.answer && (
-                                  <div style={{ fontSize: '0.875rem', fontWeight: 800, color: '#166534', marginBottom: '4px' }}>
-                                    정답: {t.answer}
-                                  </div>
-                                )}
-                                <p style={{ fontSize: '0.875rem', color: '#1E293B', lineHeight: 1.5, margin: 0 }}>
-                                  {t.definition}
-                                </p>
-                              </div>
-                            )}
-                          </div>
+                          {/* Show bottom answer/definition box ONLY if it's not a multiple-choice question where answer is already highlighted, or if definition has extra explanation */}
+                          {(!isStructuredQuestion || !hasMatchingOption) && (
+                            <div
+                              onClick={() => {
+                                if (hideDefinition) {
+                                  setRevealedCardIds(prev => ({ ...prev, [t.id]: !prev[t.id] }));
+                                }
+                              }}
+                              style={{
+                                backgroundColor: isHidden ? '#F1F5F9' : '#F8FAFC',
+                                padding: '12px 14px',
+                                borderRadius: '8px',
+                                border: `1px solid ${isHidden ? '#E2E8F0' : '#CBD5E1'}`,
+                                minHeight: '44px',
+                                cursor: hideDefinition ? 'pointer' : 'default',
+                                transition: 'all 0.2s',
+                              }}
+                            >
+                              {isHidden ? (
+                                <div style={{ textAlign: 'center', color: '#64748B', fontSize: '0.84rem', fontWeight: 600 }}>
+                                  🔒 클릭하여 정답/뜻 확인
+                                </div>
+                              ) : (
+                                <div>
+                                  {t.answer && !t.definition?.replace(/^정답:\s*/, '').includes(t.answer.replace(/^정답:\s*/, '')) && (
+                                    <div style={{ fontSize: '0.875rem', fontWeight: 800, color: '#166534', marginBottom: '4px' }}>
+                                      정답: {t.answer.replace(/^정답:\s*/, '')}
+                                    </div>
+                                  )}
+                                  <p style={{ fontSize: '0.875rem', color: '#1E293B', lineHeight: 1.5, margin: 0 }}>
+                                    {t.definition.replace(/^정답:\s*/, '')}
+                                  </p>
+                                </div>
+                              )}
+                            </div>
+                          )}
                         </div>
                       </div>
                     );
