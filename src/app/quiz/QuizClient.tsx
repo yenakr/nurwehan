@@ -437,7 +437,9 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
     pool.forEach((q, idx) => {
       if (q.options && q.options.length > 0) {
         optionsMap[idx] = q.options;
-      } else {
+      } else if (q.itemType === 'SHORT_ANSWER') {
+        optionsMap[idx] = [];
+      } else if ((q.itemType || 'TERM') === 'TERM') {
         const correct = q.term;
         const sameSubjectTerms = termsList
           .filter(t => t.subject === q.subject && t.term !== correct)
@@ -447,6 +449,8 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
           .slice(0, 3);
         const fourChoices = [correct, ...distractors].sort(() => Math.random() - 0.5);
         optionsMap[idx] = fourChoices;
+      } else {
+        optionsMap[idx] = [];
       }
     });
 
@@ -2184,8 +2188,8 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
             );
           })()}
 
-          {/* MULTIPLE CHOICE / STRUCTURED OPTIONS VIEW */}
-          {(currentQuestion.options && currentQuestion.options.length > 0) || quizType === 'multiple_choice' ? (
+          {/* MULTIPLE CHOICE / STRUCTURED OPTIONS VIEW vs SUBJECTIVE VIEW */}
+          {(currentQuestion.options && currentQuestion.options.length > 0) || (mcOptionsMap[currentIndex] && mcOptionsMap[currentIndex].length > 0) ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {(mcOptionsMap[currentIndex] || currentQuestion.options || []).map((choiceText, cIdx) => {
                 const isSelected = selectedChoiceIndex === cIdx;
