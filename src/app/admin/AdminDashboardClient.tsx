@@ -96,6 +96,9 @@ export default function AdminDashboardClient({
             </span>
           )}
         </button>
+        <button onClick={() => router.push('/admin/quiz-stats')}>
+          📊 퀴즈 학습 현황
+        </button>
         <button 
           className={activeTab === 'schedules' ? 'active' : ''} 
           onClick={() => setActiveTab('schedules')}

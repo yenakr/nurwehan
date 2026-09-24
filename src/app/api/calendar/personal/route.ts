@@ -47,6 +47,34 @@ export async function POST(req: Request) {
   }
 }
 
+export async function PATCH(req: Request) {
+  try {
+    const user = await getCurrentUser();
+    if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+
+    const body = await req.json();
+    const { id, title, description, startDateTime, category } = body;
+
+    if (!id || !title || !startDateTime) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    await prisma.personalCalendarEvent.updateMany({
+      where: { id, userId: user.id },
+      data: {
+        title,
+        description: description || null,
+        startDateTime: new Date(startDateTime),
+        category: category || 'PERSONAL',
+      },
+    });
+
+    return NextResponse.json({ success: true });
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to update personal event' }, { status: 500 });
+  }
+}
+
 export async function DELETE(req: Request) {
   try {
     const user = await getCurrentUser();

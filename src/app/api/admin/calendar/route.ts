@@ -47,6 +47,39 @@ export async function POST(req: Request) {
   }
 }
 
+export async function PATCH(req: Request) {
+  try {
+    const user = await getCurrentUser();
+    if (!user || !isAdminRole(user.role)) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const { id, title, description, startDateTime, category, applicableGrades, isCommon, status } = body;
+
+    if (!id || !title || !startDateTime) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    const updatedEvent = await prisma.calendarEvent.update({
+      where: { id },
+      data: {
+        title,
+        description: description || null,
+        startDateTime: new Date(startDateTime),
+        category: category || 'ACADEMIC',
+        applicableGrades: applicableGrades || [1, 2, 3, 4],
+        isCommon: isCommon ?? false,
+        status: status || 'PUBLISHED',
+      },
+    });
+
+    return NextResponse.json({ event: updatedEvent });
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to update calendar event' }, { status: 500 });
+  }
+}
+
 export async function DELETE(req: Request) {
   try {
     const user = await getCurrentUser();

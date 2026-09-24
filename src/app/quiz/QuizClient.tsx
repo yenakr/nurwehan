@@ -26,8 +26,12 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   const [termsList, setTermsList] = useState<NursingTerm[]>(initialTerms);
 
 
-  // Navigation tab: 'study' | 'quiz_setup' | 'quiz_play' | 'quiz_result'
-  const [activeTab, setActiveTab] = useState<'study' | 'quiz_setup' | 'quiz_play' | 'quiz_result'>('study');
+  // Navigation tab: 'study' | 'quiz_setup' | 'quiz_play' | 'quiz_result' | 'my_history'
+  const [activeTab, setActiveTab] = useState<'study' | 'quiz_setup' | 'quiz_play' | 'quiz_result' | 'my_history'>('study');
+  const [myAttempts, setMyAttempts] = useState<any[]>([]);
+  const [loadingHistory, setLoadingHistory] = useState<boolean>(false);
+  const [selectedHistoryAttempt, setSelectedHistoryAttempt] = useState<any | null>(null);
+  const [attemptSaved, setAttemptSaved] = useState<boolean>(false);
 
   // Term filters for Study Mode
   const [studySubject, setStudySubject] = useState<string>('간호관리학');
@@ -156,6 +160,97 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
     const targetSubjectTerms = termsList.filter(t => t.subject === quizSubject);
     return Array.from(new Set(targetSubjectTerms.map(t => t.category).filter(Boolean) as string[]));
   }, [termsList, quizSubject]);
+
+  const fetchMyAttempts = useCallback(() => {
+    if (!user) return;
+    setLoadingHistory(true);
+    fetch('/api/quiz/attempts')
+      .then(res => res.json())
+      .then(data => {
+        if (data.attempts) setMyAttempts(data.attempts);
+      })
+      .catch(() => {})
+      .finally(() => setLoadingHistory(false));
+  }, [user]);
+
+  useEffect(() => {
+    if (user && activeTab === 'my_history') {
+      fetchMyAttempts();
+    }
+  }, [user, activeTab, fetchMyAttempts]);
+
+  useEffect(() => {
+    if (activeTab === 'quiz_result' && !attemptSaved && quizResults.length > 0 && user) {
+      const correctCount = quizResults.filter(r => (r.overrideCorrect !== undefined ? r.overrideCorrect : r.isCorrect)).length;
+      const totalQuestions = quizQuestions.length;
+      const wrongCount = totalQuestions - correctCount;
+      const score = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
+
+      const details = quizResults.map(r => ({
+        termId: r.term.id,
+        questionText: r.term.term,
+        definition: r.term.definition,
+        userAnswer: r.userAns,
+        correctAnswer: r.term.answer || r.term.definition,
+        isCorrect: r.overrideCorrect !== undefined ? r.overrideCorrect : r.isCorrect,
+        options: r.term.options || [],
+        fullTerm: r.term,
+      }));
+
+      fetch('/api/quiz/attempts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          subject: quizSubject,
+          category: quizCategory,
+          quizType,
+          score,
+          totalQuestions,
+          correctCount,
+          wrongCount,
+          details,
+        }),
+      })
+        .then(() => {
+          setAttemptSaved(true);
+          fetchMyAttempts();
+        })
+        .catch(err => console.error('Save attempt error', err));
+    }
+  }, [activeTab, attemptSaved, quizResults, quizQuestions, quizSubject, quizCategory, quizType, user, fetchMyAttempts]);
+
+  const handleReAttemptQuiz = (attempt: any) => {
+    if (!attempt || !attempt.details || !Array.isArray(attempt.details)) {
+      alert('퀴즈 문제를 불러올 수 없습니다.');
+      return;
+    }
+    const questions: NursingTerm[] = attempt.details.map((item: any) => {
+      if (item.fullTerm) return item.fullTerm;
+      const found = termsList.find(t => t.id === item.termId);
+      if (found) return found;
+      return {
+        id: item.termId || Math.random().toString(),
+        subject: attempt.subject,
+        term: item.questionText,
+        definition: item.definition || item.correctAnswer,
+        options: item.options || [],
+        answer: item.correctAnswer,
+      };
+    });
+
+    setQuizQuestions(questions);
+    setCurrentIndex(0);
+    setUserAnswer('');
+    setSelectedChoiceIndex(null);
+    setShowHint(false);
+    setIsAnswerSubmitted(false);
+    setQuizResults([]);
+    setAttemptSaved(false);
+    setQuizSubject(attempt.subject);
+    setQuizCategory(attempt.category || 'all');
+    setSelectedHistoryAttempt(null);
+    setActiveTab('quiz_play');
+  };
 
   // Filtered terms for study list
   const filteredStudyTerms = useMemo(() => {
@@ -875,10 +970,10 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
             </button>
             <button
               onClick={() => setActiveTab('quiz_setup')}
-              className={activeTab !== 'study' ? 'btn-accent' : 'btn-outline'}
+              className={activeTab === 'quiz_setup' || activeTab === 'quiz_play' || activeTab === 'quiz_result' ? 'btn-accent' : 'btn-outline'}
               style={{
-                backgroundColor: activeTab !== 'study' ? '#FFFFFF' : 'rgba(255,255,255,0.15)',
-                color: activeTab !== 'study' ? '#0E4A84' : '#FFFFFF',
+                backgroundColor: activeTab === 'quiz_setup' || activeTab === 'quiz_play' || activeTab === 'quiz_result' ? '#FFFFFF' : 'rgba(255,255,255,0.15)',
+                color: activeTab === 'quiz_setup' || activeTab === 'quiz_play' || activeTab === 'quiz_result' ? '#0E4A84' : '#FFFFFF',
                 border: '1px solid rgba(255,255,255,0.3)',
                 fontSize: '0.875rem',
                 fontWeight: 700,
@@ -886,6 +981,21 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
             >
               ✍️ 퀴즈 테스트
             </button>
+            {user && (
+              <button
+                onClick={() => setActiveTab('my_history')}
+                className={activeTab === 'my_history' ? 'btn-accent' : 'btn-outline'}
+                style={{
+                  backgroundColor: activeTab === 'my_history' ? '#FFFFFF' : 'rgba(255,255,255,0.15)',
+                  color: activeTab === 'my_history' ? '#0E4A84' : '#FFFFFF',
+                  border: '1px solid rgba(255,255,255,0.3)',
+                  fontSize: '0.875rem',
+                  fontWeight: 700,
+                }}
+              >
+                📜 나의 퀴즈 기록
+              </button>
+            )}
           </div>
         </div>
       </div>
@@ -2362,6 +2472,161 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                   </div>
                 );
               })}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* VIEW 5: 나의 퀴즈 풀이 기록 */}
+      {activeTab === 'my_history' && (
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+          <div className="card" style={{ padding: '24px' }}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '4px' }}>
+              📜 나의 퀴즈 풀이 기록
+            </h2>
+            <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>
+              내가 완료한 퀴즈 기록을 확인하고, 오답을 검토하거나 동일한 문제로 다시 퀴즈를 풀 수 있습니다.
+            </p>
+          </div>
+
+          <div className="card" style={{ padding: '24px' }}>
+            {loadingHistory ? (
+              <p style={{ textAlign: 'center', padding: '30px', color: 'var(--sub-text)' }}>기록을 불러오는 중...</p>
+            ) : myAttempts.length > 0 ? (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                {myAttempts.map(att => (
+                  <div
+                    key={att.id}
+                    style={{
+                      border: '1px solid var(--border)',
+                      borderRadius: '12px',
+                      padding: '20px',
+                      backgroundColor: '#FFFFFF',
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      flexWrap: 'wrap',
+                      gap: '16px',
+                    }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                        <span style={{ fontWeight: 900, fontSize: '1.0625rem', color: 'var(--primary)' }}>
+                          {att.subject}
+                        </span>
+                        <span style={{ fontSize: '0.75rem', backgroundColor: '#F1F5F9', color: '#475569', padding: '2px 8px', borderRadius: '4px', fontWeight: 700 }}>
+                          {att.category || '전체'}
+                        </span>
+                      </div>
+                      <div style={{ fontSize: '0.8125rem', color: 'var(--sub-text)' }}>
+                        응시일: {new Date(att.createdAt).toLocaleString('ko-KR')} | 총 {att.totalQuestions}문항중 {att.correctCount}개 맞춤
+                      </div>
+                    </div>
+
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                      <div
+                        style={{
+                          fontSize: '1.25rem',
+                          fontWeight: 900,
+                          color: att.score >= 80 ? '#166534' : att.score >= 60 ? '#854D0E' : '#DC2626',
+                          backgroundColor: att.score >= 80 ? '#DCFCE7' : att.score >= 60 ? '#FEF9C3' : '#FEE2E2',
+                          padding: '6px 14px',
+                          borderRadius: '8px',
+                        }}
+                      >
+                        {att.score}점
+                      </div>
+
+                      <button
+                        onClick={() => setSelectedHistoryAttempt(att)}
+                        className="btn-outline"
+                        style={{ fontSize: '0.8125rem', padding: '8px 14px' }}
+                      >
+                        📜 풀이/오답 검토
+                      </button>
+
+                      <button
+                        onClick={() => handleReAttemptQuiz(att)}
+                        className="btn-primary"
+                        style={{ fontSize: '0.8125rem', padding: '8px 14px' }}
+                      >
+                        🔄 이 퀴즈 다시 풀기
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--sub-text)' }}>
+                아직 퀴즈 풀이 기록이 없습니다. [✍️ 퀴즈 테스트] 탭에서 퀴즈를 시작해보세요!
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* MY ATTEMPT DETAIL MODAL */}
+      {selectedHistoryAttempt && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+            padding: '20px',
+          }}
+        >
+          <div className="card" style={{ maxWidth: '650px', width: '100%', maxHeight: '80vh', overflowY: 'auto', padding: '28px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)' }}>
+                📝 퀴즈 풀이 상세 검토: {selectedHistoryAttempt.subject}
+              </h3>
+              <button onClick={() => setSelectedHistoryAttempt(null)} className="btn-outline" style={{ padding: '4px 10px' }}>
+                닫기 ✕
+              </button>
+            </div>
+
+            <div style={{ backgroundColor: '#F8FAFC', padding: '12px 16px', borderRadius: '8px', marginBottom: '20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div>
+                <strong>점수: {selectedHistoryAttempt.score}점</strong> (정답 {selectedHistoryAttempt.correctCount} / 오답 {selectedHistoryAttempt.wrongCount})
+              </div>
+              <button
+                onClick={() => handleReAttemptQuiz(selectedHistoryAttempt)}
+                className="btn-primary"
+                style={{ fontSize: '0.8125rem', padding: '6px 12px' }}
+              >
+                🔄 이 문제들로 다시 풀기
+              </button>
+            </div>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              {Array.isArray(selectedHistoryAttempt.details) && selectedHistoryAttempt.details.map((item: any, idx: number) => (
+                <div
+                  key={idx}
+                  style={{
+                    padding: '14px 18px',
+                    borderRadius: '8px',
+                    border: '1px solid',
+                    borderColor: item.isCorrect ? '#BBF7D0' : '#FECACA',
+                    backgroundColor: item.isCorrect ? '#F0FDF4' : '#FEF2F2',
+                  }}
+                >
+                  <div style={{ fontWeight: 800, fontSize: '0.9375rem', marginBottom: '6px', color: 'var(--text)' }}>
+                    {idx + 1}. {item.questionText}
+                  </div>
+                  <div style={{ fontSize: '0.84rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                    <div>
+                      <strong style={{ color: item.isCorrect ? '#166534' : '#991B1B' }}>내가 작성한 답:</strong> {item.userAnswer || '(미작성)'} {item.isCorrect ? '✅' : '❌'}
+                    </div>
+                    <div>
+                      <strong style={{ color: '#1E293B' }}>정답 / 해설:</strong> {item.correctAnswer}
+                    </div>
+                  </div>
+                </div>
+              ))}
             </div>
           </div>
         </div>

@@ -40,6 +40,18 @@ export default function CalendarClient({
   const [adminMemo, setAdminMemo] = useState('');
   const [adminSubmitting, setAdminSubmitting] = useState(false);
 
+  // Event Detail & Edit Modal state
+  const [selectedEvent, setSelectedEvent] = useState<any | null>(null);
+  const [isEditingEvent, setIsEditingEvent] = useState<boolean>(false);
+  const [editTitle, setEditTitle] = useState('');
+  const [editDate, setEditDate] = useState('');
+  const [editCategory, setEditCategory] = useState('');
+  const [editTargetGrade, setEditTargetGrade] = useState<'all' | '1' | '2' | '3' | '4'>('all');
+  const [editDescription, setEditDescription] = useState('');
+  const [editSubmitting, setEditSubmitting] = useState(false);
+
+  const isAdmin = isAdminRole(user?.role);
+
   useEffect(() => {
     if (user) {
       fetch('/api/calendar/personal')
@@ -50,6 +62,21 @@ export default function CalendarClient({
         .catch(() => {});
     }
   }, [user]);
+
+  const handleOpenEventDetail = (e: any) => {
+    setSelectedEvent(e);
+    setIsEditingEvent(false);
+    setEditTitle(e.title || '');
+    const dateStr = e.startDateTime ? new Date(e.startDateTime).toISOString().split('T')[0] : '';
+    setEditDate(dateStr);
+    setEditCategory(e.category || (e.isPersonal ? 'PERSONAL' : 'OFFICIAL'));
+    if (e.isCommon || !e.applicableGrades || e.applicableGrades.length === 4) {
+      setEditTargetGrade('all');
+    } else {
+      setEditTargetGrade(String(e.applicableGrades[0]) as any);
+    }
+    setEditDescription(e.description || '');
+  };
 
   const handleAddPersonalEvent = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -120,11 +147,91 @@ export default function CalendarClient({
     }
   };
 
+  const handleSaveEventEdit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!selectedEvent || !editTitle || !editDate) return;
+    setEditSubmitting(true);
+    try {
+      if (selectedEvent.isPersonal) {
+        const res = await fetch('/api/calendar/personal', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: selectedEvent.id,
+            title: editTitle,
+            startDateTime: editDate,
+            category: editCategory,
+            description: editDescription,
+          }),
+        });
+        if (res.ok) {
+          setPersonalEvents(prev =>
+            prev.map(ev =>
+              ev.id === selectedEvent.id
+                ? { ...ev, title: editTitle, startDateTime: editDate, category: editCategory, description: editDescription }
+                : ev
+            )
+          );
+          setSelectedEvent(null);
+        } else {
+          alert('개인 일정 수정 실패');
+        }
+      } else {
+        // Official Event Edit (Admin)
+        const isCommon = editTargetGrade === 'all';
+        const applicableGrades = isCommon ? [1, 2, 3, 4] : [Number(editTargetGrade)];
+
+        const res = await fetch('/api/admin/calendar', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            id: selectedEvent.id,
+            title: editTitle,
+            startDateTime: editDate,
+            category: editCategory,
+            isCommon,
+            applicableGrades,
+            description: editDescription,
+            status: selectedEvent.status || 'PUBLISHED',
+          }),
+        });
+        if (res.ok) {
+          setOfficialEvents(prev =>
+            prev.map(ev =>
+              ev.id === selectedEvent.id
+                ? { ...ev, title: editTitle, startDateTime: editDate, category: editCategory, isCommon, applicableGrades, description: editDescription }
+                : ev
+            )
+          );
+          setSelectedEvent(null);
+        } else {
+          alert('공식 일정 수정 실패');
+        }
+      }
+    } catch (err) {
+      alert('일정 수정 중 오류가 발생했습니다.');
+    } finally {
+      setEditSubmitting(false);
+    }
+  };
+
   const handleDeletePersonalEvent = async (id: string) => {
     if (!confirm('이 개인 일정을 삭제하시겠습니까?')) return;
     try {
       await fetch(`/api/calendar/personal?id=${id}`, { method: 'DELETE' });
       setPersonalEvents(prev => prev.filter(e => e.id !== id));
+      if (selectedEvent?.id === id) setSelectedEvent(null);
+    } catch (err) {
+      alert('삭제 실패');
+    }
+  };
+
+  const handleDeleteOfficialEvent = async (id: string) => {
+    if (!confirm('이 공식 일정을 삭제하시겠습니까?')) return;
+    try {
+      await fetch(`/api/admin/calendar?id=${id}`, { method: 'DELETE' });
+      setOfficialEvents(prev => prev.filter(e => e.id !== id));
+      if (selectedEvent?.id === id) setSelectedEvent(null);
     } catch (err) {
       alert('삭제 실패');
     }
@@ -194,12 +301,12 @@ export default function CalendarClient({
               📅 통합 캘린더
             </h2>
             <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>
-              학사일정, 중간/기말고사, 임상실습 OT, OPEN LAB 일정 및 개인 시험 일정을 관리하세요.
+              학사일정, 중간/기말고사, 임상실습 OT, OPEN LAB 일정 및 개인 시험 일정을 관리하세요. (일정을 클릭하면 상세정보 및 수정을 진행할 수 있습니다)
             </p>
           </div>
 
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {isAdminRole(user?.role) && (
+            {isAdmin && (
               <button
                 onClick={() => setShowAdminAddModal(true)}
                 className="btn-primary"
@@ -343,18 +450,22 @@ export default function CalendarClient({
                   {dayEvents.map(e => (
                     <div
                       key={e.id}
+                      onClick={() => handleOpenEventDetail(e)}
                       style={{
                         fontSize: '0.72rem',
-                        padding: '2px 6px',
-                        borderRadius: '3px',
+                        padding: '3px 6px',
+                        borderRadius: '4px',
                         backgroundColor: e.isPersonal ? '#FEF3C7' : '#E0F2FE',
                         color: e.isPersonal ? '#92400E' : '#0369A1',
                         fontWeight: 600,
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap',
+                        cursor: 'pointer',
+                        transition: 'all 0.15s',
+                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
                       }}
-                      title={e.title}
+                      title={`${e.title} (클릭하여 상세 보기)`}
                     >
                       {e.isPersonal ? '[개인] ' : ''}{e.title}
                     </div>
@@ -369,7 +480,7 @@ export default function CalendarClient({
       {(viewMode === 'agenda' || viewMode === 'week' || viewMode === 'semester') && (
         <div className="card">
           <h3 className="section-title">
-            <span>📋 일정 상세 목록 ({filteredEvents.length}건)</span>
+            <span>📋 일정 상세 목록 ({filteredEvents.length}건) - 클릭시 상세정보 및 수정</span>
           </h3>
 
           {filteredEvents.length > 0 ? (
@@ -386,7 +497,11 @@ export default function CalendarClient({
                 </thead>
                 <tbody>
                   {filteredEvents.map(e => (
-                    <tr key={e.id}>
+                    <tr
+                      key={e.id}
+                      style={{ cursor: 'pointer' }}
+                      onClick={() => handleOpenEventDetail(e)}
+                    >
                       <td style={{ fontWeight: 700, color: 'var(--primary)' }}>
                         {new Date(e.startDateTime).toLocaleDateString('ko-KR')}
                       </td>
@@ -398,16 +513,16 @@ export default function CalendarClient({
                       <td style={{ fontWeight: 600 }}>{e.title}</td>
                       <td>{e.isCommon ? '전학년 공통' : e.applicableGrades?.map((g: number) => `${g}학년`).join(', ') || '개인'}</td>
                       <td>
-                        {e.isPersonal ? (
-                          <button
-                            onClick={() => handleDeletePersonalEvent(e.id)}
-                            style={{ fontSize: '0.75rem', color: '#DC2626', fontWeight: 600, cursor: 'pointer' }}
-                          >
-                            삭제
-                          </button>
-                        ) : (
-                          <span style={{ fontSize: '0.75rem', color: 'var(--sub-text)' }}>공식 일정</span>
-                        )}
+                        <button
+                          onClick={(evt) => {
+                            evt.stopPropagation();
+                            handleOpenEventDetail(e);
+                          }}
+                          className="btn-outline"
+                          style={{ fontSize: '0.75rem', padding: '2px 8px' }}
+                        >
+                          상세 / 수정
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -462,51 +577,30 @@ export default function CalendarClient({
               </div>
 
               <div>
-                <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>카테고리</label>
-                <select
-                  value={newCategory}
-                  onChange={e => setNewCategory(e.target.value)}
-                  style={{ width: '100%' }}
-                >
-                  <option value="PERSONAL">개인 일정</option>
-                  <option value="EXAM">시험 / 자격증</option>
-                  <option value="CAREER">취업 / 면접</option>
-                  <option value="ACADEMIC">과제 / 발표</option>
-                </select>
-              </div>
-
-              <div>
-                <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>메모</label>
+                <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>상세 메모</label>
                 <textarea
                   rows={3}
-                  placeholder="개인 메모를 작성하세요."
+                  placeholder="메모나 특이사항을 적어주세요."
                   value={newMemo}
                   onChange={e => setNewMemo(e.target.value)}
                   style={{ width: '100%' }}
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '12px' }}>
-                <button
-                  type="button"
-                  onClick={() => setShowAddModal(false)}
-                  className="btn-outline"
-                >
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '12px' }}>
+                <button type="button" onClick={() => setShowAddModal(false)} className="btn-outline">
                   취소
                 </button>
-                <button
-                  type="submit"
-                  className="btn-primary"
-                  disabled={submitting}
-                >
-                  {submitting ? '저장 중...' : '저장'}
+                <button type="submit" className="btn-primary" disabled={submitting}>
+                  {submitting ? '등록 중...' : '등록'}
                 </button>
               </div>
             </form>
           </div>
         </div>
       )}
-      {/* Admin Add Event Modal */}
+
+      {/* Add Admin Official Event Modal */}
       {showAdminAddModal && (
         <div
           style={{
@@ -521,15 +615,15 @@ export default function CalendarClient({
         >
           <div className="card" style={{ maxWidth: '500px', width: '100%', padding: '24px' }}>
             <h3 style={{ fontSize: '1.125rem', fontWeight: 800, marginBottom: '16px', color: 'var(--primary)' }}>
-              📢 공식/행사 일정 등록 (관리자)
+              📢 새 공식/학사 일정 등록 (관리자)
             </h3>
             <form onSubmit={handleAddOfficialEvent} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
-                <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>일정 제목 *</label>
+                <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>일정명 *</label>
                 <input
                   type="text"
                   required
-                  placeholder="예: 3학년 학과 나이팅게일 선서식, 학생회 개강총회"
+                  placeholder="예: 3학년 임상실습 OT, 중간고사"
                   value={adminTitle}
                   onChange={e => setAdminTitle(e.target.value)}
                   style={{ width: '100%' }}
@@ -549,68 +643,243 @@ export default function CalendarClient({
                 </div>
 
                 <div>
-                  <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>대상 학년 *</label>
+                  <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>대상 학년</label>
                   <select
                     value={adminTargetGrade}
                     onChange={e => setAdminTargetGrade(e.target.value as any)}
                     style={{ width: '100%' }}
                   >
-                    <option value="all">전체학년</option>
-                    <option value="1">1학년</option>
-                    <option value="2">2학년</option>
-                    <option value="3">3학년</option>
-                    <option value="4">4학년</option>
+                    <option value="all">전체 학년 공통</option>
+                    <option value="1">1학년만</option>
+                    <option value="2">2학년만</option>
+                    <option value="3">3학년만</option>
+                    <option value="4">4학년만</option>
                   </select>
                 </div>
               </div>
 
               <div>
-                <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>카테고리 *</label>
+                <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>카테고리</label>
                 <select
                   value={adminCategory}
                   onChange={e => setAdminCategory(e.target.value)}
                   style={{ width: '100%' }}
                 >
-                  <option value="OFFICIAL">공식 행사 / 학과 행사</option>
-                  <option value="STUDENT_COUNCIL">학생회 행사</option>
-                  <option value="ACADEMIC">수업 / 학업</option>
-                  <option value="EXAM">중간 / 기말고사</option>
-                  <option value="CLINICAL">임상실습</option>
-                  <option value="HEALTH">건강요건</option>
-                  <option value="OPEN_LAB">OPEN LAB</option>
-                  <option value="CAREER">취업 / 채용</option>
-                  <option value="CAMPUS">비교과 / 연구</option>
+                  {Object.entries(categoryLabels).filter(([k]) => k !== 'all' && k !== 'PERSONAL').map(([key, label]) => (
+                    <option key={key} value={key}>{label}</option>
+                  ))}
                 </select>
               </div>
 
               <div>
-                <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>상세 설명 (선택)</label>
+                <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>상세 설명</label>
                 <textarea
                   rows={3}
-                  placeholder="행사 준비사항 및 상세 안내"
+                  placeholder="일정 설명 또는 준비사항"
                   value={adminMemo}
                   onChange={e => setAdminMemo(e.target.value)}
                   style={{ width: '100%' }}
                 />
               </div>
 
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '12px' }}>
-                <button
-                  type="button"
-                  onClick={() => setShowAdminAddModal(false)}
-                  className="btn-outline"
-                >
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '12px' }}>
+                <button type="button" onClick={() => setShowAdminAddModal(false)} className="btn-outline">
                   취소
                 </button>
-                <button
-                  type="submit"
-                  className="btn-primary"
-                  disabled={adminSubmitting}
-                >
-                  {adminSubmitting ? '등록 중...' : '등록 완료'}
+                <button type="submit" className="btn-primary" disabled={adminSubmitting}>
+                  {adminSubmitting ? '등록 중...' : '공식 일정 등록'}
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* EVENT DETAIL & EDIT MODAL */}
+      {selectedEvent && (
+        <div
+          style={{
+            position: 'fixed',
+            top: 0, left: 0, right: 0, bottom: 0,
+            backgroundColor: 'rgba(0,0,0,0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 2000,
+            padding: '20px',
+          }}
+        >
+          <div className="card" style={{ maxWidth: '500px', width: '100%', padding: '28px' }}>
+            {!isEditingEvent ? (
+              /* VIEW MODE */
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+                  <div>
+                    <span
+                      style={{
+                        fontSize: '0.75rem',
+                        fontWeight: 800,
+                        padding: '3px 8px',
+                        borderRadius: '4px',
+                        backgroundColor: selectedEvent.isPersonal ? '#FEF3C7' : '#E0F2FE',
+                        color: selectedEvent.isPersonal ? '#92400E' : '#0369A1',
+                      }}
+                    >
+                      {selectedEvent.isPersonal ? '개인 일정' : '공식/학사 일정'} ({categoryLabels[selectedEvent.category] || selectedEvent.category})
+                    </span>
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text)', marginTop: '8px', marginBottom: '4px' }}>
+                      {selectedEvent.title}
+                    </h3>
+                  </div>
+                  <button onClick={() => setSelectedEvent(null)} className="btn-outline" style={{ padding: '4px 10px', fontSize: '0.8125rem' }}>
+                    닫기 ✕
+                  </button>
+                </div>
+
+                <div style={{ backgroundColor: '#F8FAFC', padding: '16px', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px', fontSize: '0.875rem' }}>
+                  <div>
+                    <strong>📅 날짜:</strong> {new Date(selectedEvent.startDateTime).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
+                  </div>
+                  <div>
+                    <strong>🎓 대상 학년:</strong> {selectedEvent.isPersonal ? '개인' : (selectedEvent.isCommon ? '전학년 공통' : selectedEvent.applicableGrades?.map((g: number) => `${g}학년`).join(', '))}
+                  </div>
+                  {selectedEvent.description && (
+                    <div style={{ marginTop: '4px', paddingTop: '8px', borderTop: '1px solid #E2E8F0' }}>
+                      <strong>📝 상세 설명:</strong>
+                      <p style={{ marginTop: '4px', whiteSpace: 'pre-wrap', color: 'var(--text)', lineHeight: 1.5 }}>
+                        {selectedEvent.description}
+                      </p>
+                    </div>
+                  )}
+                </div>
+
+                <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end' }}>
+                  {(selectedEvent.isPersonal || isAdmin) && (
+                    <>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (selectedEvent.isPersonal) {
+                            handleDeletePersonalEvent(selectedEvent.id);
+                          } else {
+                            handleDeleteOfficialEvent(selectedEvent.id);
+                          }
+                        }}
+                        style={{
+                          backgroundColor: '#FEE2E2',
+                          color: '#DC2626',
+                          border: '1px solid #FECACA',
+                          padding: '8px 16px',
+                          borderRadius: '8px',
+                          fontSize: '0.875rem',
+                          fontWeight: 700,
+                          cursor: 'pointer'
+                        }}
+                      >
+                        🗑️ 삭제
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setIsEditingEvent(true)}
+                        className="btn-primary"
+                        style={{ padding: '8px 16px', fontSize: '0.875rem', fontWeight: 700 }}
+                      >
+                        ✏️ 일정 수정
+                      </button>
+                    </>
+                  )}
+                </div>
+              </div>
+            ) : (
+              /* EDIT MODE */
+              <div>
+                <h3 style={{ fontSize: '1.125rem', fontWeight: 800, marginBottom: '16px', color: 'var(--primary)' }}>
+                  ✏️ 일정 정보 수정
+                </h3>
+                <form onSubmit={handleSaveEventEdit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <div>
+                    <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>일정 제목 *</label>
+                    <input
+                      type="text"
+                      required
+                      value={editTitle}
+                      onChange={e => setEditTitle(e.target.value)}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                    <div>
+                      <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>날짜 *</label>
+                      <input
+                        type="date"
+                        required
+                        value={editDate}
+                        onChange={e => setEditDate(e.target.value)}
+                        style={{ width: '100%' }}
+                      />
+                    </div>
+
+                    {!selectedEvent.isPersonal ? (
+                      <div>
+                        <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>대상 학년</label>
+                        <select
+                          value={editTargetGrade}
+                          onChange={e => setEditTargetGrade(e.target.value as any)}
+                          style={{ width: '100%' }}
+                        >
+                          <option value="all">전체 학년 공통</option>
+                          <option value="1">1학년만</option>
+                          <option value="2">2학년만</option>
+                          <option value="3">3학년만</option>
+                          <option value="4">4학년만</option>
+                        </select>
+                      </div>
+                    ) : (
+                      <div>
+                        <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>카테고리</label>
+                        <select
+                          value={editCategory}
+                          onChange={e => setEditCategory(e.target.value)}
+                          style={{ width: '100%' }}
+                        >
+                          <option value="PERSONAL">개인 일정</option>
+                          <option value="EXAM">개인 시험/자격증</option>
+                          <option value="ACADEMIC">학업/과제</option>
+                        </select>
+                      </div>
+                    )}
+                  </div>
+
+                  <div>
+                    <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>상세 설명 / 메모</label>
+                    <textarea
+                      rows={3}
+                      value={editDescription}
+                      onChange={e => setEditDescription(e.target.value)}
+                      style={{ width: '100%' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'flex', gap: '8px', justifyContent: 'flex-end', marginTop: '12px' }}>
+                    <button
+                      type="button"
+                      onClick={() => setIsEditingEvent(false)}
+                      className="btn-outline"
+                    >
+                      취소
+                    </button>
+                    <button
+                      type="submit"
+                      className="btn-primary"
+                      disabled={editSubmitting}
+                    >
+                      {editSubmitting ? '저장 중...' : '💾 저장'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
           </div>
         </div>
       )}

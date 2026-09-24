@@ -37,6 +37,7 @@ model User {
   roadmapProgresses   UserRoadmapProgress[]
   healthRecords       StudentHealthRecord[]
   healthReadinesses   StudentHealthReadiness[]
+  quizAttempts        QuizAttempt[]
 }
 
 model Semester {
@@ -484,4 +485,22 @@ model NursingTerm {
   answer       String?  // 정답
   createdAt    DateTime @default(now())
   updatedAt    DateTime @updatedAt
+}
+
+model QuizAttempt {
+  id             String   @id @default(cuid())
+  userId         String
+  user           User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  subject        String
+  category       String?
+  quizType       String   // 'def_to_term' | 'term_to_def' | 'multiple_choice'
+  score          Int
+  totalQuestions Int
+  correctCount   Int
+  wrongCount     Int
+  details        Json?    // Array of { termId, questionText, userAnswer, correctAnswer, isCorrect, options }
+  createdAt      DateTime @default(now())
+
+  @@index([userId])
+  @@index([createdAt])
 }

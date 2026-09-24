@@ -120,9 +120,6 @@ export default function UserList({ initialUsers }: { initialUsers: User[] }) {
           <button className={`tab-btn ${activeTab === 'PENDING' ? 'active' : ''}`} onClick={() => setActiveTab('PENDING')}>
             가입 대기 ({users.filter(u => u.approvalStatus === 'PENDING').length})
           </button>
-          <button className={`tab-btn ${activeTab === 'RESTRICTED' ? 'active' : ''}`} onClick={() => setActiveTab('RESTRICTED')}>
-            참여 불가 ({users.filter(u => u.restrictions.length > 0).length})
-          </button>
         </div>
 
         <div className="search-bar">
@@ -181,58 +178,6 @@ export default function UserList({ initialUsers }: { initialUsers: User[] }) {
           </div>
         )}
 
-        {activeTab === 'RESTRICTED' && (
-          <div className="user-section">
-             <table className="admin-table">
-               <thead>
-                 <tr>
-                   <th>학생 정보</th>
-                   <th>학년</th>
-                   <th>누적 페널티</th>
-                   <th>불가 사유</th>
-                   <th>불가 기간</th>
-                 </tr>
-               </thead>
-               <tbody>
-                 {restrictedUsers.map(user => (
-                   <tr key={user.id}>
-                     <td>
-                        <div className="user-id-name">
-                          <span className="name">{user.name}</span>
-                          <span className="id">{user.studentId}</span>
-                        </div>
-                     </td>
-                     <td>{user.grade}학년</td>
-                     <td>
-                        <div className="penalty-status">
-                           {user.warnings.length > 0 && (
-                             <span className={`penalty-badge cleanup ${user.warnings.length >= 3 ? 'critical' : ''}`}>
-                               정리불량 누적 {user.warnings.length}회
-                             </span>
-                           )}
-                           {user.warnings.length === 0 && <span className="clean-status">-</span>}
-                        </div>
-                     </td>
-                     <td>
-                        {user.restrictions.map(r => (
-                          <div key={r.id} className="penalty-tag red">{r.reason}</div>
-                        ))}
-                     </td>
-                     <td>
-                        {user.restrictions.map(r => (
-                          <div key={r.id} className="penalty-date">
-                            ~ {format(new Date(r.endDate), 'yyyy.MM.dd')}
-                          </div>
-                        ))}
-                     </td>
-                   </tr>
-                 ))}
-                 {restrictedUsers.length === 0 && <tr><td colSpan={5} className="empty-td">참여 불가 학생이 없습니다.</td></tr>}
-               </tbody>
-             </table>
-          </div>
-        )}
-
         {activeTab === 'ALL' && (
           <div className="grade-groups">
             {sortedGrades.map(grade => (
@@ -244,7 +189,7 @@ export default function UserList({ initialUsers }: { initialUsers: User[] }) {
                       <tr>
                         <th>학번/이름</th>
                         <th>학년 수정</th>
-                        <th style={{ width: '200px' }}>누적 페널티</th>
+                        <th>이메일</th>
                         <th>상태</th>
                       </tr>
                     </thead>
@@ -271,18 +216,8 @@ export default function UserList({ initialUsers }: { initialUsers: User[] }) {
                               <option value="4">4학년</option>
                             </select>
                           </td>
-                          <td>
-                            <div className="penalty-status">
-                              {user.warnings.length > 0 && (
-                                <span className={`penalty-badge cleanup ${user.warnings.length >= 3 ? 'critical' : ''}`}>
-                                  정리불량 {user.warnings.length}회
-                                </span>
-                              )}
-                              {user.restrictions.length > 0 && (
-                                <span className="penalty-badge absent">참여 제한 중</span>
-                              )}
-                              {user.warnings.length === 0 && user.restrictions.length === 0 && <span className="clean-status">기록 없음</span>}
-                            </div>
+                          <td style={{ fontSize: '0.875rem', color: '#64748B' }}>
+                            {user.email || '-'}
                           </td>
                           <td>
                             <span className={`status-badge ${user.approvalStatus.toLowerCase()}`}>
