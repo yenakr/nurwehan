@@ -1047,7 +1047,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                   transition: 'all 0.2s',
                 }}
               >
-                📖 용어/단어장 (Flashcard / Typing)
+                📖 용어/단어장
               </button>
               <button
                 onClick={() => {
@@ -1071,7 +1071,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                   transition: 'all 0.2s',
                 }}
               >
-                📝 객관식/시험 퀴즈 (Exam Practice)
+                📝 객관식/시험 퀴즈
               </button>
             </div>
 

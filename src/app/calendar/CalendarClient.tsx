@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import PreparingBadge from '@/components/PreparingBadge';
 import EmptyState from '@/components/EmptyState';
 import { isAdminRole } from '@/lib/auth-core';
@@ -279,17 +279,82 @@ export default function CalendarClient({
   const nextMonth = () => setCurrentDate(new Date(currentYear, currentMonth + 1, 1));
   const todayMonth = () => setCurrentDate(new Date());
 
-  // Render Days for Month View
-  const firstDayOfMonth = new Date(currentYear, currentMonth, 1).getDay();
-  const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+  // Local YYYY-MM-DD date formatter without UTC offset bug
+  const formatYYYYMMDD = (dInput: Date | string) => {
+    if (!dInput) return '';
+    if (typeof dInput === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dInput)) {
+      return dInput;
+    }
+    const d = new Date(dInput);
+    if (isNaN(d.getTime())) return '';
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
 
-  const monthCells = [];
-  for (let i = 0; i < firstDayOfMonth; i++) {
-    monthCells.push(null);
-  }
-  for (let d = 1; d <= daysInMonth; d++) {
-    monthCells.push(new Date(currentYear, currentMonth, d));
-  }
+  // Render Grid Cells for Month View (Real Calendar App Style with Prev/Next month trailing/leading days)
+  const monthGridCells = useMemo(() => {
+    const cells: Array<{
+      dateObj: Date;
+      isCurrentMonth: boolean;
+      dayStr: string;
+      dayNumber: number;
+      monthNumber: number;
+    }> = [];
+
+    const firstDay = new Date(currentYear, currentMonth, 1);
+    const firstDayOfWeek = firstDay.getDay(); // 0 (Sun) to 6 (Sat)
+
+    // 1. Previous Month Trailing Days
+    const prevMonthLastDay = new Date(currentYear, currentMonth, 0).getDate();
+    for (let i = firstDayOfWeek - 1; i >= 0; i--) {
+      const d = new Date(currentYear, currentMonth - 1, prevMonthLastDay - i);
+      const dayStr = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+      cells.push({
+        dateObj: d,
+        isCurrentMonth: false,
+        dayStr,
+        dayNumber: d.getDate(),
+        monthNumber: d.getMonth() + 1,
+      });
+    }
+
+    // 2. Current Month Days
+    const daysInMonth = new Date(currentYear, currentMonth + 1, 0).getDate();
+    for (let d = 1; d <= daysInMonth; d++) {
+      const dateObj = new Date(currentYear, currentMonth, d);
+      const dayStr = `${currentYear}-${String(currentMonth + 1).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+      cells.push({
+        dateObj,
+        isCurrentMonth: true,
+        dayStr,
+        dayNumber: d,
+        monthNumber: currentMonth + 1,
+      });
+    }
+
+    // 3. Next Month Leading Days to complete grid row (multiple of 7)
+    const totalSoFar = cells.length;
+    const remainder = totalSoFar % 7;
+    if (remainder > 0) {
+      const nextDaysNeeded = 7 - remainder;
+      for (let d = 1; d <= nextDaysNeeded; d++) {
+        const dateObj = new Date(currentYear, currentMonth + 1, d);
+        const nextMonthNum = dateObj.getMonth() + 1;
+        const dayStr = `${dateObj.getFullYear()}-${String(nextMonthNum).padStart(2, '0')}-${String(d).padStart(2, '0')}`;
+        cells.push({
+          dateObj,
+          isCurrentMonth: false,
+          dayStr,
+          dayNumber: d,
+          monthNumber: nextMonthNum,
+        });
+      }
+    }
+
+    return cells;
+  }, [currentYear, currentMonth]);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -418,24 +483,26 @@ export default function CalendarClient({
               </div>
             ))}
 
-            {monthCells.map((dateObj, idx) => {
-              if (!dateObj) {
-                return <div key={`empty-${idx}`} style={{ backgroundColor: '#F8FAFC', minHeight: '90px' }} />;
-              }
-
-              const dayStr = dateObj.toISOString().split('T')[0];
+            {monthGridCells.map((cell) => {
+              const dayStr = cell.dayStr;
               const dayEvents = filteredEvents.filter(e => {
-                const eDate = new Date(e.startDateTime).toISOString().split('T')[0];
+                const eDate = formatYYYYMMDD(e.startDateTime);
                 return eDate === dayStr;
               });
 
-              const isToday = dayStr === new Date().toISOString().split('T')[0];
+              const todayStr = formatYYYYMMDD(new Date());
+              const isToday = dayStr === todayStr;
 
               return (
                 <div
                   key={dayStr}
                   style={{
-                    backgroundColor: isToday ? '#EFF6FF' : '#FFFFFF',
+                    backgroundColor: !cell.isCurrentMonth
+                      ? '#F8FAFC'
+                      : isToday
+                      ? '#EFF6FF'
+                      : '#FFFFFF',
+                    opacity: cell.isCurrentMonth ? 1 : 0.65,
                     minHeight: '100px',
                     padding: '8px',
                     display: 'flex',
@@ -443,8 +510,18 @@ export default function CalendarClient({
                     gap: '4px',
                   }}
                 >
-                  <div style={{ fontSize: '0.8125rem', fontWeight: isToday ? 800 : 600, color: isToday ? 'var(--primary)' : 'var(--text)' }}>
-                    {dateObj.getDate()}일
+                  <div
+                    style={{
+                      fontSize: '0.8125rem',
+                      fontWeight: isToday ? 800 : cell.isCurrentMonth ? 600 : 500,
+                      color: !cell.isCurrentMonth
+                        ? '#94A3B8'
+                        : isToday
+                        ? 'var(--primary)'
+                        : 'var(--text)',
+                    }}
+                  >
+                    {!cell.isCurrentMonth ? `${cell.monthNumber}/${cell.dayNumber}일` : `${cell.dayNumber}일`}
                   </div>
 
                   {dayEvents.map(e => (
@@ -464,6 +541,7 @@ export default function CalendarClient({
                         cursor: 'pointer',
                         transition: 'all 0.15s',
                         boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
+                        opacity: cell.isCurrentMonth ? 1 : 0.75,
                       }}
                       title={`${e.title} (클릭하여 상세 보기)`}
                     >
