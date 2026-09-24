@@ -281,9 +281,10 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
       if (studySubject !== 'all' && t.subject !== studySubject) return false;
       if (studyCategory !== 'all' && t.category !== studyCategory) return false;
 
-      // In Flashcard or Typing mode, automatically filter out MULTIPLE_CHOICE exam questions
+      // In Flashcard or Typing mode, filter out MULTIPLE_CHOICE exam questions only if the subject has TERM items
       if ((studyViewMode === 'flashcard' || studyViewMode === 'typing') && contentTypeFilter === 'all') {
-        if (itemType === 'MULTIPLE_CHOICE') return false;
+        const hasTermItemsInSubj = termsList.some(item => (studySubject === 'all' || item.subject === studySubject) && (item.itemType || 'TERM') === 'TERM');
+        if (hasTermItemsInSubj && itemType === 'MULTIPLE_CHOICE') return false;
       }
 
       if (searchTerm.trim()) {
@@ -1137,6 +1138,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                       onClick={() => {
                         setStudySubject(subj);
                         setStudyCategory('all');
+                        if (isMcSubj) setStudyViewMode('grid');
                       }}
                       className={studySubject === subj ? 'btn-primary' : 'btn-outline'}
                       style={{ fontSize: '0.84rem', padding: '6px 14px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
