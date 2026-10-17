@@ -712,8 +712,9 @@ Open lab 진행할 인원을 모아 조를 구성하고, 한 명이 대표로 �
     { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '위해사건', englishTerm: 'adverse event', definition: '환자에게 위해를 가져온 사건' },
     { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '안전문화', englishTerm: 'safety culture', definition: '조직의 모든 구성원들이 작업 환경에서 ‘ 안전’ 이라는 목표에 도달하는 방식의 하나로서 안전에 관하여 공유하는 태도나 신념, 인식, 가치관을 통칭하는 개념' },
 
-    // 사후테스트 포함
+    // 사후테스트 포함 (1~10)
     { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '관리', englishTerm: 'management', definition: '조직의 목표를 달성하기 위해 개인이나 그룹 모두가 자원을 활용하여 기획, 조직. 지휘, 인사, 통제를 하는 과정' },
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '간호표준', englishTerm: 'nursing standard', definition: '간호의 구조적, 과정적, 결과적측면의 질을 평가 할 수 있는 바람직한 수준에 대한 요약적 진술' },
     { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '권한', englishTerm: 'authority', definition: '공식적 권위에서 비롯되는 특정 지위에 부여되는 합법적 권력. 조직 규범에 의해 정당성이 인정된 합법적이니 권력' },
     { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '기획', englishTerm: 'planning', definition: '조직의 목적이나 목표를 사정, 수립하고 수행하여 평가하고 조정하는 지속적인 과정' },
     { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '목표관리', englishTerm: 'management by objectives : MBO', definition: '조직구성원의 참여과정을 통하여 상층관리자로부터 일선관리자에 이르기까지 그들이 연간목표를 설정하고 목표와 실제의 결과를 정기적으로 비교, 통제하는 관리시스템' },
