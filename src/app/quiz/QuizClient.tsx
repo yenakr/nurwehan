@@ -174,13 +174,25 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
     });
   }, [termsList, quizSubject, quizCategory]);
 
-  const isTargetMc = useMemo(() => {
-    return selectedQuizTerms.length > 0 && selectedQuizTerms.every(t => t.itemType === 'MULTIPLE_CHOICE' || (t.options && t.options.length > 0));
+  const isTargetExam = useMemo(() => {
+    return selectedQuizTerms.length > 0 && selectedQuizTerms.some(t => t.itemType === 'MULTIPLE_CHOICE' || t.itemType === 'SHORT_ANSWER' || (t.options && t.options.length > 0));
   }, [selectedQuizTerms]);
 
   const isTargetTerm = useMemo(() => {
     return selectedQuizTerms.length > 0 && selectedQuizTerms.every(t => (t.itemType || 'TERM') === 'TERM' && (!t.options || t.options.length === 0));
   }, [selectedQuizTerms]);
+
+  const isCurrentSubjectMc = useMemo(() => {
+    return termsList.some(
+      t => t.subject === studySubject && (t.itemType === 'MULTIPLE_CHOICE' || t.itemType === 'SHORT_ANSWER' || (t.options && t.options.length > 0))
+    );
+  }, [termsList, studySubject]);
+
+  useEffect(() => {
+    if (isCurrentSubjectMc || contentTypeFilter === 'MULTIPLE_CHOICE') {
+      setStudyViewMode('grid');
+    }
+  }, [isCurrentSubjectMc, contentTypeFilter, studySubject]);
 
   const fetchMyAttempts = useCallback(() => {
     if (!user) return;
@@ -442,9 +454,13 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
         optionsMap[idx] = [];
       } else if ((q.itemType || 'TERM') === 'TERM') {
         const correct = q.term;
-        const sameSubjectTerms = termsList
-          .filter(t => t.subject === q.subject && t.term !== correct)
-          .map(t => t.term);
+        const sameSubjectTerms = Array.from(
+          new Set(
+            termsList
+              .filter(t => t.subject === q.subject && t.term !== correct)
+              .map(t => t.term)
+          )
+        );
         const distractors = sameSubjectTerms
           .sort(() => Math.random() - 0.5)
           .slice(0, 3);
@@ -470,22 +486,33 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   const currentQuestion = quizQuestions[currentIndex];
 
   const checkAnswerCorrectness = (input: string, term: NursingTerm) => {
-    const cleanInput = input.trim().toLowerCase().replace(/\s+/g, '');
+    if (!input) return false;
+    const normalize = (str: string) =>
+      str
+        .trim()
+        .toLowerCase()
+        .replace(/^[①-⑤]|\([0-9]+\)|^[0-9]+\./g, '')
+        .replace(/\(정답\)/g, '')
+        .replace(/[\s\-_.,/()]/g, '');
+
+    const cleanInput = normalize(input);
     if (!cleanInput) return false;
 
     if (term.answer) {
-      const cleanAnswer = term.answer.trim().toLowerCase().replace(/\s+/g, '');
-      if (cleanInput === cleanAnswer) return true;
+      const answers = term.answer.split(/[/,]/);
+      for (const ans of answers) {
+        if (cleanInput === normalize(ans)) return true;
+      }
     }
 
-    const cleanKorean = term.term.trim().toLowerCase().replace(/\s+/g, '');
-    const cleanEng = term.englishTerm?.trim().toLowerCase().replace(/\s+/g, '') || '';
+    const cleanKorean = normalize(term.term);
+    const cleanEng = term.englishTerm ? normalize(term.englishTerm) : '';
 
-    if (quizType === 'def_to_term' || quizType === 'multiple_choice') {
+    if (quizType === 'def_to_term' || quizType === 'multiple_choice' || term.itemType === 'MULTIPLE_CHOICE' || term.itemType === 'SHORT_ANSWER') {
       return cleanInput === cleanKorean || (cleanEng !== '' && cleanInput === cleanEng);
     } else {
       const keywords = term.term.split(' ');
-      return cleanInput.length > 1 && keywords.some(k => cleanInput.includes(k.toLowerCase()));
+      return cleanInput.length > 1 && keywords.some(k => cleanInput.includes(normalize(k)));
     }
   };
 
@@ -1131,7 +1158,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
                 <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--sub-text)' }}>과목:</span>
                 {filteredSubjects.map(subj => {
-                  const isMcSubj = termsList.some(t => t.subject === subj && t.itemType === 'MULTIPLE_CHOICE');
+                  const isMcSubj = termsList.some(t => t.subject === subj && (t.itemType === 'MULTIPLE_CHOICE' || t.itemType === 'SHORT_ANSWER' || (t.options && t.options.length > 0)));
                   return (
                     <button
                       key={subj}
@@ -1154,38 +1181,42 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
 
               {/* Study Mode Selector Sub-Tabs */}
               <div style={{ display: 'flex', gap: '6px', backgroundColor: '#F1F5F9', padding: '4px', borderRadius: '8px' }}>
-                <button
-                  onClick={() => setStudyViewMode('flashcard')}
-                  style={{
-                    padding: '6px 14px',
-                    borderRadius: '6px',
-                    fontSize: '0.8125rem',
-                    fontWeight: 700,
-                    border: 'none',
-                    backgroundColor: studyViewMode === 'flashcard' ? '#0E4A84' : 'transparent',
-                    color: studyViewMode === 'flashcard' ? '#FFFFFF' : '#475569',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  🎴 플래시카드
-                </button>
-                <button
-                  onClick={() => setStudyViewMode('typing')}
-                  style={{
-                    padding: '6px 14px',
-                    borderRadius: '6px',
-                    fontSize: '0.8125rem',
-                    fontWeight: 700,
-                    border: 'none',
-                    backgroundColor: studyViewMode === 'typing' ? '#0E4A84' : 'transparent',
-                    color: studyViewMode === 'typing' ? '#FFFFFF' : '#475569',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  ⌨️ 타이핑
-                </button>
+                {!isCurrentSubjectMc && contentTypeFilter !== 'MULTIPLE_CHOICE' && (
+                  <>
+                    <button
+                      onClick={() => setStudyViewMode('flashcard')}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '6px',
+                        fontSize: '0.8125rem',
+                        fontWeight: 700,
+                        border: 'none',
+                        backgroundColor: studyViewMode === 'flashcard' ? '#0E4A84' : 'transparent',
+                        color: studyViewMode === 'flashcard' ? '#FFFFFF' : '#475569',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      🎴 플래시카드
+                    </button>
+                    <button
+                      onClick={() => setStudyViewMode('typing')}
+                      style={{
+                        padding: '6px 14px',
+                        borderRadius: '6px',
+                        fontSize: '0.8125rem',
+                        fontWeight: 700,
+                        border: 'none',
+                        backgroundColor: studyViewMode === 'typing' ? '#0E4A84' : 'transparent',
+                        color: studyViewMode === 'typing' ? '#FFFFFF' : '#475569',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                      }}
+                    >
+                      ⌨️ 타이핑
+                    </button>
+                  </>
+                )}
                 <button
                   onClick={() => setStudyViewMode('grid')}
                   style={{
@@ -1876,7 +1907,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
               </label>
               <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                 {subjects.map(subj => {
-                  const isMcSubj = termsList.some(t => t.subject === subj && t.itemType === 'MULTIPLE_CHOICE');
+                  const isMcSubj = termsList.some(t => t.subject === subj && (t.itemType === 'MULTIPLE_CHOICE' || t.itemType === 'SHORT_ANSWER' || (t.options && t.options.length > 0)));
                   return (
                     <button
                       key={subj}
@@ -1937,19 +1968,17 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
               borderRadius: '8px',
               fontSize: '0.84rem',
               fontWeight: 700,
-              backgroundColor: isTargetMc ? '#F3E8FF' : isTargetTerm ? '#EFF6FF' : '#F1F5F9',
-              color: isTargetMc ? '#6B21A8' : isTargetTerm ? '#1E40AF' : '#334155',
+              backgroundColor: isTargetExam ? '#F3E8FF' : '#EFF6FF',
+              color: isTargetExam ? '#6B21A8' : '#1E40AF',
               display: 'flex',
               alignItems: 'center',
               gap: '6px'
             }}>
-              <span>{isTargetMc ? '📝' : isTargetTerm ? '📖' : '📚'}</span>
+              <span>{isTargetExam ? '📝' : '📖'}</span>
               <span>
-                {isTargetMc
-                  ? '선택하신 범위는 [객관식 퀴즈 문항]으로 구성되어 있습니다.'
-                  : isTargetTerm
-                  ? '선택하신 범위는 [의학 용어 / 단어장 문항]으로 구성되어 있습니다.'
-                  : '선택하신 범위에 객관식 퀴즈와 의학 용어가 포함되어 있습니다.'}
+                {isTargetExam
+                  ? '선택하신 범위는 [객관식 및 주관식 문제]로 구성되어 있습니다.'
+                  : '선택하신 범위는 [의학 용어 / 단어장 문항]으로 구성되어 있습니다.'}
               </span>
             </div>
 
@@ -1959,8 +1988,8 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                 3. 문제 풀이 방식
               </label>
 
-              {isTargetMc ? (
-                /* Standard Multiple Choice only for MC subjects */
+              {isTargetExam ? (
+                /* Mixed exam mode for subjects with multiple-choice/subjective questions */
                 <div
                   style={{
                     padding: '14px',
@@ -1971,13 +2000,13 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                     fontWeight: 700,
                   }}
                 >
-                  <div style={{ fontSize: '0.9375rem', marginBottom: '4px' }}>🎯 객관식 / 선택형 퀴즈</div>
+                  <div style={{ fontSize: '0.9375rem', marginBottom: '4px' }}>🎯 객관식 및 주관식 혼합 모의고사</div>
                   <div style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 500 }}>
-                    제시된 선택지 보기 중에서 올바른 정답을 선택합니다. (객관식 과목 전용)
+                    각 문항의 출제 방식(객관식 선택형 / 주관식 단답형)에 맞게 문제가 출제됩니다.
                   </div>
                 </div>
               ) : (
-                /* Both options for vocabulary terms or all */
+                /* Both options for vocabulary terms */
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
                   <button
                     type="button"
@@ -2062,10 +2091,10 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                   }}
                 >
                   <div style={{ fontSize: '0.875rem', marginBottom: '2px' }}>
-                    {isTargetMc ? '📝 전체 시험지 모드 (모의고사)' : '📝 전체 단어장 시험 (주관식)'}
+                    {isTargetExam ? '📝 전체 모의고사 (시험지 모드)' : '📝 전체 단어장 시험'}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--sub-text)', fontWeight: 400 }}>
-                    {isTargetMc ? '모든 객관식 문제 풀이 후 한번에 제출' : '모든 빈칸 작성 후 한번에 채점'}
+                    {isTargetExam ? '모든 문제 풀이 후 한번에 제출 및 채점' : '모든 용어 답안 작성 후 한번에 채점'}
                   </div>
                 </button>
               </div>
@@ -2170,7 +2199,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
 
           {/* Question Box */}
           {(() => {
-            const isStructured = (currentQuestion.options && currentQuestion.options.length > 0) || currentQuestion.itemType === 'MULTIPLE_CHOICE';
+            const isStructured = (currentQuestion.options && currentQuestion.options.length > 0) || currentQuestion.itemType === 'MULTIPLE_CHOICE' || currentQuestion.itemType === 'SHORT_ANSWER';
             const showTermAsQuestion = isStructured || quizType === 'term_to_def';
             const promptText = showTermAsQuestion ? currentQuestion.term : currentQuestion.definition;
             const subText = showTermAsQuestion ? currentQuestion.englishTerm : null;
@@ -2398,7 +2427,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <div>
                   <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0E4A84', margin: 0 }}>
-                    {isMcSheet ? '📝 전체 퀴즈 모의고사 시험지' : '📝 전체 단어장 시험 (주관식)'}
+                    {isMcSheet ? '📝 전체 모의고사 시험지' : '📝 전체 단어장 시험'}
                   </h2>
                   <div style={{ fontSize: '0.84rem', color: '#64748B', marginTop: '4px' }}>
                     출제 과목: {quizSubject} | 총 {quizQuestions.length}문항
@@ -2491,6 +2520,55 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                               </button>
                             );
                           })}
+                        </div>
+                      </div>
+                    );
+                  }
+
+                  /* Subjective Short Answer or Term Row */
+                  const isShortAns = q.itemType === 'SHORT_ANSWER';
+                  if (isShortAns) {
+                    return (
+                      <div
+                        key={q.id || idx}
+                        style={{
+                          border: '1px solid #CBD5E1',
+                          borderRadius: '10px',
+                          padding: '20px',
+                          backgroundColor: '#FFFFFF',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
+                          <span style={{ fontSize: '0.8125rem', fontWeight: 800, backgroundColor: '#FEF3C7', color: '#D97706', padding: '4px 10px', borderRadius: '6px' }}>
+                            문제 {idx + 1} (주관식)
+                          </span>
+                          <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}>
+                            {q.subject} {q.category ? `• ${q.category}` : ''}
+                          </span>
+                        </div>
+
+                        <div style={{ fontSize: '1rem', fontWeight: 800, color: '#1E293B', lineHeight: 1.6, marginBottom: '14px' }}>
+                          {q.term}
+                        </div>
+
+                        <div>
+                          <input
+                            type="text"
+                            placeholder="주관식 정답 입력 (예: 중이염)..."
+                            value={userAns}
+                            onChange={e => setWorksheetAnswers(prev => ({ ...prev, [idx]: e.target.value }))}
+                            style={{
+                              width: '100%',
+                              padding: '12px 14px',
+                              fontSize: '0.95rem',
+                              fontWeight: 700,
+                              borderRadius: '8px',
+                              border: userAns ? '2px solid #2563EB' : '1px solid #CBD5E1',
+                              backgroundColor: userAns ? '#F0F9FF' : '#FFFFFF',
+                              color: '#0F172A',
+                            }}
+                          />
                         </div>
                       </div>
                     );

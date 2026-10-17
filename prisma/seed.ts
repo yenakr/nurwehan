@@ -690,6 +690,115 @@ Open lab 진행할 인원을 모아 조를 구성하고, 한 명이 대표로 �
     { subject: '간호관리학', category: '퀴즈 1', itemType: 'TERM', term: '절차', englishTerm: 'procedure', definition: '정책에 근거한 보다 구체적인 행동방식으로 표준화된 처리순서 또는 방법' },
     { subject: '간호관리학', category: '퀴즈 1', itemType: 'TERM', term: '규칙', englishTerm: 'rule', definition: '규칙은 일반적인 업무처리 기준이며, 구체적이고 명확한 행동을 요구하는 지침' },
 
+    // 간호관리학 (카테고리: 퀴즈 2 - 10월 8일 배부 용어 및 사후테스트 포함)
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '간호표준', englishTerm: 'nursing standard', definition: '간호의 구조적, 과정적, 결과적측면의 질을 평가 할 수 있는 바람직한 수준에 대한 요약적 진술' },
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '갈등', englishTerm: 'conflict', definition: '상반되는 두 개 이상의 욕구 혹은 동기가 동시에 존재하여 한쪽을 만족시키고자 하면 다른 한쪽이 만족하지 않는 상태' },
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '모집', englishTerm: 'recruitment', definition: '조직의 목적 활동에 적합한 인력을 확보하기 위해 우수한 후보자들을 지원하게 하는 절차' },
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '선발', englishTerm: 'selection', definition: '모집활동에 의해 응모한 지원자 가운데 조직이 필요로 하는 직무에 적합한 자질을 갖추었다고 판단되는 간호직원을 채용할 것을 결정하는 과정' },
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '이직', englishTerm: 'turn over', definition: '자의나 직장의 사정, 정년 등으로 인하여 직장을 떠나는 것' },
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '인력개발', englishTerm: 'staffing development', definition: '직원의 직업적, 인격적인 지식, 기술 및 태도를 향상시키기 위하여 제공하는 모든 훈련과 교육' },
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '환자분류체계', englishTerm: 'patient classification system', definition: '각 환자에게 요구되는 간호의존도에 따른 간호시간, 양, 복잡성에 따라 환자를 분류하는 방법' },
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '고객접점', englishTerm: 'moment of truth : MOT', definition: '고객이 조직의 일면과 접촉하면서 그 서비스품질에 관하여 뭔가 인상을 얻을 수 있는 순간. 조직의 일면은 시설, 사람, 물건, 환경에 관한 모두를 뜻함' },
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '동기부여', englishTerm: 'motivation', definition: '개인이 어떤 목표를 달성하기 위해 노력하도록 해주는 과정' },
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '리더십', englishTerm: 'leadership', definition: '리더가 일정한 상황 하에서 목표달성을 위해 개인이나 집단행위에 영향력을 행사하는 과정' },
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '질 보장', englishTerm: 'quality assurance', definition: '비용감소에 따른 간호의 질을 보장하기 위해 문제해결 방법을 이용하는 관리 철학.' },
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '주장행동', englishTerm: 'assertive behavior', definition: '상대방의 권리를 침해하거나 불쾌감을 주지 않으면서 자신의 권리, 욕구, 의견, 생각, 느낌 등을 솔직하게 나타내는 행동' },
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '지표', englishTerm: 'indicator', definition: '특정기준의 달성정도를 객관적으로 측정할 수 있게 하는 관찰 및 측정 가능한 요소' },
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '전자의무기록', englishTerm: 'electronic medical record : EMR', definition: '병원에서 사용하는 종이문서를 없애고 모든 데이터를 전산매체에 저장하는 방식' },
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '처방전달시스템', englishTerm: 'order communication system : OCS', definition: '가장 기본이 되는 병원정보 시스템으로 환자에게 발생되는 처방을 중심으로 일어나는 모든 흐름을 전산화 한 것' },
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '의료영상저장전송시스템', englishTerm: 'picture archiving communication system : PACS', definition: '기존의 필름을 가지고 진단하고 판독하던 병원의 업무를 처리해 나가는데 도움을 주는 것' },
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '과실', englishTerm: 'negligence', definition: '유사한 상황에서 합리적이고 신중한 태도로 행동하지 않은 잘못' },
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '근접오류', englishTerm: 'near miss', definition: '의료오류가 발생하여 환자에 대한 위해 가능성이 있을 수 있으나 우연, 예방, 완화조치 등에 의해 환자에게 위해가 발생하지 않은 사건' },
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '위해사건', englishTerm: 'adverse event', definition: '환자에게 위해를 가져온 사건' },
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '안전문화', englishTerm: 'safety culture', definition: '조직의 모든 구성원들이 작업 환경에서 ‘ 안전’ 이라는 목표에 도달하는 방식의 하나로서 안전에 관하여 공유하는 태도나 신념, 인식, 가치관을 통칭하는 개념' },
+
+    // 사후테스트 포함
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '관리', englishTerm: 'management', definition: '조직의 목표를 달성하기 위해 개인이나 그룹 모두가 자원을 활용하여 기획, 조직. 지휘, 인사, 통제를 하는 과정' },
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '권한', englishTerm: 'authority', definition: '공식적 권위에서 비롯되는 특정 지위에 부여되는 합법적 권력. 조직 규범에 의해 정당성이 인정된 합법적이니 권력' },
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '기획', englishTerm: 'planning', definition: '조직의 목적이나 목표를 사정, 수립하고 수행하여 평가하고 조정하는 지속적인 과정' },
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '목표관리', englishTerm: 'management by objectives : MBO', definition: '조직구성원의 참여과정을 통하여 상층관리자로부터 일선관리자에 이르기까지 그들이 연간목표를 설정하고 목표와 실제의 결과를 정기적으로 비교, 통제하는 관리시스템' },
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '비공식조직', englishTerm: 'informal organization', definition: '조직구성원들 사이의 인간관계를 바탕으로 자연발생적으로 나는 자생적 조직으로 조직기구표 상에는 나타나지 않는 조직 나타' },
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '임파워먼트', englishTerm: 'empowerment', definition: '실무자들의 업무수행능력을 제고시키고 잠재능력 및 창의력을 발휘하도록 관리자의 권한을 실무자에게 위임하는 것' },
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '오제이티', englishTerm: 'on the job training : OJT', definition: '직장 내 교육 및 훈련. 종업원가 경영자가 직무를 수행함으로써 기업목적달성에 기여하는 동시에, 직무에 대한 훈련을 받도록 하는 제도. 팀워크 조성이나 영향력이 강한 직속 상사가 업무에 대한 지식, 기능, 태도를 포함한 전인교육을 실시함으로써 사풍의 확립과 개인의 능력개발에 대한 성취감을 갖고 체계적 업무수행 능력을 배양하도록 도움.' },
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '정책', englishTerm: 'policies', definition: '조직의 목표를 달성하기 위한 방법을 제시하고, 목표를 행동화하는 과정 및 활동 범위를 알려주는 포괄적인 지침' },
+    { subject: '간호관리학', category: '퀴즈 2', itemType: 'TERM', term: '지속적인 질 향상', englishTerm: 'continuous quality improvement : CQI', definition: '직무수행 시에 자료수집, 시스템분석, 변화제안에 다학제적 팀을 이용하며, 개선을 목적으로 하는 계속적인 측정과 평가과정' },
+
+    // 간호관리학 (카테고리: 추가 퀴즈)
+    {
+      subject: '간호관리학',
+      category: '추가 퀴즈',
+      term: '1. 상황이론이 관리에 미친 영향은?\n가) 조직특성과 상황간의 관련성을 체계적으로 연구할 수 있는 개념적 특성을 제공해 준다.\n나) 조직의 영향요인은 환경, 기업규모, 기업문화이다.\n다) 조직과 상황 간의 적합, 부적합 관계를 규명함으로써 조직의 효율성을 높일 수 있게 한다.\n라) 인간의 사회적, 심리적 욕구 충족이 생산성 향상을 가져온다',
+      englishTerm: null,
+      definition: '상황이론은 조직과 상황 간의 관련성 및 적합관계를 통해 효율성을 도모하는 이론입니다. (가, 다)',
+      answer: '② 가, 다',
+      itemType: 'MULTIPLE_CHOICE',
+      options: [
+        '① 가, 나, 다',
+        '② 가, 다',
+        '③ 나, 라',
+        '④ 라',
+        '⑤ 가, 나, 다, 라'
+      ],
+    },
+    {
+      subject: '간호관리학',
+      category: '추가 퀴즈',
+      term: '2. 스코트(Scott)가 제시한 조직이론의 분류에 따른 관련 이론을 연결하시오.\n\n□ 폐쇄-합리적 조직이론:\n□ 폐쇄-자연적 조직이론:\n□ 개방-합리적 조직이론:\n\n[보기]\n1. 인간관계론  2. 과학적 관리론  3. 행정관리학파  4. 체계이론  5. 관료제이론  6. 구조적 상황이론  7. X, Y 이론',
+      englishTerm: null,
+      definition: '폐쇄-합리적: 과학적 관리론, 행정관리학파, 관료제이론 / 폐쇄-자연적: 인간관계론, X,Y이론 / 개방-합리적: 구조적 상황이론, 체계이론',
+      answer: '폐쇄-합리적: 과학적 관리론, 행정관리학파, 관료제이론 / 폐쇄-자연적: 인간관계론, X,Y이론 / 개방-합리적: 구조적 상황이론, 체계이론',
+      itemType: 'SHORT_ANSWER',
+      options: [],
+    },
+    {
+      subject: '간호관리학',
+      category: '추가 퀴즈',
+      term: '3. 예약율을 높이는 방안으로 병원 애플리케이션을 개발하기로 하였다. 이러한 전략은 마케팅 믹스 개발의 어떤 요소인가?',
+      englishTerm: null,
+      definition: '모바일 애플리케이션을 통한 예약 경로 확대는 의료서비스 접근성을 높이는 유통전략(Place)에 해당합니다.',
+      answer: '3) 유통전략',
+      itemType: 'MULTIPLE_CHOICE',
+      options: [
+        '1) 사람전략',
+        '2) 제품전략',
+        '3) 유통전략',
+        '4) 가격전략',
+        '5) 촉진전략'
+      ],
+    },
+    {
+      subject: '간호관리학',
+      category: '추가 퀴즈',
+      term: '4. 중환자실 간호관리자는 면회시간 운영에 대한 보호자들의 제안서 중 면회시간이 15분으로 제한되어 짧다는 불만사항을 개선하기 위해 면회 시간 변경에 대한 대안 의사결정을 하려고 한다. 의사결정 유형중 문제의 적응수준과 구조화 정도에 따라 알맞은 유형은?',
+      englishTerm: null,
+      definition: '일상적 부서 운영에 관한 문제이므로 운영적 의사결정이며, 문제 해결 절차가 정해진 정형적 의사결정입니다.',
+      answer: '1) 운영적, 정형적',
+      itemType: 'MULTIPLE_CHOICE',
+      options: [
+        '1) 운영적, 정형적',
+        '2) 전략적, 정형적',
+        '3) 운영적, 비정형적',
+        '4) 전략적, 비정형적',
+        '5) 관리적, 비정형적'
+      ],
+    },
+    {
+      subject: '간호관리학',
+      category: '추가 퀴즈',
+      term: '5. 제시된 조직 중 공식적 조직으로 분류 할 수 없는 것은?',
+      englishTerm: null,
+      definition: '병원 관리자로 구성된 의료봉사단은 구성원들의 자발적 의사에 의해 결성된 비공식적 조직(동호회/봉사모임)입니다.',
+      answer: '1) 병원 관리자로 구성된 의료봉사단',
+      itemType: 'MULTIPLE_CHOICE',
+      options: [
+        '1) 병원 관리자로 구성된 의료봉사단',
+        '2) 병원 조직도에 그려져 있는 기획팀',
+        '3) 병원시설관리를 위한 지원파트 직속 시설팀',
+        '4) 간호본부 조직도에 그려진 임상간호과학 연구소',
+        '5) 간호단위운영 지침서의 조직도에 그려져 있는 간호업무 개발 위원회'
+      ],
+    },
+
     // 성인간호학:인지조절 (카테고리: 5주차 퀴즈)
     {
       subject: '성인간호학:인지조절',
@@ -1001,6 +1110,170 @@ Open lab 진행할 인원을 모아 조를 구성하고, 한 명이 대표로 �
         '③골다공증',
         '④65세 이상',
         '⑤류마티스관절염'
+      ],
+    },
+
+    // 성인간호학:인지조절 (카테고리: 비사용증후군, 자기간호결핍 환자간호 퀴즈)
+    {
+      subject: '성인간호학:인지조절',
+      category: '비사용증후군, 자기간호결핍 환자간호 퀴즈',
+      term: '1. 왼쪽 장하지석고붕대(long leg cast)를 적용한 대상자 의 첫째와 둘째 발가락 사이에 자극을 주는 이유는?',
+      englishTerm: null,
+      definition: '첫째와 둘째 발가락 사이의 감각 사정은 심비골신경(deep peroneal nerve) 기능을 확인하기 위함입니다.',
+      answer: '⑤ 비골신경 기능 확인',
+      itemType: 'MULTIPLE_CHOICE',
+      options: [
+        '① 척추협착증 확인',
+        '② 대퇴신경(femoral nerve) 기능 확인',
+        '③ 좌골신경(sciatic nerve) 기능 확인',
+        '④ 경골신경 기능 확인',
+        '⑤ 비골신경 기능 확인'
+      ],
+    },
+    {
+      subject: '성인간호학:인지조절',
+      category: '비사용증후군, 자기간호결핍 환자간호 퀴즈',
+      term: '2. 오른쪽 장하지 석고붕대(long leg cast)를 한 40대 남성이 다리의 심한 통증과 발의 무감각을 호소하여 사정한 결과, 오른쪽 족배동 맥의 맥박소실과 부종을 관찰했을 때 우선적인 간호중재는?',
+      englishTerm: null,
+      definition: '극심한 통증, 무감각, 족배동맥 맥박 소실, 부종은 구획증후군(compartment syndrome)의 의심 징후로 즉시 석고붕대를 절개/제거하여 압박을 해소해야 합니다.',
+      answer: '① 석고붕대를 제거한다.',
+      itemType: 'MULTIPLE_CHOICE',
+      options: [
+        '① 석고붕대를 제거한다.',
+        '② 파울러 체위를 취해준다.',
+        '③ 마약성 진통제를 투여한다.',
+        '④ 압력붕대를 교체하여 다시 감는다.',
+        '⑤ 오른쪽 다리의 등척성 운동을 격려한다.'
+      ],
+    },
+    {
+      subject: '성인간호학:인지조절',
+      category: '비사용증후군, 자기간호결핍 환자간호 퀴즈',
+      term: '3. 오토바이 사고로 30대 남성이 대퇴골절로 내부 고정술을 받은지 이틀이 되었을 때 적절한 간호중재는?',
+      englishTerm: null,
+      definition: '수술 후 대퇴사두근 힘주기(등척성 운동)는 근위축을 예방하고 정맥 환류를 촉진합니다.',
+      answer: '④ 대퇴사두근 등척성 운동격려',
+      itemType: 'MULTIPLE_CHOICE',
+      options: [
+        '① 휠체어 이동 격려',
+        '② 대퇴경부 내회전 유지',
+        '③ 고관절굴곡 운동 격려',
+        '④ 대퇴사두근 등척성 운동격려',
+        '⑤ 편하다면 수술한 부위로 측위 유지'
+      ],
+    },
+    {
+      subject: '성인간호학:인지조절',
+      category: '비사용증후군, 자기간호결핍 환자간호 퀴즈',
+      term: '4. 절단환자의 관절구축을 예방하기 위한 간호중재로 옳은 것은?',
+      englishTerm: null,
+      definition: '절단 후 24~48시간이 지나면 절단부 상승은 고관절/슬관절 굴곡구축을 유발하므로 더 이상 상승시키지 않습니다.',
+      answer: '⑤ 48시간 이후에는 절단부를 상승하지 않는다.',
+      itemType: 'MULTIPLE_CHOICE',
+      options: [
+        '① 대퇴사이에 베개를 놓는다.',
+        '② 절단부를 규칙적으로 외전시킨다.',
+        '③ 슬부나 둔부를 굴곡시킨 채 눕는다.',
+        '④ 주기적으로 앙와위를 취하도록 한다.',
+        '⑤ 48시간 이후에는 절단부를 상승하지 않는다.'
+      ],
+    },
+    {
+      subject: '성인간호학:인지조절',
+      category: '비사용증후군, 자기간호결핍 환자간호 퀴즈',
+      term: '5. 운동 중 무릎을 다쳐 장하지석고붕대를 적용한 20대 남성 에게서 비골신경 압박이 확인된다면 예상되는 합병증은?',
+      englishTerm: null,
+      definition: '비골신경 손상 시 족배굴곡이 불가능해져 발이 아래로 처지는 족하수(footdrop)가 발생합니다.',
+      answer: '③ 족하수(footdrop)',
+      itemType: 'MULTIPLE_CHOICE',
+      options: [
+        '① 근육수축',
+        '② 관절경축',
+        '③ 족하수(footdrop)',
+        '④ 구획증후군(compartment syndrome)',
+        '⑤ 볼크만 허혈 구축(Volkman’s ischemic contracture)'
+      ],
+    },
+
+    // 성인간호학:인지조절 (카테고리: 기동성 장애 4주차 퀴즈)
+    {
+      subject: '성인간호학:인지조절',
+      category: '기동성 장애 4주차 퀴즈',
+      term: '1. 40대 여성이 아래와 같은 증상을 호소할 때 나타날 수 있는 검사 결과는?\n- 아침 강직과 통증\n- 관절의 대칭적인 부종\n- 관절의 백조 목(swan neck) 변형',
+      englishTerm: null,
+      definition: '류마티스 관절염(RA)의 전형적 증상으로 자가면역 검사상 류마티스인자(RF) 양성 소견을 보입니다.',
+      answer: '④ 류마티스인자 양성',
+      itemType: 'MULTIPLE_CHOICE',
+      options: [
+        '① 백혈구 증가',
+        '② 적혈구 증가증',
+        '③ C-반응 단백 감소',
+        '④ 류마티스인자 양성',
+        '⑤ 자가항체검사 음성'
+      ],
+    },
+    {
+      subject: '성인간호학:인지조절',
+      category: '기동성 장애 4주차 퀴즈',
+      term: '2. 60대 여성이 오른쪽 어깨관절의 심한 통증으로 내원 후, 회전근개파열로 진단받았다. 회전근개복수술을 받은 후 간호중재로 옳은 것은?',
+      englishTerm: null,
+      definition: '회전근개 봉합술 후 수술 부위 보존을 위해 어깨 고정기/외전 베개를 이용하여 수술한 어깨를 외전 상태로 고정합니다.',
+      answer: '① 오른쪽 어깨를 어깨 고정기로 외전시킨다.',
+      itemType: 'MULTIPLE_CHOICE',
+      options: [
+        '① 오른쪽 어깨를 어깨 고정기로 외전시킨다.',
+        '② 오른쪽 팔에 수 주 동안 냉요법을 적용한다.',
+        '③ 오른쪽 어깨의 내회전 관절운동을 하게 한다.',
+        '④ 오른쪽 팔을 수 주 동안 움직이지 않도록 한다.',
+        '⑤ 오른쪽 팔의 통증이 느껴져도 어깨 위로 팔을 올린다.'
+      ],
+    },
+    {
+      subject: '성인간호학:인지조절',
+      category: '기동성 장애 4주차 퀴즈',
+      term: '3. 통풍 환자에게 권장할 수 있는 음식은?',
+      englishTerm: null,
+      definition: '통풍 환자는 퓨린 함량이 높은 붉은 고기, 내장(곱창), 정어리, 조개류를 제한하고 곡류(흑미밥)나 채소를 권장합니다.',
+      answer: '④ 흑미밥',
+      itemType: 'MULTIPLE_CHOICE',
+      options: [
+        '① 곱창',
+        '② 쇠고기',
+        '③ 정어리',
+        '④ 흑미밥',
+        '⑤ 모시조개'
+      ],
+    },
+    {
+      subject: '성인간호학:인지조절',
+      category: '기동성 장애 4주차 퀴즈',
+      term: '4. 어깨통증을 호소하는 40대 남성의 회전근개 손상이 의심될 때 확인하는 검사는?',
+      englishTerm: null,
+      definition: '상지하수 검사(Drop arm test)는 팔을 90도 외전시킨 후 스스로 천천히 내리게 하여 극상근/회전근개 파열을 사정하는 검사입니다.',
+      answer: '③ 상지하수 검사(Drop arm test)',
+      itemType: 'MULTIPLE_CHOICE',
+      options: [
+        '① 티넬 징후(Tinel’s sign)',
+        '② 팔렌 징후(Phalen’s sign)',
+        '③ 상지하수 검사(Drop arm test)',
+        '④ 맥머레이 검사(McMurray test)',
+        '⑤ 모세혈관 충만검사(Blanching test)'
+      ],
+    },
+    {
+      subject: '성인간호학:인지조절',
+      category: '기동성 장애 4주차 퀴즈',
+      term: '5. 류마티스관절염 환자에게 시행할 운동에 대한 교육내용으로 적절한 것은?',
+      englishTerm: null,
+      definition: '류마티스 관절염 운동 중/후 2시간 이상 지속되는 통증이 나타나면 관절 과사용 징후이므로 운동을 중단하거나 강도를 줄여야 합니다.',
+      answer: '③ 운동 후 2시간까지 통증이 지속되면 그 운동은 중지하도록 한다.',
+      itemType: 'MULTIPLE_CHOICE',
+      options: [
+        '① 마비증세 시 움직이지 않고 안정하는 것이 우선적이다.',
+        '② 관절에 강직 증세가 나타나면 힘을 주어 움직이면서 운동한다.',
+        '③ 운동 후 2시간까지 통증이 지속되면 그 운동은 중지하도록 한다.',
+        '④ 마비증세가 있을 때에는 통증을 느끼지 못하므로 운동을 많이 하는 것이 좋다.',
+        '⑤ 염증이 심한 경우의 운동은 관절손상을 일으키므로 증상이 완화될 때까지 절대안정을 한다.'
       ],
     },
 
@@ -1557,6 +1830,223 @@ Open lab 진행할 인원을 모아 조를 구성하고, 한 명이 대표로 �
         'History of endometrial cancer',
         'Hot flashes and vasomotor symptoms',
         'Undiagnosed vaginal bleeding'
+      ],
+    },
+
+    // 아동건강문제와가족간호2
+    // 카테고리 1: 호흡기능장애 아동의 간호
+    {
+      subject: '아동건강문제와가족간호2',
+      category: '호흡기능장애 아동의 간호',
+      term: '아동기 호흡기계 특성으로 적절하지 않은 것은?',
+      englishTerm: null,
+      definition: '아동의 늑골은 성인에 비해 수평적인 구조를 가지고 있어 호흡 시 갈비뼈의 운동성이 제한적이며 복식호흡에 의존합니다.',
+      answer: '늑골이 성인에 비해 경사진 구조이다',
+      itemType: 'MULTIPLE_CHOICE',
+      options: [
+        '늑골이 성인에 비해 경사진 구조이다',
+        '유스타키오관이 짧고, 넓고, 수평적이다',
+        '면역 체계가 미숙하다',
+        '점액선의 밀도가 높다'
+      ],
+    },
+    {
+      subject: '아동건강문제와가족간호2',
+      category: '호흡기능장애 아동의 간호',
+      term: '비인두염에 대한 설명으로 옳은 것은?',
+      englishTerm: null,
+      definition: '비인두염(감기)은 대부분 라이노바이러스 등 바이러스 감염이 원인이므로 특별한 치료 없이 자연 치유되며 대증요법을 시행합니다. 아스피린은 아동에게 라이증후군 위험이 있어 금기입니다.',
+      answer: '특별한 치료 없이 자연경과를 보인다',
+      itemType: 'MULTIPLE_CHOICE',
+      options: [
+        'A군 연쇄상구균이 주 원인이다',
+        '나이가 많을수록 증상이 심하고 합병증이 자주 발생한다',
+        '고열 시 아스피린 등 해열제를 복용한다',
+        '특별한 치료 없이 자연경과를 보인다'
+      ],
+    },
+    {
+      subject: '아동건강문제와가족간호2',
+      category: '호흡기능장애 아동의 간호',
+      term: '편도염에 관한 설명으로 옳은 것은?',
+      englishTerm: null,
+      definition: '편도염은 원인균에 따라 치료법이 달라집니다. 바이러스성인 경우 대증요법을, 세균성인 경우 항생제 치료를 시행합니다.',
+      answer: '바이러스성인 경우 대증요법을, 세균성인 경우 항생제 치료를 한다.',
+      itemType: 'MULTIPLE_CHOICE',
+      options: [
+        '바이러스성인 경우 대증요법을, 세균성인 경우 항생제 치료를 한다.',
+        '편도비대로 불편감 호소 시 편도선절제술이 추천된다',
+        '항생제 내성을 막기 위해 증상 완화시 복용을 중단한다',
+        '편도절제술 후 배액 촉진을 위해 앙와위를 취한다'
+      ],
+    },
+    {
+      subject: '아동건강문제와가족간호2',
+      category: '호흡기능장애 아동의 간호',
+      term: '생후 9개월 영아가 매우 보채고 오른쪽 귀와 가까운 머리카락을 잡아 당기며 부르는 소리에 반응하지 않는다. 의심할 수 있는 질환은?',
+      englishTerm: null,
+      definition: '영아가 귀를 잡아당기거나 비비는 행위, 통증으로 인한 보채기, 난청(부르는 소리에 불응)은 급성 중이염(Otitis media)의 대표적 징후입니다.',
+      answer: '중이염',
+      itemType: 'SHORT_ANSWER',
+      options: [],
+    },
+
+    // 카테고리 2: 면역기능장애 아동의 간호
+    {
+      subject: '아동건강문제와가족간호2',
+      category: '면역기능장애 아동의 간호',
+      term: '1. 아동기 면역체계와 면역질환의 특성으로 옳은 것은?',
+      englishTerm: null,
+      definition: '아동기 면역질환은 성장에 따라 병변 부위나 증상이 변화(알레르기 행진)하거나 연령 증가에 따라 자연 호전되기도 합니다.',
+      answer: '③ 면역질환과 관련된 임상증상은 아동의 성장과 함께 변화하거나 사라지기도 한다.',
+      itemType: 'MULTIPLE_CHOICE',
+      options: [
+        '① 다양한 면역질환 진단방법을 통해 정확한 진단이 가능하다.',
+        '② 신생아는 모체순환과 모유를 통해 면역글로불린을 받아 1년간 수동면역을 지닌다.',
+        '③ 면역질환과 관련된 임상증상은 아동의 성장과 함께 변화하거나 사라지기도 한다.',
+        '④ 면역체계가 미숙하여 면역질환에 의한 임상증상이 가볍게 나타난다.'
+      ],
+    },
+    {
+      subject: '아동건강문제와가족간호2',
+      category: '면역기능장애 아동의 간호',
+      term: '2. 아토피피부염의 임상증상과 치료에 대한 설명으로 옳은 것은?',
+      englishTerm: null,
+      definition: '아토피피부염 환아의 약 50%에서 천식이나 알레르기 비염 등의 다른 알레르기 질환으로 이환되는 알레르기 행진(atopic march)을 보입니다.',
+      answer: '② 아토피피부염 환아의 절반 정도가 천식으로 이환된다.',
+      itemType: 'MULTIPLE_CHOICE',
+      options: [
+        '① 영아에서는 사지의 접히는 부위에, 아동에서는 펴지는 부위에 병변이 분포 한다.',
+        '② 아토피피부염 환아의 절반 정도가 천식으로 이환된다.',
+        '③ 전염성이 있기 때문에 긴팔이나 긴 바지를 착용한다.',
+        '④ 보습크림은 가려움증을 유발할 수 있어 사용을 피한다.'
+      ],
+    },
+    {
+      subject: '아동건강문제와가족간호2',
+      category: '면역기능장애 아동의 간호',
+      term: '3. 알레르기비염에서 코막힘으로 인해 구강호흡이 지속되면 입을 벌리고 숨을 쉬게 되면서 앞니가 튀어나오는 등 특징적인 얼굴형을 무엇이라고 하는가?',
+      englishTerm: null,
+      definition: '만성 구강호흡으로 인해 상악 치열이 좁아지고 앞니가 돌출되는 특징적인 아동의 얼굴형을 아데노이드 얼굴(Adenoid facies)이라 합니다.',
+      answer: '아데노이드 얼굴 / 아데노이드 페이스 / Adenoid facies',
+      itemType: 'SHORT_ANSWER',
+      options: [],
+    },
+    {
+      subject: '아동건강문제와가족간호2',
+      category: '면역기능장애 아동의 간호',
+      term: '4. 천식의 약물요법 중 급성 증상을 완화하는 데에 사용되는 약물은?',
+      englishTerm: null,
+      definition: 'Albuterol은 속효성 베타2-아고니스트(SABA)로, 급성 증상 완화제(Quick reliever)로 사용됩니다.',
+      answer: '④ Albuterol',
+      itemType: 'MULTIPLE_CHOICE',
+      options: [
+        '① Corticosteroid',
+        '② Aminophylline',
+        '③ Cromolyn sodium',
+        '④ Albuterol'
+      ],
+    },
+    {
+      subject: '아동건강문제와가족간호2',
+      category: '면역기능장애 아동의 간호',
+      term: '5. 가와사키병의 대표적인 임상증상으로 옳지 않은 것은?',
+      englishTerm: null,
+      definition: '아쇼프소체(Aschoff body)는 류마티스열(Rheumatic fever)의 특징적 병리 소견입니다.',
+      answer: '② 아쇼프소체',
+      itemType: 'MULTIPLE_CHOICE',
+      options: [
+        '① 결막 충혈',
+        '② 아쇼프소체',
+        '③ 전신 홍반',
+        '④ 경부림프절 비대'
+      ],
+    },
+    {
+      subject: '아동건강문제와가족간호2',
+      category: '면역기능장애 아동의 간호',
+      term: '6. 7세 남아가 엉덩이와 다리에 출혈성 반점이 여러개 생겨 병원에 내원하였다. 사정 결과 최근 구토와 설사가 빈번하고, 무릎이 아프다고 호소하였다. 혈액검사 결과 혈소판 수치나 혈액응고 관련 검사 모두 정상이었다. 이 아동에게 의심되는 질환은?',
+      englishTerm: null,
+      definition: '혈소판 수치가 정상임에도 엉덩이와 하지의 자색반, 복통(구토, 설사), 관절통이 동반되는 IgA 매개 혈관염 질환입니다.',
+      answer: '헤노흐-쇤라인 자색반병 / 헤노흐 쇤라인 자색반병 / 헤노흐-쇤라인 자반증 / 헤노흐 쇤라인 자반증 / HSP',
+      itemType: 'SHORT_ANSWER',
+      options: [],
+    },
+
+    // 카테고리 3: 혈액기능장애 아동의 간호
+    {
+      subject: '아동건강문제와가족간호2',
+      category: '혈액기능장애 아동의 간호',
+      term: '1. 철결핍빈혈의 임상증상으로 옳지 않은 것은?',
+      englishTerm: null,
+      definition: '골격 이상은 지중해성 빈혈이나 겸상적혈구빈혈 등 골수 확장이 일어나는 용혈성 빈혈의 특징입니다.',
+      answer: '④ 골격 이상이 나타난다.',
+      itemType: 'MULTIPLE_CHOICE',
+      options: [
+        '① 밤에 푹 자지 못하고 자주 깨어나 보챈다.',
+        '② 이미증이 나타난다.',
+        '③ 스푼형 손톱이 나타난다.',
+        '④ 골격 이상이 나타난다.'
+      ],
+    },
+    {
+      subject: '아동건강문제와가족간호2',
+      category: '혈액기능장애 아동의 간호',
+      term: '2. 재생불량빈혈의 치료 및 간호로 적절한 것은?',
+      englishTerm: null,
+      definition: '중증 재생불량빈혈의 주 치료법은 HLA 일치 공여자로부터 조혈모세포(골수) 이식을 시행하는 것입니다.',
+      answer: '② HLA가 일치하는 공여자로부터 골수이식을 한다.',
+      itemType: 'MULTIPLE_CHOICE',
+      options: [
+        '① 60%에서 6개월 이내 자연 치유된다.',
+        '② HLA가 일치하는 공여자로부터 골수이식을 한다.',
+        '③ 비장을 절제한다.',
+        '④ 철분 제제를 식간에 오렌지주스와 함께 복용한다.'
+      ],
+    },
+    {
+      subject: '아동건강문제와가족간호2',
+      category: '혈액기능장애 아동의 간호',
+      term: '3. 다음 검사 중 혈소판 기능 평가 검사가 아닌 것은?',
+      englishTerm: null,
+      definition: '프로트롬빈시간(PT)은 외인성 응고 기전 및 응고인자를 평가하는 검사입니다.',
+      answer: '② 프로트롬빈시간',
+      itemType: 'MULTIPLE_CHOICE',
+      options: [
+        '① 혈병수축검사',
+        '② 프로트롬빈시간',
+        '③ 지혈대검사',
+        '④ 출혈시간'
+      ],
+    },
+    {
+      subject: '아동건강문제와가족간호2',
+      category: '혈액기능장애 아동의 간호',
+      term: '4. 다음 중 혈우병에 대한 설명으로 옳은 것은?',
+      englishTerm: null,
+      definition: '혈우병 환자에게 아스피린/NSAIDs는 출혈 위험을 촉진하므로 금기이며 통증 조절에는 아세트아미노펜을 사용합니다.',
+      answer: '③ 활막염으로 인한 통증 시 아세트아미노펜을 사용한다.',
+      itemType: 'MULTIPLE_CHOICE',
+      options: [
+        '① 상염색체 열성 유전질환이다.',
+        '② 응고인자 Ⅶ의 결핍에 의해 발생한다.',
+        '③ 활막염으로 인한 통증 시 아세트아미노펜을 사용한다.',
+        '④ 점상출혈이 자주 발생한다.'
+      ],
+    },
+    {
+      subject: '아동건강문제와가족간호2',
+      category: '혈액기능장애 아동의 간호',
+      term: '5. 특발성 저혈소판 자색반병에 대한 설명으로 옳은 것은?',
+      englishTerm: null,
+      definition: '아동 ITP는 발병 1~3주 전 바이러스성 상기도 감염 등의 병력이 선행되는 특징이 있습니다.',
+      answer: '② 바이러스 감염이 선행된다.',
+      itemType: 'MULTIPLE_CHOICE',
+      options: [
+        '① 대부분 만성질환으로 이행된다.',
+        '② 바이러스 감염이 선행된다.',
+        '③ 간비대와 비장비대가 동반된다.',
+        '④ 항흉선세포 글로불린을 투여한다.'
       ],
     },
   ];
