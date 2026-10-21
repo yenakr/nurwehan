@@ -3,6 +3,68 @@
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
 import { isAdminRole } from '@/lib/auth-core';
 
+function IconSearch({ size = 15, color = 'currentColor' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <circle cx="11" cy="11" r="8" />
+      <path d="m21 21-4.3-4.3" />
+    </svg>
+  );
+}
+
+function IconVolume({ size = 15, color = 'currentColor' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+      <path d="M15.54 8.46a5 5 0 0 1 0 7.07" />
+      <path d="M19.07 4.93a10 10 0 0 1 0 14.14" />
+    </svg>
+  );
+}
+
+function IconVolumeOff({ size = 15, color = 'currentColor' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <polygon points="11 5 6 9 2 9 2 15 6 15 11 19 11 5" />
+      <line x1="22" x2="2" y1="2" y2="22" />
+    </svg>
+  );
+}
+
+function IconEye({ size = 15, color = 'currentColor' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M2 12s3-7 10-7 10 7 10 7-3 7-10 7-10-7-10-7Z" />
+      <circle cx="12" cy="12" r="3" />
+    </svg>
+  );
+}
+
+function IconEyeOff({ size = 15, color = 'currentColor' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke={color} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <path d="M9.88 9.88a3 3 0 1 0 4.24 4.24" />
+      <path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c7 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68" />
+      <path d="M6.61 6.61A13.526 13.526 0 0 0 2 12s3 7 10 7a9.74 9.74 0 0 0 5.39-1.61" />
+      <line x1="2" x2="22" y1="2" y2="22" />
+    </svg>
+  );
+}
+
+function IconGrip({ size = 14, color = 'currentColor' }: { size?: number; color?: string }) {
+  return (
+    <svg width={size} height={size} viewBox="0 0 16 16" fill={color}>
+      <circle cx="5" cy="3" r="1.5" />
+      <circle cx="11" cy="3" r="1.5" />
+      <circle cx="5" cy="8" r="1.5" />
+      <circle cx="11" cy="8" r="1.5" />
+      <circle cx="5" cy="13" r="1.5" />
+      <circle cx="11" cy="13" r="1.5" />
+    </svg>
+  );
+}
+
+
 interface NursingTerm {
   id: string;
   subject: string;
@@ -655,7 +717,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
       setTypingInput('');
       setTypingDefInput('');
     } else {
-      alert('모든 학습 문항 타자 연습을 완료했습니다! 🎉');
+      alert('모든 학습 문항의 타자 연습을 완료했습니다.');
     }
   };
 
@@ -674,7 +736,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
       : quizResults;
 
     if (exportItems.length === 0) {
-      alert('내보낼 오답 항목이 없습니다! (전체 정답입니다 🎉)');
+      alert('내보낼 오답 항목이 없습니다. (모든 문항 정답)');
       return;
     }
 
@@ -790,13 +852,13 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
       <body>
         <div class="no-print" style="margin-bottom: 20px; text-align: right;">
           <button onclick="window.print()" style="padding: 10px 20px; background-color: #0E4A84; color: white; border: none; border-radius: 6px; font-weight: bold; cursor: pointer;">
-            🖨️ PDF로 저장 / 인쇄하기
+            PDF로 저장 / 인쇄하기
           </button>
         </div>
 
         <h1>NUR위한 (NURWEHAN) - QUIZ 오답노트 & 학습 리포트</h1>
         <div class="header-info">
-          일시: ${today} | 출제과목: ${quizSubject} ${quizCategory !== 'all' ? `(${quizCategory})` : ''} | 모드: ${pdfExportMode === 'wrong_only' ? '❌ 오답 모음' : '📋 전체 문항 리포트 (오답 하이라이트)'}
+          일시: ${today} | 출제과목: ${quizSubject} ${quizCategory !== 'all' ? `(${quizCategory})` : ''} | 모드: ${pdfExportMode === 'wrong_only' ? '오답 모음' : '전체 문항 리포트 (오답 하이라이트)'}
         </div>
 
         <div class="score-badge">
@@ -810,7 +872,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
               <div class="item-card ${isCorr ? 'correct' : 'wrong'}">
                 <div style="display: flex; justify-content: space-between; align-items: center;">
                   <span class="status-badge ${isCorr ? 'correct' : 'wrong'}">
-                    #${i + 1} ${isCorr ? '⭕ 정답' : '❌ 오답'}
+                    #${i + 1} ${isCorr ? '정답' : '오답'}
                   </span>
                   <span class="meta-tag">${res.term.subject} ${res.term.category ? `• ${res.term.category}` : ''}</span>
                 </div>
@@ -1016,7 +1078,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', padding: '20px' }}>
         <div className="card" style={{ maxWidth: '420px', width: '100%', padding: '36px 28px', textAlign: 'center' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '16px' }}>🔒</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
           <h2 style={{ fontSize: '1.375rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '12px' }}>
             로그인이 필요한 서비스입니다
           </h2>
@@ -1040,7 +1102,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', padding: '20px' }}>
         <div className="card" style={{ maxWidth: '440px', width: '100%', padding: '36px 28px', textAlign: 'center' }}>
-          <div style={{ fontSize: '3rem', marginBottom: '16px' }}>⏳</div>
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
           <h2 style={{ fontSize: '1.375rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '12px' }}>
             회원가입 승인 대기 중입니다
           </h2>
@@ -1071,66 +1133,78 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      {/* Top Banner Header */}
+      {/* Top Banner Header & LMS Navigation */}
       <div
         style={{
-          backgroundColor: '#0E4A84',
-          color: '#FFFFFF',
-          borderRadius: '12px',
-          padding: '18px 24px',
-          boxShadow: '0 4px 12px rgba(14, 74, 132, 0.15)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          flexWrap: 'wrap',
+          gap: '16px',
+          paddingBottom: '16px',
+          borderBottom: '2px solid #E2E8F0',
         }}
       >
-        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
-          <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 900, letterSpacing: '1px', margin: 0 }}>
-              QUIZ
-            </h1>
-          </div>
+        <div>
+          <h1 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0E4A84', margin: 0, letterSpacing: '-0.02em' }}>
+            QUIZ
+          </h1>
+          <p style={{ fontSize: '0.84rem', color: '#64748B', margin: '4px 0 0 0' }}>
+            간호학 핵심 용어 암기 및 시험 대비 모의고사 학습 포털
+          </p>
+        </div>
 
-          <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'inline-flex', backgroundColor: '#F1F5F9', padding: '4px', borderRadius: '8px', border: '1px solid #CBD5E1', gap: '4px' }}>
+          <button
+            onClick={() => setActiveTab('study')}
+            style={{
+              padding: '7px 18px',
+              borderRadius: '6px',
+              fontSize: '0.875rem',
+              fontWeight: activeTab === 'study' ? 700 : 500,
+              border: 'none',
+              backgroundColor: activeTab === 'study' ? '#0E4A84' : 'transparent',
+              color: activeTab === 'study' ? '#FFFFFF' : '#475569',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            학습 센터
+          </button>
+          <button
+            onClick={() => setActiveTab('quiz_setup')}
+            style={{
+              padding: '7px 18px',
+              borderRadius: '6px',
+              fontSize: '0.875rem',
+              fontWeight: (activeTab === 'quiz_setup' || activeTab === 'quiz_play' || activeTab === 'quiz_result') ? 700 : 500,
+              border: 'none',
+              backgroundColor: (activeTab === 'quiz_setup' || activeTab === 'quiz_play' || activeTab === 'quiz_result') ? '#0E4A84' : 'transparent',
+              color: (activeTab === 'quiz_setup' || activeTab === 'quiz_play' || activeTab === 'quiz_result') ? '#FFFFFF' : '#475569',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            테스트 모드
+          </button>
+          {user && (
             <button
-              onClick={() => setActiveTab('study')}
-              className={activeTab === 'study' ? 'btn-accent' : 'btn-outline'}
+              onClick={() => setActiveTab('my_history')}
               style={{
-                backgroundColor: activeTab === 'study' ? '#FFFFFF' : 'rgba(255,255,255,0.15)',
-                color: activeTab === 'study' ? '#0E4A84' : '#FFFFFF',
-                border: '1px solid rgba(255,255,255,0.3)',
+                padding: '7px 18px',
+                borderRadius: '6px',
                 fontSize: '0.875rem',
-                fontWeight: 700,
+                fontWeight: activeTab === 'my_history' ? 700 : 500,
+                border: 'none',
+                backgroundColor: activeTab === 'my_history' ? '#0E4A84' : 'transparent',
+                color: activeTab === 'my_history' ? '#FFFFFF' : '#475569',
+                cursor: 'pointer',
+                transition: 'all 0.15s ease',
               }}
             >
-              📖 학습 센터
+              내 학습기록
             </button>
-            <button
-              onClick={() => setActiveTab('quiz_setup')}
-              className={activeTab === 'quiz_setup' || activeTab === 'quiz_play' || activeTab === 'quiz_result' ? 'btn-accent' : 'btn-outline'}
-              style={{
-                backgroundColor: activeTab === 'quiz_setup' || activeTab === 'quiz_play' || activeTab === 'quiz_result' ? '#FFFFFF' : 'rgba(255,255,255,0.15)',
-                color: activeTab === 'quiz_setup' || activeTab === 'quiz_play' || activeTab === 'quiz_result' ? '#0E4A84' : '#FFFFFF',
-                border: '1px solid rgba(255,255,255,0.3)',
-                fontSize: '0.875rem',
-                fontWeight: 700,
-              }}
-            >
-              ✍️ 테스트 모드
-            </button>
-            {user && (
-              <button
-                onClick={() => setActiveTab('my_history')}
-                className={activeTab === 'my_history' ? 'btn-accent' : 'btn-outline'}
-                style={{
-                  backgroundColor: activeTab === 'my_history' ? '#FFFFFF' : 'rgba(255,255,255,0.15)',
-                  color: activeTab === 'my_history' ? '#0E4A84' : '#FFFFFF',
-                  border: '1px solid rgba(255,255,255,0.3)',
-                  fontSize: '0.875rem',
-                  fontWeight: 700,
-                }}
-              >
-                📜 내 학습기록
-              </button>
-            )}
-          </div>
+          )}
         </div>
       </div>
 
@@ -1138,9 +1212,9 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
       {activeTab === 'study' && (
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           {/* Controls & Filters Header */}
-          <div className="card" style={{ padding: '20px' }}>
+          <div className="card" style={{ padding: '20px', borderRadius: '8px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
             {/* Top Content-Type Distinction Tabs */}
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '16px', borderBottom: '1px solid var(--border)', paddingBottom: '14px' }}>
+            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '16px', borderBottom: '1px solid #E2E8F0', paddingBottom: '14px' }}>
               <button
                 onClick={() => {
                   setContentTypeFilter('all');
@@ -1148,17 +1222,18 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                 }}
                 style={{
                   padding: '7px 16px',
-                  borderRadius: '8px',
-                  fontSize: '0.85rem',
-                  fontWeight: 800,
-                  border: 'none',
-                  backgroundColor: contentTypeFilter === 'all' ? '#0E4A84' : '#F1F5F9',
+                  borderRadius: '6px',
+                  fontSize: '0.84rem',
+                  fontWeight: contentTypeFilter === 'all' ? 700 : 500,
+                  border: '1px solid',
+                  borderColor: contentTypeFilter === 'all' ? '#0E4A84' : '#CBD5E1',
+                  backgroundColor: contentTypeFilter === 'all' ? '#0E4A84' : '#FFFFFF',
                   color: contentTypeFilter === 'all' ? '#FFFFFF' : '#475569',
                   cursor: 'pointer',
-                  transition: 'all 0.2s',
+                  transition: 'all 0.15s ease',
                 }}
               >
-                📚 전체 보기
+                전체 보기
               </button>
               <button
                 onClick={() => {
@@ -1171,17 +1246,18 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                 }}
                 style={{
                   padding: '7px 16px',
-                  borderRadius: '8px',
-                  fontSize: '0.85rem',
-                  fontWeight: 800,
-                  border: 'none',
-                  backgroundColor: contentTypeFilter === 'TERM' ? '#2563EB' : '#F1F5F9',
+                  borderRadius: '6px',
+                  fontSize: '0.84rem',
+                  fontWeight: contentTypeFilter === 'TERM' ? 700 : 500,
+                  border: '1px solid',
+                  borderColor: contentTypeFilter === 'TERM' ? '#0E4A84' : '#CBD5E1',
+                  backgroundColor: contentTypeFilter === 'TERM' ? '#0E4A84' : '#FFFFFF',
                   color: contentTypeFilter === 'TERM' ? '#FFFFFF' : '#475569',
                   cursor: 'pointer',
-                  transition: 'all 0.2s',
+                  transition: 'all 0.15s ease',
                 }}
               >
-                📖 용어/단어장
+                용어·단어장
               </button>
               <button
                 onClick={() => {
@@ -1195,117 +1271,133 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                 }}
                 style={{
                   padding: '7px 16px',
-                  borderRadius: '8px',
-                  fontSize: '0.85rem',
-                  fontWeight: 800,
-                  border: 'none',
-                  backgroundColor: contentTypeFilter === 'MULTIPLE_CHOICE' ? '#7C3AED' : '#F1F5F9',
+                  borderRadius: '6px',
+                  fontSize: '0.84rem',
+                  fontWeight: contentTypeFilter === 'MULTIPLE_CHOICE' ? 700 : 500,
+                  border: '1px solid',
+                  borderColor: contentTypeFilter === 'MULTIPLE_CHOICE' ? '#0E4A84' : '#CBD5E1',
+                  backgroundColor: contentTypeFilter === 'MULTIPLE_CHOICE' ? '#0E4A84' : '#FFFFFF',
                   color: contentTypeFilter === 'MULTIPLE_CHOICE' ? '#FFFFFF' : '#475569',
                   cursor: 'pointer',
-                  transition: 'all 0.2s',
+                  transition: 'all 0.15s ease',
                 }}
               >
-                📝 객관식/시험 퀴즈
+                객관식 퀴즈
               </button>
             </div>
 
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'space-between', alignItems: 'center' }}>
               {/* Subject Tabs */}
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.84rem', fontWeight: 700, color: 'var(--sub-text)' }}>과목:</span>
+                <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#64748B' }}>과목:</span>
                 {filteredSubjects.map(subj => {
-                  const isMcSubj = termsList.some(t => t.subject === subj && (t.itemType === 'MULTIPLE_CHOICE' || t.itemType === 'SHORT_ANSWER' || (t.options && t.options.length > 0)));
+                  const isSelected = studySubject === subj;
                   return (
                     <button
                       key={subj}
                       onClick={() => {
                         setStudySubject(subj);
                         setStudyCategory('all');
+                        const isMcSubj = termsList.some(t => t.subject === subj && (t.itemType === 'MULTIPLE_CHOICE' || t.itemType === 'SHORT_ANSWER' || (t.options && t.options.length > 0)));
                         if (isMcSubj) setStudyViewMode('grid');
                       }}
-                      className={studySubject === subj ? 'btn-primary' : 'btn-outline'}
-                      style={{ fontSize: '0.84rem', padding: '6px 14px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                      style={{
+                        fontSize: '0.84rem',
+                        padding: '6px 14px',
+                        borderRadius: '6px',
+                        border: '1px solid',
+                        borderColor: isSelected ? '#0E4A84' : '#CBD5E1',
+                        backgroundColor: isSelected ? '#0E4A84' : '#FFFFFF',
+                        color: isSelected ? '#FFFFFF' : '#334155',
+                        fontWeight: isSelected ? 700 : 500,
+                        cursor: 'pointer',
+                        transition: 'all 0.15s ease',
+                      }}
                     >
-                      <span>{subj}</span>
-                      <span style={{ fontSize: '0.7rem', padding: '1px 5px', borderRadius: '4px', backgroundColor: isMcSubj ? '#EDE9FE' : '#EFF6FF', color: isMcSubj ? '#6D28D9' : '#1D4ED8', fontWeight: 800 }}>
-                        {isMcSubj ? '📝 퀴즈' : '📖 용어'}
-                      </span>
+                      {subj}
                     </button>
                   );
                 })}
               </div>
 
-              {/* Study Mode Selector Sub-Tabs */}
-              <div style={{ display: 'flex', gap: '6px', backgroundColor: '#F1F5F9', padding: '4px', borderRadius: '8px' }}>
-                {!isCurrentSubjectMc && contentTypeFilter !== 'MULTIPLE_CHOICE' && (
-                  <>
-                    <button
-                      onClick={() => setStudyViewMode('flashcard')}
-                      style={{
-                        padding: '6px 14px',
-                        borderRadius: '6px',
-                        fontSize: '0.8125rem',
-                        fontWeight: 700,
-                        border: 'none',
-                        backgroundColor: studyViewMode === 'flashcard' ? '#0E4A84' : 'transparent',
-                        color: studyViewMode === 'flashcard' ? '#FFFFFF' : '#475569',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                      }}
-                    >
-                      🎴 플래시카드
-                    </button>
-                    <button
-                      onClick={() => setStudyViewMode('typing')}
-                      style={{
-                        padding: '6px 14px',
-                        borderRadius: '6px',
-                        fontSize: '0.8125rem',
-                        fontWeight: 700,
-                        border: 'none',
-                        backgroundColor: studyViewMode === 'typing' ? '#0E4A84' : 'transparent',
-                        color: studyViewMode === 'typing' ? '#FFFFFF' : '#475569',
-                        cursor: 'pointer',
-                        transition: 'all 0.2s',
-                      }}
-                    >
-                      ⌨️ 타이핑
-                    </button>
-                  </>
-                )}
-                <button
-                  onClick={() => setStudyViewMode('grid')}
-                  style={{
-                    padding: '6px 14px',
-                    borderRadius: '6px',
-                    fontSize: '0.8125rem',
-                    fontWeight: 700,
-                    border: 'none',
-                    backgroundColor: studyViewMode === 'grid' ? '#0E4A84' : 'transparent',
-                    color: studyViewMode === 'grid' ? '#FFFFFF' : '#475569',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  📋 목록
-                </button>
-                <div style={{ marginLeft: 'auto', display: 'flex', gap: '6px', alignItems: 'center' }}>
+              {/* Study Mode Selector Sub-Tabs & Audio & Admin */}
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
+                <div style={{ display: 'inline-flex', backgroundColor: '#F1F5F9', padding: '3px', borderRadius: '6px', border: '1px solid #E2E8F0' }}>
+                  {!isCurrentSubjectMc && contentTypeFilter !== 'MULTIPLE_CHOICE' && (
+                    <>
+                      <button
+                        onClick={() => setStudyViewMode('flashcard')}
+                        style={{
+                          padding: '5px 12px',
+                          borderRadius: '4px',
+                          fontSize: '0.8125rem',
+                          fontWeight: studyViewMode === 'flashcard' ? 700 : 500,
+                          border: 'none',
+                          backgroundColor: studyViewMode === 'flashcard' ? '#0E4A84' : 'transparent',
+                          color: studyViewMode === 'flashcard' ? '#FFFFFF' : '#475569',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        플래시카드
+                      </button>
+                      <button
+                        onClick={() => setStudyViewMode('typing')}
+                        style={{
+                          padding: '5px 12px',
+                          borderRadius: '4px',
+                          fontSize: '0.8125rem',
+                          fontWeight: studyViewMode === 'typing' ? 700 : 500,
+                          border: 'none',
+                          backgroundColor: studyViewMode === 'typing' ? '#0E4A84' : 'transparent',
+                          color: studyViewMode === 'typing' ? '#FFFFFF' : '#475569',
+                          cursor: 'pointer',
+                          transition: 'all 0.15s ease',
+                        }}
+                      >
+                        타이핑
+                      </button>
+                    </>
+                  )}
+                  <button
+                    onClick={() => setStudyViewMode('grid')}
+                    style={{
+                      padding: '5px 12px',
+                      borderRadius: '4px',
+                      fontSize: '0.8125rem',
+                      fontWeight: studyViewMode === 'grid' ? 700 : 500,
+                      border: 'none',
+                      backgroundColor: studyViewMode === 'grid' ? '#0E4A84' : 'transparent',
+                      color: studyViewMode === 'grid' ? '#FFFFFF' : '#475569',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                    }}
+                  >
+                    목록
+                  </button>
+                </div>
+
+                {/* Audio Controls Group */}
+                <div style={{ display: 'inline-flex', alignItems: 'center', border: '1px solid #CBD5E1', borderRadius: '6px', overflow: 'hidden', backgroundColor: '#FFFFFF' }}>
                   <button
                     onClick={() => setAutoTTS(!autoTTS)}
                     style={{
-                      padding: '6px 12px',
-                      borderRadius: '6px',
+                      padding: '5px 10px',
                       fontSize: '0.8125rem',
-                      fontWeight: 700,
+                      fontWeight: 600,
                       border: 'none',
-                      backgroundColor: autoTTS ? '#10B981' : '#CBD5E1',
-                      color: '#FFFFFF',
+                      borderRight: '1px solid #E2E8F0',
+                      backgroundColor: autoTTS ? '#F0FDF4' : '#F8FAFC',
+                      color: autoTTS ? '#166534' : '#64748B',
                       cursor: 'pointer',
-                      transition: 'all 0.2s',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
                     }}
                     title="음성 읽기 ON/OFF"
                   >
-                    {autoTTS ? '🔊 음성 ON' : '🔇 음성 OFF'}
+                    {autoTTS ? <IconVolume size={14} color="#166534" /> : <IconVolumeOff size={14} color="#64748B" />}
+                    <span>{autoTTS ? '음성 ON' : '음성 OFF'}</span>
                   </button>
 
                   <select
@@ -1313,21 +1405,21 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                     onChange={e => setTtsRate(parseFloat(e.target.value))}
                     style={{
                       fontSize: '0.8125rem',
-                      fontWeight: 700,
+                      fontWeight: 600,
                       padding: '5px 8px',
-                      borderRadius: '6px',
-                      border: '1px solid #CBD5E1',
+                      border: 'none',
                       backgroundColor: '#FFFFFF',
-                      color: '#1E293B',
+                      color: '#334155',
                       cursor: 'pointer',
+                      outline: 'none',
                     }}
-                    title="TTS 읽기 배속"
+                    title="음성 배속"
                   >
-                    <option value={0.75}>⚡ 0.75x</option>
-                    <option value={1.0}>⚡ 1.0x</option>
-                    <option value={1.25}>⚡ 1.25x</option>
-                    <option value={1.5}>⚡ 1.5x</option>
-                    <option value={2.0}>⚡ 2.0x</option>
+                    <option value={0.75}>0.75x</option>
+                    <option value={1.0}>1.0x</option>
+                    <option value={1.25}>1.25x</option>
+                    <option value={1.5}>1.5x</option>
+                    <option value={2.0}>2.0x</option>
                   </select>
                 </div>
 
@@ -1338,51 +1430,79 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                     style={{
                       padding: '6px 14px',
                       fontSize: '0.8125rem',
-                      fontWeight: 800,
-                      backgroundColor: '#2563EB',
-                      color: '#FFFFFF',
-                      border: 'none',
+                      fontWeight: 700,
                       borderRadius: '6px',
                       cursor: 'pointer',
                     }}
                   >
-                    ➕ 새 문항 추가
+                    새 문항 추가
                   </button>
                 )}
               </div>
             </div>
 
-            {/* Category Sub-Filters & Search (For Grid View & Filters) */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', marginTop: '16px', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
+            {/* Category Sub-Filters & Search */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', marginTop: '16px', borderTop: '1px solid #E2E8F0', paddingTop: '16px' }}>
               <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--sub-text)' }}>카테고리:</span>
+                <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#64748B' }}>카테고리:</span>
                 <button
                   onClick={() => setStudyCategory('all')}
-                  className={studyCategory === 'all' ? 'btn-accent' : 'btn-outline'}
-                  style={{ fontSize: '0.78125rem', padding: '4px 10px' }}
+                  style={{
+                    fontSize: '0.78125rem',
+                    padding: '4px 10px',
+                    borderRadius: '4px',
+                    border: '1px solid',
+                    borderColor: studyCategory === 'all' ? '#0E4A84' : '#CBD5E1',
+                    backgroundColor: studyCategory === 'all' ? '#0E4A84' : '#FFFFFF',
+                    color: studyCategory === 'all' ? '#FFFFFF' : '#475569',
+                    fontWeight: studyCategory === 'all' ? 700 : 500,
+                    cursor: 'pointer',
+                  }}
                 >
                   전체 ({termsList.filter(t => t.subject === studySubject).length})
                 </button>
-                {categories.map(cat => (
-                  <button
-                    key={cat}
-                    onClick={() => setStudyCategory(cat)}
-                    className={studyCategory === cat ? 'btn-accent' : 'btn-outline'}
-                    style={{ fontSize: '0.78125rem', padding: '4px 10px' }}
-                  >
-                    {cat} ({termsList.filter(t => t.subject === studySubject && t.category === cat).length})
-                  </button>
-                ))}
+                {categories.map(cat => {
+                  const isCatSelected = studyCategory === cat;
+                  return (
+                    <button
+                      key={cat}
+                      onClick={() => setStudyCategory(cat)}
+                      style={{
+                        fontSize: '0.78125rem',
+                        padding: '4px 10px',
+                        borderRadius: '4px',
+                        border: '1px solid',
+                        borderColor: isCatSelected ? '#0E4A84' : '#CBD5E1',
+                        backgroundColor: isCatSelected ? '#0E4A84' : '#FFFFFF',
+                        color: isCatSelected ? '#FFFFFF' : '#475569',
+                        fontWeight: isCatSelected ? 700 : 500,
+                        cursor: 'pointer',
+                      }}
+                    >
+                      {cat} ({termsList.filter(t => t.subject === studySubject && t.category === cat).length})
+                    </button>
+                  );
+                })}
               </div>
 
               {studyViewMode === 'grid' && (
-                <div style={{ marginLeft: 'auto', flex: '1 1 200px', maxWidth: '300px' }}>
+                <div style={{ marginLeft: 'auto', flex: '1 1 200px', maxWidth: '280px', position: 'relative' }}>
+                  <div style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8', display: 'flex', pointerEvents: 'none' }}>
+                    <IconSearch size={14} color="#94A3B8" />
+                  </div>
                   <input
                     type="text"
-                    placeholder="🔍 검색..."
+                    placeholder="검색어 입력..."
                     value={searchTerm}
                     onChange={e => setSearchTerm(e.target.value)}
-                    style={{ width: '100%', fontSize: '0.84rem' }}
+                    style={{
+                      width: '100%',
+                      fontSize: '0.8125rem',
+                      padding: '6px 12px 6px 32px',
+                      borderRadius: '6px',
+                      border: '1px solid #CBD5E1',
+                      backgroundColor: '#FFFFFF',
+                    }}
                   />
                 </div>
               )}
@@ -1413,7 +1533,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                           cursor: 'pointer',
                         }}
                       >
-                        {isAutoPlay ? '⏸️ 일시정지' : '▶️ 자동재생'}
+                        {isAutoPlay ? '일시정지' : '자동재생'}
                       </button>
 
                       {isAutoPlay && (
@@ -1432,11 +1552,11 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                           }}
                           title="카드 전환 간격"
                         >
-                          <option value={3}>⏱️ 3초</option>
-                          <option value={4}>⏱️ 4초</option>
-                          <option value={5}>⏱️ 5초</option>
-                          <option value={7}>⏱️ 7초</option>
-                          <option value={10}>⏱️ 10초</option>
+                          <option value={3}>3초</option>
+                          <option value={4}>4초</option>
+                          <option value={5}>5초</option>
+                          <option value={7}>7초</option>
+                          <option value={10}>10초</option>
                         </select>
                       )}
 
@@ -1449,7 +1569,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                         style={{ fontSize: '0.78125rem', padding: '4px 10px', color: '#0E4A84', borderColor: '#BFDBFE', backgroundColor: '#EFF6FF', fontWeight: 700 }}
                         title="앞면/뒷면 표시 순서 변경"
                       >
-                        🔄 {flashcardDirection === 'term_first' ? '용어 ➔ 뜻' : '뜻 ➔ 용어'}
+                        {flashcardDirection === 'term_first' ? '용어 → 뜻' : '뜻 → 용어'}
                       </button>
                       <button
                         onClick={() => {
@@ -1461,7 +1581,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                         className="btn-outline"
                         style={{ fontSize: '0.78125rem', padding: '4px 10px' }}
                       >
-                        🔀 카드 섞기
+                        카드 섞기
                       </button>
                     </div>
                   </div>
@@ -1560,7 +1680,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                       className="btn-outline"
                       style={{ flex: 1, padding: '12px', fontSize: '0.9375rem', fontWeight: 700 }}
                     >
-                      ⬅️ 이전
+                      이전
                     </button>
 
                     <button
@@ -1575,7 +1695,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                       className="btn-primary"
                       style={{ flex: 1, padding: '12px', fontSize: '0.9375rem', fontWeight: 800 }}
                     >
-                      {!isCardFlipped ? '정답 확인' : '➡️ (Enter)'}
+                      {!isCardFlipped ? '정답 확인' : '다음'}
                     </button>
                   </div>
                 </>
@@ -1613,7 +1733,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                         className="btn-primary"
                         style={{ padding: '6px 16px', fontSize: '0.8125rem', fontWeight: 800 }}
                       >
-                        {typingIndex + 1 < filteredStudyTerms.length ? '➡️ (Enter)' : '완료 🎉'}
+                        {typingIndex + 1 < filteredStudyTerms.length ? '다음' : '완료'}
                       </button>
                     </div>
                   </div>
@@ -1643,7 +1763,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                         style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: '6px' }}
                         title="음성으로 들려주기"
                       >
-                        🔊 용어 읽기
+                        듣기
                       </button>
                     </div>
                     <input
@@ -1684,7 +1804,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                         style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: '6px' }}
                         title="음성으로 들려주기"
                       >
-                        🔊 뜻 읽기
+                        듣기
                       </button>
                     </div>
                     {/* Target Definition Gray Preview Box */}
@@ -1736,7 +1856,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                       className="btn-accent"
                       style={{ padding: '12px 24px', fontSize: '0.95rem', fontWeight: 800 }}
                     >
-                      {typingIndex + 1 < filteredStudyTerms.length ? '➡️ (Enter)' : '🎉 완료'}
+                      {typingIndex + 1 < filteredStudyTerms.length ? '다음' : '완료'}
                     </button>
                   </div>
                 </div>
@@ -1751,11 +1871,11 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
           {/* MODE 3: GRID LIST VIEW (전체 목록 보기) */}
           {studyViewMode === 'grid' && (
             <div>
-              {/* Grid Top Toolbar: View Layout Switcher & Admin Actions */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
+              {/* Grid Top Toolbar: View Layout Switcher & Hide Definition & Admin Actions */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '14px' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                   {/* View Layout Toggle: 1열 목록 vs 카드 그리드 */}
-                  <div style={{ display: 'inline-flex', backgroundColor: '#F1F5F9', padding: '3px', borderRadius: '8px', border: '1px solid #CBD5E1' }}>
+                  <div style={{ display: 'inline-flex', backgroundColor: '#F1F5F9', padding: '3px', borderRadius: '6px', border: '1px solid #CBD5E1' }}>
                     <button
                       type="button"
                       onClick={() => {
@@ -1763,10 +1883,10 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                         try { localStorage.setItem('nursing_quiz_grid_layout', 'single'); } catch {}
                       }}
                       style={{
-                        padding: '6px 12px',
-                        borderRadius: '6px',
+                        padding: '5px 12px',
+                        borderRadius: '4px',
                         fontSize: '0.8125rem',
-                        fontWeight: 700,
+                        fontWeight: gridLayout === 'single' ? 700 : 500,
                         border: 'none',
                         backgroundColor: gridLayout === 'single' ? '#0E4A84' : 'transparent',
                         color: gridLayout === 'single' ? '#FFFFFF' : '#475569',
@@ -1778,8 +1898,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                       }}
                       title="한 행에 1개씩 세로 목록으로 보기"
                     >
-                      <span>☰</span>
-                      <span>1열 목록 (1행 1단어)</span>
+                      <span>1열 목록</span>
                     </button>
                     <button
                       type="button"
@@ -1788,10 +1907,10 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                         try { localStorage.setItem('nursing_quiz_grid_layout', 'multi'); } catch {}
                       }}
                       style={{
-                        padding: '6px 12px',
-                        borderRadius: '6px',
+                        padding: '5px 12px',
+                        borderRadius: '4px',
                         fontSize: '0.8125rem',
-                        fontWeight: 700,
+                        fontWeight: gridLayout === 'multi' ? 700 : 500,
                         border: 'none',
                         backgroundColor: gridLayout === 'multi' ? '#0E4A84' : 'transparent',
                         color: gridLayout === 'multi' ? '#FFFFFF' : '#475569',
@@ -1803,7 +1922,6 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                       }}
                       title="카드형 그리드로 여러 열 보기"
                     >
-                      <span>⊞</span>
                       <span>카드 그리드</span>
                     </button>
                   </div>
@@ -1811,18 +1929,27 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                   {/* Hide Definition toggle button */}
                   <button
                     type="button"
-                    onClick={() => setHideDefinition(prev => !prev)}
-                    className="btn-outline"
+                    onClick={() => {
+                      setHideDefinition(prev => !prev);
+                      setRevealedCardIds({});
+                    }}
                     style={{
-                      padding: '6px 12px',
+                      padding: '5px 12px',
                       fontSize: '0.8125rem',
-                      fontWeight: 700,
-                      backgroundColor: hideDefinition ? '#FEF2F2' : '#FFFFFF',
-                      borderColor: hideDefinition ? '#DC2626' : '#CBD5E1',
-                      color: hideDefinition ? '#DC2626' : '#475569',
+                      fontWeight: 600,
+                      borderRadius: '6px',
+                      border: '1px solid #CBD5E1',
+                      backgroundColor: hideDefinition ? '#F1F5F9' : '#FFFFFF',
+                      color: hideDefinition ? '#0E4A84' : '#475569',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '6px',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
                     }}
                   >
-                    {hideDefinition ? '👁️ 뜻 보이기' : '🙈 뜻 가리기'}
+                    {hideDefinition ? <IconEyeOff size={14} color="#0E4A84" /> : <IconEye size={14} color="#475569" />}
+                    <span>{hideDefinition ? '뜻 가리기 해제' : '뜻 가리기'}</span>
                   </button>
                 </div>
 
@@ -1831,52 +1958,85 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                     <button
                       onClick={() => setIsGridEditMode(prev => !prev)}
                       style={{
-                        padding: '8px 16px',
-                        borderRadius: '8px',
-                        fontSize: '0.84rem',
-                        fontWeight: 800,
-                        border: isGridEditMode ? '1px solid #DC2626' : '1px solid #0E4A84',
-                        backgroundColor: isGridEditMode ? '#FEF2F2' : '#FFFFFF',
-                        color: isGridEditMode ? '#DC2626' : '#0E4A84',
+                        padding: '6px 14px',
+                        borderRadius: '6px',
+                        fontSize: '0.8125rem',
+                        fontWeight: 700,
+                        border: '1px solid',
+                        borderColor: isGridEditMode ? '#0E4A84' : '#CBD5E1',
+                        backgroundColor: isGridEditMode ? '#0E4A84' : '#FFFFFF',
+                        color: isGridEditMode ? '#FFFFFF' : '#0E4A84',
                         cursor: 'pointer',
-                        transition: 'all 0.2s',
-                        boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                        transition: 'all 0.15s ease',
                       }}
                     >
-                      {isGridEditMode ? '🔒 편집 완료' : '⚙️ 순서 편집 / 문항 관리'}
-                    </button>
-                    <button
-                      onClick={() => handleOpenCreateModal()}
-                      className="btn-primary"
-                      style={{ fontSize: '0.84rem', padding: '8px 16px' }}
-                    >
-                      ➕ 새 문항 추가
+                      {isGridEditMode ? '편집 완료' : '순서 편집 / 문항 관리'}
                     </button>
                   </div>
                 )}
               </div>
 
-              {/* Edit Mode User Drag Guide */}
-              {isAdmin && isGridEditMode && (
+              {/* Hide Definition Guide Banner */}
+              {hideDefinition && (
                 <div
                   style={{
-                    backgroundColor: '#EFF6FF',
-                    border: '1px solid #BFDBFE',
-                    color: '#1E40AF',
-                    padding: '10px 16px',
-                    borderRadius: '8px',
+                    backgroundColor: '#F8FAFC',
+                    border: '1px solid #E2E8F0',
+                    borderRadius: '6px',
+                    padding: '10px 14px',
                     fontSize: '0.8125rem',
-                    fontWeight: 600,
+                    color: '#475569',
                     marginBottom: '14px',
                     display: 'flex',
                     alignItems: 'center',
                     gap: '8px',
                   }}
                 >
-                  <span style={{ fontSize: '1rem' }}>💡</span>
+                  <IconEyeOff size={14} color="#64748B" />
                   <span>
-                    각 카드의 <strong>⠿ 점 6개 드래그 버튼</strong>을 꾹 누르고 원하는 위치로 끌어다 놓으면 순서가 바로 변경됩니다. (🔼 🔽 화살표 버튼으로도 1칸씩 이동 가능)
+                    <strong>뜻 가리기 활성화 중:</strong> 뜻 영역이 블러 처리되어 있습니다. 카드의 뜻 영역을 클릭하면 해당 항목의 정답/뜻을 확인할 수 있습니다.
                   </span>
+                </div>
+              )}
+
+              {/* Edit Mode User Drag Guide */}
+              {isAdmin && isGridEditMode && (
+                <div
+                  style={{
+                    backgroundColor: '#F0F9FF',
+                    border: '1px solid #BAE6FD',
+                    color: '#0369A1',
+                    padding: '10px 16px',
+                    borderRadius: '6px',
+                    fontSize: '0.8125rem',
+                    fontWeight: 500,
+                    marginBottom: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '8px',
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <IconGrip size={14} color="#0369A1" />
+                    <span>
+                      <strong>순서 편집 모드:</strong> 각 카드의 드래그 핸들(⠿)을 끌어다 놓거나 ▲ / ▼ 버튼으로 문항 순서를 조정할 수 있습니다.
+                    </span>
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => setIsGridEditMode(false)}
+                    style={{
+                      background: 'none',
+                      border: 'none',
+                      color: '#0369A1',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      fontSize: '0.8125rem',
+                    }}
+                  >
+                    완료 ✕
+                  </button>
                 </div>
               )}
 
@@ -1948,23 +2108,22 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                           display: 'flex',
                           flexDirection: 'column',
                           justifyContent: 'space-between',
-                          borderLeft: '4px solid var(--primary)',
+                          border: dragOverIdx === idx && draggedIdx !== idx ? '1px dashed #0E4A84' : '1px solid #E2E8F0',
+                          borderRadius: '8px',
                           padding: gridLayout === 'single' ? '16px 20px' : '18px',
                           opacity: draggedIdx === idx ? 0.35 : 1,
-                          borderTop: dragOverIdx === idx && draggedIdx !== idx ? '2px dashed #2563EB' : undefined,
-                          borderRight: dragOverIdx === idx && draggedIdx !== idx ? '2px dashed #2563EB' : undefined,
-                          borderBottom: dragOverIdx === idx && draggedIdx !== idx ? '2px dashed #2563EB' : undefined,
-                          backgroundColor: dragOverIdx === idx && draggedIdx !== idx ? '#EFF6FF' : undefined,
+                          backgroundColor: dragOverIdx === idx && draggedIdx !== idx ? '#F1F5F9' : '#FFFFFF',
                           transition: 'all 0.15s ease',
-                          boxShadow: isGridEditMode ? '0 2px 6px rgba(0,0,0,0.06)' : undefined,
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
                         }}
                       >
                         <div>
+                          {/* Card Header: Index & Edit Controls */}
                           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                               {isAdmin && isGridEditMode && (
                                 <span
-                                  title="꾹 누르고 드래그하여 순서 변경"
+                                  title="드래그하여 순서 변경"
                                   style={{
                                     cursor: 'grab',
                                     userSelect: 'none',
@@ -1972,27 +2131,24 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                                     alignItems: 'center',
                                     justifyContent: 'center',
                                     padding: '4px 6px',
-                                    borderRadius: '6px',
+                                    borderRadius: '4px',
                                     backgroundColor: '#F1F5F9',
                                     border: '1px solid #CBD5E1',
                                     color: '#475569',
                                     lineHeight: 1,
-                                    marginRight: '2px',
                                   }}
                                 >
-                                  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
-                                    <circle cx="5" cy="3" r="1.5" />
-                                    <circle cx="11" cy="3" r="1.5" />
-                                    <circle cx="5" cy="8" r="1.5" />
-                                    <circle cx="11" cy="8" r="1.5" />
-                                    <circle cx="5" cy="13" r="1.5" />
-                                    <circle cx="11" cy="13" r="1.5" />
-                                  </svg>
+                                  <IconGrip size={14} color="#475569" />
                                 </span>
                               )}
-                              <span style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--primary)', backgroundColor: '#EFF6FF', padding: '2px 8px', borderRadius: '6px' }}>
+                              <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#64748B' }}>
                                 #{idx + 1}
                               </span>
+                              {t.category && (
+                                <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
+                                  • {t.category}
+                                </span>
+                              )}
                             </div>
 
                             {isAdmin && isGridEditMode && (
@@ -2000,30 +2156,66 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                                 <button
                                   onClick={() => handleMoveTerm(idx, 'up')}
                                   disabled={idx === 0}
-                                  style={{ background: 'none', border: '1px solid #CBD5E1', borderRadius: '4px', padding: '2px 6px', color: 'var(--primary)', fontSize: '0.8rem', cursor: idx === 0 ? 'not-allowed' : 'pointer', opacity: idx === 0 ? 0.3 : 1 }}
+                                  style={{
+                                    background: '#FFFFFF',
+                                    border: '1px solid #CBD5E1',
+                                    borderRadius: '4px',
+                                    padding: '2px 6px',
+                                    color: '#475569',
+                                    fontSize: '0.75rem',
+                                    cursor: idx === 0 ? 'not-allowed' : 'pointer',
+                                    opacity: idx === 0 ? 0.3 : 1,
+                                  }}
                                   title="위로 1칸 이동"
                                 >
-                                  🔼
+                                  ▲
                                 </button>
                                 <button
                                   onClick={() => handleMoveTerm(idx, 'down')}
                                   disabled={idx === filteredStudyTerms.length - 1}
-                                  style={{ background: 'none', border: '1px solid #CBD5E1', borderRadius: '4px', padding: '2px 6px', color: 'var(--primary)', fontSize: '0.8rem', cursor: idx === filteredStudyTerms.length - 1 ? 'not-allowed' : 'pointer', opacity: idx === filteredStudyTerms.length - 1 ? 0.3 : 1 }}
+                                  style={{
+                                    background: '#FFFFFF',
+                                    border: '1px solid #CBD5E1',
+                                    borderRadius: '4px',
+                                    padding: '2px 6px',
+                                    color: '#475569',
+                                    fontSize: '0.75rem',
+                                    cursor: idx === filteredStudyTerms.length - 1 ? 'not-allowed' : 'pointer',
+                                    opacity: idx === filteredStudyTerms.length - 1 ? 0.3 : 1,
+                                  }}
                                   title="아래로 1칸 이동"
                                 >
-                                  🔽
+                                  ▼
                                 </button>
                                 <button
                                   onClick={() => handleOpenEditModal(t)}
-                                  style={{ background: 'none', border: '1px solid #CBD5E1', borderRadius: '4px', padding: '2px 8px', color: 'var(--primary)', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 700 }}
+                                  style={{
+                                    background: '#FFFFFF',
+                                    border: '1px solid #CBD5E1',
+                                    borderRadius: '4px',
+                                    padding: '2px 8px',
+                                    color: '#0E4A84',
+                                    fontSize: '0.75rem',
+                                    cursor: 'pointer',
+                                    fontWeight: 600,
+                                  }}
                                 >
-                                  ✏️ 수정
+                                  수정
                                 </button>
                                 <button
                                   onClick={() => handleDeleteTerm(t.id, t.term)}
-                                  style={{ background: 'none', border: '1px solid #FECACA', borderRadius: '4px', padding: '2px 8px', color: '#DC2626', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 700 }}
+                                  style={{
+                                    background: '#FFFFFF',
+                                    border: '1px solid #FECACA',
+                                    borderRadius: '4px',
+                                    padding: '2px 8px',
+                                    color: '#DC2626',
+                                    fontSize: '0.75rem',
+                                    cursor: 'pointer',
+                                    fontWeight: 600,
+                                  }}
                                 >
-                                  🗑️ 삭제
+                                  삭제
                                 </button>
                               </div>
                             )}
@@ -2031,11 +2223,11 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
 
                           {/* Term (Korean) & English Term side-by-side */}
                           <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
-                            <h3 style={{ fontSize: gridLayout === 'single' ? '1.125rem' : '1.05rem', fontWeight: 800, color: 'var(--primary)', margin: 0, lineHeight: 1.4 }}>
+                            <h3 style={{ fontSize: gridLayout === 'single' ? '1.125rem' : '1.05rem', fontWeight: 700, color: '#0E4A84', margin: 0, lineHeight: 1.4 }}>
                               {t.term}
                             </h3>
                             {t.englishTerm && (
-                              <span style={{ fontSize: '0.84rem', fontWeight: 600, color: 'var(--sub-text)' }}>
+                              <span style={{ fontSize: '0.84rem', fontWeight: 500, color: '#64748B' }}>
                                 {t.englishTerm.trim().startsWith('(') ? t.englishTerm : `(${t.englishTerm})`}
                               </span>
                             )}
@@ -2052,20 +2244,20 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                                       fontSize: '0.85rem',
                                       color: isCorrectOpt ? '#15803D' : '#334155',
                                       backgroundColor: isCorrectOpt ? '#F0FDF4' : '#F8FAFC',
-                                      padding: '9px 13px',
-                                      borderRadius: '8px',
-                                      border: isCorrectOpt ? '2px solid #22C55E' : '1px solid #E2E8F0',
-                                      fontWeight: isCorrectOpt ? 800 : 500,
+                                      padding: '8px 12px',
+                                      borderRadius: '6px',
+                                      border: isCorrectOpt ? '1px solid #86EFAC' : '1px solid #E2E8F0',
+                                      fontWeight: isCorrectOpt ? 700 : 500,
                                       display: 'flex',
                                       justifyContent: 'space-between',
                                       alignItems: 'center',
-                                      transition: 'all 0.2s',
+                                      transition: 'all 0.15s ease',
                                     }}
                                   >
-                                    <span>● {opt}</span>
+                                    <span>{opt}</span>
                                     {isCorrectOpt && (
-                                      <span style={{ fontSize: '0.75rem', backgroundColor: '#22C55E', color: '#FFFFFF', padding: '2px 8px', borderRadius: '4px', fontWeight: 800 }}>
-                                        ✓ 정답
+                                      <span style={{ fontSize: '0.75rem', backgroundColor: '#DCFCE7', color: '#15803D', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                                        정답
                                       </span>
                                     )}
                                   </div>
@@ -2074,7 +2266,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                             </div>
                           )}
 
-                          {/* Show bottom answer/definition box ONLY if it's not a multiple-choice question where answer is already highlighted, or if definition has extra explanation */}
+                          {/* Definition Area: Clean CSS Masking / Blur */}
                           {(!isStructuredQuestion || !hasMatchingOption) && (
                             <div
                               onClick={() => {
@@ -2083,29 +2275,51 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                                 }
                               }}
                               style={{
-                                backgroundColor: isHidden ? '#F1F5F9' : '#F8FAFC',
+                                position: 'relative',
+                                backgroundColor: '#F8FAFC',
                                 padding: '12px 14px',
-                                borderRadius: '8px',
-                                border: `1px solid ${isHidden ? '#E2E8F0' : '#CBD5E1'}`,
-                                minHeight: '44px',
+                                borderRadius: '6px',
+                                border: '1px solid #E2E8F0',
                                 cursor: hideDefinition ? 'pointer' : 'default',
-                                transition: 'all 0.2s',
+                                transition: 'all 0.2s ease',
+                                overflow: 'hidden',
                               }}
+                              title={hideDefinition ? (isRevealed ? '클릭하여 다시 가리기' : '클릭하여 뜻 확인') : undefined}
                             >
-                              {isHidden ? (
-                                <div style={{ textAlign: 'center', color: '#64748B', fontSize: '0.84rem', fontWeight: 600 }}>
-                                  🔒 클릭하여 정답/뜻 확인
-                                </div>
-                              ) : (
-                                <div>
-                                  {t.answer && !t.definition?.replace(/^정답:\s*/, '').includes(t.answer.replace(/^정답:\s*/, '')) && (
-                                    <div style={{ fontSize: '0.875rem', fontWeight: 800, color: '#166534', marginBottom: '4px' }}>
-                                      정답: {t.answer.replace(/^정답:\s*/, '')}
-                                    </div>
-                                  )}
-                                  <p style={{ fontSize: '0.875rem', color: '#1E293B', lineHeight: 1.5, margin: 0 }}>
-                                    {t.definition.replace(/^정답:\s*/, '')}
-                                  </p>
+                              <div
+                                style={{
+                                  filter: isHidden ? 'blur(5px)' : 'none',
+                                  opacity: isHidden ? 0.35 : 1,
+                                  userSelect: isHidden ? 'none' : 'text',
+                                  transition: 'filter 0.2s ease, opacity 0.2s ease',
+                                }}
+                              >
+                                {t.answer && !t.definition?.replace(/^정답:\s*/, '').includes(t.answer.replace(/^정답:\s*/, '')) && (
+                                  <div style={{ fontSize: '0.84rem', fontWeight: 700, color: '#166534', marginBottom: '4px' }}>
+                                    정답: {t.answer.replace(/^정답:\s*/, '')}
+                                  </div>
+                                )}
+                                <p style={{ fontSize: '0.875rem', color: '#334155', lineHeight: 1.6, margin: 0 }}>
+                                  {t.definition.replace(/^정답:\s*/, '')}
+                                </p>
+                              </div>
+
+                              {isHidden && (
+                                <div
+                                  style={{
+                                    position: 'absolute',
+                                    inset: 0,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    backgroundColor: 'rgba(248, 250, 252, 0.45)',
+                                    color: '#64748B',
+                                    fontSize: '0.8125rem',
+                                    fontWeight: 600,
+                                    pointerEvents: 'none',
+                                  }}
+                                >
+                                  클릭하여 확인
                                 </div>
                               )}
                             </div>
@@ -2129,7 +2343,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
       {activeTab === 'quiz_setup' && (
         <div className="card" style={{ maxWidth: '680px', margin: '0 auto', width: '100%', padding: '28px' }}>
           <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <span>✍️</span> 테스트 모드 (테스트 설정)
+            테스트 설정
           </h2>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
@@ -2158,8 +2372,8 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                       style={{ fontSize: '0.875rem', padding: '8px 16px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
                     >
                       <span>{subj}</span>
-                      <span style={{ fontSize: '0.72rem', padding: '2px 6px', borderRadius: '4px', backgroundColor: isMcSubj ? '#EDE9FE' : '#EFF6FF', color: isMcSubj ? '#6D28D9' : '#1D4ED8', fontWeight: 800 }}>
-                        {isMcSubj ? '📝 퀴즈' : '📖 용어'}
+                      <span style={{ fontSize: '0.72rem', padding: '2px 6px', borderRadius: '4px', backgroundColor: isMcSubj ? '#F1F5F9' : '#EFF6FF', color: isMcSubj ? '#475569' : '#1D4ED8', fontWeight: 700 }}>
+                        {isMcSubj ? '퀴즈' : '용어'}
                       </span>
                     </button>
                   );
@@ -2200,18 +2414,18 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
               padding: '10px 14px',
               borderRadius: '8px',
               fontSize: '0.84rem',
-              fontWeight: 700,
-              backgroundColor: isTargetExam ? '#F3E8FF' : '#EFF6FF',
-              color: isTargetExam ? '#6B21A8' : '#1E40AF',
+              fontWeight: 600,
+              backgroundColor: '#F8FAFC',
+              border: '1px solid #E2E8F0',
+              color: '#334155',
               display: 'flex',
               alignItems: 'center',
               gap: '6px'
             }}>
-              <span>{isTargetExam ? '📝' : '📖'}</span>
               <span>
                 {isTargetExam
-                  ? '선택하신 범위는 [객관식 및 주관식 문제]로 구성되어 있습니다.'
-                  : '선택하신 범위는 [의학 용어 / 단어장 문항]으로 구성되어 있습니다.'}
+                  ? '선택하신 범위는 객관식 및 주관식 문제로 구성되어 있습니다.'
+                  : '선택하신 범위는 의학 용어 / 단어장 문항으로 구성되어 있습니다.'}
               </span>
             </div>
 
@@ -2233,7 +2447,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                     fontWeight: 700,
                   }}
                 >
-                  <div style={{ fontSize: '0.9375rem', marginBottom: '4px' }}>🎯 객관식 및 주관식 혼합 모의고사</div>
+                  <div style={{ fontSize: '0.9375rem', marginBottom: '4px' }}>객관식 및 주관식 혼합 모의고사</div>
                   <div style={{ fontSize: '0.75rem', color: '#475569', fontWeight: 500 }}>
                     각 문항의 출제 방식(객관식 선택형 / 주관식 단답형)에 맞게 문제가 출제됩니다.
                   </div>
@@ -2255,7 +2469,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                       cursor: 'pointer',
                     }}
                   >
-                    <div style={{ fontSize: '0.9375rem', marginBottom: '4px' }}>🎯 4지선다 용어 퀴즈</div>
+                    <div style={{ fontSize: '0.9375rem', marginBottom: '4px' }}>4지선다형 용어 퀴즈</div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--sub-text)', fontWeight: 400 }}>
                       용어 및 뜻 보기 4개 중 정답을 선택합니다.
                     </div>
@@ -2275,7 +2489,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                       cursor: 'pointer',
                     }}
                   >
-                    <div style={{ fontSize: '0.9375rem', marginBottom: '4px' }}>✍️ 주관식 단답형 퀴즈</div>
+                    <div style={{ fontSize: '0.9375rem', marginBottom: '4px' }}>주관식 단답형 퀴즈</div>
                     <div style={{ fontSize: '0.75rem', color: 'var(--sub-text)', fontWeight: 400 }}>
                       뜻/정의를 확인하고 알맞은 용어를 직접 입력합니다.
                     </div>
@@ -2304,7 +2518,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                     cursor: 'pointer',
                   }}
                 >
-                  <div style={{ fontSize: '0.875rem', marginBottom: '2px' }}>📑 한 문제씩 풀기</div>
+                  <div style={{ fontSize: '0.875rem', marginBottom: '2px' }}>한 문제씩 풀기</div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--sub-text)', fontWeight: 400 }}>
                     문제마다 순차 채점 및 바로 진행
                   </div>
@@ -2324,7 +2538,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                   }}
                 >
                   <div style={{ fontSize: '0.875rem', marginBottom: '2px' }}>
-                    {isTargetExam ? '📝 전체 모의고사 (시험지 모드)' : '📝 전체 단어장 시험'}
+                    {isTargetExam ? '전체 모의고사 (시험지 모드)' : '전체 단어장 시험'}
                   </div>
                   <div style={{ fontSize: '0.75rem', color: 'var(--sub-text)', fontWeight: 400 }}>
                     {isTargetExam ? '모든 문제 풀이 후 한번에 제출 및 채점' : '모든 용어 답안 작성 후 한번에 채점'}
@@ -2345,7 +2559,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                   className={quizOrder === 'shuffle' ? 'btn-primary' : 'btn-outline'}
                   style={{ flex: 1, padding: '10px', fontSize: '0.875rem' }}
                 >
-                  🔀 셔플
+                  무작위 셔플
                 </button>
                 <button
                   type="button"
@@ -2353,7 +2567,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                   className={quizOrder === 'normal' ? 'btn-primary' : 'btn-outline'}
                   style={{ flex: 1, padding: '10px', fontSize: '0.875rem' }}
                 >
-                  🔢 기본 순서
+                  기본 순서
                 </button>
               </div>
             </div>
@@ -2391,7 +2605,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                 textAlign: 'center',
               }}
             >
-              🚀 테스트 시작
+              테스트 시작
             </button>
           </div>
         </div>
@@ -2411,7 +2625,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
               className="btn-outline"
               style={{ fontSize: '0.78125rem', padding: '4px 10px' }}
             >
-              📝 전체 시험으로 변경
+              전체 시험으로 변경
             </button>
             <span style={{ fontSize: '0.9375rem', fontWeight: 800, color: 'var(--primary)' }}>
               문제 {currentIndex + 1} / {quizQuestions.length}
@@ -2535,7 +2749,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                     className="btn-accent"
                     style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
                   >
-                    {currentIndex + 1 < quizQuestions.length ? '다음 문제 →' : '🏆 퀴즈 결과 보기'}
+                    {currentIndex + 1 < quizQuestions.length ? '다음 문제 →' : '퀴즈 결과 보기'}
                   </button>
                 </div>
               )}
@@ -2570,7 +2784,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                     onClick={() => setShowHint(!showHint)}
                     style={{ background: 'none', border: 'none', color: 'var(--sub-text)', fontSize: '0.8125rem', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
                   >
-                    {showHint ? '🔒 힌트 닫기' : '💡 힌트 보기'}
+                    {showHint ? '힌트 닫기' : '힌트 보기'}
                   </button>
                   {showHint && (
                     <div style={{ fontSize: '0.8125rem', color: '#059669', backgroundColor: '#ECFDF5', padding: '8px 12px', borderRadius: '6px', marginTop: '6px', border: '1px solid #A7F3D0' }}>
@@ -2585,14 +2799,14 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {checkAnswerCorrectness(userAnswer, currentQuestion) ? (
                     <div style={{ backgroundColor: '#DCFCE7', border: '1px solid #86EFAC', padding: '16px', borderRadius: '8px', color: '#166534' }}>
-                      <div style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '4px' }}>🎉 정답입니다!</div>
+                      <div style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '4px' }}>정답입니다</div>
                       <div style={{ fontSize: '0.875rem' }}>
                         <strong>정식 정답:</strong> {currentQuestion.answer || currentQuestion.term}
                       </div>
                     </div>
                   ) : (
                     <div style={{ backgroundColor: '#FEE2E2', border: '1px solid #FCA5A5', padding: '16px', borderRadius: '8px', color: '#991B1B' }}>
-                      <div style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '4px' }}>❌ 오답입니다</div>
+                      <div style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '4px' }}>오답입니다</div>
                       <div style={{ fontSize: '0.875rem', marginBottom: '6px' }}>
                         <strong>정답:</strong> <span style={{ fontWeight: 800, color: '#B91C1C' }}>{currentQuestion.answer || currentQuestion.term}</span>
                       </div>
@@ -2614,8 +2828,8 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                       {(quizResults[currentIndex]?.overrideCorrect !== undefined
                         ? quizResults[currentIndex]?.overrideCorrect
                         : quizResults[currentIndex]?.isCorrect)
-                        ? '❌ 틀림 처리'
-                        : '⭕ 정답 처리'}
+                        ? '오답 처리'
+                        : '정답 처리'}
                     </button>
                   </div>
                 </div>
@@ -2640,7 +2854,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                     className="btn-accent"
                     style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
                   >
-                    {currentIndex + 1 < quizQuestions.length ? '다음 문제 →' : '🏆 퀴즈 결과 보기'}
+                    {currentIndex + 1 < quizQuestions.length ? '다음 문제 →' : '퀴즈 결과 보기'}
                   </button>
                 )}
               </div>
@@ -2660,7 +2874,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
                 <div>
                   <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0E4A84', margin: 0 }}>
-                    {isMcSheet ? '📝 전체 모의고사 시험지' : '📝 전체 단어장 시험'}
+                    {isMcSheet ? '전체 모의고사 시험지' : '전체 단어장 시험'}
                   </h2>
                   <div style={{ fontSize: '0.84rem', color: '#64748B', marginTop: '4px' }}>
                     출제 과목: {quizSubject} | 총 {quizQuestions.length}문항
@@ -2672,7 +2886,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                   className="btn-outline"
                   style={{ fontSize: '0.8125rem', padding: '6px 12px' }}
                 >
-                  📑 한 문제씩 풀기로 변경
+                  한 문제씩 풀기로 변경
                 </button>
               </div>
 
@@ -2875,7 +3089,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                   className="btn-accent"
                   style={{ width: '100%', padding: '16px', fontSize: '1.125rem', fontWeight: 900, textAlign: 'center' }}
                 >
-                  📝 채점하기 ({Object.keys(worksheetAnswers).filter(k => worksheetAnswers[Number(k)]?.trim()).length} / {quizQuestions.length})
+                  답안 제출 및 채점하기 ({Object.keys(worksheetAnswers).filter(k => worksheetAnswers[Number(k)]?.trim()).length} / {quizQuestions.length})
                 </button>
               </div>
             </div>
@@ -2889,7 +3103,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
           {/* Score Summary Card */}
           <div className="card" style={{ padding: '32px', textAlign: 'center', backgroundColor: '#F8FAFC' }}>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text)', marginBottom: '8px' }}>
-              🎉 퀴즈 완료!
+              퀴즈 완료
             </h2>
             <div style={{ fontSize: '3rem', fontWeight: 900, color: scorePercent >= 70 ? '#10B981' : '#EF4444', margin: '12px 0' }}>
               {scorePercent}점
@@ -2904,7 +3118,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                 className="btn-primary"
                 style={{ padding: '10px 20px', fontSize: '0.875rem' }}
               >
-                🔄 새로운 퀴즈 설정
+                새로운 퀴즈 설정
               </button>
               {wrongResults.length > 0 && (
                 <button
@@ -2915,7 +3129,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                   className="btn-accent"
                   style={{ padding: '10px 20px', fontSize: '0.875rem' }}
                 >
-                  ✏️ 오답 {wrongResults.length}개 다시 풀기
+                  오답 {wrongResults.length}개 다시 풀기
                 </button>
               )}
             </div>
@@ -2926,7 +3140,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
             <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
               <div>
                 <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#0369A1', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  <span>📄</span> PDF 내보내기 설정
+                  PDF 내보내기 설정
                 </h4>
                 <p style={{ fontSize: '0.8125rem', color: '#0284C7', margin: '4px 0 0 0' }}>
                   퀴즈 결과 오답노트 및 풀이 내역을 PDF로 저장 또는 인쇄합니다.
@@ -2950,7 +3164,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                       transition: 'all 0.2s',
                     }}
                   >
-                    ❌ 틀린 것만 ({wrongResults.length}개)
+                    오답만 ({wrongResults.length}개)
                   </button>
                   <button
                     type="button"
@@ -2967,7 +3181,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                       transition: 'all 0.2s',
                     }}
                   >
-                    📋 전체 ({quizResults.length}개 - 오답 하이라이트)
+                    전체 ({quizResults.length}개 - 오답 하이라이트)
                   </button>
                 </div>
 
@@ -2977,7 +3191,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                   className="btn-accent"
                   style={{ padding: '8px 16px', fontSize: '0.875rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px' }}
                 >
-                  🖨️ PDF 다운로드/인쇄
+                  PDF 내보내기/인쇄
                 </button>
               </div>
             </div>
@@ -2986,7 +3200,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
           {/* Wrong Answers Note */}
           <div className="card">
             <h3 className="section-title">
-              <span>📋 퀴즈 문제 및 풀이 내역 ({quizResults.length}개)</span>
+              <span>퀴즈 문제 및 풀이 내역 ({quizResults.length}개)</span>
             </h3>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
@@ -3006,7 +3220,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                         <span style={{ fontWeight: 800, fontSize: '0.9375rem', color: finalCorrect ? '#166534' : '#991B1B' }}>
-                          #{idx + 1} {finalCorrect ? '⭕ 정답' : '❌ 오답'}
+                          #{idx + 1} {finalCorrect ? '정답' : '오답'}
                         </span>
                       </div>
                       <button
@@ -3041,7 +3255,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
           <div className="card" style={{ padding: '24px' }}>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '4px' }}>
-              📜 내 학습기록
+              내 학습기록
             </h2>
             <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>
               내가 완료한 테스트 및 학습 기록을 확인하고, 오답을 검토하거나 동일한 문제로 다시 테스트를 진행할 수 있습니다.
@@ -3101,7 +3315,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                         className="btn-outline"
                         style={{ fontSize: '0.8125rem', padding: '8px 14px' }}
                       >
-                        📜 풀이/오답 검토
+                        풀이 검토
                       </button>
 
                       <button
@@ -3109,7 +3323,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                         className="btn-primary"
                         style={{ fontSize: '0.8125rem', padding: '8px 14px' }}
                       >
-                        🔄 다시 풀기
+                        다시 풀기
                       </button>
                     </div>
                   </div>
@@ -3117,7 +3331,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
               </div>
             ) : (
               <div style={{ textAlign: 'center', padding: '40px', color: 'var(--sub-text)' }}>
-                아직 학습 및 테스트 기록이 없습니다. [✍️ 테스트 모드] 탭에서 테스트를 시작해보세요!
+                아직 학습 및 테스트 기록이 없습니다. [테스트 모드] 탭에서 테스트를 시작해보세요!
               </div>
             )}
           </div>
@@ -3141,7 +3355,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
           <div className="card" style={{ maxWidth: '650px', width: '100%', maxHeight: '80vh', overflowY: 'auto', padding: '28px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)' }}>
-                📝 퀴즈 풀이 상세 검토: {selectedHistoryAttempt.subject}
+                퀴즈 풀이 상세 검토: {selectedHistoryAttempt.subject}
               </h3>
               <button onClick={() => setSelectedHistoryAttempt(null)} className="btn-outline" style={{ padding: '4px 10px' }}>
                 닫기 ✕
@@ -3157,7 +3371,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                 className="btn-primary"
                 style={{ fontSize: '0.8125rem', padding: '6px 12px' }}
               >
-                🔄 이 문제들로 다시 풀기
+                이 문제들로 다시 풀기
               </button>
             </div>
 
@@ -3178,7 +3392,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                   </div>
                   <div style={{ fontSize: '0.84rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
                     <div>
-                      <strong style={{ color: item.isCorrect ? '#166534' : '#991B1B' }}>내가 작성한 답:</strong> {item.userAnswer || '(미작성)'} {item.isCorrect ? '✅' : '❌'}
+                      <strong style={{ color: item.isCorrect ? '#166534' : '#991B1B' }}>내가 작성한 답:</strong> {item.userAnswer || '(미작성)'} {item.isCorrect ? '(정답)' : '(오답)'}
                     </div>
                     <div>
                       <strong style={{ color: '#1E293B' }}>정답 / 해설:</strong> {item.correctAnswer}
@@ -3207,7 +3421,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
         >
           <div className="card" style={{ maxWidth: '640px', width: '100%', padding: '28px', maxHeight: '90vh', overflowY: 'auto' }}>
             <h3 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: '20px', color: 'var(--primary)', display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <span>{editingTerm ? '✏️ 문항 수정' : '➕ 새 문항 추가'}</span>
+              <span>{editingTerm ? '문항 수정' : '새 문항 추가'}</span>
             </h3>
 
             {/* Type Switcher: TERM vs MULTIPLE_CHOICE */}
@@ -3228,7 +3442,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                   transition: 'all 0.2s',
                 }}
               >
-                📝 객관식 퀴즈 문항
+                객관식 퀴즈 문항
               </button>
               <button
                 type="button"
@@ -3246,7 +3460,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                   transition: 'all 0.2s',
                 }}
               >
-                📖 의학 용어 / 단어장
+                용어 / 단어장 문항
               </button>
             </div>
 
@@ -3300,7 +3514,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                 <div style={{ backgroundColor: '#F8FAFC', padding: '16px', borderRadius: '8px', border: '1px solid #E2E8F0', display: 'flex', flexDirection: 'column', gap: '10px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <label style={{ fontSize: '0.84rem', fontWeight: 800, color: '#475569' }}>
-                      🎯 객관식 선택지 보기 (① ~ ⑤) & 정답 지정
+                      객관식 선택지 보기 (① ~ ⑤) 및 정답 지정
                     </label>
                     <span style={{ fontSize: '0.75rem', color: '#64748B' }}>
                       ※ 정답 라디오 버튼을 선택해주세요.
