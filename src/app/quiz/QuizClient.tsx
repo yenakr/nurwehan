@@ -83,6 +83,23 @@ interface QuizClientProps {
   user?: any;
 }
 
+// 문제형(객관식/OX/단답형 또는 보기가 있는 문항)인지 판별
+function isExamItem(t: NursingTerm): boolean {
+  return (
+    t.itemType === 'MULTIPLE_CHOICE' ||
+    t.itemType === 'TRUE_FALSE' ||
+    t.itemType === 'SHORT_ANSWER' ||
+    (t.options?.length ?? 0) > 0
+  );
+}
+
+// 학습 센터 상단 탭(전체 / 용어·단어장 / 객관식 퀴즈)과 문항이 맞는지 판별
+// 목록, 과목 버튼, 카테고리 버튼과 개수가 모두 이 기준을 함께 써야 서로 어긋나지 않는다.
+function matchesContentType(t: NursingTerm, filter: 'all' | 'TERM' | 'MULTIPLE_CHOICE'): boolean {
+  if (filter === 'all') return true;
+  return filter === 'MULTIPLE_CHOICE' ? isExamItem(t) : !isExamItem(t);
+}
+
 export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   const isAdmin = isAdminRole(user?.role);
   const [termsList, setTermsList] = useState<NursingTerm[]>(initialTerms);
@@ -241,17 +258,20 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
     return Array.from(
       new Set(
         termsList
-          .filter(t => (t.itemType || 'TERM') === contentTypeFilter)
+          .filter(t => matchesContentType(t, contentTypeFilter))
           .map(t => t.subject)
           .filter(Boolean)
       )
     );
   }, [termsList, subjects, contentTypeFilter]);
 
+  // 현재 과목 + 현재 탭(용어/객관식)에 실제로 문항이 있는 카테고리만 노출
   const categories = useMemo(() => {
-    const targetSubjectTerms = termsList.filter(t => t.subject === studySubject);
+    const targetSubjectTerms = termsList.filter(
+      t => t.subject === studySubject && matchesContentType(t, contentTypeFilter)
+    );
     return Array.from(new Set(targetSubjectTerms.map(t => t.category).filter(Boolean) as string[]));
-  }, [termsList, studySubject]);
+  }, [termsList, studySubject, contentTypeFilter]);
 
   const quizCategories = useMemo(() => {
     const targetSubjectTerms = termsList.filter(t => t.subject === quizSubject);
@@ -381,7 +401,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   const filteredStudyTerms = useMemo(() => {
     return termsList.filter(t => {
       const itemType = t.itemType || 'TERM';
-      if (contentTypeFilter !== 'all' && itemType !== contentTypeFilter) return false;
+      if (!matchesContentType(t, contentTypeFilter)) return false;
       if (studySubject !== 'all' && t.subject !== studySubject) return false;
       if (studyCategory !== 'all' && t.category !== studyCategory) return false;
 
@@ -1239,8 +1259,8 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                 onClick={() => {
                   setContentTypeFilter('TERM');
                   setStudyCategory('all');
-                  if (!termsList.some(t => t.subject === studySubject && (t.itemType || 'TERM') === 'TERM')) {
-                    const termSubj = termsList.find(t => (t.itemType || 'TERM') === 'TERM')?.subject;
+                  if (!termsList.some(t => t.subject === studySubject && matchesContentType(t, 'TERM'))) {
+                    const termSubj = termsList.find(t => matchesContentType(t, 'TERM'))?.subject;
                     if (termSubj) setStudySubject(termSubj);
                   }
                 }}
@@ -1264,8 +1284,8 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                   setContentTypeFilter('MULTIPLE_CHOICE');
                   setStudyCategory('all');
                   setStudyViewMode('grid');
-                  if (!termsList.some(t => t.subject === studySubject && t.itemType === 'MULTIPLE_CHOICE')) {
-                    const mcSubj = termsList.find(t => t.itemType === 'MULTIPLE_CHOICE')?.subject;
+                  if (!termsList.some(t => t.subject === studySubject && matchesContentType(t, 'MULTIPLE_CHOICE'))) {
+                    const mcSubj = termsList.find(t => matchesContentType(t, 'MULTIPLE_CHOICE'))?.subject;
                     if (mcSubj) setStudySubject(mcSubj);
                   }
                 }}
@@ -1459,7 +1479,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                     cursor: 'pointer',
                   }}
                 >
-                  전체 ({termsList.filter(t => t.subject === studySubject).length})
+                  전체 ({termsList.filter(t => t.subject === studySubject && matchesContentType(t, contentTypeFilter)).length})
                 </button>
                 {categories.map(cat => {
                   const isCatSelected = studyCategory === cat;
@@ -1479,7 +1499,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                         cursor: 'pointer',
                       }}
                     >
-                      {cat} ({termsList.filter(t => t.subject === studySubject && t.category === cat).length})
+                      {cat} ({termsList.filter(t => t.subject === studySubject && t.category === cat && matchesContentType(t, contentTypeFilter)).length})
                     </button>
                   );
                 })}
