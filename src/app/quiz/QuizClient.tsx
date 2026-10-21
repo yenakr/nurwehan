@@ -190,6 +190,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   const [showHint, setShowHint] = useState<boolean>(false);
   const [isAnswerSubmitted, setIsAnswerSubmitted] = useState<boolean>(false);
   const submitTimestampRef = useRef<number>(0);
+  const answerInputRef = useRef<HTMLInputElement | null>(null);
   
   // Generated Multiple-Choice Options
   const [mcOptionsMap, setMcOptionsMap] = useState<Record<number, string[]>>({});
@@ -744,6 +745,13 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
       return copy;
     });
   };
+
+  // 다음 문제로 넘어가면(입력창이 다시 활성화되면) 바로 커서를 정답 입력창에 둔다
+  useEffect(() => {
+    if (activeTab === 'quiz_play' && quizFormat === 'single' && !isAnswerSubmitted) {
+      answerInputRef.current?.focus();
+    }
+  }, [activeTab, quizFormat, currentIndex, isAnswerSubmitted]);
 
   const handleNextQuestion = useCallback(() => {
     if (currentIndex + 1 < quizQuestions.length) {
@@ -1909,6 +1917,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                   정답 입력
                 </label>
                 <input
+                  ref={answerInputRef}
                   type="text"
                   disabled={isAnswerSubmitted}
                   placeholder="정답 입력"
