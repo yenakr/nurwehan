@@ -27,6 +27,9 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
 
 
   const [isGridEditMode, setIsGridEditMode] = useState<boolean>(false);
+  const [gridLayout, setGridLayout] = useState<'multi' | 'single'>('multi');
+  const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
+  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
   // Navigation tab: 'study' | 'quiz_setup' | 'quiz_play' | 'quiz_result' | 'my_history'
   const [activeTab, setActiveTab] = useState<'study' | 'quiz_setup' | 'quiz_play' | 'quiz_result' | 'my_history'>('study');
@@ -132,10 +135,37 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   const [formAnswer, setFormAnswer] = useState('');
   const [adminSubmitting, setAdminSubmitting] = useState(false);
 
-  // Sync termsList when initialTerms prop changes
+  // Load saved grid layout preference (single column vs multi-column)
   useEffect(() => {
+    try {
+      const savedLayout = localStorage.getItem('nursing_quiz_grid_layout');
+      if (savedLayout === 'single' || savedLayout === 'multi') {
+        setGridLayout(savedLayout);
+      }
+    } catch {}
+  }, []);
+
+  // Sync termsList when initialTerms prop changes and apply custom order if saved
+  useEffect(() => {
+    try {
+      const orderKey = `nursing_terms_order_${studySubject}_${studyCategory}`;
+      const saved = localStorage.getItem(orderKey);
+      if (saved) {
+        const idOrder: string[] = JSON.parse(saved);
+        const orderMap = new Map<string, number>();
+        idOrder.forEach((id, idx) => orderMap.set(id, idx));
+
+        const sorted = [...initialTerms].sort((a, b) => {
+          const orderA = orderMap.has(a.id) ? orderMap.get(a.id)! : 999999;
+          const orderB = orderMap.has(b.id) ? orderMap.get(b.id)! : 999999;
+          return orderA - orderB;
+        });
+        setTermsList(sorted);
+        return;
+      }
+    } catch {}
     setTermsList(initialTerms);
-  }, [initialTerms]);
+  }, [initialTerms, studySubject, studyCategory]);
 
   // Unique subjects and categories from terms
   const subjects = useMemo(() => {
@@ -931,6 +961,14 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
     }
   };
 
+  const saveCustomOrder = (list: NursingTerm[]) => {
+    try {
+      const orderKey = `nursing_terms_order_${studySubject}_${studyCategory}`;
+      const idOrder = list.map(t => t.id);
+      localStorage.setItem(orderKey, JSON.stringify(idOrder));
+    } catch {}
+  };
+
   const handleMoveTerm = (filteredIdx: number, direction: 'up' | 'down') => {
     const targetTerm = filteredStudyTerms[filteredIdx];
     if (!targetTerm) return;
@@ -948,6 +986,24 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
     newList[targetIndexInMain] = newList[swapIndexInMain];
     newList[swapIndexInMain] = temp;
     setTermsList(newList);
+    saveCustomOrder(newList);
+  };
+
+  const handleReorderTerm = (fromFilteredIdx: number, toFilteredIdx: number) => {
+    if (fromFilteredIdx === toFilteredIdx) return;
+    const fromTerm = filteredStudyTerms[fromFilteredIdx];
+    const toTerm = filteredStudyTerms[toFilteredIdx];
+    if (!fromTerm || !toTerm) return;
+
+    const fromMainIdx = termsList.findIndex(t => t.id === fromTerm.id);
+    const toMainIdx = termsList.findIndex(t => t.id === toTerm.id);
+    if (fromMainIdx === -1 || toMainIdx === -1) return;
+
+    const newList = [...termsList];
+    const [moved] = newList.splice(fromMainIdx, 1);
+    newList.splice(toMainIdx, 0, moved);
+    setTermsList(newList);
+    saveCustomOrder(newList);
   };
 
   const correctCount = quizResults.filter(r => (r.overrideCorrect !== undefined ? r.overrideCorrect : r.isCorrect)).length;
@@ -1460,14 +1516,16 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                         {showTerm ? (
                           /* TERM SIDE OF CARD */
                           <div>
-                            <h2 style={{ fontSize: '1.625rem', fontWeight: 900, color: 'var(--primary)', marginBottom: '8px' }}>
-                              {currentCard.answer || currentCard.term}
-                            </h2>
-                            {currentCard.englishTerm && (
-                              <div style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--sub-text)' }}>
-                                ({currentCard.englishTerm})
-                              </div>
-                            )}
+                            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '8px' }}>
+                              <h2 style={{ fontSize: '1.625rem', fontWeight: 900, color: 'var(--primary)', margin: 0 }}>
+                                {currentCard.answer || currentCard.term}
+                              </h2>
+                              {currentCard.englishTerm && (
+                                <span style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--sub-text)' }}>
+                                  {currentCard.englishTerm.trim().startsWith('(') ? currentCard.englishTerm : `(${currentCard.englishTerm})`}
+                                </span>
+                              )}
+                            </div>
 
                             {currentCard.options && currentCard.options.length > 0 && (
                               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginTop: '16px' }}>
@@ -1693,37 +1751,143 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
           {/* MODE 3: GRID LIST VIEW (전체 목록 보기) */}
           {studyViewMode === 'grid' && (
             <div>
-              {isAdmin && (
-                <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '8px', marginBottom: '16px' }}>
+              {/* Grid Top Toolbar: View Layout Switcher & Admin Actions */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                  {/* View Layout Toggle: 1열 목록 vs 카드 그리드 */}
+                  <div style={{ display: 'inline-flex', backgroundColor: '#F1F5F9', padding: '3px', borderRadius: '8px', border: '1px solid #CBD5E1' }}>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setGridLayout('single');
+                        try { localStorage.setItem('nursing_quiz_grid_layout', 'single'); } catch {}
+                      }}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        fontSize: '0.8125rem',
+                        fontWeight: 700,
+                        border: 'none',
+                        backgroundColor: gridLayout === 'single' ? '#0E4A84' : 'transparent',
+                        color: gridLayout === 'single' ? '#FFFFFF' : '#475569',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        transition: 'all 0.15s ease',
+                      }}
+                      title="한 행에 1개씩 세로 목록으로 보기"
+                    >
+                      <span>☰</span>
+                      <span>1열 목록 (1행 1단어)</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setGridLayout('multi');
+                        try { localStorage.setItem('nursing_quiz_grid_layout', 'multi'); } catch {}
+                      }}
+                      style={{
+                        padding: '6px 12px',
+                        borderRadius: '6px',
+                        fontSize: '0.8125rem',
+                        fontWeight: 700,
+                        border: 'none',
+                        backgroundColor: gridLayout === 'multi' ? '#0E4A84' : 'transparent',
+                        color: gridLayout === 'multi' ? '#FFFFFF' : '#475569',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        transition: 'all 0.15s ease',
+                      }}
+                      title="카드형 그리드로 여러 열 보기"
+                    >
+                      <span>⊞</span>
+                      <span>카드 그리드</span>
+                    </button>
+                  </div>
+
+                  {/* Hide Definition toggle button */}
                   <button
-                    onClick={() => setIsGridEditMode(prev => !prev)}
+                    type="button"
+                    onClick={() => setHideDefinition(prev => !prev)}
+                    className="btn-outline"
                     style={{
-                      padding: '8px 16px',
-                      borderRadius: '8px',
-                      fontSize: '0.84rem',
-                      fontWeight: 800,
-                      border: isGridEditMode ? '1px solid #DC2626' : '1px solid #0E4A84',
-                      backgroundColor: isGridEditMode ? '#FEF2F2' : '#FFFFFF',
-                      color: isGridEditMode ? '#DC2626' : '#0E4A84',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                      padding: '6px 12px',
+                      fontSize: '0.8125rem',
+                      fontWeight: 700,
+                      backgroundColor: hideDefinition ? '#FEF2F2' : '#FFFFFF',
+                      borderColor: hideDefinition ? '#DC2626' : '#CBD5E1',
+                      color: hideDefinition ? '#DC2626' : '#475569',
                     }}
                   >
-                    {isGridEditMode ? '🔒 편집 완료 (버튼 숨기기)' : '⚙️ 문항 편집/순서 관리'}
+                    {hideDefinition ? '👁️ 뜻 보이기' : '🙈 뜻 가리기'}
                   </button>
-                  <button
-                    onClick={() => handleOpenCreateModal()}
-                    className="btn-primary"
-                    style={{ fontSize: '0.84rem', padding: '8px 16px' }}
-                  >
-                    ➕ 새 문항 추가
-                  </button>
+                </div>
+
+                {isAdmin && (
+                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                    <button
+                      onClick={() => setIsGridEditMode(prev => !prev)}
+                      style={{
+                        padding: '8px 16px',
+                        borderRadius: '8px',
+                        fontSize: '0.84rem',
+                        fontWeight: 800,
+                        border: isGridEditMode ? '1px solid #DC2626' : '1px solid #0E4A84',
+                        backgroundColor: isGridEditMode ? '#FEF2F2' : '#FFFFFF',
+                        color: isGridEditMode ? '#DC2626' : '#0E4A84',
+                        cursor: 'pointer',
+                        transition: 'all 0.2s',
+                        boxShadow: '0 2px 4px rgba(0,0,0,0.05)',
+                      }}
+                    >
+                      {isGridEditMode ? '🔒 편집 완료' : '⚙️ 순서 편집 / 문항 관리'}
+                    </button>
+                    <button
+                      onClick={() => handleOpenCreateModal()}
+                      className="btn-primary"
+                      style={{ fontSize: '0.84rem', padding: '8px 16px' }}
+                    >
+                      ➕ 새 문항 추가
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {/* Edit Mode User Drag Guide */}
+              {isAdmin && isGridEditMode && (
+                <div
+                  style={{
+                    backgroundColor: '#EFF6FF',
+                    border: '1px solid #BFDBFE',
+                    color: '#1E40AF',
+                    padding: '10px 16px',
+                    borderRadius: '8px',
+                    fontSize: '0.8125rem',
+                    fontWeight: 600,
+                    marginBottom: '14px',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                  }}
+                >
+                  <span style={{ fontSize: '1rem' }}>💡</span>
+                  <span>
+                    각 카드의 <strong>⠿ 점 6개 드래그 버튼</strong>을 꾹 누르고 원하는 위치로 끌어다 놓으면 순서가 바로 변경됩니다. (🔼 🔽 화살표 버튼으로도 1칸씩 이동 가능)
+                  </span>
                 </div>
               )}
 
               {filteredStudyTerms.length > 0 ? (
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '16px' }}>
+                <div
+                  style={{
+                    display: 'grid',
+                    gridTemplateColumns: gridLayout === 'single' ? '1fr' : 'repeat(auto-fill, minmax(340px, 1fr))',
+                    gap: gridLayout === 'single' ? '12px' : '16px',
+                  }}
+                >
                   {filteredStudyTerms.map((t, idx) => {
                     const isRevealed = revealedCardIds[t.id];
                     const isHidden = hideDefinition && !isRevealed;
@@ -1751,47 +1915,113 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                       <div
                         key={t.id}
                         className="card"
+                        draggable={isAdmin && isGridEditMode}
+                        onDragStart={(e) => {
+                          if (!isAdmin || !isGridEditMode) return;
+                          e.dataTransfer.effectAllowed = 'move';
+                          e.dataTransfer.setData('text/plain', String(idx));
+                          setDraggedIdx(idx);
+                        }}
+                        onDragOver={(e) => {
+                          if (!isAdmin || !isGridEditMode) return;
+                          e.preventDefault();
+                          e.dataTransfer.dropEffect = 'move';
+                          if (dragOverIdx !== idx) setDragOverIdx(idx);
+                        }}
+                        onDragLeave={() => {
+                          if (dragOverIdx === idx) setDragOverIdx(null);
+                        }}
+                        onDrop={(e) => {
+                          if (!isAdmin || !isGridEditMode) return;
+                          e.preventDefault();
+                          if (draggedIdx !== null && draggedIdx !== idx) {
+                            handleReorderTerm(draggedIdx, idx);
+                          }
+                          setDraggedIdx(null);
+                          setDragOverIdx(null);
+                        }}
+                        onDragEnd={() => {
+                          setDraggedIdx(null);
+                          setDragOverIdx(null);
+                        }}
                         style={{
                           display: 'flex',
                           flexDirection: 'column',
                           justifyContent: 'space-between',
                           borderLeft: '4px solid var(--primary)',
-                          padding: '18px',
+                          padding: gridLayout === 'single' ? '16px 20px' : '18px',
+                          opacity: draggedIdx === idx ? 0.35 : 1,
+                          borderTop: dragOverIdx === idx && draggedIdx !== idx ? '2px dashed #2563EB' : undefined,
+                          borderRight: dragOverIdx === idx && draggedIdx !== idx ? '2px dashed #2563EB' : undefined,
+                          borderBottom: dragOverIdx === idx && draggedIdx !== idx ? '2px dashed #2563EB' : undefined,
+                          backgroundColor: dragOverIdx === idx && draggedIdx !== idx ? '#EFF6FF' : undefined,
+                          transition: 'all 0.15s ease',
+                          boxShadow: isGridEditMode ? '0 2px 6px rgba(0,0,0,0.06)' : undefined,
                         }}
                       >
                         <div>
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
-                            <span style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--primary)', backgroundColor: '#EFF6FF', padding: '2px 8px', borderRadius: '6px' }}>
-                              #{idx + 1}
-                            </span>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                              {isAdmin && isGridEditMode && (
+                                <span
+                                  title="꾹 누르고 드래그하여 순서 변경"
+                                  style={{
+                                    cursor: 'grab',
+                                    userSelect: 'none',
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'center',
+                                    padding: '4px 6px',
+                                    borderRadius: '6px',
+                                    backgroundColor: '#F1F5F9',
+                                    border: '1px solid #CBD5E1',
+                                    color: '#475569',
+                                    lineHeight: 1,
+                                    marginRight: '2px',
+                                  }}
+                                >
+                                  <svg width="14" height="14" viewBox="0 0 16 16" fill="currentColor">
+                                    <circle cx="5" cy="3" r="1.5" />
+                                    <circle cx="11" cy="3" r="1.5" />
+                                    <circle cx="5" cy="8" r="1.5" />
+                                    <circle cx="11" cy="8" r="1.5" />
+                                    <circle cx="5" cy="13" r="1.5" />
+                                    <circle cx="11" cy="13" r="1.5" />
+                                  </svg>
+                                </span>
+                              )}
+                              <span style={{ fontSize: '0.875rem', fontWeight: 800, color: 'var(--primary)', backgroundColor: '#EFF6FF', padding: '2px 8px', borderRadius: '6px' }}>
+                                #{idx + 1}
+                              </span>
+                            </div>
 
                             {isAdmin && isGridEditMode && (
-                              <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+                              <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
                                 <button
                                   onClick={() => handleMoveTerm(idx, 'up')}
                                   disabled={idx === 0}
-                                  style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '0.85rem', cursor: idx === 0 ? 'not-allowed' : 'pointer', opacity: idx === 0 ? 0.3 : 1 }}
-                                  title="위로 이동"
+                                  style={{ background: 'none', border: '1px solid #CBD5E1', borderRadius: '4px', padding: '2px 6px', color: 'var(--primary)', fontSize: '0.8rem', cursor: idx === 0 ? 'not-allowed' : 'pointer', opacity: idx === 0 ? 0.3 : 1 }}
+                                  title="위로 1칸 이동"
                                 >
                                   🔼
                                 </button>
                                 <button
                                   onClick={() => handleMoveTerm(idx, 'down')}
                                   disabled={idx === filteredStudyTerms.length - 1}
-                                  style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '0.85rem', cursor: idx === filteredStudyTerms.length - 1 ? 'not-allowed' : 'pointer', opacity: idx === filteredStudyTerms.length - 1 ? 0.3 : 1 }}
-                                  title="아래로 이동"
+                                  style={{ background: 'none', border: '1px solid #CBD5E1', borderRadius: '4px', padding: '2px 6px', color: 'var(--primary)', fontSize: '0.8rem', cursor: idx === filteredStudyTerms.length - 1 ? 'not-allowed' : 'pointer', opacity: idx === filteredStudyTerms.length - 1 ? 0.3 : 1 }}
+                                  title="아래로 1칸 이동"
                                 >
                                   🔽
                                 </button>
                                 <button
                                   onClick={() => handleOpenEditModal(t)}
-                                  style={{ background: 'none', border: 'none', color: 'var(--primary)', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 700 }}
+                                  style={{ background: 'none', border: '1px solid #CBD5E1', borderRadius: '4px', padding: '2px 8px', color: 'var(--primary)', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 700 }}
                                 >
                                   ✏️ 수정
                                 </button>
                                 <button
                                   onClick={() => handleDeleteTerm(t.id, t.term)}
-                                  style={{ background: 'none', border: 'none', color: '#DC2626', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 700 }}
+                                  style={{ background: 'none', border: '1px solid #FECACA', borderRadius: '4px', padding: '2px 8px', color: '#DC2626', fontSize: '0.75rem', cursor: 'pointer', fontWeight: 700 }}
                                 >
                                   🗑️ 삭제
                                 </button>
@@ -1799,14 +2029,17 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                             )}
                           </div>
 
-                          <h3 style={{ fontSize: '1.05rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '8px', lineHeight: 1.5 }}>
-                            {t.term}
-                          </h3>
-                          {t.englishTerm && (
-                            <div style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--sub-text)', marginBottom: '10px' }}>
-                              {t.englishTerm}
-                            </div>
-                          )}
+                          {/* Term (Korean) & English Term side-by-side */}
+                          <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
+                            <h3 style={{ fontSize: gridLayout === 'single' ? '1.125rem' : '1.05rem', fontWeight: 800, color: 'var(--primary)', margin: 0, lineHeight: 1.4 }}>
+                              {t.term}
+                            </h3>
+                            {t.englishTerm && (
+                              <span style={{ fontSize: '0.84rem', fontWeight: 600, color: 'var(--sub-text)' }}>
+                                {t.englishTerm.trim().startsWith('(') ? t.englishTerm : `(${t.englishTerm})`}
+                              </span>
+                            )}
+                          </div>
 
                           {isStructuredQuestion && (
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '12px' }}>
