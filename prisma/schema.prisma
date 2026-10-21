@@ -480,6 +480,7 @@ model NursingTerm {
   definition   String   // 뜻/정의 또는 문제 설명/해설/번역
   example      String?  // 비고/예시
   category     String?  // 세부 카테고리 (예: 퀴즈 1, 중간고사 복습 퀴즈)
+  grade        String?  @default("3학년") // 구분 (1학년~4학년)
   itemType     String?  @default("TERM") // "TERM" | "MULTIPLE_CHOICE" | "TRUE_FALSE" | "SHORT_ANSWER"
   options      String[] @default([]) // 객관식 보기도 포함
   answer       String?  // 정답
