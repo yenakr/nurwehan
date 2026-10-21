@@ -11,7 +11,7 @@ export async function POST(req: Request) {
     }
 
     const body = await req.json();
-    const { subject, category, term, englishTerm, definition, example, itemType, options, answer } = body;
+    const { subject, category, grade, term, englishTerm, definition, example, itemType, options, answer } = body;
 
     if (!term || !definition) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -21,6 +21,7 @@ export async function POST(req: Request) {
       data: {
         subject: subject || '간호관리학',
         category: category || '기타',
+        ...(grade ? { grade } : {}),
         term: term.trim(),
         englishTerm: englishTerm?.trim() || null,
         definition: definition.trim(),
@@ -45,7 +46,7 @@ export async function PUT(req: Request) {
     }
 
     const body = await req.json();
-    const { id, subject, category, term, englishTerm, definition, example, itemType, options, answer } = body;
+    const { id, subject, category, grade, term, englishTerm, definition, example, itemType, options, answer } = body;
 
     if (!id || !term || !definition) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
@@ -56,6 +57,7 @@ export async function PUT(req: Request) {
       data: {
         subject: subject || '간호관리학',
         category: category || '기타',
+        ...(grade ? { grade } : {}),
         term: term.trim(),
         englishTerm: englishTerm?.trim() || null,
         definition: definition.trim(),

@@ -1,7 +1,25 @@
 'use client';
 
 import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import { useRouter } from 'next/navigation';
 import { isAdminRole } from '@/lib/auth-core';
+import s from './quiz.module.css';
+import HubView from './components/HubView';
+import ContextBar from './components/ContextBar';
+import TestSetup from './components/TestSetup';
+import RecordView from './components/RecordView';
+import TermCards from './components/TermCards';
+import AdminManager from './components/AdminManager';
+import { Segmented, Icon, ICON_SEARCH, ICON_VOLUME, ICON_VOLUME_OFF } from './components/ui';
+import {
+  GRADES,
+  DEFAULT_GRADE,
+  buildSubjects,
+  kindOf,
+  matchesContentType,
+  type NursingTerm,
+  type QuizKind,
+} from '@/lib/quiz/taxonomy';
 
 function IconSearch({ size = 15, color = 'currentColor' }: { size?: number; color?: string }) {
   return (
@@ -64,51 +82,23 @@ function IconGrip({ size = 14, color = 'currentColor' }: { size?: number; color?
   );
 }
 
-
-interface NursingTerm {
-  id: string;
-  subject: string;
-  term: string;
-  englishTerm?: string | null;
-  definition: string;
-  example?: string | null;
-  category?: string | null;
-  itemType?: string | null;
-  options?: string[];
-  answer?: string | null;
-}
-
 interface QuizClientProps {
   initialTerms: NursingTerm[];
   user?: any;
 }
 
-// 문제형(객관식/OX/단답형 또는 보기가 있는 문항)인지 판별
-function isExamItem(t: NursingTerm): boolean {
-  return (
-    t.itemType === 'MULTIPLE_CHOICE' ||
-    t.itemType === 'TRUE_FALSE' ||
-    t.itemType === 'SHORT_ANSWER' ||
-    (t.options?.length ?? 0) > 0
-  );
-}
-
-// 학습 센터 상단 탭(전체 / 용어·단어장 / 객관식 퀴즈)과 문항이 맞는지 판별
-// 목록, 과목 버튼, 카테고리 버튼과 개수가 모두 이 기준을 함께 써야 서로 어긋나지 않는다.
-function matchesContentType(t: NursingTerm, filter: 'all' | 'TERM' | 'MULTIPLE_CHOICE'): boolean {
-  if (filter === 'all') return true;
-  return filter === 'MULTIPLE_CHOICE' ? isExamItem(t) : !isExamItem(t);
-}
 
 export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   const isAdmin = isAdminRole(user?.role);
+  const router = useRouter();
   const [termsList, setTermsList] = useState<NursingTerm[]>(initialTerms);
+  const [view, setView] = useState<'hub' | 'subject'>('hub');
+  const [showManager, setShowManager] = useState(false);
+  const [formGrade, setFormGrade] = useState<string>(DEFAULT_GRADE);
 
 
   const [isGridEditMode, setIsGridEditMode] = useState<boolean>(false);
   const [gridLayout, setGridLayout] = useState<'multi' | 'single'>('multi');
-  const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
-  const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
   // Navigation tab: 'study' | 'quiz_setup' | 'quiz_play' | 'quiz_result' | 'my_history'
   const [activeTab, setActiveTab] = useState<'study' | 'quiz_setup' | 'quiz_play' | 'quiz_result' | 'my_history'>('study');
@@ -118,7 +108,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   const [attemptSaved, setAttemptSaved] = useState<boolean>(false);
 
   // Term filters for Study Mode
-  const [studySubject, setStudySubject] = useState<string>('간호관리학');
+  const [studySubject, setStudySubject] = useState<string>('');
   const [studyCategory, setStudyCategory] = useState<string>('all');
   // Term vs Exam Quiz filter for Study Mode
   const [contentTypeFilter, setContentTypeFilter] = useState<'all' | 'TERM' | 'MULTIPLE_CHOICE'>('all');
@@ -127,7 +117,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   const [revealedCardIds, setRevealedCardIds] = useState<Record<string, boolean>>({});
 
   // Study View Sub-Modes: 'grid' | 'flashcard' | 'typing'
-  const [studyViewMode, setStudyViewMode] = useState<'flashcard' | 'typing' | 'grid'>('flashcard');
+  const [studyViewMode, setStudyViewMode] = useState<'flashcard' | 'typing' | 'grid'>('grid');
 
   // Flashcard Mode State
   const [flashcardIndex, setFlashcardIndex] = useState<number>(0);
@@ -182,7 +172,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   }, [ttsRate]);
 
   // Quiz Setup States
-  const [quizSubject, setQuizSubject] = useState<string>('간호관리학');
+  const [quizSubject, setQuizSubject] = useState<string>('');
   const [quizCategory, setQuizCategory] = useState<string>('all');
   const [quizType, setQuizType] = useState<'def_to_term' | 'term_to_def' | 'multiple_choice'>('def_to_term');
   // 테스트에 쓸 문제 유형: 용어 암기 / 문제형(객관식·단답형). 둘을 한 테스트에 섞지 않는다.
@@ -215,7 +205,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   // Admin Term Modal States
   const [showTermModal, setShowTermModal] = useState(false);
   const [editingTerm, setEditingTerm] = useState<NursingTerm | null>(null);
-  const [formSubject, setFormSubject] = useState('간호관리학');
+  const [formSubject, setFormSubject] = useState('');
   const [formCategory, setFormCategory] = useState('퀴즈 1');
   const [formItemType, setFormItemType] = useState<'TERM' | 'MULTIPLE_CHOICE'>('TERM');
   const [formTerm, setFormTerm] = useState('');
@@ -322,28 +312,55 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   // 문제형 테스트는 '풀이 방식' 단계가 없어서 이후 단계 번호가 하나씩 당겨진다
   const formatStepNo = isTargetExam ? 4 : 5;
 
-  // 유형을 바꾸면 해당 유형 문항이 있는 과목으로 이동하고 카테고리는 초기화
-  const handleSelectQuizKind = (kind: 'TERM' | 'MULTIPLE_CHOICE') => {
-    setQuizKind(kind);
+  const subjectEntries = useMemo(() => buildSubjects(termsList), [termsList]);
+  const currentGrade = subjectEntries.find(x => x.name === studySubject)?.grade ?? DEFAULT_GRADE;
+  const subjectTerms = useMemo(() => termsList.filter(t => t.subject === studySubject), [termsList, studySubject]);
+  const subjectKindCounts = useMemo(() => ({
+    TERM: subjectTerms.filter(t => kindOf(t) === 'TERM').length,
+    MULTIPLE_CHOICE: subjectTerms.filter(t => kindOf(t) === 'MULTIPLE_CHOICE').length,
+  }), [subjectTerms]);
+  const quizOptions = useMemo(
+    () => categories.map(name => ({ name, count: subjectTerms.filter(t => t.category === name && kindOf(t) === quizKind).length })),
+    [categories, subjectTerms, quizKind]
+  );
+  const allQuizNames = useMemo(
+    () => Array.from(new Set(subjectTerms.map(t => t.category).filter(Boolean) as string[])),
+    [subjectTerms]
+  );
+
+  // 과목에 들어가기: 학습/테스트/기록이 같은 과목·유형·퀴즈를 공유하도록 상태를 한 번에 맞춘다
+  const openSubject = (name: string, forceKind?: QuizKind) => {
+    const hasTerm = termsList.some(t => t.subject === name && kindOf(t) === 'TERM');
+    const k: QuizKind = forceKind ?? (hasTerm ? 'TERM' : 'MULTIPLE_CHOICE');
+    setStudySubject(name);
+    setQuizSubject(name);
+    setQuizKind(k);
+    setContentTypeFilter(k);
+    setStudyCategory('all');
     setQuizCategory('all');
-    setQuizType(kind === 'MULTIPLE_CHOICE' ? 'multiple_choice' : 'def_to_term');
-    if (!termsList.some(t => t.subject === quizSubject && matchesContentType(t, kind))) {
-      const nextSubject = termsList.find(t => matchesContentType(t, kind))?.subject;
-      if (nextSubject) setQuizSubject(nextSubject);
-    }
+    setQuizType(k === 'MULTIPLE_CHOICE' ? 'multiple_choice' : 'def_to_term');
+    setStudyViewMode('grid');
+    setSearchTerm('');
+    setHideDefinition(false);
+    setRevealedCardIds({});
+    setIsGridEditMode(false);
+    setActiveTab('study');
+    setView('subject');
   };
 
-  const isCurrentSubjectMc = useMemo(() => {
-    return termsList.some(
-      t => t.subject === studySubject && (t.itemType === 'MULTIPLE_CHOICE' || t.itemType === 'SHORT_ANSWER' || (t.options && t.options.length > 0))
-    );
-  }, [termsList, studySubject]);
+  const handleSelectKind = (k: QuizKind) => {
+    setQuizKind(k);
+    setContentTypeFilter(k);
+    setStudyCategory('all');
+    setQuizCategory('all');
+    setQuizType(k === 'MULTIPLE_CHOICE' ? 'multiple_choice' : 'def_to_term');
+    if (k === 'MULTIPLE_CHOICE') setStudyViewMode('grid');
+  };
 
-  useEffect(() => {
-    if (isCurrentSubjectMc || contentTypeFilter === 'MULTIPLE_CHOICE') {
-      setStudyViewMode('grid');
-    }
-  }, [isCurrentSubjectMc, contentTypeFilter, studySubject]);
+  const handleSelectQuiz = (q: string) => {
+    setStudyCategory(q);
+    setQuizCategory(q);
+  };
 
   const fetchMyAttempts = useCallback(() => {
     if (!user) return;
@@ -592,7 +609,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
       pool = [...pool].sort(() => Math.random() - 0.5);
     }
 
-    if (typeof quizCount === 'number' && pool.length > quizCount) {
+    if (!customTermsList && typeof quizCount === 'number' && pool.length > quizCount) {
       pool = pool.slice(0, quizCount);
     }
 
@@ -972,14 +989,13 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
     printWindow.document.close();
   };
 
-  const handleOpenCreateModal = () => {
+  const handleOpenCreateModal = (newSubject?: boolean, grade?: string) => {
     setEditingTerm(null);
-    const activeSubj = studySubject !== 'all' ? studySubject : (subjects[0] || '간호관리학');
-    const isMcSubj = termsList.some(t => t.subject === activeSubj && (t.itemType === 'MULTIPLE_CHOICE' || (t.options && t.options.length > 0)));
-
+    const activeSubj = newSubject ? '' : studySubject;
     setFormSubject(activeSubj);
-    setFormCategory(studyCategory !== 'all' ? studyCategory : '1주차 퀴즈');
-    setFormItemType(isMcSubj ? 'MULTIPLE_CHOICE' : 'TERM');
+    setFormGrade(grade ?? DEFAULT_GRADE);
+    setFormCategory(!newSubject && studyCategory !== 'all' ? studyCategory : '퀴즈 1');
+    setFormItemType(!newSubject && quizKind === 'MULTIPLE_CHOICE' ? 'MULTIPLE_CHOICE' : 'TERM');
     setFormTerm('');
     setFormEngTerm('');
     setFormDefinition('');
@@ -992,6 +1008,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   const handleOpenEditModal = (t: NursingTerm) => {
     setEditingTerm(t);
     setFormSubject(t.subject);
+    setFormGrade(subjectEntries.find(x => x.name === t.subject)?.grade ?? DEFAULT_GRADE);
     setFormCategory(t.category || '기타');
     const isMc = t.itemType === 'MULTIPLE_CHOICE' || (t.options && t.options.length > 0);
     setFormItemType(isMc ? 'MULTIPLE_CHOICE' : 'TERM');
@@ -1030,8 +1047,10 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
 
     setAdminSubmitting(true);
     try {
+      const subjectName = formSubject.trim();
       const payload = {
-        subject: formSubject,
+        subject: subjectName,
+        grade: subjectEntries.find(x => x.name === subjectName)?.grade ?? formGrade,
         category: formCategory,
         term: formTerm,
         englishTerm: formEngTerm,
@@ -1052,6 +1071,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
         if (data.term) {
           setTermsList(prev => prev.map(t => (t.id === data.term.id ? data.term : t)));
           setShowTermModal(false);
+          router.refresh();
         }
       } else {
         const res = await fetch('/api/admin/quiz/terms', {
@@ -1063,6 +1083,10 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
         if (data.term) {
           setTermsList(prev => [...prev, data.term]);
           setShowTermModal(false);
+          router.refresh();
+          if (view === 'hub' || data.term.subject !== studySubject) {
+            openSubject(data.term.subject, kindOf(data.term));
+          }
         }
       }
     } catch {
@@ -1073,11 +1097,12 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   };
 
   const handleDeleteTerm = async (id: string, termName: string) => {
-    if (!confirm(`'${termName}' 용어를 정말 삭제하시겠습니까?`)) return;
+    if (!confirm(`'${termName}' 항목을 삭제할까요?`)) return;
     try {
       const res = await fetch(`/api/admin/quiz/terms?id=${id}`, { method: 'DELETE' });
       if (res.ok) {
         setTermsList(prev => prev.filter(t => t.id !== id));
+        router.refresh();
       }
     } catch {
       alert('삭제 중 오류가 발생했습니다.');
@@ -1108,23 +1133,6 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
     const temp = newList[targetIndexInMain];
     newList[targetIndexInMain] = newList[swapIndexInMain];
     newList[swapIndexInMain] = temp;
-    setTermsList(newList);
-    saveCustomOrder(newList);
-  };
-
-  const handleReorderTerm = (fromFilteredIdx: number, toFilteredIdx: number) => {
-    if (fromFilteredIdx === toFilteredIdx) return;
-    const fromTerm = filteredStudyTerms[fromFilteredIdx];
-    const toTerm = filteredStudyTerms[toFilteredIdx];
-    if (!fromTerm || !toTerm) return;
-
-    const fromMainIdx = termsList.findIndex(t => t.id === fromTerm.id);
-    const toMainIdx = termsList.findIndex(t => t.id === toTerm.id);
-    if (fromMainIdx === -1 || toMainIdx === -1) return;
-
-    const newList = [...termsList];
-    const [moved] = newList.splice(fromMainIdx, 1);
-    newList.splice(toMainIdx, 0, moved);
     setTermsList(newList);
     saveCustomOrder(newList);
   };
@@ -1192,381 +1200,131 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
     );
   }
 
+  const tabLabels: Array<{ key: 'study' | 'quiz_setup' | 'my_history'; label: string }> = [
+    { key: 'study', label: '학습' },
+    { key: 'quiz_setup', label: '테스트' },
+    { key: 'my_history', label: '기록' },
+  ];
+  const inShell = view === 'subject' && (activeTab === 'study' || activeTab === 'quiz_setup' || activeTab === 'my_history');
+  const quizTitle = `${quizCategory === 'all' ? '전체' : quizCategory} · ${quizKind === 'TERM' ? '용어' : '문제'} ${selectedQuizTerms.length}개`;
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      {/* Top Banner Header & LMS Navigation */}
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          flexWrap: 'wrap',
-          gap: '16px',
-          paddingBottom: '16px',
-          borderBottom: '2px solid #E2E8F0',
-        }}
-      >
-        <div>
-          <h1 style={{ fontSize: '1.5rem', fontWeight: 900, color: '#0E4A84', margin: 0, letterSpacing: '-0.02em' }}>
-            QUIZ
-          </h1>
-          <p style={{ fontSize: '0.84rem', color: '#64748B', margin: '4px 0 0 0' }}>
-            간호학 핵심 용어 암기 및 시험 대비 모의고사 학습 포털
-          </p>
-        </div>
+    <div className={s.root}>
+      {view === 'hub' && (
+        <HubView
+          subjects={subjectEntries}
+          isAdmin={isAdmin}
+          onOpen={name => openSubject(name)}
+          onAddSubject={g => handleOpenCreateModal(true, g)}
+        />
+      )}
 
-        <div style={{ display: 'inline-flex', backgroundColor: '#F1F5F9', padding: '4px', borderRadius: '8px', border: '1px solid #CBD5E1', gap: '4px' }}>
-          <button
-            onClick={() => setActiveTab('study')}
-            style={{
-              padding: '7px 18px',
-              borderRadius: '6px',
-              fontSize: '0.875rem',
-              fontWeight: activeTab === 'study' ? 700 : 500,
-              border: 'none',
-              backgroundColor: activeTab === 'study' ? '#0E4A84' : 'transparent',
-              color: activeTab === 'study' ? '#FFFFFF' : '#475569',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            학습 센터
-          </button>
-          <button
-            onClick={() => setActiveTab('quiz_setup')}
-            style={{
-              padding: '7px 18px',
-              borderRadius: '6px',
-              fontSize: '0.875rem',
-              fontWeight: (activeTab === 'quiz_setup' || activeTab === 'quiz_play' || activeTab === 'quiz_result') ? 700 : 500,
-              border: 'none',
-              backgroundColor: (activeTab === 'quiz_setup' || activeTab === 'quiz_play' || activeTab === 'quiz_result') ? '#0E4A84' : 'transparent',
-              color: (activeTab === 'quiz_setup' || activeTab === 'quiz_play' || activeTab === 'quiz_result') ? '#FFFFFF' : '#475569',
-              cursor: 'pointer',
-              transition: 'all 0.15s ease',
-            }}
-          >
-            테스트 모드
-          </button>
-          {user && (
-            <button
-              onClick={() => setActiveTab('my_history')}
-              style={{
-                padding: '7px 18px',
-                borderRadius: '6px',
-                fontSize: '0.875rem',
-                fontWeight: activeTab === 'my_history' ? 700 : 500,
-                border: 'none',
-                backgroundColor: activeTab === 'my_history' ? '#0E4A84' : 'transparent',
-                color: activeTab === 'my_history' ? '#FFFFFF' : '#475569',
-                cursor: 'pointer',
-                transition: 'all 0.15s ease',
-              }}
-            >
-              내 학습기록
-            </button>
-          )}
-        </div>
-      </div>
-
-      {/* VIEW 1: 학습 센터 (Study Mode with Quizlet Flashcard & Typing Practice Modes) */}
-      {activeTab === 'study' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          {/* Controls & Filters Header */}
-          <div className="card" style={{ padding: '20px', borderRadius: '8px', border: '1px solid #E2E8F0', boxShadow: '0 1px 3px rgba(0,0,0,0.02)' }}>
-            {/* Top Content-Type Distinction Tabs */}
-            <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '16px', borderBottom: '1px solid #E2E8F0', paddingBottom: '14px' }}>
-              <button
-                onClick={() => {
-                  setContentTypeFilter('all');
-                  setStudyCategory('all');
-                }}
-                style={{
-                  padding: '7px 16px',
-                  borderRadius: '6px',
-                  fontSize: '0.84rem',
-                  fontWeight: contentTypeFilter === 'all' ? 700 : 500,
-                  border: '1px solid',
-                  borderColor: contentTypeFilter === 'all' ? '#0E4A84' : '#CBD5E1',
-                  backgroundColor: contentTypeFilter === 'all' ? '#0E4A84' : '#FFFFFF',
-                  color: contentTypeFilter === 'all' ? '#FFFFFF' : '#475569',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                전체 보기
-              </button>
-              <button
-                onClick={() => {
-                  setContentTypeFilter('TERM');
-                  setStudyCategory('all');
-                  if (!termsList.some(t => t.subject === studySubject && matchesContentType(t, 'TERM'))) {
-                    const termSubj = termsList.find(t => matchesContentType(t, 'TERM'))?.subject;
-                    if (termSubj) setStudySubject(termSubj);
-                  }
-                }}
-                style={{
-                  padding: '7px 16px',
-                  borderRadius: '6px',
-                  fontSize: '0.84rem',
-                  fontWeight: contentTypeFilter === 'TERM' ? 700 : 500,
-                  border: '1px solid',
-                  borderColor: contentTypeFilter === 'TERM' ? '#0E4A84' : '#CBD5E1',
-                  backgroundColor: contentTypeFilter === 'TERM' ? '#0E4A84' : '#FFFFFF',
-                  color: contentTypeFilter === 'TERM' ? '#FFFFFF' : '#475569',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                용어·단어장
-              </button>
-              <button
-                onClick={() => {
-                  setContentTypeFilter('MULTIPLE_CHOICE');
-                  setStudyCategory('all');
-                  setStudyViewMode('grid');
-                  if (!termsList.some(t => t.subject === studySubject && matchesContentType(t, 'MULTIPLE_CHOICE'))) {
-                    const mcSubj = termsList.find(t => matchesContentType(t, 'MULTIPLE_CHOICE'))?.subject;
-                    if (mcSubj) setStudySubject(mcSubj);
-                  }
-                }}
-                style={{
-                  padding: '7px 16px',
-                  borderRadius: '6px',
-                  fontSize: '0.84rem',
-                  fontWeight: contentTypeFilter === 'MULTIPLE_CHOICE' ? 700 : 500,
-                  border: '1px solid',
-                  borderColor: contentTypeFilter === 'MULTIPLE_CHOICE' ? '#0E4A84' : '#CBD5E1',
-                  backgroundColor: contentTypeFilter === 'MULTIPLE_CHOICE' ? '#0E4A84' : '#FFFFFF',
-                  color: contentTypeFilter === 'MULTIPLE_CHOICE' ? '#FFFFFF' : '#475569',
-                  cursor: 'pointer',
-                  transition: 'all 0.15s ease',
-                }}
-              >
-                객관식 퀴즈
-              </button>
-            </div>
-
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', justifyContent: 'space-between', alignItems: 'center' }}>
-              {/* Subject Tabs */}
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <span style={{ fontSize: '0.84rem', fontWeight: 700, color: '#64748B' }}>과목:</span>
-                {filteredSubjects.map(subj => {
-                  const isSelected = studySubject === subj;
-                  return (
-                    <button
-                      key={subj}
-                      onClick={() => {
-                        setStudySubject(subj);
-                        setStudyCategory('all');
-                        const isMcSubj = termsList.some(t => t.subject === subj && (t.itemType === 'MULTIPLE_CHOICE' || t.itemType === 'SHORT_ANSWER' || (t.options && t.options.length > 0)));
-                        if (isMcSubj) setStudyViewMode('grid');
-                      }}
-                      style={{
-                        fontSize: '0.84rem',
-                        padding: '6px 14px',
-                        borderRadius: '6px',
-                        border: '1px solid',
-                        borderColor: isSelected ? '#0E4A84' : '#CBD5E1',
-                        backgroundColor: isSelected ? '#0E4A84' : '#FFFFFF',
-                        color: isSelected ? '#FFFFFF' : '#334155',
-                        fontWeight: isSelected ? 700 : 500,
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      {subj}
-                    </button>
-                  );
-                })}
-              </div>
-
-              {/* Study Mode Selector Sub-Tabs & Audio & Admin */}
-              <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <div style={{ display: 'inline-flex', backgroundColor: '#F1F5F9', padding: '3px', borderRadius: '6px', border: '1px solid #E2E8F0' }}>
-                  {!isCurrentSubjectMc && contentTypeFilter !== 'MULTIPLE_CHOICE' && (
-                    <>
-                      <button
-                        onClick={() => setStudyViewMode('flashcard')}
-                        style={{
-                          padding: '5px 12px',
-                          borderRadius: '4px',
-                          fontSize: '0.8125rem',
-                          fontWeight: studyViewMode === 'flashcard' ? 700 : 500,
-                          border: 'none',
-                          backgroundColor: studyViewMode === 'flashcard' ? '#0E4A84' : 'transparent',
-                          color: studyViewMode === 'flashcard' ? '#FFFFFF' : '#475569',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease',
-                        }}
-                      >
-                        플래시카드
-                      </button>
-                      <button
-                        onClick={() => setStudyViewMode('typing')}
-                        style={{
-                          padding: '5px 12px',
-                          borderRadius: '4px',
-                          fontSize: '0.8125rem',
-                          fontWeight: studyViewMode === 'typing' ? 700 : 500,
-                          border: 'none',
-                          backgroundColor: studyViewMode === 'typing' ? '#0E4A84' : 'transparent',
-                          color: studyViewMode === 'typing' ? '#FFFFFF' : '#475569',
-                          cursor: 'pointer',
-                          transition: 'all 0.15s ease',
-                        }}
-                      >
-                        타이핑
-                      </button>
-                    </>
-                  )}
-                  <button
-                    onClick={() => setStudyViewMode('grid')}
-                    style={{
-                      padding: '5px 12px',
-                      borderRadius: '4px',
-                      fontSize: '0.8125rem',
-                      fontWeight: studyViewMode === 'grid' ? 700 : 500,
-                      border: 'none',
-                      backgroundColor: studyViewMode === 'grid' ? '#0E4A84' : 'transparent',
-                      color: studyViewMode === 'grid' ? '#FFFFFF' : '#475569',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    목록
-                  </button>
-                </div>
-
-                {/* Audio Controls Group */}
-                <div style={{ display: 'inline-flex', alignItems: 'center', border: '1px solid #CBD5E1', borderRadius: '6px', overflow: 'hidden', backgroundColor: '#FFFFFF' }}>
-                  <button
-                    onClick={toggleAutoTTS}
-                    style={{
-                      padding: '5px 10px',
-                      fontSize: '0.8125rem',
-                      fontWeight: 600,
-                      border: 'none',
-                      borderRight: '1px solid #E2E8F0',
-                      backgroundColor: autoTTS ? '#F0FDF4' : '#F8FAFC',
-                      color: autoTTS ? '#166534' : '#64748B',
-                      cursor: 'pointer',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '5px',
-                    }}
-                    title="음성 읽기 ON/OFF"
-                  >
-                    {autoTTS ? <IconVolume size={14} color="#166534" /> : <IconVolumeOff size={14} color="#64748B" />}
-                    <span>{autoTTS ? '음성 ON' : '음성 OFF'}</span>
-                  </button>
-
-                  <select
-                    value={ttsRate}
-                    onChange={e => setTtsRate(parseFloat(e.target.value))}
-                    style={{
-                      fontSize: '0.8125rem',
-                      fontWeight: 600,
-                      padding: '5px 8px',
-                      border: 'none',
-                      backgroundColor: '#FFFFFF',
-                      color: '#334155',
-                      cursor: 'pointer',
-                      outline: 'none',
-                    }}
-                    title="음성 배속"
-                  >
-                    <option value={0.75}>0.75x</option>
-                    <option value={1.0}>1.0x</option>
-                    <option value={1.25}>1.25x</option>
-                    <option value={1.5}>1.5x</option>
-                    <option value={2.0}>2.0x</option>
-                  </select>
-                </div>
-
-                {isAdmin && (
-                  <button
-                    onClick={handleOpenCreateModal}
-                    className="btn-primary"
-                    style={{
-                      padding: '6px 14px',
-                      fontSize: '0.8125rem',
-                      fontWeight: 700,
-                      borderRadius: '6px',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    새 문항 추가
-                  </button>
-                )}
-              </div>
-            </div>
-
-            {/* Category Sub-Filters & Search */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'center', marginTop: '16px', borderTop: '1px solid #E2E8F0', paddingTop: '16px' }}>
-              <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap', alignItems: 'center' }}>
-                <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#64748B' }}>카테고리:</span>
-                <button
-                  onClick={() => setStudyCategory('all')}
-                  style={{
-                    fontSize: '0.78125rem',
-                    padding: '4px 10px',
-                    borderRadius: '4px',
-                    border: '1px solid',
-                    borderColor: studyCategory === 'all' ? '#0E4A84' : '#CBD5E1',
-                    backgroundColor: studyCategory === 'all' ? '#0E4A84' : '#FFFFFF',
-                    color: studyCategory === 'all' ? '#FFFFFF' : '#475569',
-                    fontWeight: studyCategory === 'all' ? 700 : 500,
-                    cursor: 'pointer',
-                  }}
-                >
-                  전체 ({termsList.filter(t => t.subject === studySubject && matchesContentType(t, contentTypeFilter)).length})
-                </button>
-                {categories.map(cat => {
-                  const isCatSelected = studyCategory === cat;
-                  return (
-                    <button
-                      key={cat}
-                      onClick={() => setStudyCategory(cat)}
-                      style={{
-                        fontSize: '0.78125rem',
-                        padding: '4px 10px',
-                        borderRadius: '4px',
-                        border: '1px solid',
-                        borderColor: isCatSelected ? '#0E4A84' : '#CBD5E1',
-                        backgroundColor: isCatSelected ? '#0E4A84' : '#FFFFFF',
-                        color: isCatSelected ? '#FFFFFF' : '#475569',
-                        fontWeight: isCatSelected ? 700 : 500,
-                        cursor: 'pointer',
-                      }}
-                    >
-                      {cat} ({termsList.filter(t => t.subject === studySubject && t.category === cat && matchesContentType(t, contentTypeFilter)).length})
-                    </button>
-                  );
-                })}
-              </div>
-
-              {studyViewMode === 'grid' && (
-                <div style={{ marginLeft: 'auto', flex: '1 1 200px', maxWidth: '280px', position: 'relative' }}>
-                  <div style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94A3B8', display: 'flex', pointerEvents: 'none' }}>
-                    <IconSearch size={14} color="#94A3B8" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder="검색어 입력..."
-                    value={searchTerm}
-                    onChange={e => setSearchTerm(e.target.value)}
-                    style={{
-                      width: '100%',
-                      fontSize: '0.8125rem',
-                      padding: '6px 12px 6px 32px',
-                      borderRadius: '6px',
-                      border: '1px solid #CBD5E1',
-                      backgroundColor: '#FFFFFF',
-                    }}
-                  />
-                </div>
+      {inShell && (
+        <>
+          <div className={s.head}>
+            <button type="button" className={s.back} onClick={() => setView('hub')}>← 과목 선택</button>
+            <div className={s.headRow}>
+              <h1 className={s.title}>{studySubject}</h1>
+              {isAdmin && (
+                <button type="button" className={`${s.btn} ${s.btnSm}`} onClick={() => setShowManager(true)}>과목 관리</button>
               )}
+            </div>
+          </div>
+
+          <nav aria-label="모드" className={s.tabs}>
+            {tabLabels.map(t => (
+              <button
+                key={t.key}
+                type="button"
+                aria-current={activeTab === t.key ? 'page' : undefined}
+                className={`${s.tab} ${activeTab === t.key ? s.tabActive : ''}`}
+                onClick={() => setActiveTab(t.key)}
+              >
+                {t.label}
+              </button>
+            ))}
+          </nav>
+
+          <ContextBar
+            kind={quizKind}
+            kindCounts={subjectKindCounts}
+            onKind={handleSelectKind}
+            quizzes={quizOptions}
+            total={subjectKindCounts[quizKind]}
+            quiz={studyCategory}
+            onQuiz={handleSelectQuiz}
+          />
+        </>
+      )}
+
+      {inShell && activeTab === 'study' && (
+        <>
+          <div className={s.toolbar}>
+            {studyViewMode === 'grid' && (
+              <div className={s.search}>
+                <span className={s.searchIcon}><Icon d={ICON_SEARCH} size={16} /></span>
+                <input
+                  type="search"
+                  aria-label="검색"
+                  placeholder="검색"
+                  className={s.searchInput}
+                  value={searchTerm}
+                  onChange={e => setSearchTerm(e.target.value)}
+                />
+              </div>
+            )}
+            <div className={s.toolbarEnd}>
+              {quizKind === 'TERM' && (
+                <Segmented<'grid' | 'flashcard' | 'typing'>
+                  label="보기 방식"
+                  value={studyViewMode}
+                  onChange={setStudyViewMode}
+                  options={[
+                    { value: 'grid', label: '목록' },
+                    { value: 'flashcard', label: '플래시카드' },
+                    { value: 'typing', label: '타이핑' },
+                  ]}
+                />
+              )}
+              {studyViewMode === 'grid' && (
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={hideDefinition}
+                  className={`${s.switch} ${hideDefinition ? s.switchOn : ''}`}
+                  onClick={() => { setHideDefinition(v => !v); setRevealedCardIds({}); }}
+                >
+                  <span className={s.switchTrack}><span className={s.switchKnob} /></span>
+                  뜻 가리기
+                </button>
+              )}
+              <button
+                type="button"
+                className={`${s.btn} ${s.iconBtn}`}
+                aria-label={autoTTS ? '음성 읽기 끄기' : '음성 읽기 켜기'}
+                aria-pressed={autoTTS}
+                onClick={toggleAutoTTS}
+              >
+                <Icon d={autoTTS ? ICON_VOLUME : ICON_VOLUME_OFF} />
+              </button>
+              {autoTTS && (
+                <select aria-label="음성 배속" className={s.input} style={{ width: 'auto' }} value={ttsRate} onChange={e => setTtsRate(parseFloat(e.target.value))}>
+                  {[0.75, 1, 1.25, 1.5, 2].map(r => <option key={r} value={r}>{r}x</option>)}
+                </select>
+              )}
+              {isAdmin && (
+                <>
+                  <button type="button" className={s.btn} aria-pressed={isGridEditMode} onClick={() => { setIsGridEditMode(v => !v); setStudyViewMode('grid'); }}>
+                    {isGridEditMode ? '편집 완료' : '문항 편집'}
+                  </button>
+                  {isGridEditMode && (
+                    <button type="button" className={s.btn} onClick={() => handleOpenCreateModal()}>+ 문항 추가</button>
+                  )}
+                </>
+              )}
+              <button type="button" className={`${s.btn} ${s.btnPrimary}`} onClick={() => setActiveTab('quiz_setup')}>
+                이 퀴즈로 테스트
+              </button>
             </div>
           </div>
 
@@ -1635,7 +1393,11 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                       <button
                         onClick={() => {
                           const shuffled = [...filteredStudyTerms].sort(() => Math.random() - 0.5);
-                          setTermsList(shuffled);
+                          const shuffleIds = new Set(shuffled.map(t => t.id));
+                          setTermsList(prev => {
+                            let k = 0;
+                            return prev.map(t => (shuffleIds.has(t.id) ? shuffled[k++] : t));
+                          });
                           setFlashcardIndex(0);
                           setIsCardFlipped(false);
                         }}
@@ -1929,766 +1691,71 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
             </div>
           )}
 
-          {/* MODE 3: GRID LIST VIEW (전체 목록 보기) */}
           {studyViewMode === 'grid' && (
-            <div>
-              {/* Grid Top Toolbar: View Layout Switcher & Hide Definition & Admin Actions */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '14px' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                  {/* View Layout Toggle: 1열 목록 vs 카드 그리드 */}
-                  <div style={{ display: 'inline-flex', backgroundColor: '#F1F5F9', padding: '3px', borderRadius: '6px', border: '1px solid #CBD5E1' }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setGridLayout('single');
-                        try { localStorage.setItem('nursing_quiz_grid_layout', 'single'); } catch {}
-                      }}
-                      style={{
-                        padding: '5px 12px',
-                        borderRadius: '4px',
-                        fontSize: '0.8125rem',
-                        fontWeight: gridLayout === 'single' ? 700 : 500,
-                        border: 'none',
-                        backgroundColor: gridLayout === 'single' ? '#0E4A84' : 'transparent',
-                        color: gridLayout === 'single' ? '#FFFFFF' : '#475569',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        transition: 'all 0.15s ease',
-                      }}
-                      title="한 행에 1개씩 세로 목록으로 보기"
-                    >
-                      <span>1열 목록</span>
-                    </button>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setGridLayout('multi');
-                        try { localStorage.setItem('nursing_quiz_grid_layout', 'multi'); } catch {}
-                      }}
-                      style={{
-                        padding: '5px 12px',
-                        borderRadius: '4px',
-                        fontSize: '0.8125rem',
-                        fontWeight: gridLayout === 'multi' ? 700 : 500,
-                        border: 'none',
-                        backgroundColor: gridLayout === 'multi' ? '#0E4A84' : 'transparent',
-                        color: gridLayout === 'multi' ? '#FFFFFF' : '#475569',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: '6px',
-                        transition: 'all 0.15s ease',
-                      }}
-                      title="카드형 그리드로 여러 열 보기"
-                    >
-                      <span>카드 그리드</span>
-                    </button>
-                  </div>
-
-                  {/* Hide Definition toggle button */}
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setHideDefinition(prev => !prev);
-                      setRevealedCardIds({});
-                    }}
-                    style={{
-                      padding: '5px 12px',
-                      fontSize: '0.8125rem',
-                      fontWeight: 600,
-                      borderRadius: '6px',
-                      border: '1px solid #CBD5E1',
-                      backgroundColor: hideDefinition ? '#F1F5F9' : '#FFFFFF',
-                      color: hideDefinition ? '#0E4A84' : '#475569',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      cursor: 'pointer',
-                      transition: 'all 0.15s ease',
-                    }}
-                  >
-                    {hideDefinition ? <IconEyeOff size={14} color="#0E4A84" /> : <IconEye size={14} color="#475569" />}
-                    <span>{hideDefinition ? '뜻 가리기 해제' : '뜻 가리기'}</span>
-                  </button>
-                </div>
-
-                {isAdmin && (
-                  <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                    <button
-                      onClick={() => setIsGridEditMode(prev => !prev)}
-                      style={{
-                        padding: '6px 14px',
-                        borderRadius: '6px',
-                        fontSize: '0.8125rem',
-                        fontWeight: 700,
-                        border: '1px solid',
-                        borderColor: isGridEditMode ? '#0E4A84' : '#CBD5E1',
-                        backgroundColor: isGridEditMode ? '#0E4A84' : '#FFFFFF',
-                        color: isGridEditMode ? '#FFFFFF' : '#0E4A84',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      {isGridEditMode ? '편집 완료' : '순서 편집 / 문항 관리'}
-                    </button>
-                  </div>
-                )}
-              </div>
-
-              {/* Hide Definition Guide Banner */}
-              {hideDefinition && (
-                <div
-                  style={{
-                    backgroundColor: '#F8FAFC',
-                    border: '1px solid #E2E8F0',
-                    borderRadius: '6px',
-                    padding: '10px 14px',
-                    fontSize: '0.8125rem',
-                    color: '#475569',
-                    marginBottom: '14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '8px',
-                  }}
-                >
-                  <IconEyeOff size={14} color="#64748B" />
-                  <span>
-                    <strong>뜻 가리기 활성화 중:</strong> 뜻 영역이 블러 처리되어 있습니다. 카드의 뜻 영역을 클릭하면 해당 항목의 정답/뜻을 확인할 수 있습니다.
-                  </span>
-                </div>
-              )}
-
-              {/* Edit Mode User Drag Guide */}
-              {isAdmin && isGridEditMode && (
-                <div
-                  style={{
-                    backgroundColor: '#F0F9FF',
-                    border: '1px solid #BAE6FD',
-                    color: '#0369A1',
-                    padding: '10px 16px',
-                    borderRadius: '6px',
-                    fontSize: '0.8125rem',
-                    fontWeight: 500,
-                    marginBottom: '14px',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '8px',
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    <IconGrip size={14} color="#0369A1" />
-                    <span>
-                      <strong>순서 편집 모드:</strong> 각 카드의 드래그 핸들(⠿)을 끌어다 놓거나 ▲ / ▼ 버튼으로 문항 순서를 조정할 수 있습니다.
-                    </span>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setIsGridEditMode(false)}
-                    style={{
-                      background: 'none',
-                      border: 'none',
-                      color: '#0369A1',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      fontSize: '0.8125rem',
-                    }}
-                  >
-                    완료 ✕
-                  </button>
-                </div>
-              )}
-
-              {filteredStudyTerms.length > 0 ? (
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: gridLayout === 'single' ? '1fr' : 'repeat(auto-fill, minmax(340px, 1fr))',
-                    gap: gridLayout === 'single' ? '12px' : '16px',
-                  }}
-                >
-                  {filteredStudyTerms.map((t, idx) => {
-                    const isRevealed = revealedCardIds[t.id];
-                    const isHidden = hideDefinition && !isRevealed;
-                    const isStructuredQuestion = t.options && t.options.length > 0;
-
-                    const checkOptionIsCorrect = (opt: string, answer?: string | null, definition?: string | null) => {
-                      const targetAns = answer || definition || '';
-                      if (!targetAns) return false;
-
-                      const cleanOpt = opt.trim().replace(/^\([0-9]\)|^[①-⑤]/, '').trim();
-                      const cleanAns = targetAns.replace(/^정답:\s*/, '').trim().replace(/^\([0-9]\)|^[①-⑤]/, '').trim();
-
-                      const optNumMatch = opt.match(/^([①-⑤]|\([1-5]\))/);
-                      const ansNumMatch = targetAns.match(/^([①-⑤]|\([1-5]\))/);
-                      if (optNumMatch && ansNumMatch && optNumMatch[1] === ansNumMatch[1]) {
-                        return true;
-                      }
-
-                      return cleanOpt === cleanAns || (cleanAns.length > 3 && cleanOpt.includes(cleanAns)) || (cleanOpt.length > 3 && cleanAns.includes(cleanOpt));
-                    };
-
-                    const hasMatchingOption = isStructuredQuestion && t.options!.some(opt => checkOptionIsCorrect(opt, t.answer, t.definition));
-
-                    return (
-                      <div
-                        key={t.id}
-                        className="card"
-                        draggable={isAdmin && isGridEditMode}
-                        onDragStart={(e) => {
-                          if (!isAdmin || !isGridEditMode) return;
-                          e.dataTransfer.effectAllowed = 'move';
-                          e.dataTransfer.setData('text/plain', String(idx));
-                          setDraggedIdx(idx);
-                        }}
-                        onDragOver={(e) => {
-                          if (!isAdmin || !isGridEditMode) return;
-                          e.preventDefault();
-                          e.dataTransfer.dropEffect = 'move';
-                          if (dragOverIdx !== idx) setDragOverIdx(idx);
-                        }}
-                        onDragLeave={() => {
-                          if (dragOverIdx === idx) setDragOverIdx(null);
-                        }}
-                        onDrop={(e) => {
-                          if (!isAdmin || !isGridEditMode) return;
-                          e.preventDefault();
-                          if (draggedIdx !== null && draggedIdx !== idx) {
-                            handleReorderTerm(draggedIdx, idx);
-                          }
-                          setDraggedIdx(null);
-                          setDragOverIdx(null);
-                        }}
-                        onDragEnd={() => {
-                          setDraggedIdx(null);
-                          setDragOverIdx(null);
-                        }}
-                        style={{
-                          display: 'flex',
-                          flexDirection: 'column',
-                          justifyContent: 'space-between',
-                          border: dragOverIdx === idx && draggedIdx !== idx ? '1px dashed #0E4A84' : '1px solid #E2E8F0',
-                          borderRadius: '8px',
-                          padding: gridLayout === 'single' ? '16px 20px' : '18px',
-                          opacity: draggedIdx === idx ? 0.35 : 1,
-                          backgroundColor: dragOverIdx === idx && draggedIdx !== idx ? '#F1F5F9' : '#FFFFFF',
-                          transition: 'all 0.15s ease',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-                        }}
-                      >
-                        <div>
-                          {/* Card Header: Index & Edit Controls */}
-                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                              {isAdmin && isGridEditMode && (
-                                <span
-                                  title="드래그하여 순서 변경"
-                                  style={{
-                                    cursor: 'grab',
-                                    userSelect: 'none',
-                                    display: 'inline-flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    padding: '4px 6px',
-                                    borderRadius: '4px',
-                                    backgroundColor: '#F1F5F9',
-                                    border: '1px solid #CBD5E1',
-                                    color: '#475569',
-                                    lineHeight: 1,
-                                  }}
-                                >
-                                  <IconGrip size={14} color="#475569" />
-                                </span>
-                              )}
-                              <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: '#64748B' }}>
-                                #{idx + 1}
-                              </span>
-                              {t.category && (
-                                <span style={{ fontSize: '0.75rem', color: '#94A3B8' }}>
-                                  • {t.category}
-                                </span>
-                              )}
-                            </div>
-
-                            {isAdmin && isGridEditMode && (
-                              <div style={{ display: 'flex', gap: '4px', alignItems: 'center' }}>
-                                <button
-                                  onClick={() => handleMoveTerm(idx, 'up')}
-                                  disabled={idx === 0}
-                                  style={{
-                                    background: '#FFFFFF',
-                                    border: '1px solid #CBD5E1',
-                                    borderRadius: '4px',
-                                    padding: '2px 6px',
-                                    color: '#475569',
-                                    fontSize: '0.75rem',
-                                    cursor: idx === 0 ? 'not-allowed' : 'pointer',
-                                    opacity: idx === 0 ? 0.3 : 1,
-                                  }}
-                                  title="위로 1칸 이동"
-                                >
-                                  ▲
-                                </button>
-                                <button
-                                  onClick={() => handleMoveTerm(idx, 'down')}
-                                  disabled={idx === filteredStudyTerms.length - 1}
-                                  style={{
-                                    background: '#FFFFFF',
-                                    border: '1px solid #CBD5E1',
-                                    borderRadius: '4px',
-                                    padding: '2px 6px',
-                                    color: '#475569',
-                                    fontSize: '0.75rem',
-                                    cursor: idx === filteredStudyTerms.length - 1 ? 'not-allowed' : 'pointer',
-                                    opacity: idx === filteredStudyTerms.length - 1 ? 0.3 : 1,
-                                  }}
-                                  title="아래로 1칸 이동"
-                                >
-                                  ▼
-                                </button>
-                                <button
-                                  onClick={() => handleOpenEditModal(t)}
-                                  style={{
-                                    background: '#FFFFFF',
-                                    border: '1px solid #CBD5E1',
-                                    borderRadius: '4px',
-                                    padding: '2px 8px',
-                                    color: '#0E4A84',
-                                    fontSize: '0.75rem',
-                                    cursor: 'pointer',
-                                    fontWeight: 600,
-                                  }}
-                                >
-                                  수정
-                                </button>
-                                <button
-                                  onClick={() => handleDeleteTerm(t.id, t.term)}
-                                  style={{
-                                    background: '#FFFFFF',
-                                    border: '1px solid #FECACA',
-                                    borderRadius: '4px',
-                                    padding: '2px 8px',
-                                    color: '#DC2626',
-                                    fontSize: '0.75rem',
-                                    cursor: 'pointer',
-                                    fontWeight: 600,
-                                  }}
-                                >
-                                  삭제
-                                </button>
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Term (Korean) & English Term side-by-side */}
-                          <div style={{ display: 'flex', alignItems: 'baseline', flexWrap: 'wrap', gap: '8px', marginBottom: '8px' }}>
-                            <h3 style={{ fontSize: gridLayout === 'single' ? '1.125rem' : '1.05rem', fontWeight: 700, color: '#0E4A84', margin: 0, lineHeight: 1.4 }}>
-                              {t.term}
-                            </h3>
-                            {t.englishTerm && (
-                              <span style={{ fontSize: '0.84rem', fontWeight: 500, color: '#64748B' }}>
-                                {t.englishTerm.trim().startsWith('(') ? t.englishTerm : `(${t.englishTerm})`}
-                              </span>
-                            )}
-                          </div>
-
-                          {isStructuredQuestion && (
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', marginBottom: '12px' }}>
-                              {t.options!.map((opt, oIdx) => {
-                                const isCorrectOpt = !isHidden && checkOptionIsCorrect(opt, t.answer, t.definition);
-                                return (
-                                  <div
-                                    key={oIdx}
-                                    style={{
-                                      fontSize: '0.85rem',
-                                      color: isCorrectOpt ? '#15803D' : '#334155',
-                                      backgroundColor: isCorrectOpt ? '#F0FDF4' : '#F8FAFC',
-                                      padding: '8px 12px',
-                                      borderRadius: '6px',
-                                      border: isCorrectOpt ? '1px solid #86EFAC' : '1px solid #E2E8F0',
-                                      fontWeight: isCorrectOpt ? 700 : 500,
-                                      display: 'flex',
-                                      justifyContent: 'space-between',
-                                      alignItems: 'center',
-                                      transition: 'all 0.15s ease',
-                                    }}
-                                  >
-                                    <span>{opt}</span>
-                                    {isCorrectOpt && (
-                                      <span style={{ fontSize: '0.75rem', backgroundColor: '#DCFCE7', color: '#15803D', padding: '2px 6px', borderRadius: '4px', fontWeight: 700 }}>
-                                        정답
-                                      </span>
-                                    )}
-                                  </div>
-                                );
-                              })}
-                            </div>
-                          )}
-
-                          {/* Definition Area: Clean CSS Masking / Blur */}
-                          {(!isStructuredQuestion || !hasMatchingOption) && (
-                            <div
-                              onClick={() => {
-                                if (hideDefinition) {
-                                  setRevealedCardIds(prev => ({ ...prev, [t.id]: !prev[t.id] }));
-                                }
-                              }}
-                              style={{
-                                position: 'relative',
-                                backgroundColor: '#F8FAFC',
-                                padding: '12px 14px',
-                                borderRadius: '6px',
-                                border: '1px solid #E2E8F0',
-                                cursor: hideDefinition ? 'pointer' : 'default',
-                                transition: 'all 0.2s ease',
-                                overflow: 'hidden',
-                              }}
-                              title={hideDefinition ? (isRevealed ? '클릭하여 다시 가리기' : '클릭하여 뜻 확인') : undefined}
-                            >
-                              <div
-                                style={{
-                                  filter: isHidden ? 'blur(5px)' : 'none',
-                                  opacity: isHidden ? 0.35 : 1,
-                                  userSelect: isHidden ? 'none' : 'text',
-                                  transition: 'filter 0.2s ease, opacity 0.2s ease',
-                                }}
-                              >
-                                {t.answer && !t.definition?.replace(/^정답:\s*/, '').includes(t.answer.replace(/^정답:\s*/, '')) && (
-                                  <div style={{ fontSize: '0.84rem', fontWeight: 700, color: '#166534', marginBottom: '4px' }}>
-                                    정답: {t.answer.replace(/^정답:\s*/, '')}
-                                  </div>
-                                )}
-                                <p style={{ fontSize: '0.875rem', color: '#334155', lineHeight: 1.6, margin: 0 }}>
-                                  {t.definition.replace(/^정답:\s*/, '')}
-                                </p>
-                              </div>
-
-                              {isHidden && (
-                                <div
-                                  style={{
-                                    position: 'absolute',
-                                    inset: 0,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    backgroundColor: 'rgba(248, 250, 252, 0.45)',
-                                    color: '#64748B',
-                                    fontSize: '0.8125rem',
-                                    fontWeight: 600,
-                                    pointerEvents: 'none',
-                                  }}
-                                >
-                                  클릭하여 확인
-                                </div>
-                              )}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              ) : (
-                <div className="card" style={{ padding: '40px', textAlign: 'center', color: 'var(--sub-text)' }}>
-                  검색 조건에 해당되는 항목이 없습니다.
-                </div>
-              )}
-            </div>
+            <TermCards
+              terms={filteredStudyTerms}
+              hideDefinition={hideDefinition}
+              revealed={revealedCardIds}
+              onReveal={id => setRevealedCardIds(prev => ({ ...prev, [id]: true }))}
+              editMode={isAdmin && isGridEditMode}
+              onMove={handleMoveTerm}
+              onEdit={handleOpenEditModal}
+              onDelete={t => handleDeleteTerm(t.id, t.term)}
+            />
           )}
-        </div>
+        </>
       )}
 
-      {/* VIEW 2: 테스트 모드 (Quiz Setup Mode) */}
-      {activeTab === 'quiz_setup' && (
-        <div className="card" style={{ maxWidth: '680px', margin: '0 auto', width: '100%', padding: '28px' }}>
-          <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '20px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-            테스트 설정
-          </h2>
+      {inShell && activeTab === 'quiz_setup' && (
+        <TestSetup
+          kind={quizKind}
+          title={quizTitle}
+          poolSize={selectedQuizTerms.length}
+          quizType={quizType}
+          onQuizType={setQuizType}
+          quizCount={quizCount}
+          onQuizCount={setQuizCount}
+          quizOrder={quizOrder}
+          onQuizOrder={setQuizOrder}
+          worksheet={quizFormat === 'worksheet'}
+          onWorksheet={v => setQuizFormat(v ? 'worksheet' : 'single')}
+          onStart={() => handleStartQuiz()}
+        />
+      )}
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            {/* 1. Question Kind */}
-            <div>
-              <label style={{ fontSize: '0.875rem', fontWeight: 700, display: 'block', marginBottom: '8px' }}>
-                1. 문제 유형
-              </label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
-                {([
-                  { kind: 'TERM', title: '용어 암기 테스트', desc: '용어와 뜻을 외웠는지 확인합니다.' },
-                  { kind: 'MULTIPLE_CHOICE', title: '문제 풀이 (객관식·단답형)', desc: '문항마다 정해진 형식으로 출제됩니다.' },
-                ] as const).map(opt => {
-                  const count = quizKindCounts[opt.kind];
-                  const selected = quizKind === opt.kind;
-                  return (
-                    <button
-                      key={opt.kind}
-                      type="button"
-                      disabled={count === 0}
-                      onClick={() => handleSelectQuizKind(opt.kind)}
-                      style={{
-                        padding: '14px',
-                        borderRadius: '8px',
-                        border: selected ? '2px solid var(--primary)' : '1px solid var(--border)',
-                        backgroundColor: selected ? '#EFF6FF' : '#FFFFFF',
-                        color: selected ? 'var(--primary)' : 'var(--text)',
-                        fontWeight: 700,
-                        textAlign: 'left',
-                        cursor: count === 0 ? 'not-allowed' : 'pointer',
-                        opacity: count === 0 ? 0.5 : 1,
-                      }}
-                    >
-                      <div style={{ fontSize: '0.9375rem', marginBottom: '4px' }}>
-                        {opt.title} <span style={{ fontSize: '0.78rem', fontWeight: 600 }}>({count}개)</span>
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--sub-text)', fontWeight: 400 }}>{opt.desc}</div>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
+      {inShell && activeTab === 'my_history' && (
+        <RecordView
+          attempts={myAttempts}
+          loading={loadingHistory}
+          subject={studySubject}
+          kind={quizKind}
+          quiz={studyCategory}
+          terms={termsList}
+          onReview={a => setSelectedHistoryAttempt(a)}
+          onRetry={handleReAttemptQuiz}
+          onRetryWrong={wrong => { setQuizFormat('single'); handleStartQuiz(wrong); }}
+        />
+      )}
 
-            {/* 2. Subject */}
-            <div>
-              <label style={{ fontSize: '0.875rem', fontWeight: 700, display: 'block', marginBottom: '8px' }}>
-                2. 과목 선택
-              </label>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                {quizSubjects.map(subj => {
-                  const subjCount = termsList.filter(t => t.subject === subj && matchesContentType(t, quizKind)).length;
-                  return (
-                    <button
-                      key={subj}
-                      type="button"
-                      onClick={() => {
-                        setQuizSubject(subj);
-                        setQuizCategory('all');
-                      }}
-                      className={quizSubject === subj ? 'btn-primary' : 'btn-outline'}
-                      style={{ fontSize: '0.875rem', padding: '8px 16px', display: 'inline-flex', alignItems: 'center', gap: '6px' }}
-                    >
-                      <span>{subj}</span>
-                      <span style={{ fontSize: '0.72rem', padding: '2px 6px', borderRadius: '4px', backgroundColor: '#F1F5F9', color: '#475569', fontWeight: 700 }}>
-                        {subjCount}개
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* 2. Category */}
-            <div>
-              <label style={{ fontSize: '0.875rem', fontWeight: 700, display: 'block', marginBottom: '8px' }}>
-                3. 카테고리 선택
-              </label>
-              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                <button
-                  type="button"
-                  onClick={() => setQuizCategory('all')}
-                  className={quizCategory === 'all' ? 'btn-accent' : 'btn-outline'}
-                  style={{ fontSize: '0.84rem', padding: '6px 12px' }}
-                >
-                  전체 ({termsList.filter(t => t.subject === quizSubject && matchesContentType(t, quizKind)).length}개)
-                </button>
-                {quizCategories.map(cat => (
-                  <button
-                    key={cat}
-                    type="button"
-                    onClick={() => setQuizCategory(cat)}
-                    className={quizCategory === cat ? 'btn-accent' : 'btn-outline'}
-                    style={{ fontSize: '0.84rem', padding: '6px 12px' }}
-                  >
-                    {cat} ({termsList.filter(t => t.subject === quizSubject && t.category === cat && matchesContentType(t, quizKind)).length}개)
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Info Badge for Selected Category Type */}
-            <div style={{
-              padding: '10px 14px',
-              borderRadius: '8px',
-              fontSize: '0.84rem',
-              fontWeight: 600,
-              backgroundColor: '#F8FAFC',
-              border: '1px solid #E2E8F0',
-              color: '#334155',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px'
-            }}>
-              <span>
-                {isTargetExam
-                  ? `문제 ${selectedQuizTerms.length}개 · 객관식은 보기 중에서 고르고, 단답형은 직접 입력합니다.`
-                  : `용어 ${selectedQuizTerms.length}개 · 아래에서 풀이 방식을 고를 수 있습니다.`}
-              </span>
-            </div>
-
-            {/* 4. Quiz Type: 용어 테스트에서만 선택 (문제형은 문항별 형식대로 출제되므로 단계 자체를 숨김) */}
-            {!isTargetExam && (
-            <div>
-              <label style={{ fontSize: '0.875rem', fontWeight: 700, display: 'block', marginBottom: '8px' }}>
-                4. 문제 풀이 방식
-              </label>
-
-              <>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
-                  <button
-                    type="button"
-                    onClick={() => setQuizType('multiple_choice')}
-                    style={{
-                      padding: '14px',
-                      borderRadius: '8px',
-                      border: quizType === 'multiple_choice' ? '2px solid var(--primary)' : '1px solid var(--border)',
-                      backgroundColor: quizType === 'multiple_choice' ? '#EFF6FF' : '#FFFFFF',
-                      color: quizType === 'multiple_choice' ? 'var(--primary)' : 'var(--text)',
-                      fontWeight: 700,
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <div style={{ fontSize: '0.9375rem', marginBottom: '4px' }}>4지선다형 용어 퀴즈</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--sub-text)', fontWeight: 400 }}>
-                      용어 및 뜻 보기 4개 중 정답을 선택합니다.
-                    </div>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => setQuizType('def_to_term')}
-                    style={{
-                      padding: '14px',
-                      borderRadius: '8px',
-                      border: quizType === 'def_to_term' ? '2px solid var(--primary)' : '1px solid var(--border)',
-                      backgroundColor: quizType === 'def_to_term' ? '#EFF6FF' : '#FFFFFF',
-                      color: quizType === 'def_to_term' ? 'var(--primary)' : 'var(--text)',
-                      fontWeight: 700,
-                      textAlign: 'left',
-                      cursor: 'pointer',
-                    }}
-                  >
-                    <div style={{ fontSize: '0.9375rem', marginBottom: '4px' }}>주관식 단답형 퀴즈</div>
-                    <div style={{ fontSize: '0.75rem', color: 'var(--sub-text)', fontWeight: 400 }}>
-                      뜻/정의를 확인하고 알맞은 용어를 직접 입력합니다.
-                    </div>
-                  </button>
-                </div>
-              </>
-            </div>
-            )}
-
-            {/* Quiz Format */}
-            <div>
-              <label style={{ fontSize: '0.875rem', fontWeight: 700, display: 'block', marginBottom: '8px' }}>
-                {formatStepNo}. 진행 형태
-              </label>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '10px' }}>
-                <button
-                  type="button"
-                  onClick={() => setQuizFormat('single')}
-                  style={{
-                    padding: '12px 14px',
-                    borderRadius: '8px',
-                    border: quizFormat === 'single' ? '2px solid var(--primary)' : '1px solid var(--border)',
-                    backgroundColor: quizFormat === 'single' ? '#EFF6FF' : '#FFFFFF',
-                    color: quizFormat === 'single' ? 'var(--primary)' : 'var(--text)',
-                    fontWeight: 700,
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <div style={{ fontSize: '0.875rem', marginBottom: '2px' }}>한 문제씩 풀기</div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--sub-text)', fontWeight: 400 }}>
-                    문제마다 순차 채점 및 바로 진행
-                  </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setQuizFormat('worksheet')}
-                  style={{
-                    padding: '12px 14px',
-                    borderRadius: '8px',
-                    border: quizFormat === 'worksheet' ? '2px solid var(--primary)' : '1px solid var(--border)',
-                    backgroundColor: quizFormat === 'worksheet' ? '#EFF6FF' : '#FFFFFF',
-                    color: quizFormat === 'worksheet' ? 'var(--primary)' : 'var(--text)',
-                    fontWeight: 700,
-                    textAlign: 'left',
-                    cursor: 'pointer',
-                  }}
-                >
-                  <div style={{ fontSize: '0.875rem', marginBottom: '2px' }}>
-                    {isTargetExam ? '전체 모의고사 (시험지 모드)' : '전체 단어장 시험'}
-                  </div>
-                  <div style={{ fontSize: '0.75rem', color: 'var(--sub-text)', fontWeight: 400 }}>
-                    {isTargetExam ? '모든 문제 풀이 후 한번에 제출 및 채점' : '모든 용어 답안 작성 후 한번에 채점'}
-                  </div>
-                </button>
-              </div>
-            </div>
-
-            {/* 5. Order */}
-            <div>
-              <label style={{ fontSize: '0.875rem', fontWeight: 700, display: 'block', marginBottom: '8px' }}>
-                {formatStepNo + 1}. 출제 순서
-              </label>
-              <div style={{ display: 'flex', gap: '10px' }}>
-                <button
-                  type="button"
-                  onClick={() => setQuizOrder('shuffle')}
-                  className={quizOrder === 'shuffle' ? 'btn-primary' : 'btn-outline'}
-                  style={{ flex: 1, padding: '10px', fontSize: '0.875rem' }}
-                >
-                  무작위 셔플
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setQuizOrder('normal')}
-                  className={quizOrder === 'normal' ? 'btn-primary' : 'btn-outline'}
-                  style={{ flex: 1, padding: '10px', fontSize: '0.875rem' }}
-                >
-                  기본 순서
-                </button>
-              </div>
-            </div>
-
-            {/* 6. Question Count */}
-            <div>
-              <label style={{ fontSize: '0.875rem', fontWeight: 700, display: 'block', marginBottom: '8px' }}>
-                {formatStepNo + 2}. 문제 수
-              </label>
-              <div style={{ display: 'flex', gap: '8px' }}>
-                {[5, 10, 20, 'all'].map(cnt => (
-                  <button
-                    key={String(cnt)}
-                    type="button"
-                    onClick={() => setQuizCount(cnt as any)}
-                    className={quizCount === cnt ? 'btn-accent' : 'btn-outline'}
-                    style={{ flex: 1, padding: '10px 4px', fontSize: '0.84rem' }}
-                  >
-                    {cnt === 'all' ? '전체' : `${cnt}개`}
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Start Button */}
-            <button
-              onClick={() => handleStartQuiz()}
-              className="btn-accent"
-              style={{
-                width: '100%',
-                padding: '14px',
-                fontSize: '1.0625rem',
-                fontWeight: 800,
-                marginTop: '12px',
-                textAlign: 'center',
-              }}
-            >
-              테스트 시작
-            </button>
-          </div>
-        </div>
+      {showManager && (
+        <AdminManager
+          subject={studySubject}
+          grade={currentGrade}
+          quizzes={allQuizNames}
+          onClose={() => setShowManager(false)}
+          onDone={change => {
+            if (change.subject) {
+              setStudySubject(change.subject);
+              setQuizSubject(change.subject);
+            }
+            if (change.category) {
+              if (studyCategory === change.category.from) setStudyCategory(change.category.to);
+              if (quizCategory === change.category.from) setQuizCategory(change.category.to);
+            }
+            setShowManager(false);
+            router.refresh();
+          }}
+        />
       )}
 
       {/* VIEW 3: 퀴즈 풀이 (Quiz Play Mode - Single Question) */}
@@ -3333,94 +2400,6 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
         </div>
       )}
 
-      {/* VIEW 5: 내 학습기록 */}
-      {activeTab === 'my_history' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-          <div className="card" style={{ padding: '24px' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '4px' }}>
-              내 학습기록
-            </h2>
-            <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>
-              내가 완료한 테스트 및 학습 기록을 확인하고, 오답을 검토하거나 동일한 문제로 다시 테스트를 진행할 수 있습니다.
-            </p>
-          </div>
-
-          <div className="card" style={{ padding: '24px' }}>
-            {loadingHistory ? (
-              <p style={{ textAlign: 'center', padding: '30px', color: 'var(--sub-text)' }}>기록을 불러오는 중...</p>
-            ) : myAttempts.length > 0 ? (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {myAttempts.map(att => (
-                  <div
-                    key={att.id}
-                    style={{
-                      border: '1px solid var(--border)',
-                      borderRadius: '12px',
-                      padding: '20px',
-                      backgroundColor: '#FFFFFF',
-                      display: 'flex',
-                      justifyContent: 'space-between',
-                      alignItems: 'center',
-                      flexWrap: 'wrap',
-                      gap: '16px',
-                    }}
-                  >
-                    <div>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-                        <span style={{ fontWeight: 900, fontSize: '1.0625rem', color: 'var(--primary)' }}>
-                          {att.subject}
-                        </span>
-                        <span style={{ fontSize: '0.75rem', backgroundColor: '#F1F5F9', color: '#475569', padding: '2px 8px', borderRadius: '4px', fontWeight: 700 }}>
-                          {att.category || '전체'}
-                        </span>
-                      </div>
-                      <div style={{ fontSize: '0.8125rem', color: 'var(--sub-text)' }}>
-                        응시일: {new Date(att.createdAt).toLocaleString('ko-KR')} | 총 {att.totalQuestions}문항중 {att.correctCount}개 맞춤
-                      </div>
-                    </div>
-
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                      <div
-                        style={{
-                          fontSize: '1.25rem',
-                          fontWeight: 900,
-                          color: att.score >= 80 ? '#166534' : att.score >= 60 ? '#854D0E' : '#DC2626',
-                          backgroundColor: att.score >= 80 ? '#DCFCE7' : att.score >= 60 ? '#FEF9C3' : '#FEE2E2',
-                          padding: '6px 14px',
-                          borderRadius: '8px',
-                        }}
-                      >
-                        {att.score}점
-                      </div>
-
-                      <button
-                        onClick={() => setSelectedHistoryAttempt(att)}
-                        className="btn-outline"
-                        style={{ fontSize: '0.8125rem', padding: '8px 14px' }}
-                      >
-                        풀이 검토
-                      </button>
-
-                      <button
-                        onClick={() => handleReAttemptQuiz(att)}
-                        className="btn-primary"
-                        style={{ fontSize: '0.8125rem', padding: '8px 14px' }}
-                      >
-                        다시 풀기
-                      </button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <div style={{ textAlign: 'center', padding: '40px', color: 'var(--sub-text)' }}>
-                아직 학습 및 테스트 기록이 없습니다. [테스트 모드] 탭에서 테스트를 시작해보세요!
-              </div>
-            )}
-          </div>
-        </div>
-      )}
-
       {/* MY ATTEMPT DETAIL MODAL */}
       {selectedHistoryAttempt && (
         <div
@@ -3555,6 +2534,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                   <input
                     type="text"
                     required
+                    list="subject-names"
                     value={formSubject}
                     onChange={e => setFormSubject(e.target.value)}
                     placeholder="예: 성인간호학:인지조절"
@@ -3562,9 +2542,11 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                   />
                 </div>
                 <div>
-                  <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>카테고리</label>
+                  <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>퀴즈</label>
+                  <datalist id="quiz-names">{Array.from(new Set(termsList.filter(t => t.subject === formSubject.trim()).map(t => t.category).filter(Boolean) as string[])).map(c => <option key={c} value={c} />)}</datalist>
                   <input
                     type="text"
+                    list="quiz-names"
                     value={formCategory}
                     onChange={e => setFormCategory(e.target.value)}
                     placeholder="예: 5주차 퀴즈"
@@ -3572,6 +2554,16 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
                   />
                 </div>
               </div>
+
+              {formSubject.trim() && !subjectEntries.some(x => x.name === formSubject.trim()) && (
+                <div>
+                  <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>구분</label>
+                  <select value={formGrade} onChange={e => setFormGrade(e.target.value)} style={{ width: '100%' }}>
+                    {GRADES.map(g => <option key={g} value={g}>{g}</option>)}
+                  </select>
+                </div>
+              )}
+              <datalist id="subject-names">{subjectEntries.map(x => <option key={x.name} value={x.name} />)}</datalist>
 
               {/* Question / Term Title */}
               <div>
