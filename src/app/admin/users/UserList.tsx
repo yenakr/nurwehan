@@ -211,12 +211,12 @@ export default function UserList({ initialUsers, superAdmin = false }: { initial
             <div className="list">
               {groupedByGrade[grade].map(user => (
                 <div key={user.id} className="row">
-                  <div className="who">
-                    <div className="name">
-                      {user.name} <span className={`st ${user.approvalStatus.toLowerCase()}`}>{statusLabel(user.approvalStatus)}</span>
-                    </div>
-                    <div className="sub">{user.studentId}</div>
+                  <div className="top">
+                    <span className="name">{user.name}</span>
+                    <span className="sid">{user.studentId}</span>
+                    <span className={`st ${user.approvalStatus.toLowerCase()}`}>{statusLabel(user.approvalStatus)}</span>
                   </div>
+                  <div className="ctl">
                   {superAdmin && (
                     <select
                       value={user.role === 'STUDENT' || !user.role ? 'STUDENT' : 'ADMIN'}
@@ -246,11 +246,12 @@ export default function UserList({ initialUsers, superAdmin = false }: { initial
                     aria-label="학년"
                   >
                     <option value="">학년</option>
-                    <option value="1">1</option>
-                    <option value="2">2</option>
-                    <option value="3">3</option>
-                    <option value="4">4</option>
+                    <option value="1">1학년</option>
+                    <option value="2">2학년</option>
+                    <option value="3">3학년</option>
+                    <option value="4">4학년</option>
                   </select>
+                  </div>
                 </div>
               ))}
             </div>
@@ -268,17 +269,23 @@ export default function UserList({ initialUsers, superAdmin = false }: { initial
         .gtitle { font-size: 0.9375rem; font-weight: 800; color: #1e293b; margin: 8px 0 8px; }
         .gtitle span { color: var(--sub-text); font-weight: 600; margin-left: 4px; }
         .list { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
-        .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-top: 1px solid #f1f5f9; }
+        .row { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-top: 1px solid #f1f5f9; }
+        .row.pending { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; }
+        .top { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+        .top .name { white-space: nowrap; }
+        .top .sid { font-size: 0.8125rem; color: #94a3b8; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+        .top .st { align-self: center; flex: 0 0 auto; }
+        .ctl { display: flex; gap: 8px; }
+        .ctl select { flex: 1; min-width: 0; }
         .row:first-child { border-top: none; }
-        .who { min-width: 0; }
-        .name { font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 6px; }
+                .name { font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 6px; }
         .sub { font-size: 0.8125rem; color: #94a3b8; margin-top: 2px; word-break: break-all; }
         .st { font-size: 0.6875rem; font-weight: 800; padding: 2px 8px; border-radius: 999px; }
         .st.approved { background: #dcfce7; color: #15803d; }
         .st.pending { background: #fef9c3; color: #a16207; }
         .st.rejected { background: #fee2e2; color: #b91c1c; }
         .who { flex: 1; min-width: 0; }
-        .row select { padding: 7px 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 0.875rem; }
+        .row select { padding: 9px 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 0.875rem; }
         .btns { display: flex; gap: 8px; flex: 0 0 auto; }
         .btns button { padding: 9px 16px; border-radius: 9px; font-size: 0.875rem; font-weight: 800; cursor: pointer; border: 1px solid transparent; white-space: nowrap; }
         .btns .ok { background: var(--primary); color: #fff; }

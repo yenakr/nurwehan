@@ -76,227 +76,111 @@ export default function QuizStatsClient() {
     );
   }
 
+  const tone = (n: number) => (n >= 80 ? 'good' : n >= 60 ? 'mid' : 'low');
+  const fmt = (d: string, full = false) =>
+    new Date(d).toLocaleDateString('ko-KR', full
+      ? { year: '2-digit', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' }
+      : { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' });
+
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      {/* Top Banner Header */}
-      <div className="card" style={{ padding: '24px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
-          <div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '4px' }}>
-              📊 퀴즈 학습 현황 (관리자 전용)
-            </h1>
-            <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>
-              학생들의 퀴즈 응시 이력, 과목별 정답률 및 학년별 학습 상태를 한눈에 파악합니다.
-            </p>
-          </div>
-          <Link href="/admin" className="btn-outline" style={{ fontSize: '0.875rem' }}>
-            ← 관리자 메인으로
-          </Link>
-        </div>
+    <div className="qs">
+      <div className="top">
+        <h1>퀴즈 학습 현황</h1>
+        <Link href="/admin" className="back">← 관리자 메인</Link>
       </div>
 
-      {/* Summary Cards Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))', gap: '16px' }}>
-        <div className="card" style={{ padding: '20px', borderLeft: '5px solid var(--primary)' }}>
-          <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--sub-text)', marginBottom: '4px' }}>
-            총 퀴즈 풀이 수
-          </div>
-          <div style={{ fontSize: '2rem', fontWeight: 900, color: 'var(--primary)' }}>
-            {data.totalAttempts}회
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: '20px', borderLeft: '5px solid #10B981' }}>
-          <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--sub-text)', marginBottom: '4px' }}>
-            학습 참여 학생 수
-          </div>
-          <div style={{ fontSize: '2rem', fontWeight: 900, color: '#10B981' }}>
-            {data.activeStudentsCount}명
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: '20px', borderLeft: '5px solid #F59E0B' }}>
-          <div style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--sub-text)', marginBottom: '4px' }}>
-            전체 평균 정답률
-          </div>
-          <div style={{ fontSize: '2rem', fontWeight: 900, color: '#F59E0B' }}>
-            {data.overallAvgScore}%
-          </div>
-        </div>
+      <div className="stats">
+        <div><b>{data.totalAttempts}</b><span>총 풀이</span></div>
+        <div><b>{data.activeStudentsCount}</b><span>참여 학생</span></div>
+        <div><b>{data.overallAvgScore}<i>%</i></b><span>평균 정답률</span></div>
       </div>
 
-      {/* Tabs */}
-      <div className="card" style={{ padding: '24px' }}>
-        <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--border)', paddingBottom: '12px', marginBottom: '20px' }}>
-          <button
-            onClick={() => setActiveTab('students')}
-            className={activeTab === 'students' ? 'btn-primary' : 'btn-outline'}
-            style={{ fontSize: '0.875rem', fontWeight: 700 }}
-          >
-            👨‍🎓 학생별 응시 현황 ({data.studentStats.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('subjects')}
-            className={activeTab === 'subjects' ? 'btn-primary' : 'btn-outline'}
-            style={{ fontSize: '0.875rem', fontWeight: 700 }}
-          >
-            📚 과목별 정답률 ({data.subjectStats.length})
-          </button>
-          <button
-            onClick={() => setActiveTab('recent')}
-            className={activeTab === 'recent' ? 'btn-primary' : 'btn-outline'}
-            style={{ fontSize: '0.875rem', fontWeight: 700 }}
-          >
-            ⏱️ 최근 응시 기록 ({data.recentAttempts.length})
-          </button>
-        </div>
+      <div className="seg" role="tablist">
+        <button className={activeTab === 'students' ? 'on' : ''} onClick={() => setActiveTab('students')}>학생별</button>
+        <button className={activeTab === 'subjects' ? 'on' : ''} onClick={() => setActiveTab('subjects')}>과목별</button>
+        <button className={activeTab === 'recent' ? 'on' : ''} onClick={() => setActiveTab('recent')}>최근 기록</button>
+      </div>
 
-        {/* Tab 1: Student Stats */}
+      <div className="list">
         {activeTab === 'students' && (
-          <div className="table-container">
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '2px solid var(--border)', textAlign: 'left' }}>
-                  <th style={{ padding: '12px', fontSize: '0.8125rem' }}>학생 정보</th>
-                  <th style={{ padding: '12px', fontSize: '0.8125rem' }}>학년</th>
-                  <th style={{ padding: '12px', fontSize: '0.8125rem' }}>총 응시 횟수</th>
-                  <th style={{ padding: '12px', fontSize: '0.8125rem' }}>평균 점수</th>
-                  <th style={{ padding: '12px', fontSize: '0.8125rem' }}>최근 응시일</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.studentStats.map((st, idx) => (
-                  <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
-                    <td style={{ padding: '12px' }}>
-                      <div style={{ fontWeight: 800, color: 'var(--text)' }}>{st.name}</div>
-                      <div style={{ fontSize: '0.78rem', color: 'var(--sub-text)' }}>{st.studentId}</div>
-                    </td>
-                    <td style={{ padding: '12px', fontSize: '0.875rem' }}>{st.grade ? `${st.grade}학년` : '-'}</td>
-                    <td style={{ padding: '12px', fontWeight: 700, color: 'var(--primary)' }}>{st.attemptsCount}회</td>
-                    <td style={{ padding: '12px' }}>
-                      <span
-                        style={{
-                          fontWeight: 800,
-                          padding: '4px 8px',
-                          borderRadius: '6px',
-                          fontSize: '0.8125rem',
-                          backgroundColor: st.avgScore >= 80 ? '#DCFCE7' : st.avgScore >= 60 ? '#FEF9C3' : '#FEE2E2',
-                          color: st.avgScore >= 80 ? '#166534' : st.avgScore >= 60 ? '#854D0E' : '#991B1B',
-                        }}
-                      >
-                        {st.avgScore}%
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px', fontSize: '0.8125rem', color: 'var(--sub-text)' }}>
-                      {new Date(st.lastAttemptAt).toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                    </td>
-                  </tr>
-                ))}
-                {data.studentStats.length === 0 && (
-                  <tr>
-                    <td colSpan={5} style={{ padding: '32px', textAlign: 'center', color: 'var(--sub-text)' }}>
-                      아직 퀴즈를 응시한 학생이 없습니다.
-                    </td>
-                  </tr>
-                )}
-              </tbody>
-            </table>
-          </div>
+          <>
+            {data.studentStats.map((st, idx) => (
+              <div key={idx} className="row">
+                <div className="main">
+                  <div className="nm">{st.name} <span>{st.studentId}</span></div>
+                  <div className="sub">{st.grade ? `${st.grade}학년 · ` : ''}{st.attemptsCount}회 · 최근 {fmt(st.lastAttemptAt)}</div>
+                </div>
+                <span className={`pill ${tone(st.avgScore)}`}>{st.avgScore}%</span>
+              </div>
+            ))}
+            {data.studentStats.length === 0 && <div className="empty">아직 응시한 학생이 없어요.</div>}
+          </>
         )}
 
-        {/* Tab 2: Subject Stats */}
         {activeTab === 'subjects' && (
-          <div className="table-container">
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '2px solid var(--border)', textAlign: 'left' }}>
-                  <th style={{ padding: '12px', fontSize: '0.8125rem' }}>과목명</th>
-                  <th style={{ padding: '12px', fontSize: '0.8125rem' }}>총 응시 횟수</th>
-                  <th style={{ padding: '12px', fontSize: '0.8125rem' }}>평균 정답률</th>
-                  <th style={{ padding: '12px', fontSize: '0.8125rem' }}>난이도 평가</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.subjectStats.map((sub, idx) => (
-                  <tr key={idx} style={{ borderBottom: '1px solid var(--border)' }}>
-                    <td style={{ padding: '12px', fontWeight: 800, color: 'var(--primary)' }}>{sub.subject}</td>
-                    <td style={{ padding: '12px', fontWeight: 700 }}>{sub.count}회</td>
-                    <td style={{ padding: '12px' }}>
-                      <span
-                        style={{
-                          fontWeight: 800,
-                          padding: '4px 8px',
-                          borderRadius: '6px',
-                          fontSize: '0.8125rem',
-                          backgroundColor: sub.avgScore >= 80 ? '#DCFCE7' : sub.avgScore >= 60 ? '#FEF9C3' : '#FEE2E2',
-                          color: sub.avgScore >= 80 ? '#166534' : sub.avgScore >= 60 ? '#854D0E' : '#991B1B',
-                        }}
-                      >
-                        {sub.avgScore}%
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px', fontSize: '0.84rem' }}>
-                      {sub.avgScore >= 80 ? '🟢 쉬움 / 양호' : sub.avgScore >= 60 ? '🟡 보통' : '🔴 정답률 낮음 (보충 학습 권장)'}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            {data.subjectStats.map((sub, idx) => (
+              <div key={idx} className="row">
+                <div className="main">
+                  <div className="nm">{sub.subject}</div>
+                  <div className="bar"><i className={tone(sub.avgScore)} style={{ width: `${Math.min(100, sub.avgScore)}%` }} /></div>
+                  <div className="sub">{sub.count}회 응시</div>
+                </div>
+                <span className={`pill ${tone(sub.avgScore)}`}>{sub.avgScore}%</span>
+              </div>
+            ))}
+            {data.subjectStats.length === 0 && <div className="empty">데이터가 없어요.</div>}
+          </>
         )}
 
-        {/* Tab 3: Recent Attempts */}
         {activeTab === 'recent' && (
-          <div className="table-container">
-            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ backgroundColor: '#F8FAFC', borderBottom: '2px solid var(--border)', textAlign: 'left' }}>
-                  <th style={{ padding: '12px', fontSize: '0.8125rem' }}>응시 일시</th>
-                  <th style={{ padding: '12px', fontSize: '0.8125rem' }}>학생 정보</th>
-                  <th style={{ padding: '12px', fontSize: '0.8125rem' }}>과목 / 카테고리</th>
-                  <th style={{ padding: '12px', fontSize: '0.8125rem' }}>점수 (맞은 개수)</th>
-                  <th style={{ padding: '12px', fontSize: '0.8125rem' }}>상세 보기</th>
-                </tr>
-              </thead>
-              <tbody>
-                {data.recentAttempts.map(att => (
-                  <tr key={att.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                    <td style={{ padding: '12px', fontSize: '0.8125rem', color: 'var(--sub-text)' }}>
-                      {new Date(att.createdAt).toLocaleDateString('ko-KR', { month: '2-digit', day: '2-digit', hour: '2-digit', minute: '2-digit' })}
-                    </td>
-                    <td style={{ padding: '12px' }}>
-                      <span style={{ fontWeight: 800 }}>{att.user.name}</span>{' '}
-                      <span style={{ fontSize: '0.78rem', color: 'var(--sub-text)' }}>({att.user.studentId})</span>
-                    </td>
-                    <td style={{ padding: '12px', fontSize: '0.875rem' }}>
-                      <div style={{ fontWeight: 700 }}>{att.subject}</div>
-                      <div style={{ fontSize: '0.75rem', color: 'var(--sub-text)' }}>{att.category}</div>
-                    </td>
-                    <td style={{ padding: '12px' }}>
-                      <span style={{ fontWeight: 800, color: att.score >= 80 ? '#166534' : '#DC2626' }}>
-                        {att.score}점 ({att.correctCount}/{att.totalQuestions})
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px' }}>
-                      {att.details ? (
-                        <button
-                          onClick={() => setSelectedAttempt(att)}
-                          className="btn-outline"
-                          style={{ padding: '4px 10px', fontSize: '0.75rem' }}
-                        >
-                          오답/상세
-                        </button>
-                      ) : (
-                        <span style={{ fontSize: '0.75rem', color: 'var(--sub-text)' }}>상세없음</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+          <>
+            {data.recentAttempts.map(att => (
+              <div key={att.id} className="row">
+                <div className="main">
+                  <div className="nm">{att.user.name} <span>{att.subject}{att.category ? ` · ${att.category}` : ''}</span></div>
+                  <div className="sub">{fmt(att.createdAt)} · {att.correctCount}/{att.totalQuestions}</div>
+                </div>
+                <span className={`pill ${tone(att.score)}`}>{att.score}점</span>
+                {att.details && (
+                  <button className="more" onClick={() => setSelectedAttempt(att)}>상세</button>
+                )}
+              </div>
+            ))}
+            {data.recentAttempts.length === 0 && <div className="empty">기록이 없어요.</div>}
+          </>
         )}
       </div>
+
+      <style jsx>{`
+        .qs { display: flex; flex-direction: column; gap: 14px; max-width: 760px; margin: 0 auto; }
+        .top { display: flex; align-items: center; justify-content: space-between; gap: 12px; }
+        .top h1 { font-size: 1.375rem; font-weight: 800; color: var(--text); margin: 0; }
+        .back { font-size: 0.875rem; font-weight: 700; color: var(--sub-text); white-space: nowrap; }
+        .stats { display: grid; grid-template-columns: repeat(3, 1fr); background: var(--background); border: 1px solid var(--border); border-radius: 14px; }
+        .stats > div { padding: 14px 8px; text-align: center; display: flex; flex-direction: column; gap: 2px; }
+        .stats > div + div { border-left: 1px solid var(--border); }
+        .stats b { font-size: 1.5rem; font-weight: 800; color: var(--primary); line-height: 1.2; }
+        .stats b i { font-size: 0.9rem; font-style: normal; margin-left: 1px; }
+        .stats span { font-size: 0.75rem; font-weight: 600; color: var(--sub-text); }
+        .seg { display: flex; background: #f1f5f9; padding: 4px; border-radius: 12px; }
+        .seg button { flex: 1; padding: 9px 0; border: none; background: transparent; border-radius: 9px; font-size: 0.9375rem; font-weight: 700; color: #64748b; cursor: pointer; white-space: nowrap; }
+        .seg button.on { background: #fff; color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+        .list { background: var(--background); border: 1px solid var(--border); border-radius: 14px; overflow: hidden; }
+        .row { display: flex; align-items: center; gap: 10px; padding: 13px 14px; border-top: 1px solid #f1f5f9; }
+        .row:first-child { border-top: none; }
+        .main { flex: 1; min-width: 0; }
+        .nm { font-weight: 800; color: var(--text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .nm span { font-size: 0.8125rem; font-weight: 500; color: #94a3b8; margin-left: 4px; }
+        .sub { font-size: 0.8125rem; color: #94a3b8; margin-top: 2px; }
+        .bar { height: 6px; background: #f1f5f9; border-radius: 999px; margin-top: 7px; overflow: hidden; }
+        .bar i { display: block; height: 100%; border-radius: 999px; }
+        .bar i.good { background: #22c55e; } .bar i.mid { background: #eab308; } .bar i.low { background: #ef4444; }
+        .pill { font-size: 0.875rem; font-weight: 800; padding: 4px 10px; border-radius: 999px; flex: 0 0 auto; }
+        .pill.good { background: #dcfce7; color: #166534; } .pill.mid { background: #fef9c3; color: #854d0e; } .pill.low { background: #fee2e2; color: #991b1b; }
+        .more { border: 1px solid var(--border); background: transparent; color: var(--sub-text); border-radius: 8px; padding: 5px 10px; font-size: 0.8125rem; font-weight: 700; cursor: pointer; flex: 0 0 auto; }
+        .empty { text-align: center; color: #94a3b8; padding: 40px 12px; }
+      `}</style>
 
       {/* Detail Modal */}
       {selectedAttempt && (
@@ -315,10 +199,10 @@ export default function QuizStatsClient() {
           <div className="card" style={{ maxWidth: '650px', width: '100%', maxHeight: '80vh', overflowY: 'auto', padding: '28px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
               <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)' }}>
-                📝 풀이 상세 결과: {selectedAttempt.user.name} ({selectedAttempt.subject})
+                풀이 상세: {selectedAttempt.user.name} ({selectedAttempt.subject})
               </h3>
               <button onClick={() => setSelectedAttempt(null)} className="btn-outline" style={{ padding: '4px 10px' }}>
-                닫기 ✕
+                닫기
               </button>
             </div>
 
