@@ -8,7 +8,8 @@ export default async function QuizPage() {
   const user = await getCurrentUser();
 
   const terms = await prisma.nursingTerm.findMany({
-    orderBy: [{ subject: 'asc' }, { category: 'asc' }, { term: 'asc' }],
+    // 입력한 순서(createdAt)를 우선한다. 같은 시각에 한꺼번에 들어간 기존 데이터는 예전처럼 퀴즈·용어순.
+    orderBy: [{ subject: 'asc' }, { createdAt: 'asc' }, { category: 'asc' }, { term: 'asc' }],
   });
 
   return (
