@@ -1930,13 +1930,13 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
       {activeTab === 'quiz_play' && quizFormat === 'single' && currentQuestion && (
         <div className="card" style={{ maxWidth: '720px', margin: '0 auto', width: '100%', padding: '28px' }}>
           {/* Progress Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '12px', marginBottom: '4px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '12px', marginBottom: '10px' }}>
             <span style={{ fontSize: '1.0625rem', fontWeight: 800, color: 'var(--primary)', whiteSpace: 'nowrap' }}>
               {currentIndex + 1} / {quizQuestions.length}
             </span>
-          </div>
-          <div style={{ fontSize: '0.8125rem', color: 'var(--sub-text)', marginBottom: '12px' }}>
-            {currentQuestion.subject}{currentQuestion.category && currentQuestion.category !== 'all' ? ` · ${currentQuestion.category}` : ''}
+            <span style={{ fontSize: '0.8125rem', color: 'var(--sub-text)', textAlign: 'right' }}>
+              {currentQuestion.subject}{currentQuestion.category && currentQuestion.category !== 'all' ? ` · ${currentQuestion.category}` : ''}
+            </span>
           </div>
 
           {/* Progress Bar */}
@@ -1959,7 +1959,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
             const subText = showTermAsQuestion && quizType !== 'abbr_both' ? currentQuestion.englishTerm : null;
 
             return (
-              <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', padding: '24px', borderRadius: '10px', marginBottom: '24px' }}>
+              <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', padding: '16px 18px', borderRadius: '10px', marginBottom: '20px' }}>
                 <h3 style={{ fontSize: '1.125rem', fontWeight: 800, color: '#1E293B', lineHeight: 1.6, margin: 0 }}>
                   {promptText}
                 </h3>
@@ -2059,7 +2059,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                       className="btn-primary"
                       style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
                     >
-                      제출 및 정답 확인
+                      다음
                     </button>
                   ) : (
                     <button
@@ -2068,7 +2068,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                       className="btn-accent"
                       style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
                     >
-                      {currentIndex + 1 < quizQuestions.length ? '다음 문제 →' : '퀴즈 결과 보기'}
+                      {currentIndex + 1 < quizQuestions.length ? '다음' : '퀴즈 결과 보기'}
                     </button>
                   )}
                 </div>
@@ -2160,7 +2160,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                     className="btn-accent"
                     style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
                   >
-                    {currentIndex + 1 < quizQuestions.length ? '다음 문제 →' : '퀴즈 결과 보기'}
+                    {currentIndex + 1 < quizQuestions.length ? '다음' : '퀴즈 결과 보기'}
                   </button>
                 </div>
               )}
@@ -2188,18 +2188,11 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
 
               {/* Hint Section */}
               {!isAnswerSubmitted && (
-                <div>
-                  <button
-                    type="button"
-                    onClick={() => setShowHint(!showHint)}
-                    style={{ background: 'none', border: 'none', color: 'var(--sub-text)', fontSize: '0.8125rem', cursor: 'pointer', textDecoration: 'underline', padding: 0 }}
-                  >
-                    {showHint ? '힌트 닫기' : '힌트 보기'}
-                  </button>
-                  {showHint && (
-                    <div style={{ fontSize: '0.8125rem', color: '#059669', backgroundColor: '#ECFDF5', padding: '8px 12px', borderRadius: '6px', marginTop: '6px', border: '1px solid #A7F3D0' }}>
-                      <strong>힌트:</strong> 첫 글자: [{(currentQuestion.answer || currentQuestion.term)[0]}]{currentQuestion.englishTerm ? ` / 영문: ${currentQuestion.englishTerm}` : ''}
-                    </div>
+                <div style={{ textAlign: 'center' }}>
+                  {showHint ? (
+                    <span className={s.hintChip}>첫글자: {(currentQuestion.answer || currentQuestion.term)[0]}</span>
+                  ) : (
+                    <button type="button" onClick={() => setShowHint(true)} className={s.hintBtn}>힌트</button>
                   )}
                 </div>
               )}
@@ -2255,7 +2248,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                     className="btn-primary"
                     style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
                   >
-                    제출 및 정답 확인
+                    다음
                   </button>
                 ) : (
                   <button
@@ -2264,7 +2257,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                     className="btn-accent"
                     style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
                   >
-                    {currentIndex + 1 < quizQuestions.length ? '다음 문제 →' : '퀴즈 결과 보기'}
+                    {currentIndex + 1 < quizQuestions.length ? '다음' : '퀴즈 결과 보기'}
                   </button>
                 )}
               </div>
