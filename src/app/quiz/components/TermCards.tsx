@@ -16,7 +16,7 @@ function isCorrectOption(opt: string, answer?: string | null, definition?: strin
 }
 
 // 풀네임에서 각 단어의 첫 글자를 굵게 (약어 풀이를 한눈에 보도록)
-function boldInitials(text: string) {
+export function boldInitials(text: string) {
   return text.split(/(\s+|-)/).map((part, i) =>
     /^(\s+|-)$/.test(part) || !part ? (
       part
@@ -38,6 +38,8 @@ export default function TermCards({
   onMove,
   onEdit,
   onDelete,
+  favorites,
+  onToggleFav,
 }: {
   terms: NursingTerm[];
   hideDefinition: boolean;
@@ -47,6 +49,8 @@ export default function TermCards({
   onMove: (idx: number, dir: 'up' | 'down') => void;
   onEdit: (t: NursingTerm) => void;
   onDelete: (t: NursingTerm) => void;
+  favorites?: Set<string>;
+  onToggleFav?: (id: string) => void;
 }) {
   if (terms.length === 0) return <div className={s.empty}>표시할 항목이 없습니다.</div>;
 
@@ -60,6 +64,17 @@ export default function TermCards({
           <article key={t.id} className={s.card}>
             <div className={s.cardHead}>
               <span className={s.cardTerm}>{t.term}</span>
+              {onToggleFav && (
+                <button
+                  type="button"
+                  className={`${s.star} ${favorites?.has(t.id) ? s.starOn : ''}`}
+                  aria-label={favorites?.has(t.id) ? '즐겨찾기 해제' : '즐겨찾기'}
+                  aria-pressed={!!favorites?.has(t.id)}
+                  onClick={() => onToggleFav(t.id)}
+                >
+                  {favorites?.has(t.id) ? '★' : '☆'}
+                </button>
+              )}
               {en && <span className={s.cardEn} style={hidden ? { visibility: 'hidden' } : undefined} aria-hidden={hidden}>{boldInitials(en)}</span>}
             </div>
             <div className={s.maskWrap}>

@@ -8,7 +8,7 @@ import HubView from './components/HubView';
 import ContextBar from './components/ContextBar';
 import TestSetup from './components/TestSetup';
 import RecordView from './components/RecordView';
-import TermCards from './components/TermCards';
+import TermCards, { boldInitials } from './components/TermCards';
 import AdminManager from './components/AdminManager';
 import { Segmented, Icon, ICON_SEARCH, ICON_VOLUME, ICON_VOLUME_OFF } from './components/ui';
 import { isExamItem } from '@/lib/quiz/taxonomy';
@@ -98,6 +98,9 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
   const [termsList, setTermsList] = useState<NursingTerm[]>(initialTerms);
   const [view, setView] = useState<'hub' | 'subject'>('hub');
   const [showManager, setShowManager] = useState(false);
+  const [favIds, setFavIds] = useState<Set<string>>(new Set());
+  const [favOnly, setFavOnly] = useState(false);
+  const [quizFavOnly, setQuizFavOnly] = useState(false);
   const [levels, setLevels] = useState<Record<string, string>>(subjectLevels ?? {});
   const [formGrade, setFormGrade] = useState<string>(DEFAULT_GRADE);
 
@@ -337,19 +340,51 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
           !!t.englishTerm?.trim() &&
           !!t.definition?.trim() &&
           (quizSubject === 'all' || t.subject === quizSubject) &&
-          (quizCategory === 'all' || t.category === quizCategory)
+          (quizCategory === 'all' || t.category === quizCategory) &&
+          (!quizFavOnly || favIds.has(t.id))
       ).length,
-    [termsList, quizKind, quizSubject, quizCategory]
+    [termsList, quizKind, quizSubject, quizCategory, quizFavOnly, favIds]
   );
+
+  useEffect(() => {
+    if (!user) return;
+    fetch('/api/quiz/favorites')
+      .then(r => r.json())
+      .then(d => { if (Array.isArray(d.ids)) setFavIds(new Set<string>(d.ids)); })
+      .catch(() => {});
+  }, [user]);
+
+  const toggleFav = (id: string) => {
+    const on = !favIds.has(id);
+    setFavIds(prev => {
+      const next = new Set(prev);
+      if (on) next.add(id); else next.delete(id);
+      return next;
+    });
+    fetch('/api/quiz/favorites', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ termId: id, on }),
+    })
+      .then(r => { if (!r.ok) throw new Error('fail'); })
+      .catch(() => {
+        setFavIds(prev => {
+          const next = new Set(prev);
+          if (on) next.delete(id); else next.add(id);
+          return next;
+        });
+      });
+  };
 
   const selectedQuizTerms = useMemo(() => {
     return termsList.filter(t => {
       if (!matchesContentType(t, quizKind)) return false;
       if (quizSubject !== 'all' && t.subject !== quizSubject) return false;
       if (quizCategory !== 'all' && t.category !== quizCategory) return false;
+      if (quizFavOnly && !favIds.has(t.id)) return false;
       return true;
     });
-  }, [termsList, quizSubject, quizCategory, quizKind]);
+  }, [termsList, quizSubject, quizCategory, quizKind, quizFavOnly, favIds]);
 
   const isTargetExam = quizKind === 'MULTIPLE_CHOICE';
   // 문제형 테스트는 '풀이 방식' 단계가 없어서 이후 단계 번호가 하나씩 당겨진다
@@ -523,6 +558,8 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
         if (hasTermItemsInSubj && itemType === 'MULTIPLE_CHOICE') return false;
       }
 
+      if (favOnly && !favIds.has(t.id)) return false;
+
       if (searchTerm.trim()) {
         const q = searchTerm.toLowerCase().trim();
         const termMatch = t.term.toLowerCase().includes(q);
@@ -532,7 +569,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
       }
       return true;
     });
-  }, [termsList, studySubject, studyCategory, contentTypeFilter, studyViewMode, searchTerm]);
+  }, [termsList, studySubject, studyCategory, contentTypeFilter, studyViewMode, searchTerm, favOnly, favIds]);
 
   // Reset Flashcard & Typing Indices when filteredStudyTerms change
   useEffect(() => {
@@ -653,6 +690,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
       if (!matchesContentType(t, quizKind)) return false;
       if (quizSubject !== 'all' && t.subject !== quizSubject) return false;
       if (quizCategory !== 'all' && t.category !== quizCategory) return false;
+      if (quizFavOnly && !favIds.has(t.id)) return false;
       return true;
     });
 
@@ -1449,6 +1487,16 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                   국문
                 </button>
               )}
+              {user && (favIds.size > 0 || favOnly) && (
+                <button
+                  type="button"
+                  aria-pressed={favOnly}
+                  className={`${s.favToggle} ${favOnly ? s.favToggleOn : ''}`}
+                  onClick={() => setFavOnly(v => !v)}
+                >
+                  ★ {favIds.size}
+                </button>
+              )}
               <div className={s.ttsGroup}>
                 <button
                   type="button"
@@ -1483,64 +1531,41 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
             <div style={{ maxWidth: '640px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {filteredStudyTerms.length > 0 ? (
                 <>
-                  {/* Progress Header */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--sub-text)' }}>
-                      카드 {flashcardIndex + 1} / {filteredStudyTerms.length}
-                    </span>
-                    <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap' }}>
+                  <div className={s.fcHead}>
+                    <span className={s.fcCount}>{flashcardIndex + 1} / {filteredStudyTerms.length}</span>
+                    <div className={s.fcTools}>
                       <button
+                        type="button"
+                        aria-pressed={isAutoPlay}
+                        className={`${s.btn} ${s.btnSm} ${isAutoPlay ? s.btnPrimary : ''}`}
                         onClick={() => setIsAutoPlay(prev => !prev)}
-                        className="btn-outline"
-                        style={{
-                          fontSize: '0.78125rem',
-                          padding: '4px 10px',
-                          backgroundColor: isAutoPlay ? '#10B981' : '#FFFFFF',
-                          color: isAutoPlay ? '#FFFFFF' : '#0E4A84',
-                          borderColor: isAutoPlay ? '#10B981' : '#BFDBFE',
-                          fontWeight: 800,
-                          cursor: 'pointer',
-                        }}
                       >
                         {isAutoPlay ? '일시정지' : '자동재생'}
                       </button>
-
                       {isAutoPlay && (
                         <select
+                          aria-label="카드 전환 간격"
+                          className={s.ttsSelect}
+                          style={{ height: 32, border: '1px solid var(--q-border-strong)', borderRadius: 8 }}
                           value={autoPlayIntervalSec}
                           onChange={e => setAutoPlayIntervalSec(Number(e.target.value))}
-                          style={{
-                            fontSize: '0.78125rem',
-                            fontWeight: 700,
-                            padding: '4px 6px',
-                            borderRadius: '6px',
-                            border: '1px solid #10B981',
-                            backgroundColor: '#ECFDF5',
-                            color: '#065F46',
-                            cursor: 'pointer',
-                          }}
-                          title="카드 전환 간격"
                         >
-                          <option value={3}>3초</option>
-                          <option value={4}>4초</option>
-                          <option value={5}>5초</option>
-                          <option value={7}>7초</option>
-                          <option value={10}>10초</option>
+                          {[3, 4, 5, 7, 10].map(n => <option key={n} value={n}>{n}초</option>)}
                         </select>
                       )}
-
                       <button
+                        type="button"
+                        className={`${s.btn} ${s.btnSm}`}
                         onClick={() => {
                           setFlashcardDirection(prev => (prev === 'term_first' ? 'def_first' : 'term_first'));
                           setIsCardFlipped(false);
                         }}
-                        className="btn-outline"
-                        style={{ fontSize: '0.78125rem', padding: '4px 10px', color: '#0E4A84', borderColor: '#BFDBFE', backgroundColor: '#EFF6FF', fontWeight: 700 }}
-                        title="앞면/뒷면 표시 순서 변경"
                       >
                         {flashcardDirection === 'term_first' ? '약어 → 국문' : '국문 → 약어'}
                       </button>
                       <button
+                        type="button"
+                        className={`${s.btn} ${s.btnSm}`}
                         onClick={() => {
                           const shuffled = [...filteredStudyTerms].sort(() => Math.random() - 0.5);
                           const shuffleIds = new Set(shuffled.map(t => t.id));
@@ -1551,91 +1576,60 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                           setFlashcardIndex(0);
                           setIsCardFlipped(false);
                         }}
-                        className="btn-outline"
-                        style={{ fontSize: '0.78125rem', padding: '4px 10px' }}
                       >
-                        카드 섞기
+                        섞기
                       </button>
                     </div>
                   </div>
 
-                  {/* Progress Bar */}
-                  <div style={{ width: '100%', height: '6px', backgroundColor: '#E2E8F0', borderRadius: '3px', overflow: 'hidden' }}>
-                    <div
-                      style={{
-                        width: `${((flashcardIndex + 1) / filteredStudyTerms.length) * 100}%`,
-                        height: '100%',
-                        backgroundColor: 'var(--primary)',
-                        transition: 'width 0.3s ease',
-                      }}
-                    />
-                  </div>
+                  <div className={s.rsBar} aria-hidden="true"><div style={{ width: `${((flashcardIndex + 1) / filteredStudyTerms.length) * 100}%` }} /></div>
 
-                  {/* Big Flashcard Box */}
                   {(() => {
                     const currentCard = filteredStudyTerms[flashcardIndex];
                     if (!currentCard) return null;
 
-                    const showTerm = flashcardDirection === 'term_first' ? !isCardFlipped : isCardFlipped;
+                    const abbr = currentCard.answer || currentCard.term;
+                    const full = currentCard.englishTerm?.trim();
+                    const frontIsAbbr = flashcardDirection === 'term_first';
+                    const hasOptions = !!currentCard.options && currentCard.options.length > 0;
 
                     return (
                       <div
+                        role="button"
+                        tabIndex={0}
+                        aria-label="카드 뒤집기"
+                        className={`${s.fcCard} ${isCardFlipped ? s.fcCardBack : ''}`}
                         onClick={() => setIsCardFlipped(!isCardFlipped)}
-                        style={{
-                          backgroundColor: isCardFlipped ? '#F0F9FF' : '#FFFFFF',
-                          border: `2px solid ${isCardFlipped ? '#38BDF8' : 'var(--primary)'}`,
-                          borderRadius: '16px',
-                          padding: '40px 28px',
-                          minHeight: '280px',
-                          display: 'flex',
-                          flexDirection: 'column',
-                          justifyContent: 'center',
-                          alignItems: 'center',
-                          textAlign: 'center',
-                          cursor: 'pointer',
-                          boxShadow: '0 8px 24px rgba(0,0,0,0.06)',
-                          transition: 'all 0.25s ease',
-                          position: 'relative',
-                        }}
                       >
-                        <div style={{ position: 'absolute', top: '16px', left: '16px', fontSize: '0.8125rem', fontWeight: 800, color: 'var(--primary)', backgroundColor: '#EFF6FF', padding: '2px 8px', borderRadius: '6px' }}>
-                          #{flashcardIndex + 1}
-                        </div>
-
-                        <div style={{ position: 'absolute', top: '16px', right: '16px', fontSize: '0.78125rem', fontWeight: 700, color: '#64748B', backgroundColor: '#F1F5F9', padding: '2px 8px', borderRadius: '6px' }}>
-                          {showTerm ? '약어' : '국문 / 해설'}
-                        </div>
-
-                        {showTerm ? (
-                          /* TERM SIDE OF CARD */
-                          <div>
-                            <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'center', flexWrap: 'wrap', gap: '10px', marginBottom: '8px' }}>
-                              <h2 style={{ fontSize: '1.625rem', fontWeight: 900, color: 'var(--primary)', margin: 0 }}>
-                                {currentCard.answer || currentCard.term}
-                              </h2>
-                              {currentCard.englishTerm && (
-                                <span style={{ fontSize: '1.05rem', fontWeight: 600, color: 'var(--sub-text)' }}>
-                                  {currentCard.englishTerm.trim().startsWith('(') ? currentCard.englishTerm : `(${currentCard.englishTerm})`}
-                                </span>
-                              )}
-                            </div>
-
-                            {currentCard.options && currentCard.options.length > 0 && (
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', justifyContent: 'center', marginTop: '16px' }}>
-                                {currentCard.options.map((opt, oIdx) => (
-                                  <span key={oIdx} style={{ fontSize: '0.8125rem', backgroundColor: '#F1F5F9', color: '#475569', padding: '4px 10px', borderRadius: '12px' }}>
-                                    ● {opt}
-                                  </span>
-                                ))}
-                              </div>
-                            )}
-                          </div>
+                        {user && (
+                          <button
+                            type="button"
+                            className={`${s.star} ${s.fcStar} ${favIds.has(currentCard.id) ? s.starOn : ''}`}
+                            aria-label={favIds.has(currentCard.id) ? '즐겨찾기 해제' : '즐겨찾기'}
+                            aria-pressed={favIds.has(currentCard.id)}
+                            onClick={e => { e.stopPropagation(); toggleFav(currentCard.id); }}
+                          >
+                            {favIds.has(currentCard.id) ? '★' : '☆'}
+                          </button>
+                        )}
+                        {!isCardFlipped ? (
+                          frontIsAbbr ? (
+                            <div className={s.fcAbbr}>{abbr}</div>
+                          ) : (
+                            <div className={s.fcMean}>{currentCard.definition}</div>
+                          )
                         ) : (
-                          /* DEFINITION SIDE OF CARD */
-                          <div>
-                            <p style={{ fontSize: '1.125rem', color: '#1E293B', fontWeight: 700, lineHeight: 1.6, margin: 0, maxWidth: '520px' }}>
-                              {currentCard.definition}
-                            </p>
+                          <>
+                            <div className={s.fcAbbr}>{abbr}</div>
+                            {full && <div className={s.fcFull}>{boldInitials(full)}</div>}
+                            <div className={s.fcMean}>{currentCard.definition}</div>
+                          </>
+                        )}
+                        {!isCardFlipped && frontIsAbbr && hasOptions && (
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, justifyContent: 'center', marginTop: 8 }}>
+                            {currentCard.options!.map((opt, oIdx) => (
+                              <span key={oIdx} className={s.option}>{opt}</span>
+                            ))}
                           </div>
                         )}
                       </div>
@@ -1668,13 +1662,13 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                       className="btn-primary"
                       style={{ flex: 1, padding: '12px', fontSize: '0.9375rem', fontWeight: 800 }}
                     >
-                      {!isCardFlipped ? '정답 확인' : '다음'}
+                      {!isCardFlipped ? '확인' : '다음'}
                     </button>
                   </div>
                 </>
               ) : (
                 <div className="card" style={{ padding: '40px', textAlign: 'center', color: 'var(--sub-text)' }}>
-                  해당 카테고리에 플래시 카드가 없습니다.
+                  카드가 없어요.
                 </div>
               )}
             </div>
@@ -1851,6 +1845,8 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
               onMove={handleMoveTerm}
               onEdit={handleOpenEditModal}
               onDelete={t => handleDeleteTerm(t.id, t.term)}
+              favorites={user ? favIds : undefined}
+              onToggleFav={user ? toggleFav : undefined}
             />
           )}
         </>
@@ -1862,6 +1858,9 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
           title={quizTitle}
           poolSize={quizType === 'abbr_both' ? bothCount : selectedQuizTerms.length}
           bothAvailable={bothCount > 0}
+          favCount={user ? favIds.size : 0}
+          favOnly={quizFavOnly}
+          onFavOnly={setQuizFavOnly}
           quizType={quizType}
           onQuizType={setQuizType}
           quizCount={quizCount}

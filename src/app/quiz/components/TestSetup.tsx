@@ -11,6 +11,9 @@ export default function TestSetup({
   title,
   poolSize,
   bothAvailable,
+  favCount,
+  favOnly,
+  onFavOnly,
   quizType,
   onQuizType,
   quizCount,
@@ -27,6 +30,9 @@ export default function TestSetup({
   title: string;
   poolSize: number;
   bothAvailable: boolean;
+  favCount: number;
+  favOnly: boolean;
+  onFavOnly: (v: boolean) => void;
   quizType: QuizType;
   onQuizType: (t: QuizType) => void;
   quizCount: number | 'all';
@@ -56,6 +62,22 @@ export default function TestSetup({
   return (
     <section aria-label="테스트 설정" className={`${s.panel} ${s.panelNarrow}`}>
       <h2 className={s.panelTitle}>{title}</h2>
+
+      {favCount > 0 && (
+        <div className={s.field}>
+          <div className={s.label}>범위</div>
+          <Segmented<'all' | 'fav'>
+            full
+            label="범위"
+            value={favOnly ? 'fav' : 'all'}
+            onChange={v => onFavOnly(v === 'fav')}
+            options={[
+              { value: 'all', label: '전체' },
+              { value: 'fav', label: `★ 즐겨찾기 ${favCount}` },
+            ]}
+          />
+        </div>
+      )}
 
       {kind === 'TERM' && (
         <div className={s.field}>

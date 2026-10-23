@@ -206,3 +206,20 @@
 
 .hintBtn { border: 0; background: transparent; padding: 4px 10px; font-size: 0.8125rem; color: var(--q-muted); text-decoration: underline; font-family: inherit; }
 .hintChip { display: inline-block; padding: 6px 14px; border-radius: 999px; background: var(--q-primary-soft); color: var(--q-primary); font-size: 0.8125rem; font-weight: 700; }
+
+.star { margin-left: auto; order: 2; border: 0; background: transparent; padding: 0 2px; font-size: 1.25rem; line-height: 1; color: var(--q-muted); font-family: inherit; }
+.starOn { color: #f59e0b; }
+.cardHead { position: relative; }
+.favToggle { height: 40px; padding: 0 12px; border: 1px solid var(--q-border-strong); border-radius: 8px; background: #fff; color: var(--q-text-2); font-size: 0.875rem; font-weight: 700; font-family: inherit; }
+.favToggleOn { background: #fffbeb; border-color: #f59e0b; color: #b45309; }
+
+.fcHead { display: flex; align-items: center; justify-content: space-between; gap: 8px; flex-wrap: wrap; }
+.fcCount { font-size: 0.9375rem; font-weight: 800; color: var(--q-primary); }
+.fcTools { display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.fcCard { position: relative; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 10px; min-height: 240px; padding: 32px 24px; text-align: center; background: var(--q-surface); border: 1px solid var(--q-border-strong); border-radius: 16px; cursor: pointer; user-select: none; }
+.fcCardBack { background: var(--q-primary-soft); border-color: var(--q-primary); }
+.fcStar { position: absolute; top: 12px; right: 14px; margin: 0; font-size: 1.5rem; }
+.fcAbbr { font-size: 1.875rem; font-weight: 900; color: var(--q-primary); line-height: 1.2; word-break: break-word; }
+.fcFull { font-size: 1rem; color: var(--q-text-2); }
+.fcFull b { font-weight: 800; color: var(--q-text); }
+.fcMean { font-size: 1.125rem; font-weight: 700; color: var(--q-text); line-height: 1.6; max-width: 520px; }
