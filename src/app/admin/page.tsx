@@ -42,11 +42,9 @@ export default async function AdminPage() {
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '40px 0' }}>
       <div className="container">
-        <div style={{ marginBottom: '32px' }}>
-          <h1 style={{ fontSize: '1.75rem', fontWeight: '800', color: 'var(--text)' }}>
-            관리자 대시보드
-          </h1>
-        </div>
+        <h1 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text)', marginBottom: '20px' }}>
+          관리자
+        </h1>
 
         <AdminDashboardClient 
           initialUsers={[]}
