@@ -176,7 +176,7 @@ export default function QuizClient({ initialTerms, user, initialSubject }: QuizC
   // Quiz Setup States
   const [quizSubject, setQuizSubject] = useState<string>('');
   const [quizCategory, setQuizCategory] = useState<string>('all');
-  const [quizType, setQuizType] = useState<'def_to_term' | 'term_to_def' | 'multiple_choice'>('def_to_term');
+  const [quizType, setQuizType] = useState<'def_to_term' | 'term_to_def' | 'multiple_choice' | 'abbr_both'>('def_to_term');
   // 테스트에 쓸 문제 유형: 용어 암기 / 문제형(객관식·단답형). 둘을 한 테스트에 섞지 않는다.
   const [quizKind, setQuizKind] = useState<'TERM' | 'MULTIPLE_CHOICE'>('TERM');
   const [quizOrder, setQuizOrder] = useState<'shuffle' | 'normal'>('shuffle');
@@ -189,6 +189,8 @@ export default function QuizClient({ initialTerms, user, initialSubject }: QuizC
   const [quizQuestions, setQuizQuestions] = useState<NursingTerm[]>([]);
   const [currentIndex, setCurrentIndex] = useState<number>(0);
   const [userAnswer, setUserAnswer] = useState<string>('');
+  const [userAnswer2, setUserAnswer2] = useState<string>('');
+  const answerInput2Ref = useRef<HTMLInputElement | null>(null);
   const [selectedChoiceIndex, setSelectedChoiceIndex] = useState<number | null>(null);
   const [showHint, setShowHint] = useState<boolean>(false);
   const [isAnswerSubmitted, setIsAnswerSubmitted] = useState<boolean>(false);
@@ -302,6 +304,21 @@ export default function QuizClient({ initialTerms, user, initialSubject }: QuizC
     const targetSubjectTerms = termsList.filter(t => t.subject === quizSubject && matchesContentType(t, quizKind));
     return Array.from(new Set(targetSubjectTerms.map(t => t.category).filter(Boolean) as string[]));
   }, [termsList, quizSubject, quizKind]);
+
+  // '약어 → 풀네임·뜻' 방식으로 낼 수 있는 문항(영문 풀네임과 뜻이 모두 있는 용어형)
+  const bothCount = useMemo(
+    () =>
+      termsList.filter(
+        t =>
+          matchesContentType(t, quizKind) &&
+          kindOf(t) === 'TERM' &&
+          !!t.englishTerm?.trim() &&
+          !!t.definition?.trim() &&
+          (quizSubject === 'all' || t.subject === quizSubject) &&
+          (quizCategory === 'all' || t.category === quizCategory)
+      ).length,
+    [termsList, quizKind, quizSubject, quizCategory]
+  );
 
   const selectedQuizTerms = useMemo(() => {
     return termsList.filter(t => {
@@ -612,6 +629,11 @@ export default function QuizClient({ initialTerms, user, initialSubject }: QuizC
       return true;
     });
 
+    const bothMode = quizType === 'abbr_both' && quizKind === 'TERM';
+    if (bothMode) {
+      pool = pool.filter(t => kindOf(t) === 'TERM' && !!t.englishTerm?.trim() && !!t.definition?.trim());
+    }
+
     if (pool.length === 0) {
       alert('조건에 맞는 문항이 없습니다.');
       return;
@@ -629,9 +651,11 @@ export default function QuizClient({ initialTerms, user, initialSubject }: QuizC
     const allPossibleTerms = termsList.map(t => t.term);
 
     // '용어 → 뜻' 방향: 용어형 문항만 뜻과 용어를 맞바꿔 출제한다(문제형은 그대로).
-    const reverseOn = quizReverse && quizKind === 'TERM' && !customTermsList?.some(isExamItem);
+    const reverseOn = !bothMode && quizReverse && quizKind === 'TERM' && !customTermsList?.some(isExamItem);
     pool.forEach((q, idx) => {
-      if (reverseOn && !isExamItem(q) && quizType === 'multiple_choice') {
+      if (bothMode) {
+        optionsMap[idx] = [];
+      } else if (reverseOn && !isExamItem(q) && quizType === 'multiple_choice') {
         const sameSubjectDefs = Array.from(
           new Set(termsList.filter(t => t.subject === q.subject && !isExamItem(t) && t.definition !== q.definition).map(t => t.definition))
         );
@@ -679,6 +703,7 @@ export default function QuizClient({ initialTerms, user, initialSubject }: QuizC
     setQuizQuestions(pool);
     setCurrentIndex(0);
     setUserAnswer('');
+    setUserAnswer2('');
     setWorksheetAnswers({});
     setSelectedChoiceIndex(null);
     setShowHint(false);
@@ -718,6 +743,48 @@ export default function QuizClient({ initialTerms, user, initialSubject }: QuizC
       const keywords = term.term.split(' ');
       return cleanInput.length > 1 && keywords.some(k => cleanInput.includes(normalize(k)));
     }
+  };
+
+  // 약어 → 풀네임 + 뜻: 두 칸을 따로 채점한다. 괄호 안 표기·'/'로 나뉜 표현은 어느 쪽이든 인정.
+  const looseNorm = (str: string) => str.trim().toLowerCase().replace(/[\s\-_.,/()·ㆍ]/g, '');
+  const variantsOf = (text: string) => {
+    const out = new Set<string>();
+    const whole = looseNorm(text);
+    if (whole) out.add(whole);
+    const noParen = looseNorm(text.replace(/\([^)]*\)/g, ''));
+    if (noParen) out.add(noParen);
+    for (const m of text.matchAll(/\(([^)]*)\)/g)) {
+      const inner = looseNorm(m[1]);
+      if (inner) out.add(inner);
+    }
+    text.split(/[/,;]/).forEach(part => {
+      const n = looseNorm(part.replace(/\([^)]*\)/g, ''));
+      if (n) out.add(n);
+    });
+    return out;
+  };
+  const checkBoth = (full: string, meaning: string, term: NursingTerm) => {
+    const f = looseNorm(full);
+    const m = looseNorm(meaning);
+    return {
+      full: !!f && variantsOf(term.englishTerm || '').has(f),
+      meaning: !!m && variantsOf(term.definition || '').has(m),
+    };
+  };
+
+  const handleSubmitBoth = () => {
+    if (!currentQuestion || isAnswerSubmitted) return;
+    submitTimestampRef.current = Date.now();
+    const r = checkBoth(userAnswer, userAnswer2, currentQuestion);
+    setQuizResults(prev => [
+      ...prev,
+      {
+        term: currentQuestion,
+        userAns: `${userAnswer.trim() || '(미입력)'} / ${userAnswer2.trim() || '(미입력)'}`,
+        isCorrect: r.full && r.meaning,
+      },
+    ]);
+    setIsAnswerSubmitted(true);
   };
 
   const handleGradeWorksheet = () => {
@@ -790,6 +857,7 @@ export default function QuizClient({ initialTerms, user, initialSubject }: QuizC
     if (currentIndex + 1 < quizQuestions.length) {
       setCurrentIndex(prev => prev + 1);
       setUserAnswer('');
+      setUserAnswer2('');
       setSelectedChoiceIndex(null);
       setShowHint(false);
       setIsAnswerSubmitted(false);
@@ -1751,7 +1819,8 @@ export default function QuizClient({ initialTerms, user, initialSubject }: QuizC
         <TestSetup
           kind={quizKind}
           title={quizTitle}
-          poolSize={selectedQuizTerms.length}
+          poolSize={quizType === 'abbr_both' ? bothCount : selectedQuizTerms.length}
+          bothAvailable={bothCount > 0}
           quizType={quizType}
           onQuizType={setQuizType}
           quizCount={quizCount}
@@ -1836,9 +1905,9 @@ export default function QuizClient({ initialTerms, user, initialSubject }: QuizC
           {/* Question Box */}
           {(() => {
             const isStructured = (currentQuestion.options && currentQuestion.options.length > 0) || currentQuestion.itemType === 'MULTIPLE_CHOICE' || currentQuestion.itemType === 'SHORT_ANSWER';
-            const showTermAsQuestion = isStructured || quizType === 'term_to_def';
+            const showTermAsQuestion = isStructured || quizType === 'term_to_def' || quizType === 'abbr_both';
             const promptText = showTermAsQuestion ? currentQuestion.term : currentQuestion.definition;
-            const subText = showTermAsQuestion ? currentQuestion.englishTerm : null;
+            const subText = showTermAsQuestion && quizType !== 'abbr_both' ? currentQuestion.englishTerm : null;
 
             return (
               <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', padding: '24px', borderRadius: '10px', marginBottom: '24px' }}>
@@ -1855,6 +1924,110 @@ export default function QuizClient({ initialTerms, user, initialSubject }: QuizC
             );
           })()}
 
+          {/* 약어 → 풀네임 + 한국어 뜻 */}
+          {quizType === 'abbr_both' ? (
+            (() => {
+              const r = checkBoth(userAnswer, userAnswer2, currentQuestion);
+              const canSubmit = !!userAnswer.trim() || !!userAnswer2.trim();
+              return (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <input
+                    ref={answerInputRef}
+                    aria-label="풀네임"
+                    type="text"
+                    disabled={isAnswerSubmitted}
+                    placeholder="풀네임 (영문)"
+                    value={userAnswer}
+                    onChange={e => setUserAnswer(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && !e.nativeEvent.isComposing) {
+                        e.preventDefault();
+                        answerInput2Ref.current?.focus();
+                      }
+                    }}
+                    style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
+                  />
+                  <input
+                    ref={answerInput2Ref}
+                    aria-label="한국어 뜻"
+                    type="text"
+                    disabled={isAnswerSubmitted}
+                    placeholder="한국어 뜻"
+                    value={userAnswer2}
+                    onChange={e => setUserAnswer2(e.target.value)}
+                    onKeyDown={e => {
+                      if (e.key === 'Enter' && !e.nativeEvent.isComposing && !isAnswerSubmitted && canSubmit) {
+                        e.preventDefault();
+                        handleSubmitBoth();
+                      }
+                    }}
+                    style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
+                  />
+
+                  {isAnswerSubmitted && (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {[
+                        { label: '풀네임', ok: r.full, answer: currentQuestion.englishTerm },
+                        { label: '뜻', ok: r.meaning, answer: currentQuestion.definition },
+                      ].map(row => (
+                        <div
+                          key={row.label}
+                          style={{
+                            padding: '12px 14px',
+                            borderRadius: '8px',
+                            backgroundColor: row.ok ? '#DCFCE7' : '#FEE2E2',
+                            border: `1px solid ${row.ok ? '#86EFAC' : '#FCA5A5'}`,
+                            color: row.ok ? '#166534' : '#991B1B',
+                            fontSize: '0.9375rem',
+                          }}
+                        >
+                          <strong>{row.label} {row.ok ? '정답' : '오답'}</strong> · {row.answer}
+                        </div>
+                      ))}
+                      <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px' }}>
+                        <span style={{ fontSize: '0.78125rem', color: 'var(--sub-text)' }}>채점 변경:</span>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleSelfCorrection(currentIndex)}
+                          className="btn-outline"
+                          style={{ fontSize: '0.75rem', padding: '4px 8px' }}
+                        >
+                          {(quizResults[currentIndex]?.overrideCorrect !== undefined
+                            ? quizResults[currentIndex]?.overrideCorrect
+                            : quizResults[currentIndex]?.isCorrect)
+                            ? '오답 처리'
+                            : '정답 처리'}
+                        </button>
+                      </div>
+                    </div>
+                  )}
+
+                  {!isAnswerSubmitted ? (
+                    <button
+                      type="button"
+                      onClick={handleSubmitBoth}
+                      disabled={!canSubmit}
+                      className="btn-primary"
+                      style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
+                    >
+                      제출 및 정답 확인
+                    </button>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={handleNextQuestion}
+                      className="btn-accent"
+                      style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
+                    >
+                      {currentIndex + 1 < quizQuestions.length ? '다음 문제 →' : '퀴즈 결과 보기'}
+                    </button>
+                  )}
+                </div>
+              );
+            })()
+          ) : null}
+
+          {quizType === 'abbr_both' ? null : (<>
           {/* MULTIPLE CHOICE / STRUCTURED OPTIONS VIEW vs SUBJECTIVE VIEW */}
           {(currentQuestion.options && currentQuestion.options.length > 0) || (mcOptionsMap[currentIndex] && mcOptionsMap[currentIndex].length > 0) ? (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -2048,6 +2221,7 @@ export default function QuizClient({ initialTerms, user, initialSubject }: QuizC
               </div>
             </div>
           )}
+          </>)}
         </div>
       )}
 
