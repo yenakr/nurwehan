@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from 'react';
 import PreparingBadge from '@/components/PreparingBadge';
 import EmptyState from '@/components/EmptyState';
 import { isAdminRole } from '@/lib/auth-core';
+import styles from './calendar.module.css';
 
 interface CalendarClientProps {
   initialOfficialEvents: any[];
@@ -18,6 +19,7 @@ export default function CalendarClient({
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'agenda' | 'semester'>('month');
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
+  const [selectedDay, setSelectedDay] = useState<string>('');
   
   // Official events
   const [officialEvents, setOfficialEvents] = useState<any[]>(initialOfficialEvents);
@@ -293,6 +295,15 @@ export default function CalendarClient({
     return `${year}-${month}-${day}`;
   };
 
+  // 선택한 날짜(기본: 오늘)의 일정
+  const activeDay = selectedDay || formatYYYYMMDD(new Date());
+  const selectedDayEvents = filteredEvents.filter(e => formatYYYYMMDD(e.startDateTime) === activeDay);
+  const selectedDayLabel = (() => {
+    const [y, m, d] = activeDay.split('-').map(Number);
+    const dt = new Date(y, m - 1, d);
+    return `${m}월 ${d}일 (${['일', '월', '화', '수', '목', '금', '토'][dt.getDay()]})`;
+  })();
+
   // Render Grid Cells for Month View (Real Calendar App Style with Prev/Next month trailing/leading days)
   const monthGridCells = useMemo(() => {
     const cells: Array<{
@@ -359,84 +370,49 @@ export default function CalendarClient({
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       {/* Header Controls */}
-      <div className="card" style={{ padding: '20px' }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px', marginBottom: '16px' }}>
-          <div>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)' }}>
-              📅 통합 캘린더
-            </h2>
-          </div>
-
-          <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-            {isAdmin && (
-              <button
-                onClick={() => setShowAdminAddModal(true)}
-                className="btn-primary"
-                style={{ fontSize: '0.84rem' }}
-              >
-                + 공식/행사 일정 추가 (관리자)
-              </button>
-            )}
-            {user && (
-              <button
-                onClick={() => setShowAddModal(true)}
-                className="btn-accent"
-                style={{ fontSize: '0.84rem' }}
-              >
-                + 개인 일정 추가
-              </button>
-            )}
-            <div style={{ display: 'flex', border: '1px solid var(--border)', borderRadius: '4px', overflow: 'hidden' }}>
-              {(['month', 'week', 'agenda', 'semester'] as const).map(mode => (
-                <button
-                  key={mode}
-                  onClick={() => setViewMode(mode)}
-                  style={{
-                    padding: '6px 12px',
-                    fontSize: '0.8125rem',
-                    fontWeight: viewMode === mode ? 700 : 500,
-                    backgroundColor: viewMode === mode ? 'var(--primary)' : 'var(--white)',
-                    color: viewMode === mode ? '#FFFFFF' : 'var(--text)',
-                    border: 'none',
-                    cursor: 'pointer',
-                  }}
-                >
-                  {mode === 'month' ? '월간' : mode === 'week' ? '주간' : mode === 'agenda' ? '목록' : '학기'}
+      <div className="card" style={{ padding: '16px' }}>
+        <div className={styles.head}>
+          <div className={styles.titleRow}>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)' }}>캘린더</h2>
+            <div className={styles.actions}>
+              {isAdmin && (
+                <button onClick={() => setShowAdminAddModal(true)} className="btn-primary" style={{ fontSize: '0.8125rem', padding: '6px 12px' }}>
+                  + 공식 일정
                 </button>
-              ))}
+              )}
+              {user && (
+                <button onClick={() => setShowAddModal(true)} className="btn-accent" style={{ fontSize: '0.8125rem', padding: '6px 12px' }}>
+                  + 개인 일정
+                </button>
+              )}
             </div>
           </div>
-        </div>
 
-        {/* Filters */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '16px', alignItems: 'center', borderTop: '1px solid var(--border)', paddingTop: '16px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--sub-text)' }}>학년:</span>
-            {['all', 1, 2, 3, 4].map(g => (
-              <button
-                key={String(g)}
-                onClick={() => setSelectedGrade(g as any)}
-                style={{
-                  padding: '4px 10px',
-                  borderRadius: '4px',
-                  fontSize: '0.8125rem',
-                  fontWeight: selectedGrade === g ? 700 : 500,
-                  backgroundColor: selectedGrade === g ? 'var(--primary)' : 'var(--muted-background)',
-                  color: selectedGrade === g ? '#FFFFFF' : 'var(--text)',
-                  border: '1px solid var(--border)',
-                }}
-              >
-                {g === 'all' ? '전체 학년' : `${g}학년`}
+          <div className={styles.seg} style={{ alignSelf: 'flex-start' }}>
+            {(['month', 'week', 'agenda', 'semester'] as const).map(mode => (
+              <button key={mode} onClick={() => setViewMode(mode)} className={viewMode === mode ? styles.on : ''}>
+                {mode === 'month' ? '월간' : mode === 'week' ? '주간' : mode === 'agenda' ? '목록' : '학기'}
               </button>
             ))}
           </div>
 
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-            <span style={{ fontSize: '0.8125rem', fontWeight: 700, color: 'var(--sub-text)' }}>카테고리:</span>
+          <div className={styles.filters}>
+            <div className={styles.chips}>
+              {['all', 1, 2, 3, 4].map(g => (
+                <button
+                  key={String(g)}
+                  onClick={() => setSelectedGrade(g as any)}
+                  className={`${styles.chip} ${selectedGrade === g ? styles.on : ''}`}
+                >
+                  {g === 'all' ? '전체' : `${g}학년`}
+                </button>
+              ))}
+            </div>
             <select
               value={selectedCategory}
               onChange={e => setSelectedCategory(e.target.value)}
-              style={{ padding: '4px 8px', fontSize: '0.8125rem' }}
+              style={{ padding: '5px 8px', fontSize: '0.8125rem' }}
+              aria-label="카테고리"
             >
               {Object.entries(categoryLabels).map(([key, label]) => (
                 <option key={key} value={key}>
@@ -450,104 +426,61 @@ export default function CalendarClient({
 
       {/* View Section */}
       {viewMode === 'month' && (
-        <div className="card" style={{ padding: '20px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-              <button onClick={prevMonth} className="btn-outline" style={{ padding: '4px 12px' }}>◀ 이전달</button>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text)' }}>
-                {currentYear}년 {currentMonth + 1}월
-              </h3>
-              <button onClick={nextMonth} className="btn-outline" style={{ padding: '4px 12px' }}>다음달 ▶</button>
-              <button onClick={todayMonth} className="btn-outline" style={{ padding: '4px 12px', fontSize: '0.8125rem' }}>오늘</button>
+        <div className="card" style={{ padding: '16px' }}>
+          <div className={styles.nav}>
+            <h3 className={styles.navTitle}>
+              {currentYear}년 {currentMonth + 1}월
+            </h3>
+            <div className={styles.navBtns}>
+              <button onClick={prevMonth} className={`btn-outline ${styles.navBtn}`} aria-label="이전 달">‹</button>
+              <button onClick={todayMonth} className={`btn-outline ${styles.navBtn}`} style={{ fontSize: '0.8125rem' }}>오늘</button>
+              <button onClick={nextMonth} className={`btn-outline ${styles.navBtn}`} aria-label="다음 달">›</button>
             </div>
           </div>
 
-          {/* Month Grid */}
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', gap: '1px', backgroundColor: 'var(--border)', borderRadius: '6px', overflow: 'hidden' }}>
+          <div className={styles.grid}>
             {['일', '월', '화', '수', '목', '금', '토'].map((dayName, idx) => (
-              <div
-                key={dayName}
-                style={{
-                  backgroundColor: 'var(--muted-background)',
-                  padding: '10px',
-                  textAlign: 'center',
-                  fontWeight: 700,
-                  fontSize: '0.84rem',
-                  color: idx === 0 ? '#DC2626' : idx === 6 ? '#2563EB' : 'var(--text)',
-                }}
-              >
+              <div key={dayName} className={styles.dow} style={{ color: idx === 0 ? '#DC2626' : idx === 6 ? '#2563EB' : 'var(--text)' }}>
                 {dayName}
               </div>
             ))}
 
-            {monthGridCells.map((cell) => {
-              const dayStr = cell.dayStr;
-              const dayEvents = filteredEvents.filter(e => {
-                const eDate = formatYYYYMMDD(e.startDateTime);
-                return eDate === dayStr;
-              });
-
-              const todayStr = formatYYYYMMDD(new Date());
-              const isToday = dayStr === todayStr;
-
+            {monthGridCells.map(cell => {
+              const dayEvents = filteredEvents.filter(e => formatYYYYMMDD(e.startDateTime) === cell.dayStr);
+              const isToday = cell.dayStr === formatYYYYMMDD(new Date());
+              const shown = dayEvents.slice(0, 3);
               return (
-                <div
-                  key={dayStr}
-                  style={{
-                    backgroundColor: !cell.isCurrentMonth
-                      ? '#F8FAFC'
-                      : isToday
-                      ? '#EFF6FF'
-                      : '#FFFFFF',
-                    opacity: cell.isCurrentMonth ? 1 : 0.65,
-                    minHeight: '100px',
-                    padding: '8px',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: '4px',
-                  }}
+                <button
+                  type="button"
+                  key={cell.dayStr}
+                  onClick={() => setSelectedDay(cell.dayStr)}
+                  className={`${styles.cell} ${cell.isCurrentMonth ? '' : styles.out} ${isToday ? styles.today : ''} ${activeDay === cell.dayStr ? styles.sel : ''}`}
                 >
-                  <div
-                    style={{
-                      fontSize: '0.8125rem',
-                      fontWeight: isToday ? 800 : cell.isCurrentMonth ? 600 : 500,
-                      color: !cell.isCurrentMonth
-                        ? '#94A3B8'
-                        : isToday
-                        ? 'var(--primary)'
-                        : 'var(--text)',
-                    }}
-                  >
-                    {!cell.isCurrentMonth ? `${cell.monthNumber}/${cell.dayNumber}` : `${cell.dayNumber}`}
-                  </div>
-
-                  {dayEvents.map(e => (
-                    <div
-                      key={e.id}
-                      onClick={() => handleOpenEventDetail(e)}
-                      style={{
-                        fontSize: '0.72rem',
-                        padding: '3px 6px',
-                        borderRadius: '4px',
-                        backgroundColor: e.isPersonal ? '#FEF3C7' : '#E0F2FE',
-                        color: e.isPersonal ? '#92400E' : '#0369A1',
-                        fontWeight: 600,
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        whiteSpace: 'nowrap',
-                        cursor: 'pointer',
-                        transition: 'all 0.15s',
-                        boxShadow: '0 1px 2px rgba(0,0,0,0.05)',
-                        opacity: cell.isCurrentMonth ? 1 : 0.75,
-                      }}
-                      title={`${e.title} (클릭하여 상세 보기)`}
-                    >
-                      {e.isPersonal ? '[개인] ' : ''}{e.title}
-                    </div>
+                  <span className={styles.num}>{cell.isCurrentMonth ? cell.dayNumber : `${cell.monthNumber}/${cell.dayNumber}`}</span>
+                  {shown.map(e => (
+                    <span key={e.id} className={`${styles.ev} ${e.isPersonal ? styles.me : ''}`}>
+                      {e.title}
+                    </span>
                   ))}
-                </div>
+                  {dayEvents.length > shown.length && <span className={styles.more}>+{dayEvents.length - shown.length}</span>}
+                </button>
               );
             })}
+          </div>
+
+          {/* 선택한 날짜의 일정 */}
+          <div className={styles.dayPanel}>
+            <div className={styles.dayTitle}>{selectedDayLabel}</div>
+            {selectedDayEvents.length === 0 ? (
+              <div className={styles.empty}>일정이 없습니다.</div>
+            ) : (
+              selectedDayEvents.map(e => (
+                <div key={e.id} onClick={() => handleOpenEventDetail(e)} className={`${styles.dayItem} ${e.isPersonal ? styles.me : ''}`}>
+                  {e.isPersonal ? '[개인] ' : ''}
+                  {e.title}
+                </div>
+              ))
+            )}
           </div>
         </div>
       )}
