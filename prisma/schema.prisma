@@ -510,7 +510,8 @@ model QuizAttempt {
 model ClinicalAssignment {
   id        String   @id @default(cuid())
   term      String   // 예: 2026-2
-  name      String   // 학생 이름 (동명이인 없음 전제)
+  name      String   // 학생 이름
+  studentId String?  // 동명이인 구분용 학번(선택). 있으면 학번으로 매칭
   groupNo   Int      // 조
   weekNo    Int      // 실습 주차
   startDate String   // 해당 주 월요일 YYYY-MM-DD
@@ -522,6 +523,7 @@ model ClinicalAssignment {
   createdAt DateTime @default(now())
 
   @@index([name])
+  @@index([studentId])
 }
 
 // 실습일지 메모 (본인만 열람, 날짜·병동별 1건)

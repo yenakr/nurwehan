@@ -8,7 +8,7 @@ const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 // 내 실습일지 목록 (최신순)
 export async function GET() {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!user || user.approvalStatus !== 'APPROVED') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
     const notes = await prisma.clinicalNote.findMany({
       where: { userId: user.id },
@@ -24,7 +24,7 @@ export async function GET() {
 // 날짜·병동별 저장 (내용이 비어 있으면 삭제)
 export async function PUT(req: Request) {
   const user = await getCurrentUser();
-  if (!user) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  if (!user || user.approvalStatus !== 'APPROVED') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   try {
     const body = await req.json();
     const date = String(body.date || '');

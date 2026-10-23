@@ -110,8 +110,7 @@ export default function MySchedule({
   if (!schedule.length) {
     return (
       <div className="card" style={{ textAlign: 'center', color: 'var(--sub-text)', fontSize: '0.9rem', padding: '32px 16px' }}>
-        등록된 내 실습 배정이 없습니다.
-        <div style={{ fontSize: '0.8125rem', marginTop: '6px' }}>가입한 이름과 배정표의 이름이 같아야 표시됩니다.</div>
+        등록된 정보가 없습니다.
       </div>
     );
   }

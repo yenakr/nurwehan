@@ -6,7 +6,13 @@ export async function login(user: AuthUser) {
   const expires = new Date(Date.now() + 2 * 60 * 60 * 1000); // 2 hours
   const session = await encrypt({ user, expires });
 
-  (await cookies()).set('session', session, { expires, httpOnly: true });
+  (await cookies()).set('session', session, {
+    expires,
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax',
+    path: '/',
+  });
 }
 
 export async function logout() {
