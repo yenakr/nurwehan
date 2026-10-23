@@ -2541,154 +2541,67 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
 
       {/* VIEW 4: 퀴즈 결과 & 오답 노트 & PDF 내보내기 */}
       {activeTab === 'quiz_result' && (
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          {/* Score Summary Card */}
-          <div className="card" style={{ padding: '32px', textAlign: 'center', backgroundColor: '#F8FAFC' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text)', marginBottom: '8px' }}>
-              퀴즈 완료
-            </h2>
-            <div style={{ fontSize: '3rem', fontWeight: 900, color: scorePercent >= 70 ? '#10B981' : '#EF4444', margin: '12px 0' }}>
-              {scorePercent}점
-            </div>
-            <p style={{ fontSize: '1rem', fontWeight: 600, color: 'var(--sub-text)' }}>
-              총 {totalQuizCount}문제 중 <strong style={{ color: 'var(--primary)' }}>{correctCount}문제</strong> 정답
-            </p>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', maxWidth: '720px', margin: '0 auto', width: '100%' }}>
+          {(() => {
+            const filter: 'wrong_only' | 'all' = wrongResults.length === 0 ? 'all' : pdfExportMode;
+            return (
+              <>
+                <section className={s.rs} aria-label="결과">
+                  <div className={s.rsTop}>
+                    <div className={`${s.rsScore} ${scorePercent >= 70 ? s.rsGood : s.rsBad}`}>{scorePercent}<small>점</small></div>
+                    <div className={s.rsCount}>{correctCount} / {totalQuizCount}</div>
+                  </div>
+                  <div className={s.rsBar} aria-hidden="true"><div style={{ width: `${scorePercent}%` }} /></div>
+                  <div className={s.rsActions}>
+                    {wrongResults.length > 0 && (
+                      <button type="button" className={`${s.btn} ${s.btnPrimary}`} onClick={() => handleStartQuiz(wrongResults.map(w => w.term))}>
+                        오답 {wrongResults.length}개 다시 풀기
+                      </button>
+                    )}
+                    <button type="button" className={s.btn} onClick={() => setActiveTab('quiz_setup')}>새 테스트</button>
+                  </div>
+                </section>
 
-            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', marginTop: '24px', flexWrap: 'wrap' }}>
-              <button
-                onClick={() => setActiveTab('quiz_setup')}
-                className="btn-primary"
-                style={{ padding: '10px 20px', fontSize: '0.875rem' }}
-              >
-                새로운 퀴즈 설정
-              </button>
-              {wrongResults.length > 0 && (
-                <button
-                  onClick={() => {
-                    const wrongTerms = wrongResults.map(w => w.term);
-                    handleStartQuiz(wrongTerms);
-                  }}
-                  className="btn-accent"
-                  style={{ padding: '10px 20px', fontSize: '0.875rem' }}
-                >
-                  오답 {wrongResults.length}개 다시 풀기
-                </button>
-              )}
-            </div>
-          </div>
-
-          {/* PDF Export Toolbar Card */}
-          <div className="card" style={{ padding: '20px', backgroundColor: '#F0F9FF', border: '1px solid #BAE6FD' }}>
-            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
-              <div>
-                <h4 style={{ fontSize: '1rem', fontWeight: 800, color: '#0369A1', margin: 0, display: 'flex', alignItems: 'center', gap: '6px' }}>
-                  PDF 내보내기 설정
-                </h4>
-                <p style={{ fontSize: '0.8125rem', color: '#0284C7', margin: '4px 0 0 0' }}>
-                  퀴즈 결과 오답노트 및 풀이 내역을 PDF로 저장 또는 인쇄합니다.
-                </p>
-              </div>
-
-              <div style={{ display: 'flex', gap: '10px', alignItems: 'center', flexWrap: 'wrap' }}>
-                <div style={{ display: 'flex', gap: '4px', backgroundColor: '#FFFFFF', padding: '4px', borderRadius: '8px', border: '1px solid #7DD3FC' }}>
-                  <button
-                    type="button"
-                    onClick={() => setPdfExportMode('wrong_only')}
-                    style={{
-                      padding: '6px 12px',
-                      borderRadius: '6px',
-                      fontSize: '0.8125rem',
-                      fontWeight: 700,
-                      border: 'none',
-                      backgroundColor: pdfExportMode === 'wrong_only' ? '#0284C7' : 'transparent',
-                      color: pdfExportMode === 'wrong_only' ? '#FFFFFF' : '#0369A1',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                    }}
-                  >
-                    오답만 ({wrongResults.length}개)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setPdfExportMode('all')}
-                    style={{
-                      padding: '6px 12px',
-                      borderRadius: '6px',
-                      fontSize: '0.8125rem',
-                      fontWeight: 700,
-                      border: 'none',
-                      backgroundColor: pdfExportMode === 'all' ? '#0284C7' : 'transparent',
-                      color: pdfExportMode === 'all' ? '#FFFFFF' : '#0369A1',
-                      cursor: 'pointer',
-                      transition: 'all 0.2s',
-                    }}
-                  >
-                    전체 ({quizResults.length}개 - 오답 하이라이트)
-                  </button>
+                <div className={s.rsBarRow}>
+                  <Segmented<'wrong_only' | 'all'>
+                    label="보기"
+                    value={filter}
+                    onChange={setPdfExportMode}
+                    options={[
+                      { value: 'wrong_only', label: `오답 ${wrongResults.length}`, disabled: wrongResults.length === 0 },
+                      { value: 'all', label: `전체 ${quizResults.length}` },
+                    ]}
+                  />
+                  <button type="button" className={s.btn} onClick={handleExportPDF}>PDF 저장</button>
                 </div>
 
-                <button
-                  type="button"
-                  onClick={handleExportPDF}
-                  className="btn-accent"
-                  style={{ padding: '8px 16px', fontSize: '0.875rem', fontWeight: 800, display: 'flex', alignItems: 'center', gap: '6px' }}
-                >
-                  PDF 내보내기/인쇄
-                </button>
-              </div>
-            </div>
-          </div>
-
-          {/* Wrong Answers Note */}
-          <div className="card">
-            <h3 className="section-title">
-              <span>퀴즈 문제 및 풀이 내역 ({quizResults.length}개)</span>
-            </h3>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {quizResults.map((res, idx) => {
-                const finalCorrect = res.overrideCorrect !== undefined ? res.overrideCorrect : res.isCorrect;
-
-                return (
-                  <div
-                    key={res.term.id}
-                    style={{
-                      padding: '16px',
-                      borderRadius: '8px',
-                      border: `1px solid ${finalCorrect ? '#86EFAC' : '#FCA5A5'}`,
-                      backgroundColor: finalCorrect ? '#F0FDF4' : '#FEF2F2',
-                    }}
-                  >
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontWeight: 800, fontSize: '0.9375rem', color: finalCorrect ? '#166534' : '#991B1B' }}>
-                          #{idx + 1} {finalCorrect ? '정답' : '오답'}
-                        </span>
-                      </div>
-                      <button
-                        onClick={() => handleToggleSelfCorrection(idx)}
-                        style={{ fontSize: '0.75rem', background: 'none', border: 'none', color: 'var(--sub-text)', cursor: 'pointer', textDecoration: 'underline' }}
-                      >
-                        {finalCorrect ? '틀림으로 변경' : '정답으로 변경'}
-                      </button>
-                    </div>
-
-                    <div style={{ fontSize: '1.0625rem', fontWeight: 800, color: '#1E293B', marginBottom: '4px' }}>
-                      {res.term.term} {res.term.englishTerm && `(${res.term.englishTerm})`}
-                    </div>
-
-                    <p style={{ fontSize: '0.875rem', color: '#475569', marginBottom: '10px', lineHeight: 1.5 }}>
-                      <strong>정답/해설:</strong> {res.term.answer || res.term.term} — {res.term.definition}
-                    </p>
-
-                    <div style={{ fontSize: '0.8125rem', backgroundColor: '#FFFFFF', padding: '8px 12px', borderRadius: '6px', border: '1px solid var(--border)' }}>
-                      <strong>내 작성 답안:</strong> {res.userAns || '(미입력)'}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
+                <div className={s.rsList}>
+                  {quizResults.map((res, idx) => {
+                    const finalCorrect = res.overrideCorrect !== undefined ? res.overrideCorrect : res.isCorrect;
+                    if (filter === 'wrong_only' && finalCorrect) return null;
+                    const ans = res.term.answer;
+                    return (
+                      <article key={res.term.id ?? idx} className={`${s.rsItem} ${finalCorrect ? s.rsOk : s.rsNo}`}>
+                        <div className={s.rsHead}>
+                          <span className={s.rsNum}>#{idx + 1} {finalCorrect ? '정답' : '오답'}</span>
+                          <button type="button" className={s.rsToggle} onClick={() => handleToggleSelfCorrection(idx)}>
+                            {finalCorrect ? '오답으로' : '정답으로'}
+                          </button>
+                        </div>
+                        <div className={s.rsTerm}>
+                          {res.term.term}
+                          {res.term.englishTerm && <span> {res.term.englishTerm}</span>}
+                        </div>
+                        {ans && ans !== res.term.term && <div className={s.rsAns}>{ans}</div>}
+                        <div className={s.rsDef}>{res.term.definition}</div>
+                        <div className={s.rsMine}>내 답 · {res.userAns || '미입력'}</div>
+                      </article>
+                    );
+                  })}
+                </div>
+              </>
+            );
+          })()}
         </div>
       )}
 
