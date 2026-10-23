@@ -184,6 +184,7 @@ export default function QuizClient({ initialTerms, user, initialSubject }: QuizC
   const [quizReverse, setQuizReverse] = useState<boolean>(false);
   const [quizFormat, setQuizFormat] = useState<'single' | 'worksheet'>('single');
   const [worksheetAnswers, setWorksheetAnswers] = useState<Record<number, string>>({});
+  const [worksheetAnswers2, setWorksheetAnswers2] = useState<Record<number, string>>({});
 
   // Active Quiz State
   const [quizQuestions, setQuizQuestions] = useState<NursingTerm[]>([]);
@@ -478,6 +479,11 @@ export default function QuizClient({ initialTerms, user, initialSubject }: QuizC
     setAttemptSaved(false);
     setQuizSubject(attempt.subject);
     setQuizCategory(attempt.category || 'all');
+    setUserAnswer2('');
+    setWorksheetAnswers({});
+    setWorksheetAnswers2({});
+    if (attempt.quizType === 'abbr_both') setQuizType('abbr_both');
+    else if (quizType === 'abbr_both') setQuizType('def_to_term');
     setSelectedHistoryAttempt(null);
     setActiveTab('quiz_play');
   };
@@ -705,6 +711,7 @@ export default function QuizClient({ initialTerms, user, initialSubject }: QuizC
     setUserAnswer('');
     setUserAnswer2('');
     setWorksheetAnswers({});
+    setWorksheetAnswers2({});
     setSelectedChoiceIndex(null);
     setShowHint(false);
     setIsAnswerSubmitted(false);
@@ -788,6 +795,22 @@ export default function QuizClient({ initialTerms, user, initialSubject }: QuizC
   };
 
   const handleGradeWorksheet = () => {
+    if (quizType === 'abbr_both') {
+      setQuizResults(
+        quizQuestions.map((q, idx) => {
+          const a1 = worksheetAnswers[idx] || '';
+          const a2 = worksheetAnswers2[idx] || '';
+          const r = checkBoth(a1, a2, q);
+          return {
+            term: q,
+            userAns: `${a1.trim() || '(미입력)'} / ${a2.trim() || '(미입력)'}`,
+            isCorrect: r.full && r.meaning,
+          };
+        })
+      );
+      setActiveTab('quiz_result');
+      return;
+    }
     const results = quizQuestions.map((q, idx) => {
       const userAns = worksheetAnswers[idx] || '';
       const isCorr = checkAnswerCorrectness(userAns, q);
@@ -1431,9 +1454,6 @@ export default function QuizClient({ initialTerms, user, initialSubject }: QuizC
                   )}
                 </>
               )}
-              <button type="button" className={`${s.btn} ${s.btnPrimary}`} onClick={() => setActiveTab('quiz_setup')}>
-                이 퀴즈로 테스트
-              </button>
             </div>
           </div>
 
@@ -2226,7 +2246,7 @@ export default function QuizClient({ initialTerms, user, initialSubject }: QuizC
       )}
 
       {/* VIEW 3-B: 전체 시험지 모드 (Worksheet / Full Exam Mode) */}
-      {activeTab === 'quiz_play' && quizFormat === 'worksheet' && quizQuestions.length > 0 && (() => {
+      {activeTab === 'quiz_play' && quizFormat === 'worksheet' && quizType !== 'abbr_both' && quizQuestions.length > 0 && (() => {
         const isMcSheet = quizQuestions.some(q => q.itemType === 'MULTIPLE_CHOICE' || (q.options && q.options.length > 0));
 
         return (
@@ -2461,6 +2481,65 @@ export default function QuizClient({ initialTerms, user, initialSubject }: QuizC
           </div>
         );
       })()}
+
+      {/* 시험지 모드: 약어 → 풀네임 · 뜻 (PC는 표, 모바일은 카드) */}
+      {activeTab === 'quiz_play' && quizFormat === 'worksheet' && quizType === 'abbr_both' && quizQuestions.length > 0 && (
+        <div style={{ maxWidth: '960px', margin: '0 auto', width: '100%' }}>
+          <div className="card" style={{ padding: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '14px', flexWrap: 'wrap' }}>
+              <div>
+                <h2 style={{ fontSize: '1.125rem', fontWeight: 900, color: '#0E4A84', margin: 0 }}>약어 → 풀네임 · 뜻</h2>
+                <div style={{ fontSize: '0.8125rem', color: '#64748B', marginTop: '2px' }}>
+                  {quizSubject === 'all' ? '전체' : quizSubject} · 총 {quizQuestions.length}문항
+                </div>
+              </div>
+              <button type="button" onClick={() => setQuizFormat('single')} className="btn-outline" style={{ fontSize: '0.8125rem', padding: '6px 12px' }}>
+                한 문제씩 풀기
+              </button>
+            </div>
+
+            <div className={s.sheet}>
+              <div className={`${s.sheetRow} ${s.sheetHead}`}>
+                <span>#</span>
+                <span>약어</span>
+                <span>풀네임</span>
+                <span>뜻</span>
+              </div>
+              {quizQuestions.map((q, idx) => (
+                <div key={q.id ?? idx} className={s.sheetRow}>
+                  <span className={s.sheetNo}>{idx + 1}</span>
+                  <span className={s.sheetAbbr}>{q.term}</span>
+                  <input
+                    aria-label={`${q.term} 풀네임`}
+                    type="text"
+                    placeholder="풀네임"
+                    value={worksheetAnswers[idx] || ''}
+                    onChange={e => setWorksheetAnswers(prev => ({ ...prev, [idx]: e.target.value }))}
+                    className={s.sheetInput}
+                  />
+                  <input
+                    aria-label={`${q.term} 뜻`}
+                    type="text"
+                    placeholder="한국어 뜻"
+                    value={worksheetAnswers2[idx] || ''}
+                    onChange={e => setWorksheetAnswers2(prev => ({ ...prev, [idx]: e.target.value }))}
+                    className={s.sheetInput}
+                  />
+                </div>
+              ))}
+            </div>
+
+            <button
+              type="button"
+              onClick={() => handleGradeWorksheet()}
+              className="btn-accent"
+              style={{ width: '100%', padding: '14px', fontSize: '1.0625rem', fontWeight: 900, marginTop: '18px' }}
+            >
+              채점하기 ({quizQuestions.filter((_, i) => (worksheetAnswers[i] || '').trim() || (worksheetAnswers2[i] || '').trim()).length} / {quizQuestions.length})
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* VIEW 4: 퀴즈 결과 & 오답 노트 & PDF 내보내기 */}
       {activeTab === 'quiz_result' && (
