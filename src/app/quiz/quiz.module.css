@@ -176,3 +176,30 @@
 .choiceOn { border-color: var(--q-primary); background: var(--q-primary-soft); box-shadow: inset 0 0 0 1px var(--q-primary); }
 .choiceTitle { font-size: 0.9375rem; font-weight: 700; color: var(--q-text); }
 .choiceEx { font-size: 0.8125rem; color: var(--q-muted); }
+
+.rs { display: flex; flex-direction: column; gap: 12px; padding: 18px; background: var(--q-surface); border: 1px solid var(--q-border); border-radius: 12px; }
+.rsTop { display: flex; align-items: baseline; justify-content: space-between; }
+.rsScore { font-size: 2.25rem; font-weight: 800; line-height: 1; }
+.rsScore small { font-size: 1rem; margin-left: 2px; }
+.rsGood { color: #059669; }
+.rsBad { color: #dc2626; }
+.rsCount { font-size: 1rem; font-weight: 700; color: var(--q-text-2); }
+.rsBar { height: 6px; border-radius: 999px; background: var(--q-border); overflow: hidden; }
+.rsBar > div { height: 100%; background: var(--q-primary); border-radius: 999px; }
+.rsActions { display: flex; gap: 8px; flex-wrap: wrap; }
+.rsActions > * { flex: 1 1 140px; }
+.rsBarRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+.rsList { display: flex; flex-direction: column; gap: 10px; }
+.rsItem { display: flex; flex-direction: column; gap: 4px; padding: 12px 14px; background: var(--q-surface); border: 1px solid var(--q-border); border-left-width: 4px; border-radius: 10px; }
+.rsOk { border-left-color: #10b981; }
+.rsNo { border-left-color: #ef4444; }
+.rsHead { display: flex; align-items: center; justify-content: space-between; }
+.rsNum { font-size: 0.75rem; font-weight: 800; color: var(--q-muted); }
+.rsOk .rsNum { color: #059669; }
+.rsNo .rsNum { color: #dc2626; }
+.rsToggle { border: 0; background: transparent; padding: 0; font-size: 0.75rem; color: var(--q-muted); text-decoration: underline; font-family: inherit; }
+.rsTerm { font-size: 1.0625rem; font-weight: 800; color: var(--q-text); }
+.rsTerm span { font-size: 0.8125rem; font-weight: 500; color: var(--q-muted); }
+.rsAns { font-size: 0.9375rem; font-weight: 700; color: var(--q-primary); }
+.rsDef { font-size: 0.875rem; color: var(--q-text-2); line-height: 1.55; white-space: pre-wrap; }
+.rsMine { font-size: 0.8125rem; color: var(--q-muted); }
