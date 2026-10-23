@@ -113,12 +113,10 @@ export default function TestSetup({
           고급 설정
           <Icon d={ICON_CHEVRON} size={16} />
         </summary>
-        {quizType !== 'abbr_both' && (
         <label className={s.check}>
           <input type="checkbox" checked={worksheet} onChange={e => onWorksheet(e.target.checked)} />
           시험지 모드 (모든 문제를 풀고 한 번에 채점)
         </label>
-        )}
       </details>
 
       <button type="button" className={`${s.btn} ${s.btnPrimary} ${s.btnBlock}`} disabled={poolSize === 0} onClick={onStart}>

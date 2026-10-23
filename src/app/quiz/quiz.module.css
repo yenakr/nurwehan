@@ -141,3 +141,21 @@
   .subjectCard { min-height: 64px; padding: 12px; font-size: 0.9375rem; word-break: keep-all; overflow-wrap: anywhere; }
   .chipLg { height: 34px; padding: 0 10px; font-size: 0.8125rem; }
 }
+
+/* 약어 → 풀네임·뜻 시험지 */
+.sheet { display: flex; flex-direction: column; }
+.sheetRow { display: grid; grid-template-columns: 40px 140px minmax(0, 1fr) minmax(0, 1fr); gap: 10px; align-items: center; padding: 8px 0; border-top: 1px solid var(--q-border); }
+.sheetHead { font-size: 0.75rem; font-weight: 700; color: var(--q-muted); border-top: none; padding-top: 0; }
+.sheetNo { color: var(--q-muted); font-size: 0.8125rem; }
+.sheetAbbr { font-weight: 800; font-size: 1rem; word-break: break-all; }
+.sheetInput { box-sizing: border-box; width: 100%; min-width: 0; padding: 9px 10px; font-size: 0.9375rem; border: 1px solid var(--q-border-strong); border-radius: 8px; background: #fff; }
+@media (max-width: 640px) {
+  .sheetHead { display: none; }
+  .sheetRow { grid-template-columns: 1fr; gap: 6px; padding: 12px 0; }
+  .sheetNo { display: none; }
+  .sheetAbbr { font-size: 1.0625rem; }
+  /* 카테고리 칩·세그먼트를 조금 작게 */
+  .chip { height: 30px; padding: 0 10px; font-size: 0.8125rem; }
+  .chips { gap: 6px; }
+  .chipCount { margin-left: 4px; }
+}
