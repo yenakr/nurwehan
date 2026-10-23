@@ -39,6 +39,17 @@ export async function POST(req: Request) {
       },
     });
 
+    // 저장 공간 절약: 사용자별로 최근 20개 기록만 남긴다.
+    const stale = await prisma.quizAttempt.findMany({
+      where: { userId: user.id },
+      orderBy: { createdAt: 'desc' },
+      skip: 20,
+      select: { id: true },
+    });
+    if (stale.length > 0) {
+      await prisma.quizAttempt.deleteMany({ where: { id: { in: stale.map(a => a.id) } } });
+    }
+
     return NextResponse.json({ success: true, attempt });
   } catch (error) {
     console.error('Save quiz attempt error:', error);
@@ -56,7 +67,7 @@ export async function GET() {
     const attempts = await prisma.quizAttempt.findMany({
       where: { userId: user.id },
       orderBy: { createdAt: 'desc' },
-      take: 50,
+      take: 20,
     });
 
     return NextResponse.json({ attempts });
