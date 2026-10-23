@@ -2585,7 +2585,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                         <div className={s.rsHead}>
                           <span className={s.rsNum}>#{idx + 1} {finalCorrect ? '정답' : '오답'}</span>
                           <button type="button" className={s.rsToggle} onClick={() => handleToggleSelfCorrection(idx)}>
-                            {finalCorrect ? '오답으로' : '정답으로'}
+                            {finalCorrect ? '오답 처리' : '정답 처리'}
                           </button>
                         </div>
                         <div className={s.rsTerm}>
