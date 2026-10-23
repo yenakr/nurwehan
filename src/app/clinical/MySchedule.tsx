@@ -62,7 +62,7 @@ function buildIcs(items: ScheduleItem[]) {
         lines.push(`DTSTART;VALUE=DATE:${base}`, `DTEND;VALUE=DATE:${addDays(day, 1).replace(/-/g, '')}`);
       }
       lines.push(`SUMMARY:실습 ${place(it)} (${subjectLabel(it.subject)})`);
-      if (it.mates.length) lines.push(`DESCRIPTION:함께 실습: ${it.mates.join(', ')}`);
+      if (it.mates.length > 1) lines.push(`DESCRIPTION:${it.mates.join(', ')}`);
       lines.push('END:VEVENT');
     }
   });
@@ -70,7 +70,7 @@ function buildIcs(items: ScheduleItem[]) {
   return lines.join('\r\n');
 }
 
-export default function MySchedule({ schedule }: { schedule: ScheduleItem[] }) {
+export default function MySchedule({ schedule, me }: { schedule: ScheduleItem[]; me?: string }) {
   const today = ymd(new Date());
 
   const firstStart = schedule[0]?.startDate;
@@ -174,9 +174,14 @@ export default function MySchedule({ schedule }: { schedule: ScheduleItem[] }) {
                       </span>
                       {timeText(it) && <span style={{ fontSize: '0.8125rem', color: 'var(--sub-text)' }}>{timeText(it)}</span>}
                     </div>
-                    {it.mates.length > 0 && (
+                    {it.mates.length > 1 && (
                       <div style={{ fontSize: '0.8125rem', color: 'var(--sub-text)', marginTop: '4px' }}>
-                        함께: {it.mates.join(', ')}
+                        {it.mates.map((n, k) => (
+                          <span key={n}>
+                            {k > 0 && ', '}
+                            {n === me ? <strong style={{ color: 'var(--primary)' }}>{n}</strong> : n}
+                          </span>
+                        ))}
                       </div>
                     )}
                   </div>

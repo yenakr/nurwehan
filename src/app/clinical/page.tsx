@@ -37,7 +37,8 @@ async function loadSchedule(name?: string): Promise<ScheduleItem[]> {
       mates: others
         .filter(o => o.weekNo === m.weekNo && o.subject === m.subject && o.hospital === m.hospital && o.ward === m.ward && o.shift === m.shift)
         .map(o => o.name)
-        .sort(),
+        .concat(name)
+        .sort((a, b) => a.localeCompare(b, 'ko')),
     }));
   } catch {
     return [];

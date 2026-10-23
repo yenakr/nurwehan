@@ -54,21 +54,10 @@ export default async function OpenLabSuccessPage({ params }: { params: Promise<{
   const participantsListStr = application.participants.map(p => p.name).join(', ');
 
   const emailSubject = `[OPEN LAB 신청] ${repGrade}학년_${roomName}_${repName}`;
-  const emailBody = `안녕하세요, OPEN LAB 사용 신청 내역입니다.
+  const emailBody = `안녕하세요, ${repStudentId} ${repName}입니다.
+오픈랩 신청서 제출합니다.
 
-1. 신청일: ${new Date(application.createdAt).toLocaleDateString('ko-KR')}
-2. 신청자: ${repName} (학번: ${repStudentId})
-3. 연락처: ${repPhone}
-4. 실습실: ${roomName}
-5. 실습날짜 및 시간: ${dateStr} ${timeStr}
-6. 실습과목 및 담당교수: ${application.subject || '-'} / ${application.professor || '-'} 교수님
-7. 사용 인원 및 명단: ${application.participants.length}명 (${participantsListStr})
-8. 실습 목적: ${application.purpose || '-'}
-9. 필요 물품:
-${suppliesListStr}
-10. 추가 요청사항: ${application.additionalRequest || '없음'}
-
-* 위 서식에 서명(또는 인)이 완료된 신청서 PDF 파일을 첨부하여 송신해주시기 바랍니다.`;
+감사합니다.`;
 
   const adminEmail = process.env.NEXT_PUBLIC_ADMIN_EMAIL || 'rnassist@hanyang.ac.kr';
 

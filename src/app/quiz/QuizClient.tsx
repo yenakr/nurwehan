@@ -86,10 +86,11 @@ function IconGrip({ size = 14, color = 'currentColor' }: { size?: number; color?
 interface QuizClientProps {
   initialTerms: NursingTerm[];
   user?: any;
+  initialSubject?: string;
 }
 
 
-export default function QuizClient({ initialTerms, user }: QuizClientProps) {
+export default function QuizClient({ initialTerms, user, initialSubject }: QuizClientProps) {
   const isAdmin = isAdminRole(user?.role);
   const router = useRouter();
   const [termsList, setTermsList] = useState<NursingTerm[]>(initialTerms);
@@ -350,6 +351,14 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
     setActiveTab('study');
     setView('subject');
   };
+
+  // 다른 화면에서 ?subject=과목명 으로 들어오면 해당 과목을 바로 연다
+  useEffect(() => {
+    if (initialSubject && termsList.some(t => t.subject === initialSubject)) {
+      openSubject(initialSubject);
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialSubject]);
 
   const handleSelectKind = (k: QuizKind) => {
     setQuizKind(k);
