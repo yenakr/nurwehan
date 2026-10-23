@@ -2,14 +2,19 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 import { hiddenSubjectsFor } from '@/lib/access';
+import { hasGatePass } from '@/lib/quiz-gate';
 
 export async function GET(req: Request) {
   try {
+    const current = await getCurrentUser();
+    if (!current && !(await hasGatePass())) {
+      return NextResponse.json({ terms: [], subjects: [], categories: [] }, { status: 401 });
+    }
     const { searchParams } = new URL(req.url);
     const subject = searchParams.get('subject');
     const category = searchParams.get('category');
 
-    const hidden = await hiddenSubjectsFor(await getCurrentUser());
+    const hidden = await hiddenSubjectsFor(current);
     const where: any = hidden.length > 0 ? { subject: { notIn: hidden } } : {};
     if (subject && subject !== 'all') {
       if (hidden.includes(subject)) return NextResponse.json({ terms: [], subjects: [], categories: [] });

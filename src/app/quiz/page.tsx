@@ -1,6 +1,8 @@
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 import QuizClient from './QuizClient';
+import GateForm from './GateForm';
+import { hasGatePass } from '@/lib/quiz-gate';
 import { hiddenSubjectsFor, getSubjectLevels } from '@/lib/access';
 import { isAdminRole } from '@/lib/auth-core';
 
@@ -13,6 +15,16 @@ export default async function QuizPage({
 }) {
   const { subject } = await searchParams;
   const user = await getCurrentUser();
+
+  if (!user && !(await hasGatePass())) {
+    return (
+      <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '32px 0' }}>
+        <div className="container">
+          <GateForm />
+        </div>
+      </main>
+    );
+  }
 
   const hidden = await hiddenSubjectsFor(user);
   const subjectLevels = user && isAdminRole(user.role) ? await getSubjectLevels() : {};
