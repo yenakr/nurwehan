@@ -2,6 +2,7 @@ import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 import ClinicalClient from './ClinicalClient';
 import type { ScheduleItem } from './MySchedule';
+import { purgeExpiredAssignments } from '@/lib/clinical';
 
 async function loadSchedule(name?: string): Promise<ScheduleItem[]> {
   if (!name) return [];
@@ -47,6 +48,7 @@ async function loadSchedule(name?: string): Promise<ScheduleItem[]> {
 
 export default async function ClinicalPage() {
   const user = await getCurrentUser();
+  await purgeExpiredAssignments();
   const schedule = await loadSchedule(user?.name);
 
   return (

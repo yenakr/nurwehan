@@ -3,6 +3,7 @@ import { isAdminRole } from '@/lib/auth-core';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import AdminDashboardClient from './AdminDashboardClient';
+import { assignmentNeedsUpdate, purgeExpiredAssignments } from '@/lib/clinical';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,6 +13,9 @@ export default async function AdminPage() {
   if (!user || !isAdminRole(user.role)) {
     redirect('/login?redirect=/admin');
   }
+
+  await purgeExpiredAssignments();
+  const needsUpdate = await assignmentNeedsUpdate();
 
   const [
     skills,
@@ -52,6 +56,7 @@ export default async function AdminPage() {
           initialSkills={skills}
           initialApplications={allApplications as any}
           pendingUsersCount={pendingUsersCount}
+          assignmentNeedsUpdate={needsUpdate}
           selectedDate={new Date().toISOString().split('T')[0]}
         />
       </div>

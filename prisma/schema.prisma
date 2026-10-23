@@ -523,3 +523,17 @@ model ClinicalAssignment {
 
   @@index([name])
 }
+
+// 실습일지 메모 (본인만 열람, 날짜·병동별 1건)
+model ClinicalNote {
+  id        String   @id @default(cuid())
+  userId    String
+  date      String   // YYYY-MM-DD
+  ward      String   // 예: 서울 7층
+  content   String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, date, ward])
+  @@index([userId, date])
+}
