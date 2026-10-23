@@ -203,3 +203,6 @@
 .rsAns { font-size: 0.9375rem; font-weight: 700; color: var(--q-primary); }
 .rsDef { font-size: 0.875rem; color: var(--q-text-2); line-height: 1.55; white-space: pre-wrap; }
 .rsMine { font-size: 0.8125rem; color: var(--q-muted); }
+
+.hintBtn { border: 0; background: transparent; padding: 4px 10px; font-size: 0.8125rem; color: var(--q-muted); text-decoration: underline; font-family: inherit; }
+.hintChip { display: inline-block; padding: 6px 14px; border-radius: 999px; background: var(--q-primary-soft); color: var(--q-primary); font-size: 0.8125rem; font-weight: 700; }
