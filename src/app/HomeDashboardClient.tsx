@@ -1,6 +1,5 @@
 'use client';
 
-import { useState } from 'react';
 import Link from 'next/link';
 
 interface HomeDashboardClientProps {
@@ -14,17 +13,17 @@ export default function HomeDashboardClient({
   publishedEvents,
   notices,
 }: HomeDashboardClientProps) {
-  const [selectedGrade, setSelectedGrade] = useState<number>(user?.grade || 3);
-  const todayStr = new Date().toLocaleDateString('ko-KR', {
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-    weekday: 'short',
-  });
+  const nowDate = new Date();
+  const dateParts = {
+    ymd: nowDate.toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' }),
+    wd: nowDate.toLocaleDateString('ko-KR', { weekday: 'short' }),
+  };
+  const todayStr = `${dateParts.ymd} (${dateParts.wd})`;
 
+  // 로그인한 학년의 일정(+공통 일정)만. 학년 정보가 없으면 전체를 보여준다.
   const gradeEvents = publishedEvents.filter(e => {
-    if (e.isCommon) return true;
-    return e.applicableGrades?.includes(selectedGrade);
+    if (e.isCommon || !user?.grade) return true;
+    return e.applicableGrades?.includes(user.grade);
   });
 
   const now = new Date();
@@ -55,84 +54,44 @@ export default function HomeDashboardClient({
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
           <div>
             <div style={{ fontSize: '0.875rem', opacity: 0.85, marginBottom: '6px' }}>
-              오늘은 {todayStr} 입니다
+              오늘은 {todayStr}입니다
             </div>
             <h1 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '4px' }}>
               {user ? `${user.name}님, 안녕하세요` : '한양대학교 간호대학'}
             </h1>
           </div>
 
-          {/* Grade Selector */}
-          <div
-            style={{
-              backgroundColor: 'rgba(255, 255, 255, 0.15)',
-              padding: '12px 16px',
-              borderRadius: '8px',
-              backdropFilter: 'blur(4px)',
-            }}
-          >
-            <div style={{ fontSize: '0.75rem', fontWeight: 700, marginBottom: '6px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              학년 선택
+        </div>
+
+        {/* 가장 가까운 주요 일정 */}
+        <div style={{ marginTop: '20px', backgroundColor: 'rgba(255, 255, 255, 0.15)', padding: '14px 16px', borderRadius: '8px' }}>
+          <div style={{ fontSize: '0.75rem', fontWeight: 700, opacity: 0.85, marginBottom: '6px' }}>가장 가까운 주요 일정</div>
+          {nearestEvent ? (
+            <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '8px 16px' }}>
+              <div>
+                <div style={{ fontSize: '1.0625rem', fontWeight: 800 }}>
+                  {nearestEvent.title}
+                  <span style={{ marginLeft: '8px', fontSize: '0.8125rem', fontWeight: 700, backgroundColor: '#FFFFFF', color: '#0E4A84', padding: '2px 8px', borderRadius: '999px' }}>
+                    {dDayText}
+                  </span>
+                </div>
+                <div style={{ fontSize: '0.8125rem', opacity: 0.9, marginTop: '2px' }}>
+                  {new Date(nearestEvent.startDateTime).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })}
+                </div>
+              </div>
+              <Link href="/calendar" style={{ color: '#FFFFFF', fontSize: '0.8125rem', fontWeight: 700, textDecoration: 'underline' }}>
+                캘린더 →
+              </Link>
             </div>
-            <div style={{ display: 'flex', gap: '6px' }}>
-              {[1, 2, 3, 4].map(g => (
-                <button
-                  key={g}
-                  onClick={() => setSelectedGrade(g)}
-                  style={{
-                    padding: '6px 12px',
-                    borderRadius: '4px',
-                    fontSize: '0.875rem',
-                    fontWeight: 700,
-                    backgroundColor: selectedGrade === g ? '#FFFFFF' : 'transparent',
-                    color: selectedGrade === g ? '#0E4A84' : '#FFFFFF',
-                    border: '1px solid rgba(255, 255, 255, 0.3)',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s',
-                  }}
-                >
-                  {g}학년
-                </button>
-              ))}
-            </div>
-          </div>
+          ) : (
+            <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>예정된 일정이 없습니다.</div>
+          )}
         </div>
       </div>
 
       {/* Main Dashboard Grid */}
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
         
-        {/* Widget 1: Nearest Major Event D-Day */}
-        <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text)' }}>
-              가장 가까운 주요 일정
-            </h3>
-            {nearestEvent && (
-              <span className="badge btn-accent" style={{ color: '#FFFFFF', padding: '4px 10px' }}>
-                {dDayText}
-              </span>
-            )}
-          </div>
-
-          {nearestEvent ? (
-            <div>
-              <h4 style={{ fontSize: '1.125rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '6px' }}>
-                {nearestEvent.title}
-              </h4>
-              <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)', marginBottom: '12px' }}>
-                {new Date(nearestEvent.startDateTime).toLocaleDateString('ko-KR')}
-                {nearestEvent.description && ` • ${nearestEvent.description}`}
-              </p>
-              <Link href="/calendar" className="btn-outline" style={{ fontSize: '0.8125rem', padding: '4px 10px' }}>
-                캘린더 전체보기 →
-              </Link>
-            </div>
-          ) : (
-            <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>예정된 일정이 없습니다.</p>
-          )}
-        </div>
-
         {/* Widget 2: OPEN LAB Quick Action */}
         <div
           className="card"
