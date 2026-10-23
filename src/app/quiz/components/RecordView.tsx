@@ -100,7 +100,7 @@ export default function RecordView({
         <section aria-label="최근 기록" className={`${s.list} ${s.colMain}`}>
           {rows.slice(0, 10).map(a => (
             <div key={a.id} className={s.row}>
-              <div style={{ minWidth: 0 }}>
+              <div className={s.rowMain}>
                 <div className={s.rowTitle}>{quizName(a.category)} · {modeLabel(a.quizType, kind)}</div>
                 <div className={s.rowSub}>{fmtDate(a.createdAt)}</div>
               </div>
