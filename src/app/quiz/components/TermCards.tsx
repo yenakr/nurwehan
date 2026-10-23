@@ -60,14 +60,10 @@ export default function TermCards({
           <article key={t.id} className={s.card}>
             <div className={s.cardHead}>
               <span className={s.cardTerm}>{t.term}</span>
-              {en && !hidden && <span className={s.cardEn}>{boldInitials(en)}</span>}
+              {en && <span className={s.cardEn} style={hidden ? { visibility: 'hidden' } : undefined} aria-hidden={hidden}>{boldInitials(en)}</span>}
             </div>
-            {hidden ? (
-              <button type="button" className={s.hidden} onClick={() => onReveal(t.id)}>
-                {en ? '눌러서 풀네임·뜻 보기' : '눌러서 뜻 보기'}
-              </button>
-            ) : (
-              <>
+            <div className={s.maskWrap}>
+              <div style={hidden ? { visibility: 'hidden' } : undefined} aria-hidden={hidden}>
                 {hasOptions && (
                   <div className={s.options}>
                     {t.options!.map((opt, i) => (
@@ -79,8 +75,13 @@ export default function TermCards({
                 )}
                 <p className={s.cardBody}>{hasOptions && t.answer ? `정답: ${t.answer}\n${t.definition}` : t.definition}</p>
                 {t.example && <div className={s.cardNote}>{t.example}</div>}
-              </>
-            )}
+              </div>
+              {hidden && (
+                <button type="button" className={s.maskBtn} onClick={() => onReveal(t.id)}>
+                  {en ? '눌러서 풀네임·뜻 보기' : '눌러서 뜻 보기'}
+                </button>
+              )}
+            </div>
             {editMode && (
               <div className={s.cardActions}>
                 <button type="button" className={`${s.btn} ${s.btnSm}`} disabled={idx === 0} aria-label="위로" onClick={() => onMove(idx, 'up')}>▲</button>
