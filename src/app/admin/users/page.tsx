@@ -3,6 +3,7 @@ import { isAdminRole } from '@/lib/auth-core';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import UserList from './UserList';
+import { getTiers } from '@/lib/access';
 
 export const dynamic = 'force-dynamic';
 
@@ -34,13 +35,16 @@ export default async function AdminUsersPage() {
     ]
   });
 
+  const tiers = await getTiers();
+  const withTier = users.map(u => ({ ...u, tier: tiers[u.id] ?? 0 }));
+
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '40px 0' }}>
       <div className="container" style={{ maxWidth: '760px' }}>
         <h1 style={{ fontSize: '1.375rem', fontWeight: 800, marginBottom: '16px', color: 'var(--text)' }}>
           학생 관리
         </h1>
-        <UserList initialUsers={users as any} />
+        <UserList initialUsers={withTier as any} />
       </div>
     </main>
   );

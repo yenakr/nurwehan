@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
+import { hiddenSubjectsFor } from '@/lib/access';
 
 export async function POST(req: Request) {
   try {
@@ -23,6 +24,10 @@ export async function POST(req: Request) {
 
     if (!subject || score === undefined || !totalQuestions) {
       return NextResponse.json({ error: '필수 데이터가 누락되었습니다.' }, { status: 400 });
+    }
+
+    if ((await hiddenSubjectsFor(user)).includes(subject)) {
+      return NextResponse.json({ error: '저장할 수 없습니다.' }, { status: 403 });
     }
 
     const attempt = await prisma.quizAttempt.create({
@@ -64,8 +69,9 @@ export async function GET() {
       return NextResponse.json({ attempts: [] });
     }
 
+    const hidden = await hiddenSubjectsFor(user);
     const attempts = await prisma.quizAttempt.findMany({
-      where: { userId: user.id },
+      where: { userId: user.id, ...(hidden.length > 0 && { subject: { notIn: hidden } }) },
       orderBy: { createdAt: 'desc' },
       take: 20,
     });

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 import { isAdminRole } from '@/lib/auth-core';
+import { setSubjectLevel, renameSubjectLevel } from '@/lib/access';
 
 const GRADES = ['1학년', '2학년', '3학년', '4학년'];
 
@@ -12,10 +13,13 @@ export async function PATCH(req: Request) {
     if (!user || !isAdminRole(user.role)) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
-    const { subject, newSubject, grade } = await req.json();
+    const { subject, newSubject, grade, level } = await req.json();
     if (!subject) return NextResponse.json({ error: '과목이 필요합니다.' }, { status: 400 });
     if (grade !== undefined && !GRADES.includes(grade)) {
       return NextResponse.json({ error: '구분은 1~4학년 중 하나여야 합니다.' }, { status: 400 });
+    }
+    if (level !== undefined && !['NORMAL', 'PARTIAL', 'PRIVATE'].includes(level)) {
+      return NextResponse.json({ error: '공개 범위 값이 올바르지 않습니다.' }, { status: 400 });
     }
     const nextName = typeof newSubject === 'string' ? newSubject.trim() : '';
     const renaming = nextName && nextName !== subject;
@@ -30,11 +34,17 @@ export async function PATCH(req: Request) {
     const data: { subject?: string; grade?: string } = {};
     if (renaming) data.subject = nextName;
     if (grade) data.grade = grade;
-    if (Object.keys(data).length === 0) return NextResponse.json({ success: true });
+    if (Object.keys(data).length === 0 && level === undefined) return NextResponse.json({ success: true });
 
-    const result = await prisma.nursingTerm.updateMany({ where: { subject }, data });
+    const result = Object.keys(data).length > 0
+      ? await prisma.nursingTerm.updateMany({ where: { subject }, data })
+      : { count: 0 };
     if (renaming) {
       await prisma.quizAttempt.updateMany({ where: { subject }, data: { subject: nextName } });
+      await renameSubjectLevel(subject, nextName);
+    }
+    if (level !== undefined) {
+      await setSubjectLevel(renaming ? nextName : subject, level === 'NORMAL' ? null : level);
     }
     return NextResponse.json({ success: true, updated: result.count });
   } catch {

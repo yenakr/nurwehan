@@ -1,5 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
+import { getCurrentUser } from '@/lib/auth';
+import { hiddenSubjectsFor } from '@/lib/access';
 
 export async function GET(req: Request) {
   try {
@@ -7,8 +9,10 @@ export async function GET(req: Request) {
     const subject = searchParams.get('subject');
     const category = searchParams.get('category');
 
-    const where: any = {};
+    const hidden = await hiddenSubjectsFor(await getCurrentUser());
+    const where: any = hidden.length > 0 ? { subject: { notIn: hidden } } : {};
     if (subject && subject !== 'all') {
+      if (hidden.includes(subject)) return NextResponse.json({ terms: [], subjects: [], categories: [] });
       where.subject = subject;
     }
     if (category && category !== 'all') {
@@ -22,6 +26,7 @@ export async function GET(req: Request) {
 
     // Extract unique subjects and categories
     const allTerms = await prisma.nursingTerm.findMany({
+      where: hidden.length > 0 ? { subject: { notIn: hidden } } : undefined,
       select: { subject: true, category: true },
     });
 
