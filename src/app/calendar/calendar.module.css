@@ -61,3 +61,29 @@
 .majorDate { font-size: 0.75rem; color: var(--sub-text); margin-top: 2px; }
 .dday { flex: 0 0 auto; font-size: 0.75rem; font-weight: 800; background: #0E4A84; color: #fff; padding: 3px 9px; border-radius: 999px; }
 .majorItem.exam .dday { background: #DC2626; }
+
+/* 주간 */
+.weekHead { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; gap: 8px; }
+.weekRow { display: grid; grid-template-columns: 52px minmax(0, 1fr); gap: 10px; padding: 10px 0; border-top: 1px solid var(--border); }
+.weekDay { text-align: center; font-weight: 800; line-height: 1.2; }
+.weekDay small { display: block; font-size: 0.6875rem; font-weight: 600; color: var(--sub-text); }
+.weekRow.today { background: #EFF6FF; border-radius: 8px; }
+.weekRow.weekend .weekDay { color: #DC2626; }
+.weekRow.weekend.sat .weekDay { color: #2563EB; }
+.none { color: var(--sub-text); font-size: 0.8125rem; padding-top: 4px; }
+
+/* 목록 */
+.aDate { font-size: 0.8125rem; font-weight: 800; color: var(--sub-text); margin: 14px 0 6px; }
+.aDate:first-child { margin-top: 0; }
+.cat { font-size: 0.6875rem; font-weight: 700; opacity: 0.8; margin-right: 6px; }
+
+/* 학기 */
+.semGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 10px; }
+.semMonth { border: 1px solid var(--border); border-radius: 10px; padding: 12px; min-width: 0; }
+.semMonthHead { display: flex; justify-content: space-between; font-weight: 800; margin-bottom: 8px; }
+.semMonthHead span { font-size: 0.75rem; color: var(--sub-text); font-weight: 600; }
+.semItem { display: flex; gap: 8px; font-size: 0.8125rem; padding: 4px 0; cursor: pointer; min-width: 0; }
+.semItem b { flex: 0 0 34px; color: var(--sub-text); font-weight: 700; }
+.semItem.off span { color: #0E4A84; font-weight: 700; }
+.semItem.off.exam span { color: #DC2626; }
+.semItem.me span { color: #92400E; }
