@@ -46,7 +46,7 @@ export default function RegisterPage() {
       const data = await res.json();
 
       if (res.ok) {
-        alert('회원가입 신청이 완료되었습니다! 관리자 승인 후 이용 가능합니다.');
+        alert('가입 신청이 완료됐어요. 관리자 확인 후 이용할 수 있어요.');
         router.push('/login');
       } else {
         setError(data.message || '회원가입에 실패했습니다.');
@@ -63,7 +63,7 @@ export default function RegisterPage() {
         <div className="card" style={{ width: '100%', maxWidth: '500px', padding: '40px' }}>
           <div style={{ textAlign: 'center', marginBottom: '32px' }}>
             <h1 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--primary)', marginBottom: '8px' }}>학생 회원가입</h1>
-            <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>가입 후 관리자 승인이 완료되어야 시스템 이용이 가능합니다.</p>
+            <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>가입 후 관리자 확인이 끝나면 이용할 수 있어요.</p>
           </div>
           
           {error && (
