@@ -16,6 +16,8 @@ export default function TestSetup({
   onQuizCount,
   quizOrder,
   onQuizOrder,
+  reverse,
+  onReverse,
   worksheet,
   onWorksheet,
   onStart,
@@ -29,6 +31,8 @@ export default function TestSetup({
   onQuizCount: (c: number | 'all') => void;
   quizOrder: 'shuffle' | 'normal';
   onQuizOrder: (o: 'shuffle' | 'normal') => void;
+  reverse: boolean;
+  onReverse: (v: boolean) => void;
   worksheet: boolean;
   onWorksheet: (v: boolean) => void;
   onStart: () => void;
@@ -52,6 +56,22 @@ export default function TestSetup({
             options={[
               { value: 'multiple_choice', label: '4지선다' },
               { value: 'def_to_term', label: '단답형' },
+            ]}
+          />
+        </div>
+      )}
+
+      {kind === 'TERM' && (
+        <div className={s.field}>
+          <div className={s.label}>출제 방향</div>
+          <Segmented<'fwd' | 'rev'>
+            full
+            label="출제 방향"
+            value={reverse ? 'rev' : 'fwd'}
+            onChange={v => onReverse(v === 'rev')}
+            options={[
+              { value: 'fwd', label: '뜻 → 용어' },
+              { value: 'rev', label: '용어 → 뜻' },
             ]}
           />
         </div>

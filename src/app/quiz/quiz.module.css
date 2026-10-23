@@ -96,6 +96,8 @@
 .subjectCard { box-sizing: border-box; min-height: 96px; display: flex; align-items: flex-start; padding: 20px; background: var(--q-surface); border: 1px solid var(--q-border); border-radius: 12px; color: var(--q-text); font-size: 1.0625rem; font-weight: 700; line-height: 1.4; text-align: left; }
 .subjectCard:hover { border-color: var(--q-primary); }
 .subjectCardAdd { border-style: dashed; color: var(--q-muted); align-items: center; justify-content: center; }
+.divider { display: flex; align-items: center; gap: 12px; margin-top: 4px; font-size: 0.8125rem; font-weight: 700; color: var(--q-muted); }
+.divider::after { content: ''; flex: 1; height: 1px; background: var(--q-border-strong); }
 .groupTitle { margin: 8px 0 -4px; font-size: 0.875rem; font-weight: 800; color: var(--q-muted); }
 
 .stats { display: flex; flex-wrap: wrap; gap: 16px; }

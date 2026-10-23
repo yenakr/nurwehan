@@ -7,15 +7,10 @@ import HomeHistory from './HomeHistory';
 export default async function Home() {
   const user = await getCurrentUser();
 
-  // Fetch published calendar events and roadmap items from Prisma DB
-  const [publishedEvents, publishedRoadmaps, notices] = await Promise.all([
+  const [publishedEvents, notices] = await Promise.all([
     prisma.calendarEvent.findMany({
       where: { status: 'PUBLISHED' },
       orderBy: { startDateTime: 'asc' },
-    }).catch(() => []),
-    prisma.roadmapItem.findMany({
-      where: { status: 'PUBLISHED' },
-      orderBy: [{ recommendedGrade: 'asc' }, { priority: 'asc' }],
     }).catch(() => []),
     prisma.notice.findMany({
       take: 5,
@@ -33,7 +28,6 @@ export default async function Home() {
           <HomeDashboardClient
             user={user}
             publishedEvents={publishedEvents}
-            publishedRoadmaps={publishedRoadmaps}
             notices={notices}
           />
 
@@ -70,11 +64,10 @@ export default async function Home() {
             }}
           >
             <div>
-              <p style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '8px', fontSize: '0.9375rem' }}>
-                NUR위한 (한양대학교 간호대학 통합 로드맵 플랫폼)
+              <p style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '4px', fontSize: '0.9375rem' }}>
+                NUR위한
               </p>
-              <p>본 서비스는 간호대학 학생들의 1~4학년 학업, 임상실습, OPEN LAB 및 진로 준비를 지원하는 통합 학생 지원 플랫폼입니다.</p>
-              <p>© 2026 NUR위한. All Rights Reserved.</p>
+              <p>한양대학교 간호대학 · © 2026</p>
             </div>
             <div style={{ display: 'flex', gap: '20px', fontWeight: 500 }}>
               <a href="#">개인정보처리방침</a>

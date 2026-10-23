@@ -2,20 +2,16 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import PreparingBadge from '@/components/PreparingBadge';
-import EmptyState from '@/components/EmptyState';
 
 interface HomeDashboardClientProps {
   user: any;
   publishedEvents: any[];
-  publishedRoadmaps: any[];
   notices: any[];
 }
 
 export default function HomeDashboardClient({
   user,
   publishedEvents,
-  publishedRoadmaps,
   notices,
 }: HomeDashboardClientProps) {
   const [selectedGrade, setSelectedGrade] = useState<number>(user?.grade || 3);
@@ -37,14 +33,12 @@ export default function HomeDashboardClient({
     .sort((a, b) => new Date(a.startDateTime).getTime() - new Date(b.startDateTime).getTime());
 
   const nearestEvent = futureEvents[0];
-  let dDayText = '준비 중';
+  let dDayText = '';
   if (nearestEvent) {
     const diffTime = new Date(nearestEvent.startDateTime).getTime() - now.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     dDayText = diffDays === 0 ? 'D-Day' : `D-${diffDays}`;
   }
-
-  const gradeRoadmaps = publishedRoadmaps.filter(r => r.recommendedGrade === selectedGrade);
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
@@ -64,7 +58,7 @@ export default function HomeDashboardClient({
               오늘은 {todayStr} 입니다
             </div>
             <h1 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '4px' }}>
-              {user ? `${user.name}님, 오늘 해야 할 학업·실습 일정을 확인하세요.` : '한양대학교 간호대학 통합 학업·실습·진로 로드맵'}
+              {user ? `${user.name}님, 안녕하세요` : '한양대학교 간호대학'}
             </h1>
           </div>
 
@@ -114,12 +108,10 @@ export default function HomeDashboardClient({
             <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text)' }}>
               가장 가까운 주요 일정
             </h3>
-            {nearestEvent ? (
+            {nearestEvent && (
               <span className="badge btn-accent" style={{ color: '#FFFFFF', padding: '4px 10px' }}>
                 {dDayText}
               </span>
-            ) : (
-              <PreparingBadge variant="badge" text="준비 중" />
             )}
           </div>
 
@@ -137,7 +129,7 @@ export default function HomeDashboardClient({
               </Link>
             </div>
           ) : (
-            <EmptyState type="preparing" />
+            <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>예정된 일정이 없습니다.</p>
           )}
         </div>
 
@@ -164,68 +156,26 @@ export default function HomeDashboardClient({
           </div>
         </div>
 
-        {/* Widget 3: Clinical Health Readiness Overview */}
+        {/* Widget 3: Clinical guide */}
         <div className="card">
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text)' }}>
-              임상실습 건강요건 준비상태
-            </h3>
-            <PreparingBadge variant="badge" text="준비 중" />
-          </div>
-          <Link href="/clinical" className="btn-outline" style={{ width: '100%', textAlign: 'center', fontSize: '0.84rem', marginTop: '12px' }}>
-            임상실습 가이드 확인 →
+          <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text)', marginBottom: '12px' }}>
+            임상실습
+          </h3>
+          <Link href="/clinical" className="btn-outline" style={{ width: '100%', textAlign: 'center', fontSize: '0.84rem' }}>
+            임상실습 가이드 →
           </Link>
         </div>
 
         {/* Widget 4: QUIZ Quick Access */}
         <div className="card" style={{ borderLeft: '4px solid var(--primary)', backgroundColor: '#F8FAFC' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px' }}>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: 900, color: 'var(--primary)', letterSpacing: '0.5px' }}>
-              QUIZ
-            </h3>
-          </div>
-          <div style={{ display: 'flex', gap: '8px', marginTop: '12px' }}>
-            <Link href="/quiz" className="btn-primary" style={{ flex: 1, textAlign: 'center', fontSize: '0.875rem', fontWeight: 700 }}>
-              QUIZ →
-            </Link>
-          </div>
-        </div>
-      </div>
-
-      {/* Recommended Activities for Current Grade */}
-      <section>
-        <div className="section-title">
-          <span>{selectedGrade}학년 추천 학업·진로 로드맵</span>
-          <Link href="/roadmap" style={{ fontSize: '0.84rem', fontWeight: 600, color: 'var(--primary)' }}>
-            전체 4년 로드맵 보기 →
+          <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '12px' }}>
+            QUIZ
+          </h3>
+          <Link href="/quiz" className="btn-primary" style={{ width: '100%', textAlign: 'center', fontSize: '0.875rem', fontWeight: 700 }}>
+            학습·테스트 시작 →
           </Link>
         </div>
-
-        {gradeRoadmaps.length > 0 ? (
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '16px' }}>
-            {gradeRoadmaps.slice(0, 4).map(item => (
-              <div key={item.id} className="card" style={{ padding: '16px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '8px' }}>
-                  <span className="badge" style={{ backgroundColor: '#E2E8F0', color: '#334155' }}>
-                    {item.category}
-                  </span>
-                  <span style={{ fontSize: '0.75rem', color: 'var(--sub-text)' }}>
-                    {item.recommendedSemester ? `${item.recommendedGrade}학년 ${item.recommendedSemester}학기` : `${item.recommendedGrade}학년`}
-                  </span>
-                </div>
-                <h4 style={{ fontSize: '0.9375rem', fontWeight: 700, color: 'var(--text)', marginBottom: '6px' }}>
-                  {item.title}
-                </h4>
-                <p style={{ fontSize: '0.8125rem', color: 'var(--sub-text)', lineHeight: 1.4 }}>
-                  {item.description || '상세 가이드 준비 중'}
-                </p>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <EmptyState type="preparing" />
-        )}
-      </section>
+      </div>
 
       {/* Important Notices */}
       {notices && notices.length > 0 && (
