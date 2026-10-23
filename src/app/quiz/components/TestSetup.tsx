@@ -39,7 +39,7 @@ export default function TestSetup({
   onWorksheet: (v: boolean) => void;
   onStart: () => void;
 }) {
-  const presets = [5, 10, 20].filter(n => n < poolSize);
+  const presets = [10, 30, 50].filter(n => n < poolSize);
   const effective = quizCount === 'all' || quizCount >= poolSize ? poolSize : quizCount;
   const countValue: number | 'all' = quizCount === 'all' || quizCount >= poolSize ? 'all' : quizCount;
 
