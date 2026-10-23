@@ -1,9 +1,9 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import type { ScheduleItem } from './MySchedule';
 
-interface Note {
+export interface Note {
   id: string;
   date: string;
   ward: string;
@@ -28,7 +28,19 @@ const addDay = (s: string, n: number) => {
   return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
 };
 
-export default function ClinicalNotes({ schedule }: { schedule: ScheduleItem[] }) {
+export default function ClinicalNotes({
+  schedule,
+  notes,
+  setNotes,
+  unavailable,
+  targetDate,
+}: {
+  schedule: ScheduleItem[];
+  notes: Note[];
+  setNotes: Dispatch<SetStateAction<Note[]>>;
+  unavailable: boolean;
+  targetDate?: string;
+}) {
   // 실습 평일 목록 (배정된 주의 월~금)
   const practiceDays = useMemo(() => {
     const days: string[] = [];
@@ -38,9 +50,8 @@ export default function ClinicalNotes({ schedule }: { schedule: ScheduleItem[] }
     return Array.from(new Set(days)).sort();
   }, [schedule]);
 
-  const [notes, setNotes] = useState<Note[]>([]);
-  const [unavailable, setUnavailable] = useState(false);
   const [date, setDate] = useState(() => {
+    if (targetDate) return targetDate;
     const t = todayStr();
     if (!practiceDays.length || practiceDays.includes(t)) return t;
     // 오늘이 실습일이 아니면 가장 가까운 다음 실습일(없으면 마지막 실습일)
@@ -51,14 +62,8 @@ export default function ClinicalNotes({ schedule }: { schedule: ScheduleItem[] }
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
 
   useEffect(() => {
-    fetch('/api/clinical/notes')
-      .then(r => r.json())
-      .then(d => {
-        setNotes(d.notes || []);
-        if (d.unavailable) setUnavailable(true);
-      })
-      .catch(() => setUnavailable(true));
-  }, []);
+    if (targetDate) setDate(targetDate);
+  }, [targetDate]);
 
   // 그 날짜의 내 배정 병동 (없으면 직접 입력)
   const scheduled = useMemo(() => {

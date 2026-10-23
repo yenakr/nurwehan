@@ -70,7 +70,17 @@ function buildIcs(items: ScheduleItem[]) {
   return lines.join('\r\n');
 }
 
-export default function MySchedule({ schedule, me }: { schedule: ScheduleItem[]; me?: string }) {
+export default function MySchedule({
+  schedule,
+  me,
+  noteDates,
+  onPickDay,
+}: {
+  schedule: ScheduleItem[];
+  me?: string;
+  noteDates?: Set<string>;
+  onPickDay?: (date: string) => void;
+}) {
   const today = ymd(new Date());
 
   const firstStart = schedule[0]?.startDate;
@@ -196,6 +206,7 @@ export default function MySchedule({ schedule, me }: { schedule: ScheduleItem[];
 
       {/* 월 달력 */}
       <div className="card">
+        {onPickDay && <div style={{ fontSize: '0.75rem', color: 'var(--sub-text)', marginBottom: '8px' }}>날짜를 누르면 그날 실습일지를 쓸 수 있어요. ● 표시는 일지가 있는 날이에요.</div>}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
           <button className="btn-outline" disabled={!canPrev} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))} style={{ padding: '4px 12px' }}>
             ‹
@@ -218,10 +229,14 @@ export default function MySchedule({ schedule, me }: { schedule: ScheduleItem[];
             const weekday = d.getDay() >= 1 && d.getDay() <= 5;
             const it = wk && weekday ? wk.item : undefined;
             const free = wk && weekday && !wk.item;
+            const hasNote = !!noteDates?.has(s);
             return (
               <div
                 key={s}
+                onClick={it && onPickDay ? () => onPickDay(s) : undefined}
                 style={{
+                  cursor: it && onPickDay ? 'pointer' : 'default',
+                  position: 'relative',
                   minHeight: '54px',
                   padding: '3px',
                   borderRadius: '4px',
@@ -232,6 +247,7 @@ export default function MySchedule({ schedule, me }: { schedule: ScheduleItem[];
                 }}
               >
                 <div style={{ fontWeight: 700 }}>{d.getDate()}</div>
+                {hasNote && <span style={{ position: 'absolute', top: '3px', right: '5px', color: 'var(--primary)', fontSize: '0.75rem', lineHeight: 1 }}>●</span>}
                 {it && (
                   <div style={{ fontSize: '0.625rem', lineHeight: 1.25, wordBreak: 'keep-all' }}>
                     {it.ward}
