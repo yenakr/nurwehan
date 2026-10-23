@@ -134,3 +134,10 @@
 .manageRow { display: flex; gap: 8px; align-items: center; }
 .sectionTitle { margin: 0; font-size: 0.875rem; font-weight: 800; color: var(--q-text-2); }
 .error { font-size: 0.8125rem; color: var(--q-danger); }
+
+/* 모바일: 과목 카드를 한 줄에 2개, 학년 칩은 한 줄에 */
+@media (max-width: 640px) {
+  .hubGrid { grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
+  .subjectCard { min-height: 64px; padding: 12px; font-size: 0.9375rem; word-break: keep-all; overflow-wrap: anywhere; }
+  .chipLg { height: 34px; padding: 0 10px; font-size: 0.8125rem; }
+}
