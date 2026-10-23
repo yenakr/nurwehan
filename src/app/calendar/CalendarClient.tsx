@@ -21,6 +21,18 @@ export default function CalendarClient({
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [selectedDay, setSelectedDay] = useState<string>('');
   const [showAddMenu, setShowAddMenu] = useState(false);
+  const startOfWeek = (d: Date) => {
+    const x = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    x.setDate(x.getDate() - x.getDay());
+    return x;
+  };
+  const currentSemester = () => {
+    const n = new Date();
+    const m = n.getMonth() + 1;
+    return m >= 3 && m <= 8 ? { year: n.getFullYear(), half: 1 } : { year: m >= 9 ? n.getFullYear() : n.getFullYear() - 1, half: 2 };
+  };
+  const [weekStart, setWeekStart] = useState<Date>(() => startOfWeek(new Date()));
+  const [sem, setSem] = useState<{ year: number; half: number }>(currentSemester);
   
   // Official events
   const [officialEvents, setOfficialEvents] = useState<any[]>(initialOfficialEvents);
@@ -323,6 +335,49 @@ export default function CalendarClient({
     return `${m}월 ${d}일 (${['일', '월', '화', '수', '목', '금', '토'][dt.getDay()]})`;
   })();
 
+  // 주간 / 목록 / 학기 보기용
+  const weekDays = Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(weekStart);
+    d.setDate(weekStart.getDate() + i);
+    return d;
+  });
+  const shiftWeek = (n: number) => {
+    const d = new Date(weekStart);
+    d.setDate(d.getDate() + 7 * n);
+    setWeekStart(d);
+  };
+  const eventsOn = (ds: string) =>
+    filteredEvents
+      .filter(e => formatYYYYMMDD(e.startDateTime) === ds)
+      .sort((a, b) => Number(!!a.isPersonal) - Number(!!b.isPersonal));
+  const dateLabel = (ds: string) => {
+    const [y, m, d] = ds.split('-').map(Number);
+    return `${m}월 ${d}일 (${['일', '월', '화', '수', '목', '금', '토'][new Date(y, m - 1, d).getDay()]})`;
+  };
+  const upcomingGroups = (() => {
+    const map = new Map<string, any[]>();
+    filteredEvents
+      .filter(e => formatYYYYMMDD(e.startDateTime) >= todayYmd)
+      .sort((a, b) => formatYYYYMMDD(a.startDateTime).localeCompare(formatYYYYMMDD(b.startDateTime)))
+      .forEach(e => {
+        const k = formatYYYYMMDD(e.startDateTime);
+        map.set(k, [...(map.get(k) || []), e]);
+      });
+    return Array.from(map.entries());
+  })();
+  const shiftSem = (n: number) => {
+    const idx = sem.year * 2 + (sem.half - 1) + n;
+    setSem({ year: Math.floor(idx / 2), half: (idx % 2) + 1 });
+  };
+  const semMonths = Array.from({ length: 6 }, (_, i) => {
+    // 1학기: 3~8월 / 2학기: 9월~다음 해 2월
+    const startMonth = sem.half === 1 ? 3 : 9;
+    const mm = startMonth + i;
+    const year = sem.year + (mm > 12 ? 1 : 0);
+    const month = mm > 12 ? mm - 12 : mm;
+    return { year, month, key: `${year}-${String(month).padStart(2, '0')}` };
+  });
+
   // Render Grid Cells for Month View (Real Calendar App Style with Prev/Next month trailing/leading days)
   const monthGridCells = useMemo(() => {
     const cells: Array<{
@@ -530,61 +585,108 @@ export default function CalendarClient({
         </div>
       )}
 
-      {(viewMode === 'agenda' || viewMode === 'week' || viewMode === 'semester') && (
-        <div className="card">
-          <h3 className="section-title">
-            <span>📋 일정 상세 목록 ({filteredEvents.length}건) - 클릭시 상세정보 및 수정</span>
-          </h3>
-
-          {filteredEvents.length > 0 ? (
-            <div className="table-container">
-              <table>
-                <thead>
-                  <tr>
-                    <th>날짜</th>
-                    <th>구분</th>
-                    <th>일정명</th>
-                    <th>대상 학년</th>
-                    <th>상세 / 관리</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {filteredEvents.map(e => (
-                    <tr
-                      key={e.id}
-                      style={{ cursor: 'pointer' }}
-                      onClick={() => handleOpenEventDetail(e)}
-                    >
-                      <td style={{ fontWeight: 700, color: 'var(--primary)' }}>
-                        {new Date(e.startDateTime).toLocaleDateString('ko-KR')}
-                      </td>
-                      <td>
-                        <span className="badge" style={{ backgroundColor: e.isPersonal ? '#FEF3C7' : '#E2E8F0', color: e.isPersonal ? '#92400E' : '#334155' }}>
-                          {categoryLabels[e.category] || e.category}
-                        </span>
-                      </td>
-                      <td style={{ fontWeight: 600 }}>{e.title}</td>
-                      <td>{e.isCommon ? '전학년 공통' : e.applicableGrades?.map((g: number) => `${g}학년`).join(', ') || '개인'}</td>
-                      <td>
-                        <button
-                          onClick={(evt) => {
-                            evt.stopPropagation();
-                            handleOpenEventDetail(e);
-                          }}
-                          className="btn-outline"
-                          style={{ fontSize: '0.75rem', padding: '2px 8px' }}
-                        >
-                          상세 / 수정
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+      {viewMode === 'week' && (
+        <div className="card" style={{ padding: '16px' }}>
+          <div className={styles.weekHead}>
+            <h3 className={styles.navTitle} style={{ fontSize: '1rem' }}>
+              {weekDays[0].getMonth() + 1}/{weekDays[0].getDate()} – {weekDays[6].getMonth() + 1}/{weekDays[6].getDate()}
+            </h3>
+            <div className={styles.navBtns}>
+              <button onClick={() => shiftWeek(-1)} className={`btn-outline ${styles.navBtn}`} aria-label="이전 주">‹</button>
+              <button onClick={() => setWeekStart(startOfWeek(new Date()))} className={`btn-outline ${styles.navBtn}`} style={{ fontSize: '0.8125rem' }}>이번 주</button>
+              <button onClick={() => shiftWeek(1)} className={`btn-outline ${styles.navBtn}`} aria-label="다음 주">›</button>
             </div>
+          </div>
+          {weekDays.map(d => {
+            const ds = formatYYYYMMDD(d);
+            const evs = eventsOn(ds);
+            return (
+              <div
+                key={ds}
+                className={`${styles.weekRow} ${ds === todayYmd ? styles.today : ''} ${d.getDay() === 0 ? styles.weekend : d.getDay() === 6 ? `${styles.weekend} ${styles.sat}` : ''}`}
+              >
+                <div className={styles.weekDay}>
+                  {d.getDate()}
+                  <small>{['일', '월', '화', '수', '목', '금', '토'][d.getDay()]}</small>
+                </div>
+                <div>
+                  {evs.length === 0 ? (
+                    <div className={styles.none}>일정 없음</div>
+                  ) : (
+                    evs.map(e => (
+                      <div key={e.id} onClick={() => handleOpenEventDetail(e)} className={`${styles.dayItem} ${e.isPersonal ? styles.me : e.category === 'EXAM' ? styles.exam : ''}`}>
+                        {e.title}
+                      </div>
+                    ))
+                  )}
+                </div>
+              </div>
+            );
+          })}
+        </div>
+      )}
+
+      {viewMode === 'agenda' && (
+        <div className="card" style={{ padding: '16px' }}>
+          {upcomingGroups.length === 0 ? (
+            <div className={styles.empty}>앞으로 예정된 일정이 없습니다.</div>
           ) : (
-            <EmptyState type="preparing" />
+            upcomingGroups.map(([ds, evs]) => (
+              <div key={ds}>
+                <div className={styles.aDate}>{dateLabel(ds)}</div>
+                {evs.map(e => (
+                  <div key={e.id} onClick={() => handleOpenEventDetail(e)} className={`${styles.dayItem} ${e.isPersonal ? styles.me : e.category === 'EXAM' ? styles.exam : ''}`}>
+                    <span className={styles.cat}>{categoryLabels[e.category] || ''}</span>
+                    {e.title}
+                  </div>
+                ))}
+              </div>
+            ))
           )}
+        </div>
+      )}
+
+      {viewMode === 'semester' && (
+        <div className="card" style={{ padding: '16px' }}>
+          <div className={styles.weekHead}>
+            <h3 className={styles.navTitle} style={{ fontSize: '1rem' }}>
+              {sem.year}학년도 {sem.half}학기
+            </h3>
+            <div className={styles.navBtns}>
+              <button onClick={() => shiftSem(-1)} className={`btn-outline ${styles.navBtn}`} aria-label="이전 학기">‹</button>
+              <button onClick={() => setSem(currentSemester())} className={`btn-outline ${styles.navBtn}`} style={{ fontSize: '0.8125rem' }}>이번 학기</button>
+              <button onClick={() => shiftSem(1)} className={`btn-outline ${styles.navBtn}`} aria-label="다음 학기">›</button>
+            </div>
+          </div>
+          <div className={styles.semGrid}>
+            {semMonths.map(m => {
+              const evs = filteredEvents
+                .filter(e => {
+                  const ds = formatYYYYMMDD(e.startDateTime);
+                  return ds.startsWith(m.key);
+                })
+                .sort((a, b) => formatYYYYMMDD(a.startDateTime).localeCompare(formatYYYYMMDD(b.startDateTime)));
+              return (
+                <div key={m.key} className={styles.semMonth}>
+                  <div className={styles.semMonthHead}>
+                    {m.month}월
+                    <span>{evs.length ? `${evs.length}건` : ''}</span>
+                  </div>
+                  {evs.length === 0 && <div className={styles.none}>—</div>}
+                  {evs.map(e => (
+                    <div
+                      key={e.id}
+                      onClick={() => handleOpenEventDetail(e)}
+                      className={`${styles.semItem} ${e.isPersonal ? styles.me : `${styles.off} ${e.category === 'EXAM' ? styles.exam : ''}`}`}
+                    >
+                      <b>{Number(formatYYYYMMDD(e.startDateTime).split('-')[2])}일</b>
+                      <span>{e.title}</span>
+                    </div>
+                  ))}
+                </div>
+              );
+            })}
+          </div>
         </div>
       )}
 
