@@ -69,11 +69,11 @@ export default function Header() {
       ],
     },
     {
-      title: '진로 & 캠퍼스',
+      title: '도구',
       key: 'career',
       items: [
         // 취업 준비(/career)는 일단 숨김 — 페이지는 유지
-        { label: '유틸리티 도구', href: '/tools', desc: 'OPEN LAB 신청서 작성기' },
+        { label: '계산기', href: '/tools', desc: '수액 속도, 약물 용량, BMI' },
       ],
     },
   ];
