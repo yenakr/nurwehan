@@ -38,6 +38,10 @@ export async function decrypt(input: string): Promise<AuthSession | null> {
   }
 }
 
+export function isSuperAdmin(role?: string | null) {
+  return !!role && role.toUpperCase() === 'SUPER_ADMIN';
+}
+
 export function isAdminRole(role?: string | null) {
   if (!role) return false;
   const upperRole = role.toUpperCase();

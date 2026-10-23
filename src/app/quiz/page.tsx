@@ -4,7 +4,7 @@ import QuizClient from './QuizClient';
 import GateForm from './GateForm';
 import { gateEnabled, guestAllowed } from '@/lib/quiz-gate';
 import { hiddenSubjectsFor, getSubjectLevels } from '@/lib/access';
-import { isAdminRole } from '@/lib/auth-core';
+import { isSuperAdmin } from '@/lib/auth-core';
 
 export const dynamic = 'force-dynamic';
 
@@ -29,7 +29,7 @@ export default async function QuizPage({
   }
 
   const hidden = await hiddenSubjectsFor(user);
-  const subjectLevels = user && isAdminRole(user.role) ? await getSubjectLevels() : {};
+  const subjectLevels = user && isSuperAdmin(user.role) ? await getSubjectLevels() : {};
 
   // 로그인도 코드 통과도 아닌 경우 데이터를 내려보내지 않는다
   const terms = !user && !guest ? [] : await prisma.nursingTerm.findMany({
@@ -41,7 +41,7 @@ export default async function QuizPage({
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '32px 0' }}>
       <div className="container">
-        <QuizClient initialTerms={terms} user={user} initialSubject={subject} subjectLevels={subjectLevels} guest={guest} />
+        <QuizClient initialTerms={terms} user={user} initialSubject={subject} subjectLevels={subjectLevels} superAdmin={!!user && isSuperAdmin(user.role)} guest={guest} />
       </div>
     </main>
   );

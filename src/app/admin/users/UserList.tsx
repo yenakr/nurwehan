@@ -25,12 +25,13 @@ interface User {
   phone: string | null;
   approvalStatus: string;
   tier?: number;
+  role?: string;
   createdAt: string;
   restrictions: Restriction[];
   warnings: CleanupWarning[];
 }
 
-export default function UserList({ initialUsers }: { initialUsers: User[] }) {
+export default function UserList({ initialUsers, superAdmin = false }: { initialUsers: User[]; superAdmin?: boolean }) {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [users, setUsers] = useState<User[]>(initialUsers);
@@ -94,6 +95,23 @@ export default function UserList({ initialUsers }: { initialUsers: User[] }) {
         body: JSON.stringify({ tier }),
       });
       if (res.ok) setUsers(users.map(u => (u.id === id ? { ...u, tier } : u)));
+      else alert('저장하지 못했습니다.');
+    } catch {
+      alert('오류가 발생했습니다.');
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleRoleUpdate = async (id: string, role: string) => {
+    setLoading(id);
+    try {
+      const res = await fetch(`/api/admin/users/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ role }),
+      });
+      if (res.ok) setUsers(users.map(u => (u.id === id ? { ...u, role } : u)));
       else alert('저장하지 못했습니다.');
     } catch {
       alert('오류가 발생했습니다.');
@@ -199,7 +217,18 @@ export default function UserList({ initialUsers }: { initialUsers: User[] }) {
                     </div>
                     <div className="sub">{user.studentId}</div>
                   </div>
-                  {user.approvalStatus === 'APPROVED' && (
+                  {superAdmin && (
+                    <select
+                      value={user.role === 'STUDENT' || !user.role ? 'STUDENT' : 'ADMIN'}
+                      onChange={e => handleRoleUpdate(user.id, e.target.value)}
+                      disabled={loading === user.id}
+                      aria-label="권한"
+                    >
+                      <option value="STUDENT">학생</option>
+                      <option value="ADMIN">관리자</option>
+                    </select>
+                  )}
+                  {superAdmin && user.approvalStatus === 'APPROVED' && (
                     <select
                       value={user.tier ?? 0}
                       onChange={e => handleTierUpdate(user.id, Number(e.target.value))}

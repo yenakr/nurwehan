@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
-import { isAdminRole } from '@/lib/auth-core';
+import { isAdminRole, isSuperAdmin } from '@/lib/auth-core';
 
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -30,6 +30,9 @@ export async function POST(req: Request) {
   }
   try {
     const { term, week1Start, text, dryRun } = await req.json();
+    if (!dryRun && !isSuperAdmin(user.role)) {
+      return NextResponse.json({ error: '시스템관리자만 등록할 수 있습니다.' }, { status: 403 });
+    }
     const termName = String(term || '').trim();
     if (!termName) return NextResponse.json({ error: '학기 이름이 필요합니다. (예: 2027-1)' }, { status: 400 });
     if (!DATE_RE.test(String(week1Start || ''))) {
@@ -104,6 +107,9 @@ export async function DELETE(req: Request) {
   const user = await getCurrentUser();
   if (!user || !isAdminRole(user.role)) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
+  if (!isSuperAdmin(user.role)) {
+    return NextResponse.json({ error: '시스템관리자만 삭제할 수 있습니다.' }, { status: 403 });
   }
   const { term } = await req.json();
   if (!term) return NextResponse.json({ error: 'term 필요' }, { status: 400 });

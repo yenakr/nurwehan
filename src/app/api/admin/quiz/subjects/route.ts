@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
-import { isAdminRole } from '@/lib/auth-core';
+import { isAdminRole, isSuperAdmin } from '@/lib/auth-core';
 import { setSubjectLevel, renameSubjectLevel } from '@/lib/access';
 
 const GRADES = ['1학년', '2학년', '3학년', '4학년'];
@@ -17,6 +17,9 @@ export async function PATCH(req: Request) {
     if (!subject) return NextResponse.json({ error: '과목이 필요합니다.' }, { status: 400 });
     if (grade !== undefined && !GRADES.includes(grade)) {
       return NextResponse.json({ error: '구분은 1~4학년 중 하나여야 합니다.' }, { status: 400 });
+    }
+    if (level !== undefined && !isSuperAdmin(user.role)) {
+      return NextResponse.json({ error: '권한이 없습니다.' }, { status: 403 });
     }
     if (level !== undefined && !['NORMAL', 'PARTIAL', 'PRIVATE'].includes(level)) {
       return NextResponse.json({ error: '공개 범위 값이 올바르지 않습니다.' }, { status: 400 });
