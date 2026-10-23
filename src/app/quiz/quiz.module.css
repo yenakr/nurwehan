@@ -167,3 +167,6 @@
   .chips { gap: 6px; }
   .chipCount { margin-left: 4px; }
 }
+
+.maskWrap { position: relative; }
+.maskBtn { position: absolute; inset: 0; border: 0; border-radius: 8px; background: var(--q-primary-soft); color: var(--q-muted); font-size: 0.8125rem; text-align: left; padding: 0 10px; display: flex; align-items: center; }
