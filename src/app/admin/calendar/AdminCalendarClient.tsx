@@ -76,7 +76,7 @@ export default function AdminCalendarClient({ initialEvents }: AdminCalendarClie
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)' }}>
-              📅 캘린더 관리
+              캘린더 관리
             </h2>
             <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>
               학년별 학사일정, 중간/기말고사, 임상실습 OT, 학생회/공식행사 일정을 관리합니다.
@@ -158,7 +158,7 @@ export default function AdminCalendarClient({ initialEvents }: AdminCalendarClie
 
       <div className="card">
         <h3 className="section-title">
-          <span>📋 등록된 학사 및 실습 일정 ({events.length}개)</span>
+          <span>등록된 일정 {events.length}</span>
         </h3>
 
         {events.length > 0 ? (
@@ -207,7 +207,7 @@ export default function AdminCalendarClient({ initialEvents }: AdminCalendarClie
           </div>
         ) : (
           <div style={{ padding: '32px', textAlign: 'center', color: 'var(--sub-text)' }}>
-            등록된 공식 학사 및 실습 일정이 없습니다.
+            등록된 일정이 없어요.
           </div>
         )}
       </div>

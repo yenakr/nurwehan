@@ -47,7 +47,6 @@ function LoginForm() {
     <div className="card" style={{ width: '100%', maxWidth: '400px', padding: '40px' }}>
       <div style={{ textAlign: 'center', marginBottom: '32px' }}>
         <h1 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--primary)', marginBottom: '8px' }}>로그인</h1>
-        <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>NUR위한에 오신 것을 환영합니다.</p>
       </div>
 
       {error && (
@@ -62,7 +61,7 @@ function LoginForm() {
           <input
             type="text"
             required
-            placeholder="학번을 입력하세요"
+            placeholder="학번"
             value={formData.studentId}
             onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
             style={{ width: '100%' }}
@@ -73,7 +72,7 @@ function LoginForm() {
           <input
             type="password"
             required
-            placeholder="비밀번호를 입력하세요"
+            placeholder="비밀번호"
             value={formData.password}
             onChange={(e) => setFormData({ ...formData, password: e.target.value })}
             style={{ width: '100%' }}

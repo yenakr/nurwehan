@@ -99,7 +99,7 @@ export default function RecordView({
     );
   }
   if (loading) return <div className={s.empty}>불러오는 중…</div>;
-  if (rows.length === 0) return <div className={s.empty}>아직 푼 기록이 없습니다.</div>;
+  if (rows.length === 0) return <div className={s.empty}>아직 푼 기록이 없어요.</div>;
 
   return (
     <>

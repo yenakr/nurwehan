@@ -70,7 +70,7 @@ export default function HubView({
           </section>
         );
       })}
-      {subjects.length === 0 && <div className={s.empty}>등록된 과목이 없습니다.</div>}
+      {subjects.length === 0 && <div className={s.empty}>등록된 과목이 없어요.</div>}
       {isAdmin && grade === 'all' && (
         <div>
           <button type="button" className={s.btn} onClick={() => onAddSubject()}>+ 새 과목 추가</button>

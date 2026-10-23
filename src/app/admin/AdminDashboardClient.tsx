@@ -1095,7 +1095,7 @@ function SupplyList({ skill, onUpdate }: { skill: any, onUpdate: () => void }) {
             {skill.supplies.length === 0 && !isAdding && (
               <tr>
                 <td colSpan={5} style={{ textAlign: 'center', padding: '60px', color: 'var(--sub-text)' }}>
-                  등록된 준비물이 없습니다.
+                  등록된 준비물이 없어요.
                 </td>
               </tr>
             )}

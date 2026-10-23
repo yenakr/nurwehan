@@ -2632,7 +2632,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                 퀴즈 풀이 상세 검토: {selectedHistoryAttempt.subject}
               </h3>
               <button onClick={() => setSelectedHistoryAttempt(null)} className="btn-outline" style={{ padding: '4px 10px' }}>
-                닫기 ✕
+                닫기
               </button>
             </div>
 

@@ -229,9 +229,8 @@ export default function AttendanceClient({
           </div>
         ) : processedGroups.length === 0 ? (
           <div className="premium-empty">
-             <div className="empty-icon">📅</div>
-             <h3>신청 내역이 없습니다.</h3>
-             <p>해당 날짜에 승인된 OPEN LAB 신청이 존재하지 않습니다.</p>
+             <h3>신청 내역이 없어요</h3>
+             <p>이 날짜에 승인된 신청이 없어요.</p>
           </div>
         ) : (
           processedGroups.map((group) => (
@@ -247,7 +246,7 @@ export default function AttendanceClient({
                 </div>
                 <div className="header-right">
                   <button className="btn-print-slot" onClick={() => handlePrintSlot(group.timeLabel)}>
-                    🖨️ 명단 인쇄
+                    명단 인쇄
                   </button>
                 </div>
               </div>

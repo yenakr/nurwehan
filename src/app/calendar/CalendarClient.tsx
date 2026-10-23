@@ -553,7 +553,7 @@ export default function CalendarClient({
           <div className={styles.dayPanel}>
             <div className={styles.dayTitle}>{selectedDayLabel}</div>
             {selectedDayEvents.length === 0 ? (
-              <div className={styles.empty}>일정이 없습니다.</div>
+              <div className={styles.empty}>일정이 없어요.</div>
             ) : (
               selectedDayEvents.map(e => (
                 <div key={e.id} onClick={() => handleOpenEventDetail(e)} className={`${styles.dayItem} ${e.isPersonal ? styles.me : e.category === 'EXAM' ? styles.exam : ''}`}>
@@ -570,7 +570,7 @@ export default function CalendarClient({
         <div className="card" style={{ padding: '16px' }}>
           <div className={styles.majorTitle}>주요 일정</div>
           {majorEvents.length === 0 ? (
-            <div className={styles.empty}>예정된 주요 일정이 없습니다.</div>
+            <div className={styles.empty}>예정된 주요 일정이 없어요.</div>
           ) : (
             majorEvents.map(e => (
               <div key={e.id} onClick={() => handleOpenEventDetail(e)} className={`${styles.majorItem} ${e.category === 'EXAM' ? styles.exam : ''}`}>
@@ -629,7 +629,7 @@ export default function CalendarClient({
       {viewMode === 'agenda' && (
         <div className="card" style={{ padding: '16px' }}>
           {upcomingGroups.length === 0 ? (
-            <div className={styles.empty}>앞으로 예정된 일정이 없습니다.</div>
+            <div className={styles.empty}>앞으로 예정된 일정이 없어요.</div>
           ) : (
             upcomingGroups.map(([ds, evs]) => (
               <div key={ds}>
@@ -705,7 +705,7 @@ export default function CalendarClient({
         >
           <div className="card" style={{ maxWidth: '450px', width: '100%', padding: '24px' }}>
             <h3 style={{ fontSize: '1.125rem', fontWeight: 800, marginBottom: '16px', color: 'var(--primary)' }}>
-              ✏️ 개인 일정 등록
+              개인 일정 등록
             </h3>
             <form onSubmit={handleAddPersonalEvent} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
@@ -770,7 +770,7 @@ export default function CalendarClient({
         >
           <div className="card" style={{ maxWidth: '500px', width: '100%', padding: '24px' }}>
             <h3 style={{ fontSize: '1.125rem', fontWeight: 800, marginBottom: '16px', color: 'var(--primary)' }}>
-              📢 새 공식/학사 일정 등록 (관리자)
+              공식 일정 등록
             </h3>
             <form onSubmit={handleAddOfficialEvent} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               <div>
@@ -887,20 +887,20 @@ export default function CalendarClient({
                     </h3>
                   </div>
                   <button onClick={() => setSelectedEvent(null)} className="btn-outline" style={{ padding: '4px 10px', fontSize: '0.8125rem' }}>
-                    닫기 ✕
+                    닫기
                   </button>
                 </div>
 
                 <div style={{ backgroundColor: '#F8FAFC', padding: '16px', borderRadius: '10px', display: 'flex', flexDirection: 'column', gap: '8px', marginBottom: '20px', fontSize: '0.875rem' }}>
                   <div>
-                    <strong>📅 날짜:</strong> {new Date(selectedEvent.startDateTime).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
+                    <strong>날짜</strong> {new Date(selectedEvent.startDateTime).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric', weekday: 'long' })}
                   </div>
                   <div>
-                    <strong>🎓 대상 학년:</strong> {selectedEvent.isPersonal ? '개인' : (selectedEvent.isCommon ? '전학년 공통' : selectedEvent.applicableGrades?.map((g: number) => `${g}학년`).join(', '))}
+                    <strong>대상</strong> {selectedEvent.isPersonal ? '개인' : (selectedEvent.isCommon ? '전학년 공통' : selectedEvent.applicableGrades?.map((g: number) => `${g}학년`).join(', '))}
                   </div>
                   {selectedEvent.description && (
                     <div style={{ marginTop: '4px', paddingTop: '8px', borderTop: '1px solid #E2E8F0' }}>
-                      <strong>📝 상세 설명:</strong>
+                      <strong>설명</strong>
                       <p style={{ marginTop: '4px', whiteSpace: 'pre-wrap', color: 'var(--text)', lineHeight: 1.5 }}>
                         {selectedEvent.description}
                       </p>
@@ -931,7 +931,7 @@ export default function CalendarClient({
                           cursor: 'pointer'
                         }}
                       >
-                        🗑️ 삭제
+                        삭제
                       </button>
                       <button
                         type="button"
@@ -939,7 +939,7 @@ export default function CalendarClient({
                         className="btn-primary"
                         style={{ padding: '8px 16px', fontSize: '0.875rem', fontWeight: 700 }}
                       >
-                        ✏️ 일정 수정
+                        수정
                       </button>
                     </>
                   )}
@@ -949,7 +949,7 @@ export default function CalendarClient({
               /* EDIT MODE */
               <div>
                 <h3 style={{ fontSize: '1.125rem', fontWeight: 800, marginBottom: '16px', color: 'var(--primary)' }}>
-                  ✏️ 일정 정보 수정
+                  일정 수정
                 </h3>
                 <form onSubmit={handleSaveEventEdit} style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div>
@@ -1029,7 +1029,7 @@ export default function CalendarClient({
                       className="btn-primary"
                       disabled={editSubmitting}
                     >
-                      {editSubmitting ? '저장 중...' : '💾 저장'}
+                      {editSubmitting ? '저장 중...' : '저장'}
                     </button>
                   </div>
                 </form>

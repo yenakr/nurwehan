@@ -42,12 +42,11 @@ export default function EmptyState({
         margin: '12px 0',
       }}
     >
-      <div style={{ fontSize: '1.5rem', marginBottom: '8px', opacity: 0.6 }}>📭</div>
       <h4 style={{ fontSize: '0.9375rem', fontWeight: 600, color: '#475569', marginBottom: '4px' }}>
-        {title || '등록된 내역이 없습니다.'}
+        {title || '내역이 없어요'}
       </h4>
       <p style={{ fontSize: '0.8125rem', color: '#94A3B8', marginBottom: actionButton ? '16px' : '0' }}>
-        {description || '새로운 항목을 추가하거나 관리해 보세요.'}
+        {description || ''}
       </p>
       {actionButton && <div>{actionButton}</div>}
     </div>

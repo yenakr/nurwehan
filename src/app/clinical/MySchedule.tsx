@@ -110,7 +110,7 @@ export default function MySchedule({
   if (!schedule.length) {
     return (
       <div className="card" style={{ textAlign: 'center', color: 'var(--sub-text)', fontSize: '0.9rem', padding: '32px 16px' }}>
-        등록된 정보가 없습니다.
+        등록된 정보가 없어요.
       </div>
     );
   }

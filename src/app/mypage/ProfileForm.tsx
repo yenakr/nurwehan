@@ -38,7 +38,7 @@ export default function ProfileForm({ user }: Props) {
       });
 
       if (res.ok) {
-        alert(user.approvalStatus === 'REJECTED' ? '수정 및 재심사 요청이 완료되었습니다.' : '정보가 수정되었습니다.');
+        alert(user.approvalStatus === 'REJECTED' ? '재확인을 요청했어요.' : '저장했어요.');
         setIsEditing(false);
         router.refresh();
       } else {
@@ -60,8 +60,8 @@ export default function ProfileForm({ user }: Props) {
       {/* Rejection Reason Alert */}
       {isRejected && !isEditing && (
         <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fee2e2', padding: '16px', borderRadius: '12px', marginBottom: '24px' }}>
-          <p style={{ color: '#b91c1c', fontWeight: '700', fontSize: '0.9375rem', marginBottom: '4px' }}>⚠️ 가입 확인이 거절되었어요.</p>
-          <p style={{ color: '#7f1d1d', fontSize: '0.875rem' }}>사유: {user.rejectedReason || '사유가 입력되지 않았습니다.'}</p>
+          <p style={{ color: '#b91c1c', fontWeight: '700', fontSize: '0.9375rem', marginBottom: '4px' }}>가입 확인이 거절됐어요.</p>
+          <p style={{ color: '#7f1d1d', fontSize: '0.875rem' }}>사유: {user.rejectedReason || '사유 없음'}</p>
           <p style={{ color: '#b91c1c', fontSize: '0.8125rem', marginTop: '8px', fontWeight: '500' }}>정보를 수정한 후 저장하면 재확인이 요청돼요.</p>
         </div>
       )}

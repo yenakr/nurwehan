@@ -126,10 +126,10 @@ export default function ApplicationStatusActions({
                   <li key={p.id} style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '4px' }}>
                     <span>{p.name}</span>
                     <span style={{ fontWeight: '600' }}>
-                      {p.attendanceStatus === 'PRESENT' ? '✅ 출석' : 
-                       p.attendanceStatus === 'ABSENT' ? '❌ 불참' : 
-                       p.attendanceStatus === 'LATE_30' ? '⚠️ 지각' : '대기'}
-                      {p.cleanupBad && ' (🧹 불량)'}
+                      {p.attendanceStatus === 'PRESENT' ? '출석' : 
+                       p.attendanceStatus === 'ABSENT' ? '불참' : 
+                       p.attendanceStatus === 'LATE_30' ? '지각' : '대기'}
+                      {p.cleanupBad && ' (청소 불량)'}
                     </span>
                   </li>
                 ))}

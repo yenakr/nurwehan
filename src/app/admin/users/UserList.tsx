@@ -172,7 +172,7 @@ export default function UserList({ initialUsers, superAdmin = false }: { initial
 
       {activeTab === 'PENDING' && (
         <div className="list">
-          {pendingUsers.length === 0 && <div className="empty">대기 중인 학생이 없습니다.</div>}
+          {pendingUsers.length === 0 && <div className="empty">대기 중인 학생이 없어요.</div>}
           {pendingUsers.map(user => (
             <div key={user.id} className="row pending">
               <div className="who">
