@@ -3,7 +3,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { findMyAssignments } from '@/lib/clinical';
 import HomeDashboardClient from './HomeDashboardClient';
 import AdminQuickStats from '@/components/AdminQuickStats';
-import HomeHistory from './HomeHistory';
+import { getHomeTiles } from '@/lib/home-stats';
 
 export default async function Home() {
   const user = await getCurrentUser();
@@ -21,6 +21,8 @@ export default async function Home() {
     findMyAssignments(user),
   ]);
 
+  const tiles = await getHomeTiles(user, placements as any);
+
   return (
     <>
       <main style={{ flex: 1, backgroundColor: 'var(--white)', padding: '32px 0' }}>
@@ -33,17 +35,8 @@ export default async function Home() {
             publishedEvents={publishedEvents}
             notices={notices}
             placements={placements}
+            tiles={tiles}
           />
-
-          {/* Preserved OPEN LAB Recent Applications Section */}
-          <section style={{ maxWidth: '900px', margin: '0 auto', width: '100%' }}>
-            <h3 className="section-title">
-              <span>최근 내 OPEN LAB 신청 내역</span>
-            </h3>
-            <div className="card">
-              <HomeHistory />
-            </div>
-          </section>
         </div>
       </main>
 

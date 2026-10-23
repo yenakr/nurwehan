@@ -1,0 +1,17 @@
+.list { display: flex; flex-direction: column; gap: 14px; }
+.tile { display: flex; align-items: stretch; gap: 16px; padding: 14px; text-decoration: none; color: inherit; }
+.sq { flex: 0 0 auto; width: 92px; height: 92px; border-radius: 16px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; color: #fff; font-weight: 800; font-size: 0.8125rem; letter-spacing: 0.01em; }
+.sq svg { width: 28px; height: 28px; }
+.quiz { background: #0e4a84; }
+.clinical { background: #0f766e; }
+.lab { background: #2563eb; }
+.stats { flex: 1; min-width: 0; display: flex; align-items: center; justify-content: space-around; gap: 8px; }
+.stat { display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; min-width: 0; }
+.stat b { font-size: 1.25rem; font-weight: 800; color: var(--text); line-height: 1.2; }
+.stat span { font-size: 0.75rem; color: var(--sub-text); white-space: nowrap; }
+.go { flex: 1; display: flex; align-items: center; justify-content: flex-end; color: var(--sub-text); font-size: 0.875rem; font-weight: 600; padding-right: 8px; }
+@media (max-width: 520px) {
+  .tile { gap: 12px; padding: 12px; }
+  .sq { width: 80px; height: 80px; }
+  .stat b { font-size: 1.0625rem; }
+}
