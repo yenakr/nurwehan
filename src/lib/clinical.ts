@@ -34,3 +34,64 @@ export async function assignmentNeedsUpdate() {
     return false;
   }
 }
+
+const BASE_SELECT = {
+  id: true, term: true, name: true, groupNo: true, weekNo: true, startDate: true, endDate: true,
+  subject: true, hospital: true, ward: true, shift: true,
+} as const;
+
+interface Who {
+  name: string;
+  studentId: string;
+  approvalStatus: string;
+}
+
+/**
+ * 내 배정 조회. 승인된 회원만. 학번이 적힌 배정은 학번으로, 없는 배정은 이름으로 매칭한다.
+ * (학번 칸이 아직 DB에 없으면 이름만으로 조회)
+ */
+export async function findMyAssignments(user: Who | null) {
+  if (!user || user.approvalStatus !== 'APPROVED') return [];
+  try {
+    return await prisma.clinicalAssignment.findMany({
+      where: { OR: [{ studentId: user.studentId }, { name: user.name, studentId: null }] },
+      orderBy: { weekNo: 'asc' },
+      select: BASE_SELECT,
+    });
+  } catch {
+    try {
+      return await prisma.clinicalAssignment.findMany({
+        where: { name: user.name },
+        orderBy: { weekNo: 'asc' },
+        select: BASE_SELECT,
+      });
+    } catch {
+      return [];
+    }
+  }
+}
+
+/** 같은 학기·주·병동·근무조의 다른 사람들 (나 제외) */
+export async function findMates(
+  user: Who,
+  mine: { term: string; weekNo: number; subject: string; hospital: string; ward: string; shift: string | null }[]
+) {
+  if (!mine.length) return [];
+  const where = {
+    term: { in: Array.from(new Set(mine.map(m => m.term))) },
+    OR: mine.map(m => ({ weekNo: m.weekNo, subject: m.subject, hospital: m.hospital, ward: m.ward, shift: m.shift })),
+  };
+  const select = { name: true, weekNo: true, subject: true, hospital: true, ward: true, shift: true } as const;
+  try {
+    return await prisma.clinicalAssignment.findMany({
+      where: { ...where, NOT: { OR: [{ studentId: user.studentId }, { name: user.name, studentId: null }] } },
+      select,
+    });
+  } catch {
+    try {
+      return await prisma.clinicalAssignment.findMany({ where: { ...where, name: { not: user.name } }, select });
+    } catch {
+      return [];
+    }
+  }
+}

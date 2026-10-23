@@ -103,7 +103,7 @@ export default function AssignmentImportClient({ terms }: { terms: TermInfo[] })
         </div>
 
         <label style={{ fontSize: '0.8125rem', fontWeight: 700 }}>
-          표 붙여넣기 (이름 · 조 · 주차 · 과목 · 병원 · 병동 · 근무)
+          표 붙여넣기 (이름 · 조 · 주차 · 과목 · 병원 · 병동 · 근무 · 학번)
         </label>
         <textarea
           value={text}
@@ -113,7 +113,7 @@ export default function AssignmentImportClient({ terms }: { terms: TermInfo[] })
           style={{ width: '100%', marginTop: '6px', fontFamily: 'monospace', fontSize: '0.8125rem', padding: '8px' }}
         />
         <p style={{ fontSize: '0.75rem', color: 'var(--sub-text)', margin: '6px 0 12px' }}>
-          엑셀에서 칸을 복사해 붙여넣으면 돼요. 한 사람이 한 주에 한 줄이에요. 근무는 Day / Eve / 빈칸. 같은 학기 이름으로 올리면 기존 내용이 교체돼요.
+          엑셀에서 칸을 복사해 붙여넣으면 돼요. 한 사람이 한 주에 한 줄이에요. 근무는 Day / Eve / 빈칸. 학번은 동명이인일 때만 적으면 돼요(그 사람의 모든 줄에). 같은 학기 이름으로 올리면 기존 내용이 교체돼요.
         </p>
 
         {msg && (

@@ -21,7 +21,7 @@ function normShift(v: string): string | null | undefined {
 
 /**
  * 붙여넣은 표(탭 또는 쉼표)를 학기 단위로 통째로 교체한다.
- * 열 순서: 이름, 조, 주차, 과목, 병원, 병동, 근무(Day/Eve/빈칸)
+ * 열 순서: 이름, 조, 주차, 과목, 병원, 병동, 근무(Day/Eve/빈칸), 학번(선택 · 동명이인만)
  */
 export async function POST(req: Request) {
   const user = await getCurrentUser();
@@ -41,7 +41,7 @@ export async function POST(req: Request) {
 
     const errors: string[] = [];
     const rows: {
-      term: string; name: string; groupNo: number; weekNo: number; startDate: string; endDate: string;
+      term: string; name: string; studentId: string | null; groupNo: number; weekNo: number; startDate: string; endDate: string;
       subject: string; hospital: string; ward: string; shift: string | null;
     }[] = [];
 
@@ -52,7 +52,7 @@ export async function POST(req: Request) {
         if (!line) return;
         const cells = (line.includes('\t') ? line.split('\t') : line.split(',')).map(c => c.trim());
         if (idx === 0 && cells[0] === '이름') return; // 머리글
-        const [name, g, w, subject, hospital, ward, shiftRaw = ''] = cells;
+        const [name, g, w, subject, hospital, ward, shiftRaw = '', sid = ''] = cells;
         const lineNo = idx + 1;
         const groupNo = Number(g);
         const weekNo = Number(w);
@@ -62,8 +62,20 @@ export async function POST(req: Request) {
         if (!Number.isInteger(weekNo) || weekNo < 1 || weekNo > 20) return void errors.push(`${lineNo}번째 줄: 주차가 올바르지 않아요`);
         if (shift === undefined) return void errors.push(`${lineNo}번째 줄: 근무는 Day / Eve / 빈칸 중 하나예요`);
         const start = addDays(week1Start, 7 * (weekNo - 1));
-        rows.push({ term: termName, name, groupNo, weekNo, startDate: start, endDate: addDays(start, 4), subject, hospital, ward, shift });
+        rows.push({ term: termName, name, studentId: sid || null, groupNo, weekNo, startDate: start, endDate: addDays(start, 4), subject, hospital, ward, shift });
       });
+
+    // 동명이인 의심: 같은 사람(학번 또는 이름)이 같은 주에 서로 다른 곳에 배정돼 있으면 학번이 필요하다
+    const seen = new Map<string, string>();
+    const dupNames = new Set<string>();
+    rows.forEach(r => {
+      const key = `${r.studentId || r.name}|${r.weekNo}`;
+      const place = `${r.subject}|${r.hospital}|${r.ward}|${r.shift}`;
+      const prev = seen.get(key);
+      if (prev && prev !== place) dupNames.add(r.name);
+      else seen.set(key, place);
+    });
+    dupNames.forEach(n => errors.push(`'${n}' 이름이 같은 주에 서로 다른 곳에 배정돼 있어요. 동명이인이면 8번째 열에 학번을 적어 주세요`));
 
     if (errors.length) {
       return NextResponse.json({ error: '입력을 확인해 주세요.', details: errors.slice(0, 10) }, { status: 400 });
@@ -74,9 +86,12 @@ export async function POST(req: Request) {
     const weeks = new Set(rows.map(r => r.weekNo)).size;
     if (dryRun) return NextResponse.json({ ok: true, rows: rows.length, students, weeks });
 
+    // 학번이 하나도 없으면 학번 칸을 건드리지 않는다 (DB에 칸이 아직 없어도 저장되도록)
+    const hasSid = rows.some(r => r.studentId);
+    const data = hasSid ? rows : rows.map(({ studentId, ...rest }) => rest);
     await prisma.$transaction([
       prisma.clinicalAssignment.deleteMany({ where: { term: termName } }),
-      prisma.clinicalAssignment.createMany({ data: rows }),
+      prisma.clinicalAssignment.createMany({ data }),
     ]);
     return NextResponse.json({ ok: true, rows: rows.length, students, weeks });
   } catch {

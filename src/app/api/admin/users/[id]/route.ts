@@ -17,8 +17,17 @@ export async function PATCH(
     const body = await request.json();
     const { grade, approvalStatus, rejectedReason } = body;
 
+    if (grade !== undefined && !(Number.isInteger(grade) && grade >= 1 && grade <= 4)) {
+      return NextResponse.json({ message: '학년이 올바르지 않습니다.' }, { status: 400 });
+    }
+    if (approvalStatus !== undefined && !['PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED'].includes(approvalStatus)) {
+      return NextResponse.json({ message: '상태 값이 올바르지 않습니다.' }, { status: 400 });
+    }
+
     const updatedUser = await prisma.user.update({
       where: { id },
+      // 비밀번호 해시 등은 응답에 포함하지 않는다
+      select: { id: true, studentId: true, name: true, grade: true, approvalStatus: true },
       data: {
         ...(grade !== undefined && { grade }),
         ...(approvalStatus !== undefined && { approvalStatus }),

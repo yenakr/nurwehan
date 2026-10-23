@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
+import { findMyAssignments } from '@/lib/clinical';
 import HomeDashboardClient from './HomeDashboardClient';
 import AdminQuickStats from '@/components/AdminQuickStats';
 import HomeHistory from './HomeHistory';
@@ -16,13 +17,8 @@ export default async function Home() {
       take: 5,
       orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }],
     }).catch(() => []),
-    // 내 임상실습 배정 (이름 매칭). 테이블이 없거나 비어 있어도 홈은 정상 동작.
-    user?.name
-      ? prisma.clinicalAssignment.findMany({
-          where: { name: user.name },
-          orderBy: { weekNo: 'asc' },
-        }).catch(() => [])
-      : Promise.resolve([]),
+    // 내 임상실습 배정 (승인된 회원만). 테이블이 없거나 비어 있어도 홈은 정상 동작.
+    findMyAssignments(user),
   ]);
 
   return (
