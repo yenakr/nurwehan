@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { format } from 'date-fns';
 
 interface Restriction {
   id: string;
@@ -36,7 +35,9 @@ export default function UserList({ initialUsers }: { initialUsers: User[] }) {
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [loading, setLoading] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
-  const [activeTab, setActiveTab] = useState<'PENDING' | 'ALL' | 'RESTRICTED'>('ALL');
+  const [activeTab, setActiveTab] = useState<'PENDING' | 'ALL' | 'RESTRICTED'>(
+    initialUsers.some(u => u.approvalStatus === 'PENDING') ? 'PENDING' : 'ALL'
+  );
 
   useEffect(() => {
     const tab = searchParams.get('tab');
@@ -110,240 +111,124 @@ export default function UserList({ initialUsers }: { initialUsers: User[] }) {
 
   const sortedGrades = Object.keys(groupedByGrade).map(Number).sort((a, b) => a - b);
 
-  return (
-    <div className="users-management">
-      <div className="management-header">
-        <div className="tabs no-print">
-          <button className={`tab-btn ${activeTab === 'ALL' ? 'active' : ''}`} onClick={() => setActiveTab('ALL')}>
-            전체 학생 ({users.length})
-          </button>
-          <button className={`tab-btn ${activeTab === 'PENDING' ? 'active' : ''}`} onClick={() => setActiveTab('PENDING')}>
-            가입 대기 ({users.filter(u => u.approvalStatus === 'PENDING').length})
-          </button>
-        </div>
+  const pendingCount = users.filter(u => u.approvalStatus === 'PENDING').length;
+  const statusLabel = (st: string) => (st === 'APPROVED' ? '승인' : st === 'PENDING' ? '대기' : '정지');
 
-        <div className="search-bar">
-          <input 
-            type="text" 
-            placeholder="이름 또는 학번 검색..." 
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
+  return (
+    <div className="um">
+      <div className="head">
+        <div className="tabs">
+          <button className={activeTab === 'ALL' ? 'on' : ''} onClick={() => setActiveTab('ALL')}>
+            전체 {users.length}
+          </button>
+          <button className={activeTab === 'PENDING' ? 'on' : ''} onClick={() => setActiveTab('PENDING')}>
+            가입 대기 {pendingCount > 0 && <span className="dot">{pendingCount}</span>}
+          </button>
         </div>
+        <input
+          className="search"
+          type="text"
+          placeholder="이름 또는 학번 검색"
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+        />
       </div>
 
-      <div className="tab-content">
-        {activeTab === 'PENDING' && (
-          <div className="user-section">
-             <table className="admin-table">
-               <thead>
-                 <tr>
-                   <th>학생 정보</th>
-                   <th>학년</th>
-                   <th>연락처</th>
-                   <th>작업</th>
-                 </tr>
-               </thead>
-               <tbody>
-                 {pendingUsers.map(user => (
-                   <tr key={user.id}>
-                     <td>
-                        <div className="user-id-name">
-                          <span className="name">{user.name}</span>
-                          <span className="id">{user.studentId}</span>
-                        </div>
-                     </td>
-                     <td>{user.grade}학년</td>
-                     <td>{user.phone || '-'}</td>
-                     <td>
-                        <div className="action-btns">
-                          <button onClick={() => handleStatusUpdate(user.id, 'APPROVED')} disabled={loading === user.id} className="btn-approve">승인</button>
-                          <button 
-                            onClick={() => {
-                              const reason = prompt('반려 사유를 입력해주세요:');
-                              if (reason) handleStatusUpdate(user.id, 'REJECTED', reason);
-                            }} 
-                            disabled={loading === user.id} 
-                            className="btn-reject"
-                          >
-                            거절
-                          </button>
-                        </div>
-                     </td>
-                   </tr>
-                 ))}
-                 {pendingUsers.length === 0 && <tr><td colSpan={4} className="empty-td">대기 중인 학생이 없습니다.</td></tr>}
-               </tbody>
-             </table>
-          </div>
-        )}
-
-        {activeTab === 'ALL' && (
-          <div className="grade-groups">
-            {sortedGrades.map(grade => (
-              <div key={grade} className="grade-group">
-                <h3 className="grade-title">{grade === 0 ? '기타/학년미지정' : `${grade}학년`}</h3>
-                <div className="user-section">
-                  <table className="admin-table">
-                    <thead>
-                      <tr>
-                        <th>학번/이름</th>
-                        <th>학년 수정</th>
-                        <th>이메일</th>
-                        <th>상태</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {groupedByGrade[grade].map(user => (
-                        <tr key={user.id}>
-                          <td>
-                            <div className="user-id-name">
-                              <span className="name">{user.name}</span>
-                              <span className="id">{user.studentId}</span>
-                            </div>
-                          </td>
-                          <td>
-                            <select 
-                              className="grade-select"
-                              value={user.grade || ''} 
-                              onChange={(e) => handleGradeUpdate(user.id, Number(e.target.value))}
-                              disabled={loading === user.id}
-                            >
-                              <option value="">학년 선택</option>
-                              <option value="1">1학년</option>
-                              <option value="2">2학년</option>
-                              <option value="3">3학년</option>
-                              <option value="4">4학년</option>
-                            </select>
-                          </td>
-                          <td style={{ fontSize: '0.875rem', color: '#64748B' }}>
-                            {user.email || '-'}
-                          </td>
-                          <td>
-                            <span className={`status-badge ${user.approvalStatus.toLowerCase()}`}>
-                              {user.approvalStatus === 'APPROVED' ? '승인완료' : user.approvalStatus === 'PENDING' ? '대기' : '정지'}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
+      {activeTab === 'PENDING' && (
+        <div className="list">
+          {pendingUsers.length === 0 && <div className="empty">대기 중인 학생이 없습니다.</div>}
+          {pendingUsers.map(user => (
+            <div key={user.id} className="row pending">
+              <div className="who">
+                <div className="name">{user.name}</div>
+                <div className="sub">
+                  {user.studentId} · {user.grade ? `${user.grade}학년` : '학년 미지정'}
+                  {user.phone ? ` · ${user.phone}` : ''}
                 </div>
               </div>
-            ))}
-          </div>
-        )}
-      </div>
+              <div className="btns">
+                <button onClick={() => handleStatusUpdate(user.id, 'APPROVED')} disabled={loading === user.id} className="ok">
+                  승인
+                </button>
+                <button
+                  onClick={() => {
+                    const reason = prompt('반려 사유를 입력해주세요:');
+                    if (reason) handleStatusUpdate(user.id, 'REJECTED', reason);
+                  }}
+                  disabled={loading === user.id}
+                  className="no"
+                >
+                  거절
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {activeTab === 'ALL' &&
+        sortedGrades.map(grade => (
+          <section key={grade}>
+            <h3 className="gtitle">
+              {grade === 0 ? '학년 미지정' : `${grade}학년`} <span>{groupedByGrade[grade].length}</span>
+            </h3>
+            <div className="list">
+              {groupedByGrade[grade].map(user => (
+                <div key={user.id} className="row">
+                  <div className="who">
+                    <div className="name">
+                      {user.name} <span className={`st ${user.approvalStatus.toLowerCase()}`}>{statusLabel(user.approvalStatus)}</span>
+                    </div>
+                    <div className="sub">{user.studentId}</div>
+                  </div>
+                  <select
+                    value={user.grade || ''}
+                    onChange={e => handleGradeUpdate(user.id, Number(e.target.value))}
+                    disabled={loading === user.id}
+                    aria-label="학년"
+                  >
+                    <option value="">학년</option>
+                    <option value="1">1</option>
+                    <option value="2">2</option>
+                    <option value="3">3</option>
+                    <option value="4">4</option>
+                  </select>
+                </div>
+              ))}
+            </div>
+          </section>
+        ))}
 
       <style jsx>{`
-        .users-management { padding: 0; font-family: 'Pretendard', sans-serif; }
-        
-        .management-header {
-          display: flex;
-          justify-content: space-between;
-          align-items: center;
-          margin-bottom: 32px;
-          gap: 20px;
-          flex-wrap: wrap;
-        }
-
-        .search-bar {
-          flex: 1;
-          min-width: 280px;
-          max-width: 400px;
-        }
-        .search-bar input {
-          width: 100%;
-          padding: 12px 20px;
-          border-radius: 12px;
-          border: 1px solid #e2e8f0;
-          font-size: 0.9375rem;
-          outline: none;
-          transition: all 0.2s;
-          background: white;
-          box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-        }
-        .search-bar input:focus {
-          border-color: var(--primary);
-          box-shadow: 0 0 0 3px rgba(0, 112, 243, 0.1);
-        }
-
-        .tabs { display: flex; gap: 8px; background: #f1f5f9; padding: 6px; border-radius: 14px; width: fit-content; }
-        .tab-btn { 
-          padding: 10px 24px; 
-          border: none; 
-          background: transparent; 
-          border-radius: 10px; 
-          font-size: 0.9375rem; 
-          font-weight: 700; 
-          color: #64748b; 
-          cursor: pointer; 
-          transition: all 0.2s; 
-        }
-        .tab-btn.active { background: white; color: var(--primary); box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1), 0 2px 4px -1px rgba(0,0,0,0.06); }
-
-        .grade-group { margin-bottom: 48px; }
-        .grade-title { font-size: 1.25rem; font-weight: 900; color: #1e293b; margin-bottom: 20px; padding-left: 14px; border-left: 5px solid var(--primary); letter-spacing: -0.02em; }
-
-        .user-section { background: white; border-radius: 20px; border: 1px solid #e2e8f0; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.03); }
-        .admin-table { width: 100%; border-collapse: collapse; }
-        .admin-table th { background: #f8fafc; padding: 16px 24px; text-align: left; font-size: 0.8125rem; font-weight: 800; color: #64748b; text-transform: uppercase; border-bottom: 1px solid #e2e8f0; letter-spacing: 0.05em; }
-        .admin-table td { padding: 18px 24px; border-bottom: 1px solid #f1f5f9; vertical-align: middle; }
-        
-        .user-id-name { display: flex; flex-direction: column; gap: 2px; }
-        .user-id-name .name { font-size: 1rem; font-weight: 800; color: #1e293b; }
-        .user-id-name .id { font-size: 0.8125rem; color: #94a3b8; font-family: 'JetBrains Mono', monospace; font-weight: 500; }
-
-        .grade-select { 
-          padding: 8px 12px; 
-          border: 1px solid #e2e8f0; 
-          border-radius: 10px; 
-          font-size: 0.875rem; 
-          font-weight: 600; 
-          outline: none; 
-          background: #f8fafc;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-        .grade-select:focus { border-color: var(--primary); background: white; }
-
-        .penalty-status { display: flex; gap: 8px; flex-wrap: wrap; }
-        .penalty-badge { font-size: 0.75rem; font-weight: 800; padding: 4px 10px; border-radius: 6px; display: flex; align-items: center; gap: 4px; }
-        .penalty-badge::before { content: '⚠️'; font-size: 0.7rem; }
-        .penalty-badge.cleanup { background: #fee2e2; color: #ef4444; border: 1px solid #fecaca; }
-        .penalty-badge.cleanup.critical { background: #7f1d1d; color: white; border-color: #7f1d1d; box-shadow: 0 2px 4px rgba(127, 29, 29, 0.2); }
-        .penalty-badge.absent { background: #ffedd5; color: #f59e0b; border: 1px solid #fed7aa; }
-        .clean-status { font-size: 0.8125rem; color: #94a3b8; font-weight: 500; display: flex; align-items: center; gap: 4px; }
-        .clean-status::before { content: '✅'; font-size: 0.7rem; }
-
-        .status-badge { font-size: 0.75rem; font-weight: 800; padding: 4px 12px; border-radius: 20px; border: 1px solid transparent; }
-        .status-badge.approved { background: #dcfce7; color: #15803d; border-color: #bbf7d0; }
-        .status-badge.pending { background: #fef9c3; color: #a16207; border-color: #fef08a; }
-        .status-badge.rejected { background: #fee2e2; color: #b91c1c; border-color: #fecaca; }
-
-        .penalty-tag { font-size: 0.875rem; font-weight: 800; margin-bottom: 6px; display: flex; align-items: center; gap: 6px; }
-        .penalty-tag::before { content: '🚫'; font-size: 0.8rem; }
-        .penalty-tag.red { color: #ef4444; }
-        .penalty-date { font-size: 0.8125rem; color: #64748b; margin-bottom: 4px; font-weight: 500; padding-left: 24px; }
-
-        .btn-approve { background: var(--primary); color: white; border: none; padding: 8px 18px; border-radius: 10px; font-size: 0.875rem; font-weight: 800; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px -1px rgba(0, 112, 243, 0.2); }
-        .btn-approve:hover { opacity: 0.9; transform: translateY(-1px); box-shadow: 0 6px 10px -1px rgba(0, 112, 243, 0.3); }
-        .btn-approve:active { transform: translateY(0); }
-        .btn-approve:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-        .btn-reject { background: white; color: #ef4444; border: 1px solid #fee2e2; padding: 8px 18px; border-radius: 10px; font-size: 0.875rem; font-weight: 800; cursor: pointer; transition: all 0.2s; }
-        .btn-reject:hover { background: #fef2f2; border-color: #fecaca; transform: translateY(-1px); }
-        .btn-reject:active { transform: translateY(0); }
-        .btn-reject:disabled { opacity: 0.5; cursor: not-allowed; transform: none; }
-
-        .action-btns { display: flex; gap: 8px; }
-
-        .empty-td { text-align: center; color: #94a3b8; padding: 60px !important; font-size: 1rem; font-weight: 500; }
-
-        @media (max-width: 768px) {
-          .management-header { flex-direction: column; align-items: stretch; }
-          .search-bar { max-width: none; }
-          .tabs { width: 100%; overflow-x: auto; }
+        .um { display: flex; flex-direction: column; gap: 16px; }
+        .head { display: flex; flex-direction: column; gap: 10px; }
+        .tabs { display: inline-flex; align-self: flex-start; background: #f1f5f9; padding: 4px; border-radius: 12px; }
+        .tabs button { padding: 8px 18px; border: none; background: transparent; border-radius: 9px; font-size: 0.9375rem; font-weight: 700; color: #64748b; cursor: pointer; white-space: nowrap; display: flex; align-items: center; gap: 6px; }
+        .tabs button.on { background: #fff; color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,0.12); }
+        .dot { background: #ef4444; color: #fff; border-radius: 999px; font-size: 0.75rem; padding: 1px 7px; }
+        .search { width: 100%; padding: 11px 14px; border-radius: 10px; border: 1px solid #e2e8f0; font-size: 0.9375rem; background: #fff; }
+        .gtitle { font-size: 0.9375rem; font-weight: 800; color: #1e293b; margin: 8px 0 8px; }
+        .gtitle span { color: var(--sub-text); font-weight: 600; margin-left: 4px; }
+        .list { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
+        .row { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px 14px; border-top: 1px solid #f1f5f9; }
+        .row:first-child { border-top: none; }
+        .who { min-width: 0; }
+        .name { font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 6px; }
+        .sub { font-size: 0.8125rem; color: #94a3b8; margin-top: 2px; word-break: break-all; }
+        .st { font-size: 0.6875rem; font-weight: 800; padding: 2px 8px; border-radius: 999px; }
+        .st.approved { background: #dcfce7; color: #15803d; }
+        .st.pending { background: #fef9c3; color: #a16207; }
+        .st.rejected { background: #fee2e2; color: #b91c1c; }
+        .row select { padding: 7px 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 0.875rem; }
+        .btns { display: flex; gap: 8px; flex: 0 0 auto; }
+        .btns button { padding: 9px 16px; border-radius: 9px; font-size: 0.875rem; font-weight: 800; cursor: pointer; border: 1px solid transparent; white-space: nowrap; }
+        .btns .ok { background: var(--primary); color: #fff; }
+        .btns .no { background: #fff; color: #ef4444; border-color: #fecaca; }
+        .btns button:disabled { opacity: 0.5; }
+        .empty { text-align: center; color: #94a3b8; padding: 40px 12px; }
+        @media (max-width: 480px) {
+          .row.pending { flex-direction: column; align-items: stretch; }
+          .row.pending .btns button { flex: 1; padding: 11px; }
         }
       `}</style>
     </div>

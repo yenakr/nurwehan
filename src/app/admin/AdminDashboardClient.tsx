@@ -27,7 +27,6 @@ export default function AdminDashboardClient({
   const [skills, setSkills] = useState(initialSkills);
   
   const router = useRouter();
-  const pendingApplications = initialApplications.filter(a => a.status === 'PENDING').length;
 
   const groups: { title: string; items: { icon: string; label: string; desc: string; href: string; badge?: number }[] }[] = [
     {
@@ -36,13 +35,6 @@ export default function AdminDashboardClient({
         { icon: '👥', label: '학생 관리', desc: '가입 승인, 정보 수정', href: '/admin/users', badge: pendingUsersCount },
         { icon: '📊', label: '퀴즈 학습 현황', desc: '학생별 학습·정답률', href: '/admin/quiz-stats' },
         { icon: '🧠', label: '퀴즈 콘텐츠', desc: '과목·용어 추가·수정', href: '/quiz' },
-      ],
-    },
-    {
-      title: 'OPEN LAB',
-      items: [
-        { icon: '📝', label: '신청 내역', desc: '승인·반려·상태 관리', href: '/admin/applications', badge: pendingApplications },
-        { icon: '✅', label: '출석 관리', desc: '사용·출석 확인', href: '/admin/attendance' },
       ],
     },
     {
@@ -58,7 +50,7 @@ export default function AdminDashboardClient({
 
   return (
     <div className="dashboard-container">
-      {(pendingUsersCount > 0 || pendingApplications > 0 || assignmentNeedsUpdate) && (
+      {(pendingUsersCount > 0 || assignmentNeedsUpdate) && (
         <div className="todo">
           {pendingUsersCount > 0 && (
             <button onClick={() => router.push('/admin/users?tab=pending')} className="todoItem">
@@ -70,12 +62,6 @@ export default function AdminDashboardClient({
             <button onClick={() => router.push('/admin/clinical-assignments')} className="todoItem">
               <strong>임상실습 배정표를 새 학기로 업데이트해 주세요</strong>
               <span>올리기 →</span>
-            </button>
-          )}
-          {pendingApplications > 0 && (
-            <button onClick={() => router.push('/admin/applications')} className="todoItem">
-              <strong>OPEN LAB 신청 대기 {pendingApplications}건</strong>
-              <span>확인하기 →</span>
             </button>
           )}
         </div>
@@ -292,10 +278,10 @@ function ScheduleManagement() {
 
   return (
     <div className="rules-mgmt-container">
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-        <h3 style={{ fontSize: '1.25rem', fontWeight: '800', margin: 0 }}>실습실 학년별 운영시간(시간표) 설정</h3>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+        <h3 style={{ fontSize: '1.0625rem', fontWeight: 800, margin: 0 }}>운영 시간표</h3>
         <button className="btn-small btn-primary" onClick={() => setIsAdding(!isAdding)}>
-          {isAdding ? '닫기' : '+ 새 운영시간 추가'}
+          {isAdding ? '닫기' : '+ 추가'}
         </button>
       </div>
 
@@ -355,104 +341,84 @@ function ScheduleManagement() {
       ) : rules.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px', color: 'var(--sub-text)', border: '2px dashed var(--border)', borderRadius: '12px' }}>등록된 운영시간 정보가 없습니다.</div>
       ) : (
-        <div className="card-table">
-          <table>
-            <thead>
-              <tr>
-                <th>학년</th>
-                <th>요일</th>
-                <th>시간</th>
-                <th>실습실</th>
-                <th>정원</th>
-                <th>활성화</th>
-                <th style={{ textAlign: 'right' }}>관리</th>
-              </tr>
-            </thead>
-            <tbody>
-              {rules.map(rule => {
-                const isEditing = editingRuleId === rule.id;
-                return (
-                  <tr key={rule.id}>
-                    {isEditing ? (
-                      <>
-                        <td>
-                          <select value={editForm.grade} onChange={e => setEditForm({ ...editForm, grade: e.target.value })}>
-                            <option value="2">2학년</option>
-                            <option value="3">3학년</option>
-                            <option value="4">4학년</option>
-                          </select>
-                        </td>
-                        <td>
-                          <select value={editForm.dayOfWeek} onChange={e => setEditForm({ ...editForm, dayOfWeek: e.target.value })}>
-                            <option value="1">월요일</option>
-                            <option value="2">화요일</option>
-                            <option value="3">수요일</option>
-                            <option value="4">목요일</option>
-                            <option value="5">금요일</option>
-                            <option value="6">토요일</option>
-                            <option value="0">일요일</option>
-                          </select>
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                            <input style={{ width: '70px', padding: '6px' }} value={editForm.startTime} onChange={e => setEditForm({ ...editForm, startTime: e.target.value })} />
-                            <span>~</span>
-                            <input style={{ width: '70px', padding: '6px' }} value={editForm.endTime} onChange={e => setEditForm({ ...editForm, endTime: e.target.value })} />
+        <div className="groups">
+          {Array.from(new Set(rules.map(r => r.grade as number)))
+            .sort((x, y) => x - y)
+            .map(g => (
+              <section key={g}>
+                <h4 className="gtitle">{g}학년</h4>
+                <div className="rlist">
+                  {rules
+                    .filter(r => r.grade === g)
+                    .sort((x, y) => (x.dayOfWeek || 7) - (y.dayOfWeek || 7) || x.startTime.localeCompare(y.startTime))
+                    .map(rule => {
+                      const isEditing = editingRuleId === rule.id;
+                      const shortRoom = (rule.room.match(/\((.*?)\)/)?.[1] ?? rule.room) as string;
+                      return isEditing ? (
+                        <div key={rule.id} className="redit">
+                          <div className="form-grid">
+                            <select value={editForm.grade} onChange={e => setEditForm({ ...editForm, grade: e.target.value })}>
+                              <option value="2">2학년</option>
+                              <option value="3">3학년</option>
+                              <option value="4">4학년</option>
+                            </select>
+                            <select value={editForm.dayOfWeek} onChange={e => setEditForm({ ...editForm, dayOfWeek: e.target.value })}>
+                              {[1, 2, 3, 4, 5, 6, 0].map(d => (
+                                <option key={d} value={d}>{dayNames[d]}요일</option>
+                              ))}
+                            </select>
+                            <input value={editForm.startTime} onChange={e => setEditForm({ ...editForm, startTime: e.target.value })} placeholder="시작 09:00" />
+                            <input value={editForm.endTime} onChange={e => setEditForm({ ...editForm, endTime: e.target.value })} placeholder="종료 10:00" />
+                            <select value={editForm.room} onChange={e => setEditForm({ ...editForm, room: e.target.value })}>
+                              <option value="임상수기실습실 (5층)">임상수기실습실 (5층)</option>
+                              <option value="시뮬레이션실습실 (6층)">시뮬레이션실습실 (6층)</option>
+                            </select>
+                            <input type="number" value={editForm.maxCapacity} onChange={e => setEditForm({ ...editForm, maxCapacity: e.target.value })} placeholder="정원" />
                           </div>
-                        </td>
-                        <td>
-                          <select value={editForm.room} onChange={e => setEditForm({ ...editForm, room: e.target.value })}>
-                            <option value="임상수기실습실 (5층)">임상수기실습실 (5층)</option>
-                            <option value="시뮬레이션실습실 (6층)">시뮬레이션실습실 (6층)</option>
-                          </select>
-                        </td>
-                        <td>
-                          <input type="number" style={{ width: '60px', padding: '6px' }} value={editForm.maxCapacity} onChange={e => setEditForm({ ...editForm, maxCapacity: e.target.value })} />
-                        </td>
-                        <td>
-                          <span style={{ fontSize: '0.8125rem', color: rule.isActive ? '#166534' : '#991b1b', fontWeight: '800' }}>
-                            {rule.isActive ? '활성' : '비활성'}
-                          </span>
-                        </td>
-                        <td style={{ textAlign: 'right' }}>
-                          <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                            <button onClick={() => handleSaveEdit(rule.id)} className="btn-small btn-primary" style={{ padding: '6px 12px' }}>저장</button>
-                            <button onClick={() => setEditingRuleId(null)} className="btn-small btn-outline" style={{ padding: '6px 12px' }}>취소</button>
+                          <div className="rbtns" style={{ marginTop: '10px' }}>
+                            <button onClick={() => handleSaveEdit(rule.id)} className="btn-small btn-primary">저장</button>
+                            <button onClick={() => setEditingRuleId(null)} className="btn-small btn-outline">취소</button>
                           </div>
-                        </td>
-                      </>
-                    ) : (
-                      <>
-                        <td style={{ fontWeight: '800' }}>{rule.grade}학년</td>
-                        <td>{dayNames[rule.dayOfWeek]}요일</td>
-                        <td>{rule.startTime} ~ {rule.endTime}</td>
-                        <td style={{ color: 'var(--primary)', fontWeight: '600' }}>{rule.room}</td>
-                        <td>{rule.maxCapacity}명</td>
-                        <td>
-                          <button 
-                            className={`status-toggle-btn ${rule.isActive ? 'active' : 'inactive'}`}
-                            onClick={() => toggleActive(rule.id, rule.isActive)}
-                          >
-                            {rule.isActive ? '활성' : '비활성'}
-                          </button>
-                        </td>
-                        <td style={{ textAlign: 'right' }}>
-                          <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
+                        </div>
+                      ) : (
+                        <div key={rule.id} className={`rrow ${rule.isActive ? '' : 'off'}`}>
+                          <div className="rtime">
+                            <b>{dayNames[rule.dayOfWeek]}</b>
+                            <span>{rule.startTime}~{rule.endTime}</span>
+                          </div>
+                          <div className="rmeta">{shortRoom} · {rule.maxCapacity}명</div>
+                          <div className="rbtns">
+                            <button
+                              className={`status-toggle-btn ${rule.isActive ? 'active' : 'inactive'}`}
+                              onClick={() => toggleActive(rule.id, rule.isActive)}
+                            >
+                              {rule.isActive ? '사용' : '중지'}
+                            </button>
                             <button onClick={() => handleStartEdit(rule)} className="btn-small btn-outline">수정</button>
                             <button onClick={() => handleDelete(rule.id)} className="btn-small btn-danger-outline">삭제</button>
                           </div>
-                        </td>
-                      </>
-                    )}
-                  </tr>
-                );
-              })}
-            </tbody>
-          </table>
+                        </div>
+                      );
+                    })}
+                </div>
+              </section>
+            ))}
         </div>
       )}
 
       <style jsx>{`
+        .groups { display: flex; flex-direction: column; gap: 18px; }
+        .gtitle { font-size: 0.9375rem; font-weight: 800; margin: 0 0 8px; }
+        .rlist { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+        .rrow { display: flex; align-items: center; gap: 10px 14px; padding: 10px 12px; border-top: 1px solid #f1f5f9; flex-wrap: wrap; }
+        .rrow:first-child { border-top: none; }
+        .rrow.off { opacity: 0.5; }
+        .rtime { display: flex; gap: 8px; align-items: baseline; flex: 0 0 auto; white-space: nowrap; }
+        .rtime b { width: 1.2em; }
+        .rtime span { font-variant-numeric: tabular-nums; }
+        .rmeta { color: var(--sub-text); font-size: 0.8125rem; flex: 1 1 auto; white-space: nowrap; }
+        .rbtns { display: flex; gap: 6px; margin-left: auto; }
+        .redit { padding: 12px; border-top: 1px solid #f1f5f9; background: #f8fafc; }
         .rules-mgmt-container {
           display: flex;
           flex-direction: column;
