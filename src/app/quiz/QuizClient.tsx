@@ -152,25 +152,43 @@ export default function QuizClient({ initialTerms, user, initialSubject }: QuizC
   const [isAutoPlay, setIsAutoPlay] = useState<boolean>(false);
   const [autoPlayIntervalSec, setAutoPlayIntervalSec] = useState<number>(4);
 
-  const speakText = useCallback((text: string, onEnd?: () => void) => {
+  // 약어(영문 대문자 2자 이상의 한 단어, 예: ACA·SpO2)는 글자 하나씩 읽고, 풀네임이 있으면 이어서 한 번 읽는다.
+  // 그 외 용어(한글 등)는 기존처럼 그대로 읽는다.
+  type SpeechSeg = { text: string; lang: string };
+  const termSpeech = (card: NursingTerm): string | SpeechSeg[] => {
+    const raw = (card.answer || card.term || '').trim();
+    const isAbbr = !card.answer && /^[A-Za-z0-9][A-Za-z0-9/&.-]{1,9}$/.test(raw) && (raw.match(/[A-Z]/g) || []).length >= 2;
+    if (!isAbbr) return card.answer || card.term;
+    const letters = raw.replace(/[/&.-]/g, ' ').split('').filter(c => c.trim()).join(', ');
+    const segs: SpeechSeg[] = [{ text: letters, lang: 'en-US' }];
+    if (card.englishTerm?.trim()) segs.push({ text: card.englishTerm.trim(), lang: 'en-US' });
+    return segs;
+  };
+
+  const speakText = useCallback((input: string | SpeechSeg[], onEnd?: () => void) => {
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) {
       if (onEnd) onEnd();
       return;
     }
     window.speechSynthesis.cancel();
-    if (!text) {
+    const segs: SpeechSeg[] = (typeof input === 'string'
+      ? [{ text: input, lang: /^[A-Za-z0-9\s.,?!'()-]+$/.test(input.trim()) ? 'en-US' : 'ko-KR' }]
+      : input
+    ).filter(g => g.text);
+    if (segs.length === 0) {
       if (onEnd) onEnd();
       return;
     }
-    const utterance = new SpeechSynthesisUtterance(text);
-    const isEng = /^[A-Za-z0-9\s.,?!'()-]+$/.test(text.trim());
-    utterance.lang = isEng ? 'en-US' : 'ko-KR';
-    utterance.rate = ttsRate;
-    if (onEnd) {
-      utterance.onend = () => onEnd();
-      utterance.onerror = () => onEnd();
-    }
-    window.speechSynthesis.speak(utterance);
+    segs.forEach((g, i) => {
+      const utterance = new SpeechSynthesisUtterance(g.text);
+      utterance.lang = g.lang;
+      utterance.rate = ttsRate;
+      if (i === segs.length - 1 && onEnd) {
+        utterance.onend = () => onEnd();
+        utterance.onerror = () => onEnd();
+      }
+      window.speechSynthesis.speak(utterance);
+    });
   }, [ttsRate]);
 
   // Quiz Setup States
@@ -538,7 +556,7 @@ export default function QuizClient({ initialTerms, user, initialSubject }: QuizC
       const showTermOnFront = flashcardDirection === 'term_first';
       const isFront = !isCardFlipped;
       const text = (isFront === showTermOnFront)
-        ? (card.answer || card.term)
+        ? termSpeech(card)
         : card.definition;
       speakText(text);
     }
@@ -558,7 +576,7 @@ export default function QuizClient({ initialTerms, user, initialSubject }: QuizC
     const showTermOnFront = flashcardDirection === 'term_first';
     const isFront = !isCardFlipped;
     const text = (isFront === showTermOnFront)
-      ? (currentCard.answer || currentCard.term)
+      ? termSpeech(currentCard)
       : currentCard.definition;
 
     const advanceNext = () => {
@@ -1713,7 +1731,7 @@ export default function QuizClient({ initialTerms, user, initialSubject }: QuizC
                       </span>
                       <button
                         type="button"
-                        onClick={() => speakText(currentTypingTerm.answer || currentTypingTerm.term)}
+                        onClick={() => speakText(termSpeech(currentTypingTerm))}
                         className="btn-outline"
                         style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: '6px' }}
                         title="음성으로 들려주기"
