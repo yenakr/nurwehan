@@ -25,7 +25,7 @@ function attemptKind(a: Attempt, terms: NursingTerm[]): QuizKind {
 }
 
 const pill = (rate: number) => (rate >= 80 ? s.pillGood : rate >= 60 ? s.pillMid : s.pillBad);
-const modeLabel = (q: string, kind: QuizKind) => (kind === 'MULTIPLE_CHOICE' ? '문제' : q === 'multiple_choice' ? '4지선다' : q === 'abbr_both' ? '풀네임·뜻' : '단답형');
+const modeLabel = (q: string, kind: QuizKind) => (kind === 'MULTIPLE_CHOICE' ? '문제' : q === 'multiple_choice' ? '4지선다' : q === 'abbr_both' ? '용어·국문' : '단답형');
 const quizName = (c?: string | null) => (!c || c === 'all' ? '전체' : c);
 const fmtDate = (iso: string) => {
   const d = new Date(iso);

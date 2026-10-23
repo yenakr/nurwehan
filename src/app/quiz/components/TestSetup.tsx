@@ -62,9 +62,9 @@ export default function TestSetup({
           <div className={s.label}>어떤 문제를 풀까요?</div>
           <div role="radiogroup" aria-label="문제 유형" className={s.choices}>
             {([
-              { v: 'fwd', title: '뜻 보고 용어 쓰기', ex: '전대뇌동맥 → ACA' },
-              { v: 'rev', title: '용어 보고 뜻 쓰기', ex: 'ACA → 전대뇌동맥' },
-              ...(bothAvailable ? [{ v: 'both', title: '약어 보고 풀네임·뜻 쓰기', ex: 'ACA → Anterior cerebral artery, 전대뇌동맥' }] : []),
+              { v: 'fwd', title: '국문 보고 약어 쓰기', ex: '전대뇌동맥 → ACA' },
+              { v: 'rev', title: '약어 보고 국문 쓰기', ex: 'ACA → 전대뇌동맥' },
+              ...(bothAvailable ? [{ v: 'both', title: '약어 보고 용어·국문 쓰기', ex: 'ACA → Anterior cerebral artery, 전대뇌동맥' }] : []),
             ] as Array<{ v: 'fwd' | 'rev' | 'both'; title: string; ex: string }>).map(o => {
               const on = o.v === mode;
               return (
