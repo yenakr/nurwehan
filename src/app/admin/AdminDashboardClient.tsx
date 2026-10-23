@@ -25,157 +25,121 @@ export default function AdminDashboardClient({
   const [skills, setSkills] = useState(initialSkills);
   
   const router = useRouter();
+  const pendingApplications = initialApplications.filter(a => a.status === 'PENDING').length;
+
+  const groups: { title: string; items: { icon: string; label: string; desc: string; href: string; badge?: number }[] }[] = [
+    {
+      title: '학생 · 학습',
+      items: [
+        { icon: '👥', label: '학생 관리', desc: '가입 승인, 정보 수정', href: '/admin/users', badge: pendingUsersCount },
+        { icon: '📊', label: '퀴즈 학습 현황', desc: '학생별 학습·정답률', href: '/admin/quiz-stats' },
+        { icon: '🧠', label: '퀴즈 콘텐츠', desc: '과목·용어 추가·수정', href: '/quiz' },
+      ],
+    },
+    {
+      title: 'OPEN LAB',
+      items: [
+        { icon: '📝', label: '신청 내역', desc: '승인·반려·상태 관리', href: '/admin/applications', badge: pendingApplications },
+        { icon: '✅', label: '출석 관리', desc: '사용·출석 확인', href: '/admin/attendance' },
+      ],
+    },
+    {
+      title: '콘텐츠',
+      items: [
+        { icon: '📅', label: '캘린더', desc: '공식 일정 관리', href: '/admin/calendar' },
+        { icon: '📢', label: '공지사항', desc: '공지 작성·고정', href: '/admin/notices' },
+        { icon: '🩺', label: '건강요건 규칙', desc: '임상실습 요건 설정', href: '/admin/clinical' },
+      ],
+    },
+  ];
 
   return (
     <div className="dashboard-container">
-      {pendingUsersCount > 0 && (
-        <div
-          style={{
-            backgroundColor: '#FEF2F2',
-            border: '1px solid #FECACA',
-            borderRadius: '16px',
-            padding: '20px 24px',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            gap: '16px',
-            boxShadow: '0 4px 12px rgba(239, 68, 68, 0.08)',
-            flexWrap: 'wrap'
-          }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
-            <span style={{ fontSize: '1.75rem' }}>⏳</span>
-            <div>
-              <div style={{ fontWeight: 800, color: '#991B1B', fontSize: '1.0625rem', marginBottom: '4px' }}>
-                회원가입 승인 대기중인 학생이 {pendingUsersCount}명 있습니다!
-              </div>
-              <div style={{ fontSize: '0.875rem', color: '#B91C1C' }}>
-                관리자가 가입을 승인해야 학생이 퀴즈 및 서비스를 정상적으로 이용할 수 있습니다.
-              </div>
-            </div>
-          </div>
-          <button
-            onClick={() => router.push('/admin/users?tab=pending')}
-            style={{
-              backgroundColor: '#DC2626',
-              color: 'white',
-              border: 'none',
-              padding: '10px 20px',
-              borderRadius: '10px',
-              fontWeight: 800,
-              fontSize: '0.9375rem',
-              cursor: 'pointer',
-              whiteSpace: 'nowrap',
-              boxShadow: '0 2px 6px rgba(220, 38, 38, 0.25)'
-            }}
-          >
-            가입 승인하러 가기 →
-          </button>
+      {(pendingUsersCount > 0 || pendingApplications > 0) && (
+        <div className="todo">
+          {pendingUsersCount > 0 && (
+            <button onClick={() => router.push('/admin/users?tab=pending')} className="todoItem">
+              <strong>가입 승인 대기 {pendingUsersCount}명</strong>
+              <span>확인하기 →</span>
+            </button>
+          )}
+          {pendingApplications > 0 && (
+            <button onClick={() => router.push('/admin/applications')} className="todoItem">
+              <strong>OPEN LAB 신청 대기 {pendingApplications}건</strong>
+              <span>확인하기 →</span>
+            </button>
+          )}
         </div>
       )}
 
-      <div className="tab-menu">
-        <button 
-          onClick={() => router.push('/admin/users')}
-          style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
-        >
-          👥 학생 관리 & 가입 승인
-          {pendingUsersCount > 0 && (
-            <span
-              style={{
-                backgroundColor: '#EF4444',
-                color: '#FFFFFF',
-                borderRadius: '12px',
-                padding: '2px 8px',
-                fontSize: '0.75rem',
-                fontWeight: 800,
-                lineHeight: 1,
-              }}
-            >
-              {pendingUsersCount}건 대기
-            </span>
-          )}
-        </button>
-        <button onClick={() => router.push('/admin/quiz-stats')}>
-          📊 퀴즈 학습 현황
-        </button>
-        <button 
-          className={activeTab === 'schedules' ? 'active' : ''} 
-          onClick={() => setActiveTab('schedules')}
-        >
-          OPEN LAB 시간표
-        </button>
-        <button 
-          className={activeTab === 'skills' ? 'active' : ''} 
-          onClick={() => setActiveTab('skills')}
-        >
-          술기 및 준비물
-        </button>
-        <button onClick={() => router.push('/admin/calendar')}>
-          📅 통합 CALENDAR 관리
-        </button>
-        <button onClick={() => router.push('/admin/clinical')}>
-          🩺 건강요건 Rule 관리
-        </button>
-      </div>
-
-      <div className="tab-content">
-
-        {activeTab === 'schedules' && (
-          <div className="dashboard-section">
-            <ScheduleManagement />
+      {groups.map(g => (
+        <section key={g.title}>
+          <h2 className="groupTitle">{g.title}</h2>
+          <div className="grid">
+            {g.items.map(it => (
+              <button key={it.href} onClick={() => router.push(it.href)} className="tile">
+                <span className="tileIcon">{it.icon}</span>
+                <span className="tileText">
+                  <span className="tileLabel">
+                    {it.label}
+                    {!!it.badge && <span className="badge">{it.badge}</span>}
+                  </span>
+                  <span className="tileDesc">{it.desc}</span>
+                </span>
+              </button>
+            ))}
           </div>
-        )}
+        </section>
+      ))}
 
-        {activeTab === 'skills' && (
-          <SkillManagement initialSkills={skills} />
-        )}
-      </div>
+      <section>
+        <h2 className="groupTitle">OPEN LAB 설정</h2>
+        <div className="seg">
+          <button className={activeTab === 'schedules' ? 'on' : ''} onClick={() => setActiveTab('schedules')}>
+            시간표
+          </button>
+          <button className={activeTab === 'skills' ? 'on' : ''} onClick={() => setActiveTab('skills')}>
+            술기·준비물
+          </button>
+        </div>
+        <div style={{ marginTop: '16px' }}>
+          {activeTab === 'schedules' && (
+            <div className="dashboard-section">
+              <ScheduleManagement />
+            </div>
+          )}
+          {activeTab === 'skills' && <SkillManagement initialSkills={skills} />}
+        </div>
+      </section>
 
       <style jsx>{`
-        .dashboard-container {
-          display: flex;
-          flex-direction: column;
-          gap: 24px;
+        .dashboard-container { display: flex; flex-direction: column; gap: 28px; }
+        .todo { display: flex; flex-direction: column; gap: 8px; }
+        .todoItem {
+          display: flex; justify-content: space-between; align-items: center; gap: 12px;
+          padding: 14px 16px; border-radius: 10px; border: 1px solid #FECACA;
+          background: #FEF2F2; color: #991B1B; cursor: pointer; font-size: 0.9375rem; text-align: left;
         }
-        .tab-menu {
-          display: flex;
-          gap: 12px;
-          border-bottom: 1px solid var(--border);
-          padding-bottom: 2px;
-          overflow-x: auto;
+        .todoItem span { font-weight: 700; white-space: nowrap; }
+        .groupTitle { font-size: 0.8125rem; font-weight: 800; color: var(--sub-text); margin-bottom: 10px; letter-spacing: 0.02em; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+        .tile {
+          display: flex; align-items: center; gap: 12px; padding: 16px; text-align: left;
+          background: #fff; border: 1px solid var(--border); border-radius: 12px; cursor: pointer;
+          transition: border-color 0.15s, box-shadow 0.15s;
         }
-        .tab-menu button {
-          padding: 12px 24px;
-          background: none;
-          border: none;
-          border-bottom: 3px solid transparent;
-          font-weight: 700;
-          color: var(--sub-text);
-          cursor: pointer;
-          white-space: nowrap;
-          transition: all 0.2s;
-          font-size: 1rem;
-        }
-        .tab-menu button:hover {
-          color: var(--primary);
-        }
-        .tab-menu button.active {
-          color: var(--primary);
-          border-bottom-color: var(--primary);
-        }
+        .tile:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(14, 74, 132, 0.1); }
+        .tileIcon { font-size: 1.5rem; }
+        .tileText { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+        .tileLabel { font-weight: 800; color: var(--text); display: flex; align-items: center; gap: 6px; }
+        .tileDesc { font-size: 0.8125rem; color: var(--sub-text); }
+        .badge { background: #EF4444; color: #fff; border-radius: 999px; padding: 1px 8px; font-size: 0.75rem; font-weight: 800; }
+        .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+        .seg button { padding: 8px 18px; border: none; background: #fff; cursor: pointer; font-weight: 600; color: var(--text); }
+        .seg button.on { background: var(--primary); color: #fff; font-weight: 800; }
         .dashboard-section {
-          background: white;
-          padding: 32px;
-          border-radius: 16px;
-          border: 1px solid var(--border);
+          background: white; padding: 24px; border-radius: 16px; border: 1px solid var(--border);
           box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-        }
-        .dashboard-section.no-padding {
-          padding: 0;
-          background: transparent;
-          border: none;
-          box-shadow: none;
         }
       `}</style>
     </div>

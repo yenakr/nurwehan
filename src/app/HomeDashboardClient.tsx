@@ -169,11 +169,10 @@ export default function HomeDashboardClient({
                 }}
               >
                 <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                  {n.isPinned && <span className="badge badge-pending">필독</span>}
                   <span style={{ fontWeight: 600, color: 'var(--text)' }}>{n.title}</span>
                 </div>
-                <span style={{ fontSize: '0.8125rem', color: 'var(--sub-text)' }}>
-                  {new Date(n.createdAt).toLocaleDateString('ko-KR')}
+                <span style={{ fontSize: '0.8125rem', color: 'var(--sub-text)', whiteSpace: 'nowrap', marginLeft: '12px' }}>
+                  {new Date(n.createdAt).toLocaleDateString('ko-KR', { month: 'numeric', day: 'numeric' })}
                 </span>
               </Link>
             ))}

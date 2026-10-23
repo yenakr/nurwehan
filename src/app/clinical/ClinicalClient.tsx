@@ -40,22 +40,17 @@ export default function ClinicalClient({ schedule, user }: ClinicalClientProps) 
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      <div className="card" style={{ padding: '20px' }}>
-        <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '14px' }}>
-          임상실습
-        </h2>
-        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-          {TABS.map(t => (
-            <button
-              key={t.id}
-              onClick={() => setTab(t.id)}
-              className={tab === t.id ? 'btn-primary' : 'btn-outline'}
-              style={{ fontSize: '0.875rem' }}
-            >
-              {t.label}
-            </button>
-          ))}
-        </div>
+      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+        {TABS.map(t => (
+          <button
+            key={t.id}
+            onClick={() => setTab(t.id)}
+            className={tab === t.id ? 'btn-primary' : 'btn-outline'}
+            style={{ fontSize: '0.875rem' }}
+          >
+            {t.label}
+          </button>
+        ))}
       </div>
 
       {tab === 'mine' && (user ? <MySchedule schedule={schedule} me={user.name} /> : (

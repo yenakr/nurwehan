@@ -20,6 +20,7 @@ export default function CalendarClient({
   const [viewMode, setViewMode] = useState<'month' | 'week' | 'agenda' | 'semester'>('month');
   const [currentDate, setCurrentDate] = useState<Date>(new Date());
   const [selectedDay, setSelectedDay] = useState<string>('');
+  const [showAddMenu, setShowAddMenu] = useState(false);
   
   // Official events
   const [officialEvents, setOfficialEvents] = useState<any[]>(initialOfficialEvents);
@@ -297,7 +298,25 @@ export default function CalendarClient({
 
   // 선택한 날짜(기본: 오늘)의 일정
   const activeDay = selectedDay || formatYYYYMMDD(new Date());
-  const selectedDayEvents = filteredEvents.filter(e => formatYYYYMMDD(e.startDateTime) === activeDay);
+  const selectedDayEvents = filteredEvents
+    .filter(e => formatYYYYMMDD(e.startDateTime) === activeDay)
+    .sort((a, b) => Number(!!a.isPersonal) - Number(!!b.isPersonal));
+
+  // 주요(공식) 일정: 오늘 이후 가까운 순
+  const todayYmd = formatYYYYMMDD(new Date());
+  const majorEvents = filteredEvents
+    .filter(e => !e.isPersonal && formatYYYYMMDD(e.startDateTime) >= todayYmd)
+    .sort((a, b) => formatYYYYMMDD(a.startDateTime).localeCompare(formatYYYYMMDD(b.startDateTime)))
+    .slice(0, 6);
+  const ddayOf = (e: any) => {
+    const [y, m, d] = formatYYYYMMDD(e.startDateTime).split('-').map(Number);
+    const diff = Math.round((new Date(y, m - 1, d).getTime() - new Date(new Date().getFullYear(), new Date().getMonth(), new Date().getDate()).getTime()) / 86400000);
+    return diff === 0 ? 'D-Day' : `D-${diff}`;
+  };
+  const mdLabel = (e: any) => {
+    const [, m, d] = formatYYYYMMDD(e.startDateTime).split('-').map(Number);
+    return `${m}월 ${d}일`;
+  };
   const selectedDayLabel = (() => {
     const [y, m, d] = activeDay.split('-').map(Number);
     const dt = new Date(y, m - 1, d);
@@ -374,18 +393,23 @@ export default function CalendarClient({
         <div className={styles.head}>
           <div className={styles.titleRow}>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)' }}>캘린더</h2>
-            <div className={styles.actions}>
-              {isAdmin && (
-                <button onClick={() => setShowAdminAddModal(true)} className="btn-primary" style={{ fontSize: '0.8125rem', padding: '6px 12px' }}>
-                  + 공식 일정
+            {user && (
+              <div className={styles.menuWrap}>
+                <button
+                  className={styles.plus}
+                  aria-label="일정 추가"
+                  onClick={() => (isAdmin ? setShowAddMenu(v => !v) : setShowAddModal(true))}
+                >
+                  +
                 </button>
-              )}
-              {user && (
-                <button onClick={() => setShowAddModal(true)} className="btn-accent" style={{ fontSize: '0.8125rem', padding: '6px 12px' }}>
-                  + 개인 일정
-                </button>
-              )}
-            </div>
+                {isAdmin && showAddMenu && (
+                  <div className={styles.menu}>
+                    <button onClick={() => { setShowAddMenu(false); setShowAddModal(true); }}>개인 일정</button>
+                    <button onClick={() => { setShowAddMenu(false); setShowAdminAddModal(true); }}>공식 일정</button>
+                  </div>
+                )}
+              </div>
+            )}
           </div>
 
           <div className={styles.seg} style={{ alignSelf: 'flex-start' }}>
@@ -446,7 +470,9 @@ export default function CalendarClient({
             ))}
 
             {monthGridCells.map(cell => {
-              const dayEvents = filteredEvents.filter(e => formatYYYYMMDD(e.startDateTime) === cell.dayStr);
+              const dayEvents = filteredEvents
+                .filter(e => formatYYYYMMDD(e.startDateTime) === cell.dayStr)
+                .sort((a, b) => Number(!!a.isPersonal) - Number(!!b.isPersonal));
               const isToday = cell.dayStr === formatYYYYMMDD(new Date());
               const shown = dayEvents.slice(0, 3);
               return (
@@ -458,7 +484,7 @@ export default function CalendarClient({
                 >
                   <span className={styles.num}>{cell.isCurrentMonth ? cell.dayNumber : `${cell.monthNumber}/${cell.dayNumber}`}</span>
                   {shown.map(e => (
-                    <span key={e.id} className={`${styles.ev} ${e.isPersonal ? styles.me : ''}`}>
+                    <span key={e.id} className={`${styles.ev} ${e.isPersonal ? styles.me : e.category === 'EXAM' ? styles.exam : ''}`}>
                       {e.title}
                     </span>
                   ))}
@@ -475,13 +501,32 @@ export default function CalendarClient({
               <div className={styles.empty}>일정이 없습니다.</div>
             ) : (
               selectedDayEvents.map(e => (
-                <div key={e.id} onClick={() => handleOpenEventDetail(e)} className={`${styles.dayItem} ${e.isPersonal ? styles.me : ''}`}>
+                <div key={e.id} onClick={() => handleOpenEventDetail(e)} className={`${styles.dayItem} ${e.isPersonal ? styles.me : e.category === 'EXAM' ? styles.exam : ''}`}>
                   {e.isPersonal ? '[개인] ' : ''}
                   {e.title}
                 </div>
               ))
             )}
           </div>
+        </div>
+      )}
+
+      {viewMode === 'month' && (
+        <div className="card" style={{ padding: '16px' }}>
+          <div className={styles.majorTitle}>주요 일정</div>
+          {majorEvents.length === 0 ? (
+            <div className={styles.empty}>예정된 주요 일정이 없습니다.</div>
+          ) : (
+            majorEvents.map(e => (
+              <div key={e.id} onClick={() => handleOpenEventDetail(e)} className={`${styles.majorItem} ${e.category === 'EXAM' ? styles.exam : ''}`}>
+                <div style={{ minWidth: 0 }}>
+                  <div className={styles.majorName}>{e.title}</div>
+                  <div className={styles.majorDate}>{mdLabel(e)}</div>
+                </div>
+                <span className={styles.dday}>{ddayOf(e)}</span>
+              </div>
+            ))
+          )}
         </div>
       )}
 
