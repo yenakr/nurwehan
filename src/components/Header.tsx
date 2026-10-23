@@ -72,7 +72,7 @@ export default function Header() {
       title: '진로 & 캠퍼스',
       key: 'career',
       items: [
-        { label: '취업 준비', href: '/career', desc: '어학 및 병원 채용 일정' },
+        // 취업 준비(/career)는 일단 숨김 — 페이지는 유지
         { label: '유틸리티 도구', href: '/tools', desc: 'OPEN LAB 신청서 작성기' },
       ],
     },
