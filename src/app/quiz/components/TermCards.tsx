@@ -46,12 +46,12 @@ export default function TermCards({
           <article key={t.id} className={s.card}>
             <div>
               <div className={s.cardTerm}>{t.term}</div>
-              {en && <div className={s.cardEn}>{en.startsWith('(') ? en : en}</div>}
+              {en && !hidden && <div className={s.cardEn}>{en}</div>}
             </div>
             <div className={s.cardDivider} />
             {hidden ? (
               <button type="button" className={s.hidden} onClick={() => onReveal(t.id)}>
-                눌러서 뜻 보기
+                {en ? '눌러서 풀네임·뜻 보기' : '눌러서 뜻 보기'}
               </button>
             ) : (
               <>
