@@ -87,15 +87,17 @@ interface QuizClientProps {
   initialTerms: NursingTerm[];
   user?: any;
   initialSubject?: string;
+  subjectLevels?: Record<string, string>;
 }
 
 
-export default function QuizClient({ initialTerms, user, initialSubject }: QuizClientProps) {
+export default function QuizClient({ initialTerms, user, initialSubject, subjectLevels }: QuizClientProps) {
   const isAdmin = isAdminRole(user?.role);
   const router = useRouter();
   const [termsList, setTermsList] = useState<NursingTerm[]>(initialTerms);
   const [view, setView] = useState<'hub' | 'subject'>('hub');
   const [showManager, setShowManager] = useState(false);
+  const [levels, setLevels] = useState<Record<string, string>>(subjectLevels ?? {});
   const [formGrade, setFormGrade] = useState<string>(DEFAULT_GRADE);
 
 
@@ -1363,6 +1365,7 @@ export default function QuizClient({ initialTerms, user, initialSubject }: QuizC
       {view === 'hub' && (
         <HubView
           subjects={subjectEntries}
+          levels={isAdmin ? levels : undefined}
           isAdmin={isAdmin}
           onOpen={name => openSubject(name)}
           onAddSubject={g => handleOpenCreateModal(true, g)}
@@ -1894,12 +1897,22 @@ export default function QuizClient({ initialTerms, user, initialSubject }: QuizC
         <AdminManager
           subject={studySubject}
           grade={currentGrade}
+          level={levels[studySubject] ?? 'NORMAL'}
           quizzes={allQuizNames}
           onClose={() => setShowManager(false)}
           onDone={change => {
             if (change.subject) {
               setStudySubject(change.subject);
               setQuizSubject(change.subject);
+            }
+            if (change.level) {
+              const key = change.subject || studySubject;
+              setLevels(prev => {
+                const next = { ...prev };
+                delete next[studySubject];
+                if (change.level !== 'NORMAL') next[key] = change.level!;
+                return next;
+              });
             }
             if (change.category) {
               if (studyCategory === change.category.from) setStudyCategory(change.category.to);

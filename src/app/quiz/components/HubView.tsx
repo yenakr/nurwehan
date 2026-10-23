@@ -7,11 +7,13 @@ import { GRADES, type SubjectEntry } from '@/lib/quiz/taxonomy';
 
 export default function HubView({
   subjects,
+  levels,
   isAdmin,
   onOpen,
   onAddSubject,
 }: {
   subjects: SubjectEntry[];
+  levels?: Record<string, string>;
   isAdmin: boolean;
   onOpen: (name: string) => void;
   onAddSubject: (grade?: string) => void;
@@ -42,6 +44,7 @@ export default function HubView({
             {items.map(x => (
               <button key={x.name} type="button" className={s.subjectCard} onClick={() => onOpen(x.name)}>
                 {x.name}
+                {levels?.[x.name] && <small style={{ display: 'block', fontSize: '0.6875rem', fontWeight: 600, opacity: 0.6, marginTop: 2 }}>{levels[x.name] === 'PRIVATE' ? '비공개' : '일부공개'}</small>}
               </button>
             ))}
           </div>

@@ -24,6 +24,7 @@ interface User {
   email: string | null;
   phone: string | null;
   approvalStatus: string;
+  tier?: number;
   createdAt: string;
   restrictions: Restriction[];
   warnings: CleanupWarning[];
@@ -79,6 +80,23 @@ export default function UserList({ initialUsers }: { initialUsers: User[] }) {
       }
     } catch (err) {
       alert('학년 수정에 실패했습니다.');
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleTierUpdate = async (id: string, tier: number) => {
+    setLoading(id);
+    try {
+      const res = await fetch(`/api/admin/users/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ tier }),
+      });
+      if (res.ok) setUsers(users.map(u => (u.id === id ? { ...u, tier } : u)));
+      else alert('저장하지 못했습니다.');
+    } catch {
+      alert('오류가 발생했습니다.');
     } finally {
       setLoading(null);
     }
@@ -181,6 +199,17 @@ export default function UserList({ initialUsers }: { initialUsers: User[] }) {
                     </div>
                     <div className="sub">{user.studentId}</div>
                   </div>
+                  {user.approvalStatus === 'APPROVED' && (
+                    <select
+                      value={user.tier ?? 0}
+                      onChange={e => handleTierUpdate(user.id, Number(e.target.value))}
+                      disabled={loading === user.id}
+                      aria-label="열람 범위"
+                    >
+                      <option value={0}>일반</option>
+                      <option value={1}>일부공개</option>
+                    </select>
+                  )}
                   <select
                     value={user.grade || ''}
                     onChange={e => handleGradeUpdate(user.id, Number(e.target.value))}
@@ -219,6 +248,7 @@ export default function UserList({ initialUsers }: { initialUsers: User[] }) {
         .st.approved { background: #dcfce7; color: #15803d; }
         .st.pending { background: #fef9c3; color: #a16207; }
         .st.rejected { background: #fee2e2; color: #b91c1c; }
+        .who { flex: 1; min-width: 0; }
         .row select { padding: 7px 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 0.875rem; }
         .btns { display: flex; gap: 8px; flex: 0 0 auto; }
         .btns button { padding: 9px 16px; border-radius: 9px; font-size: 0.875rem; font-weight: 800; cursor: pointer; border: 1px solid transparent; white-space: nowrap; }

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 import { isAdminRole } from '@/lib/auth-core';
+import { setTier } from '@/lib/access';
 
 export async function PATCH(
   request: NextRequest,
@@ -15,13 +16,17 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
-    const { grade, approvalStatus, rejectedReason } = body;
+    const { grade, approvalStatus, rejectedReason, tier } = body;
 
     if (grade !== undefined && !(Number.isInteger(grade) && grade >= 1 && grade <= 4)) {
       return NextResponse.json({ message: '학년이 올바르지 않습니다.' }, { status: 400 });
     }
     if (approvalStatus !== undefined && !['PENDING', 'APPROVED', 'REJECTED', 'SUSPENDED'].includes(approvalStatus)) {
       return NextResponse.json({ message: '상태 값이 올바르지 않습니다.' }, { status: 400 });
+    }
+
+    if (tier !== undefined && tier !== 0 && tier !== 1) {
+      return NextResponse.json({ message: '값이 올바르지 않습니다.' }, { status: 400 });
     }
 
     const updatedUser = await prisma.user.update({
@@ -34,6 +39,8 @@ export async function PATCH(
         ...(rejectedReason !== undefined && { rejectedReason })
       }
     });
+
+    if (tier !== undefined) await setTier(id, tier);
 
     return NextResponse.json(updatedUser);
   } catch (error) {

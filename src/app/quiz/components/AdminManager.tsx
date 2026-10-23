@@ -18,18 +18,21 @@ async function patch(url: string, body: object): Promise<string | null> {
 export default function AdminManager({
   subject,
   grade,
+  level,
   quizzes,
   onClose,
   onDone,
 }: {
   subject: string;
   grade: string;
+  level: string;
   quizzes: string[];
   onClose: () => void;
-  onDone: (change: { subject?: string; category?: { from: string; to: string } }) => void;
+  onDone: (change: { subject?: string; level?: string; category?: { from: string; to: string } }) => void;
 }) {
   const [name, setName] = useState(subject);
   const [g, setG] = useState(grade);
+  const [lv, setLv] = useState(level);
   const [names, setNames] = useState<Record<string, string>>(() => Object.fromEntries(quizzes.map(q => [q, q])));
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState('');
@@ -37,10 +40,10 @@ export default function AdminManager({
   const saveSubject = async () => {
     setBusy(true);
     setError('');
-    const err = await patch('/api/admin/quiz/subjects', { subject, newSubject: name.trim(), grade: g });
+    const err = await patch('/api/admin/quiz/subjects', { subject, newSubject: name.trim(), grade: g, level: lv });
     setBusy(false);
     if (err) return setError(err);
-    onDone({ subject: name.trim() || subject });
+    onDone({ subject: name.trim() || subject, level: lv });
   };
 
   const saveQuiz = async (q: string) => {
@@ -67,6 +70,14 @@ export default function AdminManager({
           <label className={s.label} htmlFor="mg-grade">구분</label>
           <select id="mg-grade" className={s.input} value={g} onChange={e => setG(e.target.value)}>
             {GRADES.map(x => <option key={x} value={x}>{x}</option>)}
+          </select>
+        </div>
+        <div className={s.field}>
+          <label className={s.label} htmlFor="mg-level">공개 범위</label>
+          <select id="mg-level" className={s.input} value={lv} onChange={e => setLv(e.target.value)}>
+            <option value="NORMAL">일반 (모든 승인 회원)</option>
+            <option value="PARTIAL">일부공개 (지정한 회원만)</option>
+            <option value="PRIVATE">비공개 (관리자만)</option>
           </select>
         </div>
         <button type="button" className={`${s.btn} ${s.btnPrimary}`} disabled={busy || !name.trim()} onClick={saveSubject}>
