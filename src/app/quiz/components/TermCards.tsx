@@ -15,6 +15,20 @@ function isCorrectOption(opt: string, answer?: string | null, definition?: strin
   return cleanOpt === cleanAns || (cleanAns.length > 3 && cleanOpt.includes(cleanAns)) || (cleanOpt.length > 3 && cleanAns.includes(cleanOpt));
 }
 
+// 풀네임에서 각 단어의 첫 글자를 굵게 (약어 풀이를 한눈에 보도록)
+function boldInitials(text: string) {
+  return text.split(/(\s+|-)/).map((part, i) =>
+    /^(\s+|-)$/.test(part) || !part ? (
+      part
+    ) : (
+      <span key={i}>
+        <b>{part[0]}</b>
+        {part.slice(1)}
+      </span>
+    )
+  );
+}
+
 export default function TermCards({
   terms,
   hideDefinition,
@@ -44,11 +58,10 @@ export default function TermCards({
         const en = t.englishTerm?.trim();
         return (
           <article key={t.id} className={s.card}>
-            <div>
-              <div className={s.cardTerm}>{t.term}</div>
-              {en && !hidden && <div className={s.cardEn}>{en}</div>}
+            <div className={s.cardHead}>
+              <span className={s.cardTerm}>{t.term}</span>
+              {en && !hidden && <span className={s.cardEn}>{boldInitials(en)}</span>}
             </div>
-            <div className={s.cardDivider} />
             {hidden ? (
               <button type="button" className={s.hidden} onClick={() => onReveal(t.id)}>
                 {en ? '눌러서 풀네임·뜻 보기' : '눌러서 뜻 보기'}
