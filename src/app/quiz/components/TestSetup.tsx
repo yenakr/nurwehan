@@ -136,7 +136,7 @@ export default function TestSetup({
         </summary>
         <label className={s.check}>
           <input type="checkbox" checked={worksheet} onChange={e => onWorksheet(e.target.checked)} />
-          시험지 모드 (모든 문제를 풀고 한 번에 채점)
+          시험지 모드
         </label>
       </details>
 

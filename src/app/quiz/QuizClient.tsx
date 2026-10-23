@@ -1301,18 +1301,15 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', padding: '20px' }}>
         <div className="card" style={{ maxWidth: '420px', width: '100%', padding: '36px 28px', textAlign: 'center' }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><rect width="18" height="11" x="3" y="11" rx="2" ry="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
-          <h2 style={{ fontSize: '1.375rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '12px' }}>
-            로그인이 필요한 서비스입니다
+          <h2 style={{ fontSize: '1.375rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '24px' }}>
+            로그인이 필요해요
           </h2>
-          <p style={{ fontSize: '0.9375rem', color: 'var(--sub-text)', marginBottom: '28px', lineHeight: 1.6 }}>
-            퀴즈 및 단어장 서비스를 이용하시려면 먼저 로그인해 주세요.
-          </p>
           <a
             href="/login"
             className="btn-primary"
             style={{ display: 'inline-block', width: '100%', padding: '14px', fontSize: '1rem', fontWeight: 700, textDecoration: 'none', textAlign: 'center', borderRadius: '8px' }}
           >
-            로그인하러 가기
+            로그인
           </a>
         </div>
       </div>
@@ -1326,11 +1323,10 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
         <div className="card" style={{ maxWidth: '440px', width: '100%', padding: '36px 28px', textAlign: 'center' }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
           <h2 style={{ fontSize: '1.375rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '12px' }}>
-            회원가입 승인 대기 중입니다
+            승인 대기 중이에요
           </h2>
           <p style={{ fontSize: '0.9375rem', color: 'var(--sub-text)', marginBottom: '28px', lineHeight: 1.6 }}>
-            현재 계정이 승인 대기(또는 미승인) 상태입니다.<br />
-            관리자의 승인이 완료된 후 퀴즈 서비스를 이용하실 수 있습니다.
+            승인이 완료되면 이용할 수 있어요.
           </p>
           <div style={{ display: 'flex', gap: '12px' }}>
             <a
@@ -2202,14 +2198,14 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {checkAnswerCorrectness(userAnswer, currentQuestion) ? (
                     <div style={{ backgroundColor: '#DCFCE7', border: '1px solid #86EFAC', padding: '16px', borderRadius: '8px', color: '#166534' }}>
-                      <div style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '4px' }}>정답입니다</div>
+                      <div style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '4px' }}>정답</div>
                       <div style={{ fontSize: '0.875rem' }}>
-                        <strong>정식 정답:</strong> {currentQuestion.answer || currentQuestion.term}
+                        <strong>정답:</strong> {currentQuestion.answer || currentQuestion.term}
                       </div>
                     </div>
                   ) : (
                     <div style={{ backgroundColor: '#FEE2E2', border: '1px solid #FCA5A5', padding: '16px', borderRadius: '8px', color: '#991B1B' }}>
-                      <div style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '4px' }}>오답입니다</div>
+                      <div style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '4px' }}>오답</div>
                       <div style={{ fontSize: '0.875rem', marginBottom: '6px' }}>
                         <strong>정답:</strong> <span style={{ fontWeight: 800, color: '#B91C1C' }}>{currentQuestion.answer || currentQuestion.term}</span>
                       </div>
@@ -2389,7 +2385,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                         <div>
                           <input
                             type="text"
-                            placeholder="주관식 정답 입력 (예: 중이염)..."
+                            placeholder="정답"
                             value={userAns}
                             onChange={e => setWorksheetAnswers(prev => ({ ...prev, [idx]: e.target.value }))}
                             style={{
@@ -2477,7 +2473,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                   className="btn-primary"
                   style={{ width: '100%', padding: '16px', fontSize: '1.125rem', fontWeight: 900, textAlign: 'center' }}
                 >
-                  답안 제출 및 채점하기 ({Object.keys(worksheetAnswers).filter(k => worksheetAnswers[Number(k)]?.trim()).length} / {quizQuestions.length})
+                  채점하기 ({Object.keys(worksheetAnswers).filter(k => worksheetAnswers[Number(k)]?.trim()).length} / {quizQuestions.length})
                 </button>
               </div>
             </div>
