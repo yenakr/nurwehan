@@ -1323,10 +1323,10 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
         <div className="card" style={{ maxWidth: '440px', width: '100%', padding: '36px 28px', textAlign: 'center' }}>
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '16px' }}><svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="#64748B" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="12" r="10"/><polyline points="12 6 12 12 16 14"/></svg></div>
           <h2 style={{ fontSize: '1.375rem', fontWeight: 800, color: 'var(--text-main)', marginBottom: '12px' }}>
-            승인 대기 중이에요
+            확인 대기 중이에요
           </h2>
           <p style={{ fontSize: '0.9375rem', color: 'var(--sub-text)', marginBottom: '28px', lineHeight: 1.6 }}>
-            승인이 완료되면 이용할 수 있어요.
+            관리자 확인 후 이용할 수 있어요.
           </p>
           <div style={{ display: 'flex', gap: '12px' }}>
             <a
