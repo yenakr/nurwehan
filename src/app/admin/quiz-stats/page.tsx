@@ -14,7 +14,7 @@ export default async function AdminQuizStatsPage() {
 
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '40px 0' }}>
-      <div className="container" style={{ maxWidth: '1200px' }}>
+      <div className="container" style={{ maxWidth: '760px' }}>
         <QuizStatsClient />
       </div>
     </main>
