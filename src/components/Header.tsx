@@ -55,9 +55,8 @@ export default function Header() {
       title: '학업 & 캘린더',
       key: 'academic',
       items: [
-        { label: 'MY ROADMAP', href: '/roadmap', desc: '1~4학년 학업·진로 로드맵' },
         { label: '캘린더', href: '/calendar', desc: '통합 학사 및 시험 일정' },
-        { label: 'QUIZ', href: '/quiz', desc: 'QUIZ' },
+        { label: 'QUIZ', href: '/quiz', desc: '용어·문제 학습과 테스트' },
       ],
     },
     {
@@ -74,8 +73,7 @@ export default function Header() {
       key: 'career',
       items: [
         { label: '취업 준비', href: '/career', desc: '어학 및 병원 채용 일정' },
-        { label: '학부연구 & 비교과', href: '/campus', desc: '연구실 Open Lab 및 장학' },
-        { label: '유틸리티 도구', href: '/tools', desc: '지원서 작성 도우미 모음' },
+        { label: '유틸리티 도구', href: '/tools', desc: 'OPEN LAB 신청서 작성기' },
       ],
     },
   ];

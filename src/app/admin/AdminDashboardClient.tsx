@@ -111,9 +111,6 @@ export default function AdminDashboardClient({
         >
           술기 및 준비물
         </button>
-        <button onClick={() => router.push('/admin/roadmap')}>
-          🧭 MY ROADMAP 관리
-        </button>
         <button onClick={() => router.push('/admin/calendar')}>
           📅 통합 CALENDAR 관리
         </button>

@@ -11,6 +11,7 @@ import RecordView from './components/RecordView';
 import TermCards from './components/TermCards';
 import AdminManager from './components/AdminManager';
 import { Segmented, Icon, ICON_SEARCH, ICON_VOLUME, ICON_VOLUME_OFF } from './components/ui';
+import { isExamItem } from '@/lib/quiz/taxonomy';
 import {
   GRADES,
   DEFAULT_GRADE,
@@ -179,6 +180,7 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
   const [quizKind, setQuizKind] = useState<'TERM' | 'MULTIPLE_CHOICE'>('TERM');
   const [quizOrder, setQuizOrder] = useState<'shuffle' | 'normal'>('shuffle');
   const [quizCount, setQuizCount] = useState<number | 'all'>('all');
+  const [quizReverse, setQuizReverse] = useState<boolean>(false);
   const [quizFormat, setQuizFormat] = useState<'single' | 'worksheet'>('single');
   const [worksheetAnswers, setWorksheetAnswers] = useState<Record<number, string>>({});
 
@@ -617,8 +619,16 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
     const optionsMap: Record<number, string[]> = {};
     const allPossibleTerms = termsList.map(t => t.term);
 
+    // '용어 → 뜻' 방향: 용어형 문항만 뜻과 용어를 맞바꿔 출제한다(문제형은 그대로).
+    const reverseOn = quizReverse && quizKind === 'TERM' && !customTermsList?.some(isExamItem);
     pool.forEach((q, idx) => {
-      if (q.options && q.options.length > 0) {
+      if (reverseOn && !isExamItem(q) && quizType === 'multiple_choice') {
+        const sameSubjectDefs = Array.from(
+          new Set(termsList.filter(t => t.subject === q.subject && !isExamItem(t) && t.definition !== q.definition).map(t => t.definition))
+        );
+        const distractors = sameSubjectDefs.sort(() => Math.random() - 0.5).slice(0, 3);
+        optionsMap[idx] = [q.definition, ...distractors].sort(() => Math.random() - 0.5);
+      } else if (q.options && q.options.length > 0) {
         optionsMap[idx] = q.options;
       } else if (q.itemType === 'SHORT_ANSWER') {
         optionsMap[idx] = [];
@@ -641,6 +651,20 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
         optionsMap[idx] = [];
       }
     });
+
+    if (reverseOn) {
+      pool = pool.map(q =>
+        isExamItem(q)
+          ? q
+          : {
+              ...q,
+              term: q.definition,
+              englishTerm: null,
+              definition: q.englishTerm ? `${q.term} (${q.englishTerm})` : q.term,
+              answer: q.definition,
+            }
+      );
+    }
 
     setMcOptionsMap(optionsMap);
     setQuizQuestions(pool);
@@ -1725,6 +1749,8 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
           onQuizCount={setQuizCount}
           quizOrder={quizOrder}
           onQuizOrder={setQuizOrder}
+          reverse={quizReverse}
+          onReverse={setQuizReverse}
           worksheet={quizFormat === 'worksheet'}
           onWorksheet={v => setQuizFormat(v ? 'worksheet' : 'single')}
           onStart={() => handleStartQuiz()}
@@ -1770,21 +1796,20 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
       {activeTab === 'quiz_play' && quizFormat === 'single' && currentQuestion && (
         <div className="card" style={{ maxWidth: '720px', margin: '0 auto', width: '100%', padding: '28px' }}>
           {/* Progress Header */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <span className="badge" style={{ backgroundColor: '#EFF6FF', color: '#1E40AF', fontSize: '0.8125rem' }}>
-              {currentQuestion.subject} • {currentQuestion.category}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '12px', marginBottom: '4px' }}>
+            <span style={{ fontSize: '1.0625rem', fontWeight: 800, color: 'var(--primary)', whiteSpace: 'nowrap' }}>
+              {currentIndex + 1} / {quizQuestions.length}
             </span>
             <button
               type="button"
               onClick={() => setQuizFormat('worksheet')}
-              className="btn-outline"
-              style={{ fontSize: '0.78125rem', padding: '4px 10px' }}
+              style={{ background: 'none', border: 'none', padding: 0, fontSize: '0.8125rem', fontWeight: 600, color: 'var(--sub-text)', textDecoration: 'underline', cursor: 'pointer', whiteSpace: 'nowrap' }}
             >
-              전체 시험으로 변경
+              시험지로 보기
             </button>
-            <span style={{ fontSize: '0.9375rem', fontWeight: 800, color: 'var(--primary)' }}>
-              문제 {currentIndex + 1} / {quizQuestions.length}
-            </span>
+          </div>
+          <div style={{ fontSize: '0.8125rem', color: 'var(--sub-text)', marginBottom: '12px' }}>
+            {currentQuestion.subject}{currentQuestion.category && currentQuestion.category !== 'all' ? ` · ${currentQuestion.category}` : ''}
           </div>
 
           {/* Progress Bar */}
@@ -1913,11 +1938,9 @@ export default function QuizClient({ initialTerms, user }: QuizClientProps) {
             /* SUBJECTIVE MODE VIEW */
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div>
-                <label style={{ fontSize: '0.84rem', fontWeight: 700, display: 'block', marginBottom: '6px' }}>
-                  정답 입력
-                </label>
                 <input
                   ref={answerInputRef}
+                  aria-label="정답 입력"
                   type="text"
                   disabled={isAnswerSubmitted}
                   placeholder="정답 입력"
