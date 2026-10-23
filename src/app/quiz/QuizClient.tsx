@@ -1114,7 +1114,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                   </div>
                 ` : ''}
                 <div class="answer-box">
-                  <div><strong>내 작성 답안:</strong> ${res.userAns || '(미입력)'}</div>
+                  <div><strong>내 답안:</strong> ${res.userAns || '(미입력)'}</div>
                   <div style="margin-top: 4px; color: ${isCorr ? '#166534' : '#B91C1C'};">
                     <strong>정답:</strong> ${res.term.answer || res.term.term}
                   </div>
@@ -2594,7 +2594,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                         </div>
                         {ans && ans !== res.term.term && <div className={s.rsAns}>{ans}</div>}
                         <div className={s.rsDef}>{res.term.definition}</div>
-                        <div className={s.rsMine}>내 답 · {res.userAns || '미입력'}</div>
+                        <div className={s.rsMine}>내 답안 · {res.userAns || '미입력'}</div>
                       </article>
                     );
                   })}
@@ -2644,28 +2644,14 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {Array.isArray(selectedHistoryAttempt.details) && selectedHistoryAttempt.details.map((item: any, idx: number) => (
-                <div
-                  key={idx}
-                  style={{
-                    padding: '14px 18px',
-                    borderRadius: '8px',
-                    border: '1px solid',
-                    borderColor: item.isCorrect ? '#BBF7D0' : '#FECACA',
-                    backgroundColor: item.isCorrect ? '#F0FDF4' : '#FEF2F2',
-                  }}
-                >
-                  <div style={{ fontWeight: 800, fontSize: '0.9375rem', marginBottom: '6px', color: 'var(--text)' }}>
-                    {idx + 1}. {item.questionText}
+                <article key={idx} className={`${s.rsItem} ${item.isCorrect ? s.rsOk : s.rsNo}`}>
+                  <div className={s.rsHead}>
+                    <span className={s.rsNum}>#{idx + 1} {item.isCorrect ? '정답' : '오답'}</span>
                   </div>
-                  <div style={{ fontSize: '0.84rem', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                    <div>
-                      <strong style={{ color: item.isCorrect ? '#166534' : '#991B1B' }}>내가 작성한 답:</strong> {item.userAnswer || '(미작성)'} {item.isCorrect ? '(정답)' : '(오답)'}
-                    </div>
-                    <div>
-                      <strong style={{ color: '#1E293B' }}>정답 / 해설:</strong> {item.correctAnswer}
-                    </div>
-                  </div>
-                </div>
+                  <div className={s.rsTerm}>{item.questionText}</div>
+                  <div className={s.rsAns}>{item.correctAnswer}</div>
+                  <div className={s.rsMine}>내 답안 · {item.userAnswer || '미입력'}</div>
+                </article>
               ))}
             </div>
           </div>
