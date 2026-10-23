@@ -1,17 +1,20 @@
 'use client';
 
 import Link from 'next/link';
+import PlacementBox, { pickPlacement, type Placement } from './PlacementBox';
 
 interface HomeDashboardClientProps {
   user: any;
   publishedEvents: any[];
   notices: any[];
+  placements?: Placement[];
 }
 
 export default function HomeDashboardClient({
   user,
   publishedEvents,
   notices,
+  placements = [],
 }: HomeDashboardClientProps) {
   const nowDate = new Date();
   const dateParts = {
@@ -39,6 +42,8 @@ export default function HomeDashboardClient({
     dDayText = diffDays === 0 ? 'D-Day' : `D-${diffDays}`;
   }
 
+  const showPlacement = !!pickPlacement(placements, new Date());
+
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
       {/* Top Banner / Hero Context */}
@@ -63,7 +68,10 @@ export default function HomeDashboardClient({
 
         </div>
 
-        {/* 가장 가까운 주요 일정 */}
+        {/* 실습 기간: 내 배정 / 그 외: 가장 가까운 주요 일정 */}
+        {showPlacement ? (
+          <PlacementBox placements={placements} />
+        ) : (
         <div style={{ marginTop: '20px', backgroundColor: 'rgba(255, 255, 255, 0.15)', padding: '14px 16px', borderRadius: '8px' }}>
           <div style={{ fontSize: '0.75rem', fontWeight: 700, opacity: 0.85, marginBottom: '6px' }}>가장 가까운 주요 일정</div>
           {nearestEvent ? (
@@ -87,6 +95,7 @@ export default function HomeDashboardClient({
             <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>예정된 일정이 없습니다.</div>
           )}
         </div>
+        )}
       </div>
 
       {/* Main Dashboard Grid */}

@@ -7,7 +7,7 @@ import HomeHistory from './HomeHistory';
 export default async function Home() {
   const user = await getCurrentUser();
 
-  const [publishedEvents, notices] = await Promise.all([
+  const [publishedEvents, notices, placements] = await Promise.all([
     prisma.calendarEvent.findMany({
       where: { status: 'PUBLISHED' },
       orderBy: { startDateTime: 'asc' },
@@ -16,6 +16,13 @@ export default async function Home() {
       take: 5,
       orderBy: [{ isPinned: 'desc' }, { createdAt: 'desc' }],
     }).catch(() => []),
+    // 내 임상실습 배정 (이름 매칭). 테이블이 없거나 비어 있어도 홈은 정상 동작.
+    user?.name
+      ? prisma.clinicalAssignment.findMany({
+          where: { name: user.name },
+          orderBy: { weekNo: 'asc' },
+        }).catch(() => [])
+      : Promise.resolve([]),
   ]);
 
   return (
@@ -29,6 +36,7 @@ export default async function Home() {
             user={user}
             publishedEvents={publishedEvents}
             notices={notices}
+            placements={placements}
           />
 
           {/* Preserved OPEN LAB Recent Applications Section */}
