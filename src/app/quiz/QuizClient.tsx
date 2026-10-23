@@ -1934,13 +1934,6 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
             <span style={{ fontSize: '1.0625rem', fontWeight: 800, color: 'var(--primary)', whiteSpace: 'nowrap' }}>
               {currentIndex + 1} / {quizQuestions.length}
             </span>
-            <button
-              type="button"
-              onClick={() => setQuizFormat('worksheet')}
-              style={{ background: 'none', border: 'none', padding: 0, fontSize: '0.8125rem', fontWeight: 600, color: 'var(--sub-text)', textDecoration: 'underline', cursor: 'pointer', whiteSpace: 'nowrap' }}
-            >
-              시험지로 보기
-            </button>
           </div>
           <div style={{ fontSize: '0.8125rem', color: 'var(--sub-text)', marginBottom: '12px' }}>
             {currentQuestion.subject}{currentQuestion.category && currentQuestion.category !== 'all' ? ` · ${currentQuestion.category}` : ''}
@@ -2287,27 +2280,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
 
         return (
           <div style={{ maxWidth: '840px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div className="card" style={{ padding: '24px' }}>
-              {/* Header Info */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-                <div>
-                  <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#0E4A84', margin: 0 }}>
-                    {isMcSheet ? '전체 모의고사 시험지' : '전체 단어장 시험'}
-                  </h2>
-                  <div style={{ fontSize: '0.84rem', color: '#64748B', marginTop: '4px' }}>
-                    출제 과목: {quizSubject} | 총 {quizQuestions.length}문항
-                  </div>
-                </div>
-                <button
-                  type="button"
-                  onClick={() => setQuizFormat('single')}
-                  className="btn-outline"
-                  style={{ fontSize: '0.8125rem', padding: '6px 12px' }}
-                >
-                  한 문제씩 풀기로 변경
-                </button>
-              </div>
-
+            <div>
               {/* Questions Container */}
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
                 {quizQuestions.map((q, idx) => {
@@ -2467,7 +2440,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                       >
                         <input
                           type="text"
-                          placeholder={`#${idx + 1} 용어 정답 입력...`}
+                          placeholder={`#${idx + 1}`}
                           value={userAns}
                           onChange={e => setWorksheetAnswers(prev => ({ ...prev, [idx]: e.target.value }))}
                           style={{
@@ -2475,8 +2448,9 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                             padding: '10px 12px',
                             fontSize: '0.95rem',
                             fontWeight: 700,
-                            borderColor: userAns ? '#0E4A84' : '#E2E8F0',
-                            backgroundColor: '#FFFFFF',
+                            border: 'none',
+                            outline: 'none',
+                            backgroundColor: 'transparent',
                             borderRadius: '6px',
                             color: '#0F172A',
                           }}
@@ -2507,7 +2481,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                 <button
                   type="button"
                   onClick={() => handleGradeWorksheet()}
-                  className="btn-accent"
+                  className="btn-primary"
                   style={{ width: '100%', padding: '16px', fontSize: '1.125rem', fontWeight: 900, textAlign: 'center' }}
                 >
                   답안 제출 및 채점하기 ({Object.keys(worksheetAnswers).filter(k => worksheetAnswers[Number(k)]?.trim()).length} / {quizQuestions.length})
@@ -2521,19 +2495,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
       {/* 시험지 모드: 약어 → 풀네임 · 뜻 (PC는 표, 모바일은 카드) */}
       {activeTab === 'quiz_play' && quizFormat === 'worksheet' && quizType === 'abbr_both' && quizQuestions.length > 0 && (
         <div style={{ maxWidth: '960px', margin: '0 auto', width: '100%' }}>
-          <div className="card" style={{ padding: '20px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '14px', flexWrap: 'wrap' }}>
-              <div>
-                <h2 style={{ fontSize: '1.125rem', fontWeight: 900, color: '#0E4A84', margin: 0 }}>약어 → 용어 · 국문</h2>
-                <div style={{ fontSize: '0.8125rem', color: '#64748B', marginTop: '2px' }}>
-                  {quizSubject === 'all' ? '전체' : quizSubject} · 총 {quizQuestions.length}문항
-                </div>
-              </div>
-              <button type="button" onClick={() => setQuizFormat('single')} className="btn-outline" style={{ fontSize: '0.8125rem', padding: '6px 12px' }}>
-                한 문제씩 풀기
-              </button>
-            </div>
-
+          <div>
             <div className={s.sheet}>
               <div className={`${s.sheetRow} ${s.sheetHead}`}>
                 <span>#</span>
@@ -2568,7 +2530,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
             <button
               type="button"
               onClick={() => handleGradeWorksheet()}
-              className="btn-accent"
+              className="btn-primary"
               style={{ width: '100%', padding: '14px', fontSize: '1.0625rem', fontWeight: 900, marginTop: '18px' }}
             >
               채점하기 ({quizQuestions.filter((_, i) => (worksheetAnswers[i] || '').trim() || (worksheetAnswers2[i] || '').trim()).length} / {quizQuestions.length})
