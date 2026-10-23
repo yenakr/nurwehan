@@ -4,12 +4,13 @@ import s from '../quiz.module.css';
 import { Icon, ICON_CHEVRON, Segmented } from './ui';
 import type { QuizKind } from '@/lib/quiz/taxonomy';
 
-type QuizType = 'def_to_term' | 'term_to_def' | 'multiple_choice';
+type QuizType = 'def_to_term' | 'term_to_def' | 'multiple_choice' | 'abbr_both';
 
 export default function TestSetup({
   kind,
   title,
   poolSize,
+  bothAvailable,
   quizType,
   onQuizType,
   quizCount,
@@ -25,6 +26,7 @@ export default function TestSetup({
   kind: QuizKind;
   title: string;
   poolSize: number;
+  bothAvailable: boolean;
   quizType: QuizType;
   onQuizType: (t: QuizType) => void;
   quizCount: number | 'all';
@@ -51,17 +53,18 @@ export default function TestSetup({
           <Segmented<QuizType>
             full
             label="풀이 방식"
-            value={quizType === 'multiple_choice' ? 'multiple_choice' : 'def_to_term'}
+            value={quizType === 'multiple_choice' || quizType === 'abbr_both' ? quizType : 'def_to_term'}
             onChange={onQuizType}
             options={[
               { value: 'multiple_choice', label: '4지선다' },
               { value: 'def_to_term', label: '단답형' },
+              ...(bothAvailable ? [{ value: 'abbr_both' as QuizType, label: '약어 → 풀네임·뜻' }] : []),
             ]}
           />
         </div>
       )}
 
-      {kind === 'TERM' && (
+      {kind === 'TERM' && quizType !== 'abbr_both' && (
         <div className={s.field}>
           <div className={s.label}>출제 방향</div>
           <Segmented<'fwd' | 'rev'>
@@ -110,10 +113,12 @@ export default function TestSetup({
           고급 설정
           <Icon d={ICON_CHEVRON} size={16} />
         </summary>
+        {quizType !== 'abbr_both' && (
         <label className={s.check}>
           <input type="checkbox" checked={worksheet} onChange={e => onWorksheet(e.target.checked)} />
           시험지 모드 (모든 문제를 풀고 한 번에 채점)
         </label>
+        )}
       </details>
 
       <button type="button" className={`${s.btn} ${s.btnPrimary} ${s.btnBlock}`} disabled={poolSize === 0} onClick={onStart}>
