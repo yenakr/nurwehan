@@ -1,9 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import MySchedule, { type ScheduleItem } from './MySchedule';
-import ClinicalNotes from './ClinicalNotes';
+import ClinicalNotes, { type Note } from './ClinicalNotes';
 
 interface ClinicalClientProps {
   schedule: ScheduleItem[];
@@ -29,6 +29,26 @@ const quizSubjectOf = (subject: string) => QUIZ_SUBJECT[subject.split('_')[0]];
 
 export default function ClinicalClient({ schedule, user }: ClinicalClientProps) {
   const [tab, setTab] = useState<Tab>('mine');
+  const [notes, setNotes] = useState<Note[]>([]);
+  const [unavailable, setUnavailable] = useState(false);
+  const [targetDate, setTargetDate] = useState<string | undefined>(undefined);
+
+  useEffect(() => {
+    if (!user) return;
+    fetch('/api/clinical/notes')
+      .then(r => r.json())
+      .then(d => {
+        setNotes(d.notes || []);
+        if (d.unavailable) setUnavailable(true);
+      })
+      .catch(() => setUnavailable(true));
+  }, [user]);
+
+  const noteDates = useMemo(() => new Set(notes.map(n => n.date)), [notes]);
+  const pickDay = (date: string) => {
+    setTargetDate(date);
+    setTab('notes');
+  };
 
   // 내 실습 과목을 주차 순서대로 중복 없이
   const subjects: { quiz: string; weekNo: number; place: string }[] = [];
@@ -55,13 +75,13 @@ export default function ClinicalClient({ schedule, user }: ClinicalClientProps) 
         ))}
       </div>
 
-      {tab === 'mine' && (user ? <MySchedule schedule={schedule} me={user.name} /> : (
+      {tab === 'mine' && (user ? <MySchedule schedule={schedule} me={user.name} noteDates={noteDates} onPickDay={pickDay} /> : (
         <div className="card" style={{ textAlign: 'center', color: 'var(--sub-text)' }}>
           로그인하면 내 실습 일정을 볼 수 있어요.
         </div>
       ))}
 
-      {tab === 'notes' && (user ? <ClinicalNotes schedule={schedule} /> : (
+      {tab === 'notes' && (user ? <ClinicalNotes schedule={schedule} notes={notes} setNotes={setNotes} unavailable={unavailable} targetDate={targetDate} /> : (
         <div className="card" style={{ textAlign: 'center', color: 'var(--sub-text)' }}>
           로그인하면 실습일지를 쓸 수 있어요.
         </div>
