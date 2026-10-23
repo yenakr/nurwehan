@@ -43,38 +43,59 @@ export default function TestSetup({
   const effective = quizCount === 'all' || quizCount >= poolSize ? poolSize : quizCount;
   const countValue: number | 'all' = quizCount === 'all' || quizCount >= poolSize ? 'all' : quizCount;
 
+  const mode: 'fwd' | 'rev' | 'both' = quizType === 'abbr_both' ? 'both' : reverse ? 'rev' : 'fwd';
+  const pickMode = (m: 'fwd' | 'rev' | 'both') => {
+    if (m === 'both') {
+      onQuizType('abbr_both');
+      return;
+    }
+    if (quizType === 'abbr_both') onQuizType('def_to_term');
+    onReverse(m === 'rev');
+  };
+
   return (
     <section aria-label="테스트 설정" className={`${s.panel} ${s.panelNarrow}`}>
       <h2 className={s.panelTitle}>{title}</h2>
 
       {kind === 'TERM' && (
         <div className={s.field}>
-          <div className={s.label}>풀이 방식</div>
-          <Segmented<QuizType>
-            full
-            label="풀이 방식"
-            value={quizType === 'multiple_choice' || quizType === 'abbr_both' ? quizType : 'def_to_term'}
-            onChange={onQuizType}
-            options={[
-              { value: 'multiple_choice', label: '4지선다' },
-              { value: 'def_to_term', label: '단답형' },
-              ...(bothAvailable ? [{ value: 'abbr_both' as QuizType, label: '약어 → 풀네임·뜻' }] : []),
-            ]}
-          />
+          <div className={s.label}>어떤 문제를 풀까요?</div>
+          <div role="radiogroup" aria-label="문제 유형" className={s.choices}>
+            {([
+              { v: 'fwd', title: '뜻 보고 용어 쓰기', ex: '전대뇌동맥 → ACA' },
+              { v: 'rev', title: '용어 보고 뜻 쓰기', ex: 'ACA → 전대뇌동맥' },
+              ...(bothAvailable ? [{ v: 'both', title: '약어 보고 풀네임·뜻 쓰기', ex: 'ACA → Anterior cerebral artery, 전대뇌동맥' }] : []),
+            ] as Array<{ v: 'fwd' | 'rev' | 'both'; title: string; ex: string }>).map(o => {
+              const on = o.v === mode;
+              return (
+                <button
+                  key={o.v}
+                  type="button"
+                  role="radio"
+                  aria-checked={on}
+                  className={`${s.choice} ${on ? s.choiceOn : ''}`}
+                  onClick={() => pickMode(o.v)}
+                >
+                  <span className={s.choiceTitle}>{o.title}</span>
+                  <span className={s.choiceEx}>{o.ex}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       )}
 
       {kind === 'TERM' && quizType !== 'abbr_both' && (
         <div className={s.field}>
-          <div className={s.label}>출제 방향</div>
-          <Segmented<'fwd' | 'rev'>
+          <div className={s.label}>답하는 방식</div>
+          <Segmented<QuizType>
             full
-            label="출제 방향"
-            value={reverse ? 'rev' : 'fwd'}
-            onChange={v => onReverse(v === 'rev')}
+            label="답하는 방식"
+            value={quizType === 'multiple_choice' ? 'multiple_choice' : 'def_to_term'}
+            onChange={onQuizType}
             options={[
-              { value: 'fwd', label: '뜻 → 용어' },
-              { value: 'rev', label: '용어 → 뜻' },
+              { value: 'def_to_term', label: '직접 쓰기' },
+              { value: 'multiple_choice', label: '4지선다' },
             ]}
           />
         </div>
