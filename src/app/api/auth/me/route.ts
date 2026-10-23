@@ -36,7 +36,7 @@ export async function PATCH(request: NextRequest) {
         ...(name && { name }),
         ...(studentId && { studentId }),
         grade,
-        phone,
+        ...(phone !== undefined && { phone: phone ? String(phone).trim().slice(0, 20) : null }),
         email
       }
     });

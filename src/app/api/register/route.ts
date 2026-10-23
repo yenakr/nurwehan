@@ -8,7 +8,6 @@ export async function POST(request: Request) {
     const studentId = String(body.studentId ?? '').trim();
     const name = String(body.name ?? '').trim();
     const email = String(body.email ?? '').trim().toLowerCase();
-    const phone = body.phone ? String(body.phone).trim().slice(0, 20) : null;
     const password = String(body.password ?? '');
     const grade = Number(body.grade);
 
@@ -61,7 +60,6 @@ export async function POST(request: Request) {
         name,
         grade,
         email,
-        phone,
         password: hashedPassword,
         role: 'STUDENT',
         approvalStatus: 'PENDING',
