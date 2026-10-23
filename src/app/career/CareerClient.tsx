@@ -30,10 +30,10 @@ export default function CareerClient({ careerInfos, user }: CareerClientProps) {
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
       <div className="card" style={{ padding: '20px' }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)', marginBottom: '6px' }}>
-          💼 취업 준비
+          취업 준비
         </h2>
         <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)', marginBottom: '16px' }}>
-          어학 성적 유효기간 관리부터 주요 병원 채용 일정, 자기소개서, 면접 및 국가고시 대비 흐름을 안내합니다.
+          어학 · 병원 채용 · 면접 · 국가고시
         </p>
 
         {/* Filters */}

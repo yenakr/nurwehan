@@ -355,7 +355,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
       {/* 0. Template Selection (Only for logged-in users) */}
       {user && templates.length > 0 && (
         <div className="template-box">
-          <label>⚡️ 최근 신청 내역 불러오기 (자동 완성)</label>
+          <label>최근 신청 불러오기</label>
           <select
             value={selectedTemplateId}
             onChange={(e) => handleLoadTemplate(e.target.value)}
@@ -510,7 +510,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
         {loadingSlots ? (
           <div className="loading-slots">신청 가능한 시간을 불러오는 중...</div>
         ) : filteredSlots.length === 0 ? (
-          <div className="no-slots">현재 선택하신 학년에서 신청 가능한 일정이 없습니다.</div>
+          <div className="no-slots">신청 가능한 일정이 없어요.</div>
         ) : (
           <div className="slots-grid">
             {filteredSlots.map((slot) => {
@@ -643,7 +643,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
         <div style={{ marginBottom: '16px' }}>
           <input 
             type="text" 
-            placeholder="🔍 술기 이름 검색..." 
+            placeholder="술기 검색" 
             value={skillSearchQuery}
             onChange={(e) => setSkillSearchQuery(e.target.value)}
             style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.875rem', fontWeight: 600 }}

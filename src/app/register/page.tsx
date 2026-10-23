@@ -61,7 +61,7 @@ export default function RegisterPage() {
         <div className="card" style={{ width: '100%', maxWidth: '500px', padding: '40px' }}>
           <div style={{ textAlign: 'center', marginBottom: '32px' }}>
             <h1 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--primary)', marginBottom: '8px' }}>학생 회원가입</h1>
-            <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>가입 후 관리자 확인이 끝나면 이용할 수 있어요.</p>
+            
           </div>
           
           {error && (

@@ -88,7 +88,7 @@ export default async function MyPage() {
                     </tr>
                   )) : (
                     <tr>
-                      <td colSpan={4} style={{ padding: '24px', textAlign: 'center', color: 'var(--sub-text)', fontSize: '0.875rem' }}>작성 내역이 없습니다.</td>
+                      <td colSpan={4} style={{ padding: '24px', textAlign: 'center', color: 'var(--sub-text)', fontSize: '0.875rem' }}>작성 내역이 없어요.</td>
                     </tr>
                   )}
                 </tbody>
@@ -108,7 +108,7 @@ export default async function MyPage() {
                     <div style={{ fontSize: '0.875rem', color: 'var(--primary)', fontWeight: '500' }}>술기: {app.skills.map(s => s.skill.name).join(', ')}</div>
                   </div>
                 )) : (
-                  <p style={{ textAlign: 'center', padding: '20px', color: 'var(--sub-text)' }}>작성 내역이 없습니다.</p>
+                  <p style={{ textAlign: 'center', padding: '20px', color: 'var(--sub-text)' }}>작성 내역이 없어요.</p>
                 )}
               </div>
             </div>

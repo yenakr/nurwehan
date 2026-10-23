@@ -68,7 +68,7 @@ export default function AdminClinicalClient({ initialRequirements }: AdminClinic
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <div>
             <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)' }}>
-              🩺 임상실습 건강요건 관리
+              건강요건 관리
             </h2>
             <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>
               예방접종 및 항체검사 세부 요건과 판정 규칙을 등록합니다.
@@ -133,7 +133,7 @@ export default function AdminClinicalClient({ initialRequirements }: AdminClinic
 
       <div className="card">
         <h3 className="section-title">
-          <span>📋 등록된 건강요건 항목 ({requirements.length}개)</span>
+          <span>등록된 항목 {requirements.length}</span>
         </h3>
 
         {requirements.length > 0 ? (
@@ -180,7 +180,7 @@ export default function AdminClinicalClient({ initialRequirements }: AdminClinic
           </div>
         ) : (
           <div style={{ padding: '32px', textAlign: 'center', color: 'var(--sub-text)' }}>
-            등록된 건강요건 기준이 없습니다.
+            등록된 항목이 없어요.
           </div>
         )}
       </div>

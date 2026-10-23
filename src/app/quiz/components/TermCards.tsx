@@ -52,7 +52,7 @@ export default function TermCards({
   favorites?: Set<string>;
   onToggleFav?: (id: string) => void;
 }) {
-  if (terms.length === 0) return <div className={s.empty}>표시할 항목이 없습니다.</div>;
+  if (terms.length === 0) return <div className={s.empty}>표시할 항목이 없어요.</div>;
 
   return (
     <div className={s.grid}>

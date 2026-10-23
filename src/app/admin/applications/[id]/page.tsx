@@ -137,7 +137,7 @@ export default async function AdminApplicationDetailPage({ params }: { params: P
             <div style={{ marginBottom: '24px' }}>
               <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--sub-text)', marginBottom: '4px' }}>유의사항 확인 여부</label>
               <div style={{ fontSize: '0.875rem', fontWeight: '600', color: application.confirmedNotice ? '#166534' : '#991b1b' }}>
-                {application.confirmedNotice ? '✅ 확인 완료' : '❌ 미확인 (구버전 신청)'}
+                {application.confirmedNotice ? '확인 완료' : '미확인 (구버전 신청)'}
               </div>
             </div>
 
@@ -172,7 +172,7 @@ export default async function AdminApplicationDetailPage({ params }: { params: P
             <div style={{ marginTop: '24px' }}>
               <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--sub-text)', marginBottom: '8px' }}>학생 추가 요청사항</label>
               <div style={{ backgroundColor: '#fff9db', padding: '16px', borderRadius: '4px', fontSize: '0.9375rem', border: '1px solid #ffe066' }}>
-                {application.additionalRequest || '추가 요청사항이 없습니다.'}
+                {application.additionalRequest || '추가 요청 없음'}
               </div>
             </div>
           </div>

@@ -62,7 +62,7 @@ export default function HomeDashboardClient({
         <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
           <div>
             <div style={{ fontSize: '0.875rem', opacity: 0.85, marginBottom: '6px' }}>
-              오늘은 {todayStr}입니다
+              {todayStr}
             </div>
             <h1 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '4px' }}>
               {user ? `${user.name}님, 안녕하세요` : '한양대학교 간호대학'}
@@ -95,7 +95,7 @@ export default function HomeDashboardClient({
               </Link>
             </div>
           ) : (
-            <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>예정된 일정이 없습니다.</div>
+            <div style={{ fontSize: '0.875rem', opacity: 0.9 }}>예정된 일정이 없어요.</div>
           )}
         </div>
         )}

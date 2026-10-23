@@ -261,7 +261,7 @@ export default function EditForm({ user, application }: EditFormProps) {
         <div style={{ marginBottom: '16px' }}>
           <input 
             type="text" 
-            placeholder="🔍 술기 이름 검색..." 
+            placeholder="술기 검색" 
             value={skillSearchQuery}
             onChange={(e) => setSkillSearchQuery(e.target.value)}
             style={{ width: '100%', padding: '10px 14px', borderRadius: '8px', border: '1px solid var(--border)', fontSize: '0.875rem', fontWeight: 600 }}

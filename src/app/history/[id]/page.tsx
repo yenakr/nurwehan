@@ -180,7 +180,7 @@ export default async function HistoryDetailPage({ params }: { params: Promise<{ 
                 </table>
               </div>
             ) : (
-              <p className="empty-text">선택된 술기에 연결된 물품이 없습니다.</p>
+              <p className="empty-text">연결된 물품이 없어요.</p>
             )}
           </section>
 

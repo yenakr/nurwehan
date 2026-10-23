@@ -52,14 +52,6 @@ export default function PreparingBadge({
           color: '#64748B',
         }}
       >
-        <div
-          style={{
-            fontSize: '1.25rem',
-            marginBottom: '8px',
-          }}
-        >
-          📋
-        </div>
         <p style={{ fontWeight: 700, fontSize: '0.9375rem', color: '#334155' }}>
           {text}
         </p>

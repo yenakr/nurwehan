@@ -54,7 +54,7 @@ export default async function NoticesPage() {
                 )) : (
                   <tr>
                     <td colSpan={4} style={{ textAlign: 'center', padding: '40px', color: 'var(--sub-text)' }}>
-                      등록된 공지사항이 없습니다.
+                      공지가 없어요.
                     </td>
                   </tr>
                 )}
