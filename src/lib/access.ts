@@ -1,5 +1,5 @@
 import { prisma } from './prisma';
-import { isAdminRole } from './auth-core';
+import { isAdminRole, isSuperAdmin } from './auth-core';
 
 // 과목 공개 범위: 없음 = 일반, PARTIAL = 일부공개, PRIVATE = 관리자만
 export type SubjectLevel = 'PARTIAL' | 'PRIVATE';
@@ -60,11 +60,12 @@ type Viewer = { id: string; role: string; approvalStatus?: string | null } | nul
 
 // 이 사용자에게 보이지 않아야 하는 과목 목록
 export async function hiddenSubjectsFor(user: Viewer): Promise<string[]> {
-  if (user && isAdminRole(user.role)) return [];
+  if (user && isSuperAdmin(user.role)) return [];
   const levels = await getSubjectLevels();
   const entries = Object.entries(levels);
   if (entries.length === 0) return [];
-  const tier = user && user.approvalStatus === 'APPROVED' ? await getTier(user.id) : 0;
+  const isAdmin = !!user && isAdminRole(user.role);
+  const tier = isAdmin ? 1 : user && user.approvalStatus === 'APPROVED' ? await getTier(user.id) : 0;
   return entries
     .filter(([, level]) => level === 'PRIVATE' || (level === 'PARTIAL' && tier < 1))
     .map(([subject]) => subject);

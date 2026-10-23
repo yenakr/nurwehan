@@ -19,6 +19,7 @@ export default function AdminManager({
   subject,
   grade,
   level,
+  canSetLevel,
   quizzes,
   onClose,
   onDone,
@@ -26,6 +27,7 @@ export default function AdminManager({
   subject: string;
   grade: string;
   level: string;
+  canSetLevel?: boolean;
   quizzes: string[];
   onClose: () => void;
   onDone: (change: { subject?: string; level?: string; category?: { from: string; to: string } }) => void;
@@ -40,10 +42,10 @@ export default function AdminManager({
   const saveSubject = async () => {
     setBusy(true);
     setError('');
-    const err = await patch('/api/admin/quiz/subjects', { subject, newSubject: name.trim(), grade: g, level: lv });
+    const err = await patch('/api/admin/quiz/subjects', { subject, newSubject: name.trim(), grade: g, ...(canSetLevel && { level: lv }) });
     setBusy(false);
     if (err) return setError(err);
-    onDone({ subject: name.trim() || subject, level: lv });
+    onDone({ subject: name.trim() || subject, ...(canSetLevel && { level: lv }) });
   };
 
   const saveQuiz = async (q: string) => {
@@ -72,14 +74,14 @@ export default function AdminManager({
             {GRADES.map(x => <option key={x} value={x}>{x}</option>)}
           </select>
         </div>
-        <div className={s.field}>
+        {canSetLevel && <div className={s.field}>
           <label className={s.label} htmlFor="mg-level">공개 범위</label>
           <select id="mg-level" className={s.input} value={lv} onChange={e => setLv(e.target.value)}>
             <option value="NORMAL">일반 (모든 승인 회원)</option>
-            <option value="PARTIAL">일부공개 (지정한 회원만)</option>
-            <option value="PRIVATE">비공개 (관리자만)</option>
+            <option value="PARTIAL">일부공개 (지정한 회원·관리자)</option>
+            <option value="PRIVATE">비공개 (시스템관리자만)</option>
           </select>
-        </div>
+        </div>}
         <button type="button" className={`${s.btn} ${s.btnPrimary}`} disabled={busy || !name.trim()} onClick={saveSubject}>
           과목 저장
         </button>

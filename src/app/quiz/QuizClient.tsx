@@ -89,10 +89,11 @@ interface QuizClientProps {
   initialSubject?: string;
   subjectLevels?: Record<string, string>;
   guest?: boolean;
+  superAdmin?: boolean;
 }
 
 
-export default function QuizClient({ initialTerms, user, initialSubject, subjectLevels, guest }: QuizClientProps) {
+export default function QuizClient({ initialTerms, user, initialSubject, subjectLevels, guest, superAdmin }: QuizClientProps) {
   const isAdmin = isAdminRole(user?.role);
   const router = useRouter();
   const [termsList, setTermsList] = useState<NursingTerm[]>(initialTerms);
@@ -1410,7 +1411,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
       {view === 'hub' && (
         <HubView
           subjects={subjectEntries}
-          levels={isAdmin ? levels : undefined}
+          levels={superAdmin ? levels : undefined}
           isAdmin={isAdmin}
           onOpen={name => openSubject(name)}
           onAddSubject={g => handleOpenCreateModal(true, g)}
@@ -1905,6 +1906,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
           subject={studySubject}
           grade={currentGrade}
           level={levels[studySubject] ?? 'NORMAL'}
+          canSetLevel={!!superAdmin}
           quizzes={allQuizNames}
           onClose={() => setShowManager(false)}
           onDone={change => {

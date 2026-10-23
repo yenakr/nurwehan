@@ -1,5 +1,5 @@
 import { getCurrentUser } from '@/lib/auth';
-import { isAdminRole } from '@/lib/auth-core';
+import { isAdminRole, isSuperAdmin } from '@/lib/auth-core';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import UserList from './UserList';
@@ -17,7 +17,7 @@ export default async function AdminUsersPage() {
   const users = await prisma.user.findMany({
     where: {
       role: {
-        notIn: ['ADMIN', 'SUPER_ADMIN']
+        notIn: isSuperAdmin(user.role) ? ['SUPER_ADMIN'] : ['ADMIN', 'SUPER_ADMIN', 'ASSISTANT']
       }
     },
     include: {
@@ -35,7 +35,8 @@ export default async function AdminUsersPage() {
     ]
   });
 
-  const tiers = await getTiers();
+  const superAdmin = isSuperAdmin(user.role);
+  const tiers = superAdmin ? await getTiers() : {};
   const withTier = users.map(u => ({ ...u, tier: tiers[u.id] ?? 0 }));
 
   return (
@@ -44,7 +45,7 @@ export default async function AdminUsersPage() {
         <h1 style={{ fontSize: '1.375rem', fontWeight: 800, marginBottom: '16px', color: 'var(--text)' }}>
           학생 관리
         </h1>
-        <UserList initialUsers={withTier as any} />
+        <UserList initialUsers={withTier as any} superAdmin={superAdmin} />
       </div>
     </main>
   );
