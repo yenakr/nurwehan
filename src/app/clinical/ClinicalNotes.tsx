@@ -22,10 +22,30 @@ const label = (s: string) => {
 };
 const MAX = 3000;
 
+const addDay = (s: string, n: number) => {
+  const [y, m, d] = s.split('-').map(Number);
+  const dt = new Date(y, m - 1, d + n);
+  return `${dt.getFullYear()}-${pad(dt.getMonth() + 1)}-${pad(dt.getDate())}`;
+};
+
 export default function ClinicalNotes({ schedule }: { schedule: ScheduleItem[] }) {
+  // 실습 평일 목록 (배정된 주의 월~금)
+  const practiceDays = useMemo(() => {
+    const days: string[] = [];
+    schedule.forEach(s => {
+      for (let i = 0; i < 5; i++) days.push(addDay(s.startDate, i));
+    });
+    return Array.from(new Set(days)).sort();
+  }, [schedule]);
+
   const [notes, setNotes] = useState<Note[]>([]);
   const [unavailable, setUnavailable] = useState(false);
-  const [date, setDate] = useState(todayStr());
+  const [date, setDate] = useState(() => {
+    const t = todayStr();
+    if (!practiceDays.length || practiceDays.includes(t)) return t;
+    // 오늘이 실습일이 아니면 가장 가까운 다음 실습일(없으면 마지막 실습일)
+    return practiceDays.find(d => d > t) ?? practiceDays[practiceDays.length - 1];
+  });
   const [wardInput, setWardInput] = useState('');
   const [content, setContent] = useState('');
   const [status, setStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
@@ -78,6 +98,17 @@ export default function ClinicalNotes({ schedule }: { schedule: ScheduleItem[] }
     }
   };
 
+  const step = (dir: 1 | -1) => {
+    if (practiceDays.length) {
+      const next = dir === 1 ? practiceDays.find(d => d > date) : [...practiceDays].reverse().find(d => d < date);
+      if (next) setDate(next);
+    } else {
+      setDate(addDay(date, dir));
+    }
+  };
+  const hasPrev = practiceDays.length ? practiceDays.some(d => d < date) : true;
+  const hasNext = practiceDays.length ? practiceDays.some(d => d > date) : true;
+
   const open = (n: Note) => {
     setDate(n.date);
     const inSchedule = schedule.some(s => s.startDate <= n.date && n.date <= s.endDate && `${s.hospital} ${s.ward}` === n.ward);
@@ -107,17 +138,25 @@ export default function ClinicalNotes({ schedule }: { schedule: ScheduleItem[] }
       )}
 
       <div className="card">
-        <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '12px' }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '12px' }}>
+          <button className="btn-outline" onClick={() => step(-1)} disabled={!hasPrev} aria-label="이전 실습일" style={{ padding: '4px 12px' }}>
+            ‹
+          </button>
           <input type="date" value={date} onChange={e => setDate(e.target.value || todayStr())} style={{ padding: '6px 8px' }} />
+          <button className="btn-outline" onClick={() => step(1)} disabled={!hasNext} aria-label="다음 실습일" style={{ padding: '4px 12px' }}>
+            ›
+          </button>
           {scheduled ? (
-            <span style={{ alignSelf: 'center', fontWeight: 700 }}>{scheduled}</span>
-          ) : (
+            <span style={{ fontWeight: 700 }}>{scheduled}</span>
+          ) : practiceDays.length === 0 ? (
             <input
               value={wardInput}
               onChange={e => setWardInput(e.target.value)}
               placeholder="병동 (예: 서울 7층)"
               style={{ padding: '6px 8px', flex: '1 1 160px' }}
             />
+          ) : (
+            <span style={{ color: 'var(--sub-text)', fontSize: '0.875rem' }}>실습이 없는 날이에요</span>
           )}
         </div>
         <textarea
