@@ -505,3 +505,21 @@ model QuizAttempt {
   @@index([userId])
   @@index([createdAt])
 }
+
+// 임상실습 배정표 (이름으로 User.name과 매칭, 주 단위)
+model ClinicalAssignment {
+  id        String   @id @default(cuid())
+  term      String   // 예: 2026-2
+  name      String   // 학생 이름 (동명이인 없음 전제)
+  groupNo   Int      // 조
+  weekNo    Int      // 실습 주차
+  startDate String   // 해당 주 월요일 YYYY-MM-DD
+  endDate   String   // 해당 주 금요일 YYYY-MM-DD
+  subject   String   // 성인1 / 성인2 / 간호과정 / 여성_산과 ...
+  hospital  String   // 서울 / 구리 / 서울아산
+  ward      String   // 7층, 분만실 ...
+  shift     String?  // Day / Eve (없으면 null)
+  createdAt DateTime @default(now())
+
+  @@index([name])
+}
