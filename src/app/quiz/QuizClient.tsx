@@ -1385,14 +1385,7 @@ export default function QuizClient({ initialTerms, user, initialSubject }: QuizC
             total={subjectKindCounts[quizKind]}
             quiz={studyCategory}
             onQuiz={handleSelectQuiz}
-          />
-        </>
-      )}
-
-      {inShell && activeTab === 'study' && (
-        <>
-          <div className={s.toolbar}>
-            {studyViewMode === 'grid' && (
+            trailing={activeTab === 'study' && studyViewMode === 'grid' ? (
               <div className={s.search}>
                 <span className={s.searchIcon}><Icon d={ICON_SEARCH} size={16} /></span>
                 <input
@@ -1404,19 +1397,27 @@ export default function QuizClient({ initialTerms, user, initialSubject }: QuizC
                   onChange={e => setSearchTerm(e.target.value)}
                 />
               </div>
-            )}
+            ) : undefined}
+          />
+        </>
+      )}
+
+      {inShell && activeTab === 'study' && (
+        <>
+          <div className={s.toolbar}>
             <div className={s.toolbarEnd}>
               {quizKind === 'TERM' && (
-                <Segmented<'grid' | 'flashcard' | 'typing'>
-                  label="보기 방식"
+                <select
+                  aria-label="보기 방식"
+                  className={s.input}
+                  style={{ width: 'auto' }}
                   value={studyViewMode}
-                  onChange={setStudyViewMode}
-                  options={[
-                    { value: 'grid', label: '목록' },
-                    { value: 'flashcard', label: '플래시카드' },
-                    { value: 'typing', label: '타이핑' },
-                  ]}
-                />
+                  onChange={e => setStudyViewMode(e.target.value as 'grid' | 'flashcard' | 'typing')}
+                >
+                  <option value="grid">목록</option>
+                  <option value="flashcard">플래시카드</option>
+                  <option value="typing">타이핑</option>
+                </select>
               )}
               {studyViewMode === 'grid' && (
                 <button

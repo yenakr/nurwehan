@@ -1,5 +1,6 @@
 'use client';
 
+import type { ReactNode } from 'react';
 import s from '../quiz.module.css';
 import { Chips, Segmented } from './ui';
 import type { QuizKind } from '@/lib/quiz/taxonomy';
@@ -12,6 +13,7 @@ export default function ContextBar({
   total,
   quiz,
   onQuiz,
+  trailing,
 }: {
   kind: QuizKind;
   kindCounts: Record<QuizKind, number>;
@@ -20,9 +22,11 @@ export default function ContextBar({
   total: number;
   quiz: string;
   onQuiz: (q: string) => void;
+  trailing?: ReactNode;
 }) {
   return (
     <div className={s.bar}>
+      <div className={s.barTop}>
       <Segmented<QuizKind>
         label="문제 유형"
         value={kind}
@@ -32,6 +36,8 @@ export default function ContextBar({
           { value: 'MULTIPLE_CHOICE', label: '문제', disabled: kindCounts.MULTIPLE_CHOICE === 0 },
         ]}
       />
+      {trailing}
+      </div>
       <Chips
         label="퀴즈"
         value={quiz}

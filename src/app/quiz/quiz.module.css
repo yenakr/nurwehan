@@ -34,6 +34,9 @@
 .tabActive { font-weight: 800; color: var(--q-primary); border-bottom-color: var(--q-primary); }
 
 .bar { display: flex; flex-wrap: wrap; align-items: center; gap: 12px 16px; }
+.barTop { display: flex; align-items: center; gap: 10px; width: 100%; }
+.barTop .search { flex: 1 1 0; max-width: 260px; margin-left: auto; }
+.barTop .searchInput { height: 36px; }
 .seg { display: inline-flex; padding: 3px; background: var(--q-bg-seg); border-radius: 10px; }
 .segFull { display: flex; }
 .segBtn { height: 32px; padding: 0 16px; border: 0; border-radius: 8px; background: transparent; color: #475569; font-size: 0.875rem; font-weight: 600; }
