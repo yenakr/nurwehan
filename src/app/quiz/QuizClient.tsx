@@ -1428,23 +1428,25 @@ export default function QuizClient({ initialTerms, user, initialSubject }: QuizC
                   onClick={() => { setHideDefinition(v => !v); setRevealedCardIds({}); }}
                 >
                   <span className={s.switchTrack}><span className={s.switchKnob} /></span>
-                  뜻 가리기
+                  뜻
                 </button>
               )}
-              <button
-                type="button"
-                className={`${s.btn} ${s.iconBtn}`}
-                aria-label={autoTTS ? '음성 읽기 끄기' : '음성 읽기 켜기'}
-                aria-pressed={autoTTS}
-                onClick={toggleAutoTTS}
-              >
-                <Icon d={autoTTS ? ICON_VOLUME : ICON_VOLUME_OFF} />
-              </button>
-              {autoTTS && (
-                <select aria-label="음성 배속" className={s.input} style={{ width: 'auto' }} value={ttsRate} onChange={e => setTtsRate(parseFloat(e.target.value))}>
-                  {[0.75, 1, 1.25, 1.5, 2].map(r => <option key={r} value={r}>{r}x</option>)}
-                </select>
-              )}
+              <div className={s.ttsGroup}>
+                <button
+                  type="button"
+                  className={`${s.ttsBtn} ${autoTTS ? s.ttsBtnOn : ''}`}
+                  aria-label={autoTTS ? '음성 읽기 끄기' : '음성 읽기 켜기'}
+                  aria-pressed={autoTTS}
+                  onClick={toggleAutoTTS}
+                >
+                  <Icon d={autoTTS ? ICON_VOLUME : ICON_VOLUME_OFF} />
+                </button>
+                {autoTTS && (
+                  <select aria-label="음성 배속" className={s.ttsSelect} value={ttsRate} onChange={e => setTtsRate(parseFloat(e.target.value))}>
+                    {[0.75, 1, 1.25, 1.5, 2].map(r => <option key={r} value={r}>{r}x</option>)}
+                  </select>
+                )}
+              </div>
               {isAdmin && (
                 <>
                   <button type="button" className={s.btn} aria-pressed={isGridEditMode} onClick={() => { setIsGridEditMode(v => !v); setStudyViewMode('grid'); }}>

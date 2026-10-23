@@ -63,7 +63,12 @@
 .search { position: relative; flex: 1 1 240px; max-width: 360px; }
 .searchIcon { position: absolute; left: 12px; top: 50%; transform: translateY(-50%); display: flex; color: var(--q-muted); pointer-events: none; }
 .searchInput { width: 100%; box-sizing: border-box; height: 40px; padding: 0 12px 0 36px; border: 1px solid var(--q-border-strong); border-radius: 8px; background: #fff; font-size: 0.875rem; color: var(--q-text); font-family: inherit; }
-.toolbarEnd { margin-left: auto; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 12px; }
+.toolbarEnd { margin-left: 0; width: 100%; display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; }
+.toolbarEnd > select { flex: 0 0 auto; }
+.ttsGroup { display: inline-flex; align-items: center; height: 40px; border: 1px solid var(--q-border-strong); border-radius: 8px; background: #fff; overflow: hidden; }
+.ttsBtn { width: 40px; height: 100%; display: inline-flex; align-items: center; justify-content: center; border: 0; background: transparent; color: var(--q-text-2); }
+.ttsBtnOn { color: var(--q-primary); background: var(--q-primary-soft); }
+.ttsSelect { height: 100%; border: 0; border-left: 1px solid var(--q-border-strong); background: transparent; padding: 0 6px; font-size: 0.8125rem; font-family: inherit; color: var(--q-text); }
 .switch { display: inline-flex; align-items: center; gap: 8px; height: 40px; padding: 0 4px; border: 0; background: transparent; color: var(--q-text-2); font-size: 0.875rem; font-weight: 600; }
 .switchTrack { position: relative; width: 36px; height: 20px; border-radius: 999px; background: var(--q-border-strong); display: inline-block; }
 .switchOn .switchTrack { background: var(--q-primary); }
@@ -80,7 +85,7 @@
 .cardBody { margin: 0; font-size: 0.875rem; line-height: 1.65; color: var(--q-text-2); white-space: pre-wrap; }
 .cardNote { font-size: 0.8125rem; color: var(--q-muted); }
 .cardActions { display: flex; flex-wrap: wrap; gap: 6px; }
-.hidden { color: var(--q-muted); background: var(--q-primary-soft); border: 0; border-radius: 8px; padding: 10px; font-size: 0.8125rem; text-align: left; }
+.hidden { color: var(--q-muted); background: var(--q-primary-soft); border: 0; border-radius: 8px; padding: 0 10px; min-height: calc(0.875rem * 1.65); display: flex; align-items: center; font-size: 0.8125rem; text-align: left; }
 .option { padding: 8px 10px; border-radius: 8px; border: 1px solid var(--q-border); font-size: 0.875rem; color: var(--q-text-2); }
 .optionOk { border-color: #86efac; background: #f0fdf4; color: #166534; font-weight: 700; }
 .options { display: flex; flex-direction: column; gap: 6px; }
