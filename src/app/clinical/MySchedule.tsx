@@ -205,7 +205,7 @@ export default function MySchedule({
 
       {/* 월 달력 */}
       <div className="card">
-        {onPickDay && <div style={{ fontSize: '0.75rem', color: 'var(--sub-text)', marginBottom: '8px' }}>날짜를 누르면 그날 실습일지를 쓸 수 있어요. ● 표시는 일지가 있는 날이에요.</div>}
+        {onPickDay && <div style={{ fontSize: '0.75rem', color: 'var(--sub-text)', marginBottom: '8px' }}>날짜를 누르면 그날 실습메모를 쓸 수 있어요. ● 표시는 일지가 있는 날이에요.</div>}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
           <button className="btn-outline" disabled={!canPrev} onClick={() => setMonth(new Date(month.getFullYear(), month.getMonth() - 1, 1))} style={{ padding: '4px 12px' }}>
             ‹

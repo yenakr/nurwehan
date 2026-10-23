@@ -14,7 +14,7 @@ type Tab = 'mine' | 'notes' | 'terms';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'mine', label: '내 실습' },
-  { id: 'notes', label: '실습일지' },
+  { id: 'notes', label: '실습메모' },
   { id: 'terms', label: '실습 의학용어' },
 ];
 
@@ -83,7 +83,7 @@ export default function ClinicalClient({ schedule, user }: ClinicalClientProps) 
 
       {tab === 'notes' && (user ? <ClinicalNotes schedule={schedule} notes={notes} setNotes={setNotes} unavailable={unavailable} targetDate={targetDate} /> : (
         <div className="card" style={{ textAlign: 'center', color: 'var(--sub-text)' }}>
-          로그인하면 실습일지를 쓸 수 있어요.
+          로그인하면 실습메모를 쓸 수 있어요.
         </div>
       ))}
 

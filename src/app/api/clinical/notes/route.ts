@@ -5,7 +5,7 @@ import { getCurrentUser } from '@/lib/auth';
 const MAX_LEN = 3000;
 const DATE_RE = /^\d{4}-\d{2}-\d{2}$/;
 
-// 내 실습일지 목록 (최신순)
+// 내 실습메모 목록 (최신순)
 export async function GET() {
   const user = await getCurrentUser();
   if (!user || user.approvalStatus !== 'APPROVED') return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
