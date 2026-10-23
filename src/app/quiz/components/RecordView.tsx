@@ -42,6 +42,7 @@ export default function RecordView({
   onReview,
   onRetry,
   onRetryWrong,
+  guest,
 }: {
   attempts: Attempt[];
   loading: boolean;
@@ -52,6 +53,7 @@ export default function RecordView({
   onReview: (a: Attempt) => void;
   onRetry: (a: Attempt) => void;
   onRetryWrong: (wrong: NursingTerm[]) => void;
+  guest?: boolean;
 }) {
   const rows = useMemo(
     () =>
@@ -85,6 +87,17 @@ export default function RecordView({
     return Array.from(m, ([name, v]) => ({ name, rate: Math.round(v.reduce((x, y) => x + y, 0) / v.length) }));
   }, [rows]);
 
+  if (guest) {
+    return (
+      <div className={s.empty}>
+        <p style={{ margin: '0 0 14px' }}>로그인하면 최근 학습 현황과 오답 목록을 볼 수 있어요.</p>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+          <a href="/login" className={`${s.btn} ${s.btnPrimary}`} style={{ textDecoration: 'none' }}>로그인</a>
+          <a href="/register" className={s.btn} style={{ textDecoration: 'none' }}>회원가입</a>
+        </div>
+      </div>
+    );
+  }
   if (loading) return <div className={s.empty}>불러오는 중…</div>;
   if (rows.length === 0) return <div className={s.empty}>아직 푼 기록이 없습니다.</div>;
 

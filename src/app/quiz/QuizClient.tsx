@@ -88,10 +88,11 @@ interface QuizClientProps {
   user?: any;
   initialSubject?: string;
   subjectLevels?: Record<string, string>;
+  guest?: boolean;
 }
 
 
-export default function QuizClient({ initialTerms, user, initialSubject, subjectLevels }: QuizClientProps) {
+export default function QuizClient({ initialTerms, user, initialSubject, subjectLevels, guest }: QuizClientProps) {
   const isAdmin = isAdminRole(user?.role);
   const router = useRouter();
   const [termsList, setTermsList] = useState<NursingTerm[]>(initialTerms);
@@ -1295,7 +1296,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
   const wrongResults = quizResults.filter(r => !(r.overrideCorrect !== undefined ? r.overrideCorrect : r.isCorrect));
 
   // USER AUTHENTICATION & APPROVAL CHECK
-  if (!user) {
+  if (!user && !guest) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', padding: '20px' }}>
         <div className="card" style={{ maxWidth: '420px', width: '100%', padding: '36px 28px', textAlign: 'center' }}>
@@ -1318,7 +1319,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
     );
   }
 
-  const isApproved = user.approvalStatus === 'APPROVED' || isAdmin;
+  const isApproved = !user || user.approvalStatus === 'APPROVED' || isAdmin;
   if (!isApproved) {
     return (
       <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '60vh', padding: '20px' }}>
@@ -1890,6 +1891,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
           onReview={a => setSelectedHistoryAttempt(a)}
           onRetry={handleReAttemptQuiz}
           onRetryWrong={wrong => { setQuizFormat('single'); handleStartQuiz(wrong); }}
+          guest={!user}
         />
       )}
 

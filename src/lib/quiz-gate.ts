@@ -44,3 +44,8 @@ export async function grantGatePass(): Promise<void> {
     maxAge: 60 * 60 * 24 * 14,
   });
 }
+
+// 비로그인 사용자의 퀴즈 이용 허용: 코드가 설정돼 있고 통과한 경우만
+export async function guestAllowed(): Promise<boolean> {
+  return gateEnabled() && (await hasGatePass());
+}

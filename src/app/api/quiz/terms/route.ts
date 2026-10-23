@@ -2,12 +2,12 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 import { hiddenSubjectsFor } from '@/lib/access';
-import { hasGatePass } from '@/lib/quiz-gate';
+import { guestAllowed } from '@/lib/quiz-gate';
 
 export async function GET(req: Request) {
   try {
     const current = await getCurrentUser();
-    if (!current && !(await hasGatePass())) {
+    if (!current && !(await guestAllowed())) {
       return NextResponse.json({ terms: [], subjects: [], categories: [] }, { status: 401 });
     }
     const { searchParams } = new URL(req.url);
