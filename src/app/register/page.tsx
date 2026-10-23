@@ -11,7 +11,6 @@ export default function RegisterPage() {
     name: '',
     grade: '1',
     email: '',
-    phone: '',
     password: '',
     confirmPassword: '',
   });
@@ -38,7 +37,6 @@ export default function RegisterPage() {
           name: formData.name,
           grade: parseInt(formData.grade),
           email: formData.email,
-          phone: formData.phone,
           password: formData.password,
         }),
       });
@@ -120,18 +118,6 @@ export default function RegisterPage() {
                 placeholder="example@hanyang.ac.kr" 
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                style={{ width: '100%' }} 
-              />
-            </div>
-
-            <div>
-              <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: '600', marginBottom: '6px' }}>전화번호</label>
-              <input 
-                type="tel" 
-                required
-                placeholder="010-XXXX-XXXX" 
-                value={formData.phone}
-                onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
                 style={{ width: '100%' }} 
               />
             </div>

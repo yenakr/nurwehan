@@ -70,6 +70,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
   const [guestName, setGuestName] = useState('');
   const [guestStudentId, setGuestStudentId] = useState('');
   const [guestPhone, setGuestPhone] = useState('');
+  const [myPhone, setMyPhone] = useState('');
   const [guestGrade, setGuestGrade] = useState('2');
 
   // Form Fields State
@@ -239,6 +240,8 @@ export default function ApplyForm({ user }: ApplyFormProps) {
       if (!guestName.trim()) return alert('이름을 입력해주세요.');
       if (!guestStudentId.trim()) return alert('학번을 입력해주세요.');
       if (!guestPhone.trim()) return alert('연락처를 입력해주세요.');
+    } else if (!user.phone && !myPhone.trim()) {
+      return alert('연락처를 입력해주세요.');
     }
     if (!subject.trim()) return alert('실습과목을 입력해주세요.');
     if (!professor.trim()) return alert('담당교수를 입력해주세요.');
@@ -314,6 +317,19 @@ export default function ApplyForm({ user }: ApplyFormProps) {
         })
       };
 
+      if (user && !user.phone) {
+        const saved = await fetch('/api/auth/me', {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ phone: myPhone.trim() }),
+        });
+        if (!saved.ok) {
+          alert('연락처를 저장하지 못했습니다.');
+          setSubmitting(false);
+          return;
+        }
+      }
+
       const res = await fetch('/api/open-lab/apply', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -370,7 +386,16 @@ export default function ApplyForm({ user }: ApplyFormProps) {
             </div>
             <div className="info-item">
               <label>연락처</label>
-              <div className="info-value">{user.phone}</div>
+              {user.phone ? (
+                <div className="info-value">{user.phone}</div>
+              ) : (
+                <input
+                  type="text"
+                  placeholder="010-XXXX-XXXX"
+                  value={myPhone}
+                  onChange={e => setMyPhone(formatPhoneNumber(e.target.value))}
+                />
+              )}
             </div>
             <div className="info-item">
               <label>학년</label>
