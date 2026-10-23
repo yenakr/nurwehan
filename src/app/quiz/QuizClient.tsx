@@ -1119,7 +1119,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                     <strong>정답:</strong> ${res.term.answer || res.term.term}
                   </div>
                   <div style="margin-top: 4px; color: #475569;">
-                    <strong>뜻 / 해설:</strong> ${res.term.definition}
+                    <strong>국문 / 해설:</strong> ${res.term.definition}
                   </div>
                 </div>
               </div>
@@ -1450,7 +1450,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                   onClick={() => { setHideDefinition(v => !v); setRevealedCardIds({}); }}
                 >
                   <span className={s.switchTrack}><span className={s.switchKnob} /></span>
-                  뜻
+                  국문
                 </button>
               )}
               <div className={s.ttsGroup}>
@@ -1542,7 +1542,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                         style={{ fontSize: '0.78125rem', padding: '4px 10px', color: '#0E4A84', borderColor: '#BFDBFE', backgroundColor: '#EFF6FF', fontWeight: 700 }}
                         title="앞면/뒷면 표시 순서 변경"
                       >
-                        {flashcardDirection === 'term_first' ? '용어 → 뜻' : '뜻 → 용어'}
+                        {flashcardDirection === 'term_first' ? '약어 → 국문' : '국문 → 약어'}
                       </button>
                       <button
                         onClick={() => {
@@ -1607,7 +1607,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                         </div>
 
                         <div style={{ position: 'absolute', top: '16px', right: '16px', fontSize: '0.78125rem', fontWeight: 700, color: '#64748B', backgroundColor: '#F1F5F9', padding: '2px 8px', borderRadius: '6px' }}>
-                          {showTerm ? '용어' : '뜻 / 해설'}
+                          {showTerm ? '약어' : '국문 / 해설'}
                         </div>
 
                         {showTerm ? (
@@ -1772,7 +1772,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                   <div style={{ marginBottom: '24px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                       <span style={{ fontSize: '0.8125rem', fontWeight: 800, color: '#0E4A84' }}>
-                        뜻
+                        국문
                       </span>
                       <button
                         type="button"
@@ -1989,10 +1989,10 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <input
                     ref={answerInputRef}
-                    aria-label="풀네임"
+                    aria-label="용어"
                     type="text"
                     disabled={isAnswerSubmitted}
-                    placeholder="풀네임 (영문)"
+                    placeholder="용어 (영문)"
                     value={userAnswer}
                     onChange={e => setUserAnswer(e.target.value)}
                     onKeyDown={e => {
@@ -2005,10 +2005,10 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                   />
                   <input
                     ref={answerInput2Ref}
-                    aria-label="한국어 뜻"
+                    aria-label="국문"
                     type="text"
                     disabled={isAnswerSubmitted}
-                    placeholder="한국어 뜻"
+                    placeholder="국문"
                     value={userAnswer2}
                     onChange={e => setUserAnswer2(e.target.value)}
                     onKeyDown={e => {
@@ -2023,8 +2023,8 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                   {isAnswerSubmitted && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       {[
-                        { label: '풀네임', ok: r.full, answer: currentQuestion.englishTerm },
-                        { label: '뜻', ok: r.meaning, answer: currentQuestion.definition },
+                        { label: '용어', ok: r.full, answer: currentQuestion.englishTerm },
+                        { label: '국문', ok: r.meaning, answer: currentQuestion.definition },
                       ].map(row => (
                         <div
                           key={row.label}
@@ -2159,7 +2159,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
               {isAnswerSubmitted && (
                 <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <div style={{ fontSize: '0.875rem', color: '#475569', backgroundColor: '#F1F5F9', padding: '14px', borderRadius: '8px', border: '1px solid #CBD5E1' }}>
-                    <strong>해설/뜻:</strong> {currentQuestion.definition}
+                    <strong>해설/국문:</strong> {currentQuestion.definition}
                   </div>
                   <button
                     type="button"
@@ -2228,7 +2228,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                         <strong>정답:</strong> <span style={{ fontWeight: 800, color: '#B91C1C' }}>{currentQuestion.answer || currentQuestion.term}</span>
                       </div>
                       <div style={{ fontSize: '0.8125rem', color: '#7F1D1D' }}>
-                        <strong>뜻/해설:</strong> {currentQuestion.definition}
+                        <strong>국문/해설:</strong> {currentQuestion.definition}
                       </div>
                     </div>
                   )}
@@ -2524,7 +2524,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
           <div className="card" style={{ padding: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '14px', flexWrap: 'wrap' }}>
               <div>
-                <h2 style={{ fontSize: '1.125rem', fontWeight: 900, color: '#0E4A84', margin: 0 }}>약어 → 풀네임 · 뜻</h2>
+                <h2 style={{ fontSize: '1.125rem', fontWeight: 900, color: '#0E4A84', margin: 0 }}>약어 → 용어 · 국문</h2>
                 <div style={{ fontSize: '0.8125rem', color: '#64748B', marginTop: '2px' }}>
                   {quizSubject === 'all' ? '전체' : quizSubject} · 총 {quizQuestions.length}문항
                 </div>
@@ -2538,25 +2538,25 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
               <div className={`${s.sheetRow} ${s.sheetHead}`}>
                 <span>#</span>
                 <span>약어</span>
-                <span>풀네임</span>
-                <span>뜻</span>
+                <span>용어</span>
+                <span>국문</span>
               </div>
               {quizQuestions.map((q, idx) => (
                 <div key={q.id ?? idx} className={s.sheetRow}>
                   <span className={s.sheetNo}>{idx + 1}</span>
                   <span className={s.sheetAbbr}>{q.term}</span>
                   <input
-                    aria-label={`${q.term} 풀네임`}
+                    aria-label={`${q.term} 용어`}
                     type="text"
-                    placeholder="풀네임"
+                    placeholder="용어"
                     value={worksheetAnswers[idx] || ''}
                     onChange={e => setWorksheetAnswers(prev => ({ ...prev, [idx]: e.target.value }))}
                     className={s.sheetInput}
                   />
                   <input
-                    aria-label={`${q.term} 뜻`}
+                    aria-label={`${q.term} 국문`}
                     type="text"
-                    placeholder="한국어 뜻"
+                    placeholder="국문"
                     value={worksheetAnswers2[idx] || ''}
                     onChange={e => setWorksheetAnswers2(prev => ({ ...prev, [idx]: e.target.value }))}
                     className={s.sheetInput}
@@ -2988,7 +2988,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
               {/* Definition / Explanation */}
               <div>
                 <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
-                  {formItemType === 'MULTIPLE_CHOICE' ? '문제 해설 및 정답 설명 *' : '한글 뜻 / 상세 정의 *'}
+                  {formItemType === 'MULTIPLE_CHOICE' ? '문제 해설 및 정답 설명 *' : '국문 / 상세 정의 *'}
                 </label>
                 <textarea
                   rows={3}
@@ -2998,7 +2998,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                   placeholder={
                     formItemType === 'MULTIPLE_CHOICE'
                       ? '예: 관절의 부동은 관절 가동성 감소와 강직을 유발하므로 부적절함.'
-                      : '상세한 한글 뜻 및 정의 입력'
+                      : '상세한 국문 및 정의 입력'
                   }
                   style={{ width: '100%' }}
                 />

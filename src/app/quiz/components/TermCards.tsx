@@ -78,7 +78,7 @@ export default function TermCards({
               </div>
               {hidden && (
                 <button type="button" className={s.maskBtn} onClick={() => onReveal(t.id)}>
-                  {en ? '눌러서 풀네임·뜻 보기' : '눌러서 뜻 보기'}
+                  {en ? '눌러서 용어·국문 보기' : '눌러서 국문 보기'}
                 </button>
               )}
             </div>
