@@ -100,6 +100,12 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
   const [showManager, setShowManager] = useState(false);
   const [favIds, setFavIds] = useState<Set<string>>(new Set());
   const [favOnly, setFavOnly] = useState(false);
+  const [guestNotice, setGuestNotice] = useState(false);
+  useEffect(() => {
+    if (!guestNotice) return;
+    const t = setTimeout(() => setGuestNotice(false), 3500);
+    return () => clearTimeout(t);
+  }, [guestNotice]);
   const [quizFavOnly, setQuizFavOnly] = useState(false);
   const [levels, setLevels] = useState<Record<string, string>>(subjectLevels ?? {});
   const [formGrade, setFormGrade] = useState<string>(DEFAULT_GRADE);
@@ -355,6 +361,10 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
   }, [user]);
 
   const toggleFav = (id: string) => {
+    if (!user) {
+      setGuestNotice(true);
+      return;
+    }
     const on = !favIds.has(id);
     setFavIds(prev => {
       const next = new Set(prev);
@@ -1601,7 +1611,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                         className={`${s.fcCard} ${isCardFlipped ? s.fcCardBack : ''}`}
                         onClick={() => setIsCardFlipped(!isCardFlipped)}
                       >
-                        {user && (
+                        {(
                           <button
                             type="button"
                             className={`${s.star} ${s.fcStar} ${favIds.has(currentCard.id) ? s.starOn : ''}`}
@@ -1845,8 +1855,8 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
               onMove={handleMoveTerm}
               onEdit={handleOpenEditModal}
               onDelete={t => handleDeleteTerm(t.id, t.term)}
-              favorites={user ? favIds : undefined}
-              onToggleFav={user ? toggleFav : undefined}
+              favorites={favIds}
+              onToggleFav={toggleFav}
             />
           )}
         </>
@@ -2590,6 +2600,13 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
               </>
             );
           })()}
+        </div>
+      )}
+
+      {guestNotice && (
+        <div role="status" className={s.toast}>
+          <span>즐겨찾기는 로그인 시 저장돼요</span>
+          <a href="/login">로그인</a>
         </div>
       )}
 
