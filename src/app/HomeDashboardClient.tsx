@@ -2,12 +2,14 @@
 
 import Link from 'next/link';
 import PlacementBox, { pickPlacement, type Placement } from './PlacementBox';
+import HomeTiles, { type HomeTilesData } from './HomeTiles';
 
 interface HomeDashboardClientProps {
   user: any;
   publishedEvents: any[];
   notices: any[];
   placements?: Placement[];
+  tiles: HomeTilesData;
 }
 
 export default function HomeDashboardClient({
@@ -15,6 +17,7 @@ export default function HomeDashboardClient({
   publishedEvents,
   notices,
   placements = [],
+  tiles,
 }: HomeDashboardClientProps) {
   const nowDate = new Date();
   const dateParts = {
@@ -98,52 +101,7 @@ export default function HomeDashboardClient({
         )}
       </div>
 
-      {/* Main Dashboard Grid */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '24px' }}>
-        
-        {/* Widget 2: OPEN LAB Quick Action */}
-        <div
-          className="card"
-          style={{
-            borderLeft: '4px solid var(--accent)',
-            backgroundColor: '#F0F9FF',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-            <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--primary)' }}>
-              OPEN LAB 신청
-            </h3>
-          </div>
-          <div style={{ display: 'flex', gap: '10px' }}>
-            <Link href="/open-lab" className="btn-accent" style={{ flex: 1, textAlign: 'center' }}>
-              신청서 작성하기
-            </Link>
-            <Link href="/history" className="btn-outline" style={{ flex: 1, textAlign: 'center' }}>
-              내 신청 내역
-            </Link>
-          </div>
-        </div>
-
-        {/* Widget 3: Clinical guide */}
-        <div className="card">
-          <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--text)', marginBottom: '12px' }}>
-            임상실습
-          </h3>
-          <Link href="/clinical" className="btn-outline" style={{ width: '100%', textAlign: 'center', fontSize: '0.84rem' }}>
-            내 실습 · 메모 →
-          </Link>
-        </div>
-
-        {/* Widget 4: QUIZ Quick Access */}
-        <div className="card" style={{ borderLeft: '4px solid var(--primary)', backgroundColor: '#F8FAFC' }}>
-          <h3 style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--primary)', marginBottom: '12px' }}>
-            QUIZ
-          </h3>
-          <Link href="/quiz" className="btn-primary" style={{ width: '100%', textAlign: 'center', fontSize: '0.875rem', fontWeight: 700 }}>
-            학습·테스트 시작 →
-          </Link>
-        </div>
-      </div>
+      <HomeTiles data={tiles} />
 
       {/* Important Notices */}
       {notices && notices.length > 0 && (
