@@ -223,3 +223,6 @@
 .fcFull { font-size: 1rem; color: var(--q-text-2); }
 .fcFull b { font-weight: 800; color: var(--q-text); }
 .fcMean { font-size: 1.125rem; font-weight: 700; color: var(--q-text); line-height: 1.6; max-width: 520px; }
+
+.toast { position: fixed; left: 50%; bottom: 28px; transform: translateX(-50%); z-index: 3000; display: flex; align-items: center; gap: 14px; padding: 12px 16px; border-radius: 12px; background: #1e293b; color: #fff; font-size: 0.875rem; box-shadow: 0 8px 24px rgba(0,0,0,0.25); white-space: nowrap; }
+.toast a { color: #93c5fd; font-weight: 700; text-decoration: none; }
