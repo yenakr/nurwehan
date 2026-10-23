@@ -133,12 +133,12 @@ export default function ClinicalNotes({
           fontSize: '0.8125rem',
         }}
       >
-        <strong>환자를 알아볼 수 있는 정보는 적지 마세요.</strong> 이름, 등록번호, 병실 번호, 생년월일 등은 저장하지 않아요. 이 일지는 나만 볼 수 있어요.
+        <strong>환자를 알아볼 수 있는 정보는 적지 마세요.</strong> 이름, 등록번호, 병실 번호, 생년월일 등은 저장하지 않아요. 이 메모는 나만 볼 수 있어요.
       </div>
 
       {unavailable && (
         <div className="card" style={{ color: 'var(--sub-text)', fontSize: '0.875rem' }}>
-          일지 저장소가 아직 준비되지 않았어요. 잠시 후 다시 시도해 주세요.
+          메모 저장소가 아직 준비되지 않았어요. 잠시 후 다시 시도해 주세요.
         </div>
       )}
 
@@ -188,7 +188,7 @@ export default function ClinicalNotes({
 
       {notes.length > 0 && (
         <div className="card">
-          <h3 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '8px' }}>지난 일지</h3>
+          <h3 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '8px' }}>지난 메모</h3>
           {notes.map(n => (
             <button
               key={n.id}
