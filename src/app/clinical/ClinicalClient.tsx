@@ -3,16 +3,18 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import MySchedule, { type ScheduleItem } from './MySchedule';
+import ClinicalNotes from './ClinicalNotes';
 
 interface ClinicalClientProps {
   schedule: ScheduleItem[];
   user: any;
 }
 
-type Tab = 'mine' | 'terms';
+type Tab = 'mine' | 'notes' | 'terms';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'mine', label: '내 실습' },
+  { id: 'notes', label: '실습일지' },
   { id: 'terms', label: '실습 의학용어' },
 ];
 
@@ -56,6 +58,12 @@ export default function ClinicalClient({ schedule, user }: ClinicalClientProps) 
       {tab === 'mine' && (user ? <MySchedule schedule={schedule} me={user.name} /> : (
         <div className="card" style={{ textAlign: 'center', color: 'var(--sub-text)' }}>
           로그인하면 내 실습 일정을 볼 수 있어요.
+        </div>
+      ))}
+
+      {tab === 'notes' && (user ? <ClinicalNotes schedule={schedule} /> : (
+        <div className="card" style={{ textAlign: 'center', color: 'var(--sub-text)' }}>
+          로그인하면 실습일지를 쓸 수 있어요.
         </div>
       ))}
 

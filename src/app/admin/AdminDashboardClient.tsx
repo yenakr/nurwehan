@@ -10,6 +10,7 @@ interface Props {
   initialSkills: any[];
   initialApplications: any[];
   pendingUsersCount?: number;
+  assignmentNeedsUpdate?: boolean;
   selectedDate: string;
 }
 
@@ -19,6 +20,7 @@ export default function AdminDashboardClient({
   initialSkills,
   initialApplications,
   pendingUsersCount = 0,
+  assignmentNeedsUpdate = false,
   selectedDate
 }: Props) {
   const [activeTab, setActiveTab] = useState('schedules');
@@ -48,6 +50,7 @@ export default function AdminDashboardClient({
       items: [
         { icon: '📅', label: '캘린더', desc: '공식 일정 관리', href: '/admin/calendar' },
         { icon: '📢', label: '공지사항', desc: '공지 작성·고정', href: '/admin/notices' },
+        { icon: '🏥', label: '실습 배정표', desc: '학기별 배정 올리기', href: '/admin/clinical-assignments', badge: assignmentNeedsUpdate ? 1 : 0 },
         { icon: '🩺', label: '건강요건 규칙', desc: '임상실습 요건 설정', href: '/admin/clinical' },
       ],
     },
@@ -55,12 +58,18 @@ export default function AdminDashboardClient({
 
   return (
     <div className="dashboard-container">
-      {(pendingUsersCount > 0 || pendingApplications > 0) && (
+      {(pendingUsersCount > 0 || pendingApplications > 0 || assignmentNeedsUpdate) && (
         <div className="todo">
           {pendingUsersCount > 0 && (
             <button onClick={() => router.push('/admin/users?tab=pending')} className="todoItem">
               <strong>가입 승인 대기 {pendingUsersCount}명</strong>
               <span>확인하기 →</span>
+            </button>
+          )}
+          {assignmentNeedsUpdate && (
+            <button onClick={() => router.push('/admin/clinical-assignments')} className="todoItem">
+              <strong>임상실습 배정표를 새 학기로 업데이트해 주세요</strong>
+              <span>올리기 →</span>
             </button>
           )}
           {pendingApplications > 0 && (

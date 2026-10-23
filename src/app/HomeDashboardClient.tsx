@@ -130,7 +130,7 @@ export default function HomeDashboardClient({
             임상실습
           </h3>
           <Link href="/clinical" className="btn-outline" style={{ width: '100%', textAlign: 'center', fontSize: '0.84rem' }}>
-            임상실습 가이드 →
+            내 실습 · 일지 →
           </Link>
         </div>
 
