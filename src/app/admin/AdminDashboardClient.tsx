@@ -674,6 +674,8 @@ function SkillManagement({ initialSkills }: { initialSkills: any[] }) {
       </div>
 
       <style jsx>{`
+        .section-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+        .section-header h3 { font-size: 1rem; font-weight: 800; margin: 0; }
         .skill-mgmt-container {
           display: grid;
           grid-template-columns: 340px 1fr;
@@ -1024,6 +1026,7 @@ function SupplyList({ skill, onUpdate }: { skill: any, onUpdate: () => void }) {
       </div>
 
       <style jsx>{`
+        .section-header { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 12px; }
         .supply-form-card {
           background: #f8fafc;
           padding: 16px;
