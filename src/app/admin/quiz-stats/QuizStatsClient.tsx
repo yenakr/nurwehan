@@ -49,6 +49,7 @@ export default function QuizStatsClient() {
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState<'students' | 'subjects' | 'recent'>('students');
   const [selectedAttempt, setSelectedAttempt] = useState<RecentAttempt | null>(null);
+  const [onlyWrong, setOnlyWrong] = useState(true);
 
   useEffect(() => {
     fetch('/api/admin/quiz/stats')
@@ -143,7 +144,7 @@ export default function QuizStatsClient() {
                 </div>
                 <span className={`pill ${tone(att.score)}`}>{att.score}점</span>
                 {att.details && (
-                  <button className="more" onClick={() => setSelectedAttempt(att)}>상세</button>
+                  <button className="more" onClick={() => { setSelectedAttempt(att); setOnlyWrong((att.wrongCount ?? 0) > 0); }}>상세</button>
                 )}
               </div>
             ))}
@@ -180,62 +181,71 @@ export default function QuizStatsClient() {
         .pill.good { background: #dcfce7; color: #166534; } .pill.mid { background: #fef9c3; color: #854d0e; } .pill.low { background: #fee2e2; color: #991b1b; }
         .more { border: 1px solid var(--border); background: transparent; color: var(--sub-text); border-radius: 8px; padding: 5px 10px; font-size: 0.8125rem; font-weight: 700; cursor: pointer; flex: 0 0 auto; }
         .empty { text-align: center; color: #94a3b8; padding: 40px 12px; }
+        .ov { position: fixed; inset: 0; background: rgba(15,23,42,0.5); display: flex; align-items: center; justify-content: center; z-index: 2000; padding: 16px; }
+        .sheet { background: var(--background); border-radius: 18px; width: 100%; max-width: 560px; max-height: 85vh; display: flex; flex-direction: column; padding: 20px; gap: 14px; }
+        .sh-head { display: flex; justify-content: space-between; align-items: flex-start; gap: 12px; }
+        .sh-name { font-size: 1.125rem; font-weight: 800; color: var(--text); }
+        .sh-sub { font-size: 0.8125rem; color: var(--sub-text); margin-top: 2px; }
+        .sh-close { border: none; background: #f1f5f9; color: var(--sub-text); border-radius: 8px; padding: 6px 12px; font-size: 0.8125rem; font-weight: 700; cursor: pointer; flex: 0 0 auto; }
+        .sh-score { display: flex; align-items: baseline; gap: 10px; }
+        .sh-score b { font-size: 2.25rem; font-weight: 800; line-height: 1; }
+        .sh-score b i { font-size: 1rem; font-style: normal; margin-left: 2px; }
+        .sh-score b.good { color: #16a34a; } .sh-score b.mid { color: #ca8a04; } .sh-score b.low { color: #dc2626; }
+        .sh-score span { font-size: 0.875rem; color: var(--sub-text); }
+        .seg.sm button { padding: 7px 0; font-size: 0.875rem; }
+        .sh-list { overflow-y: auto; display: flex; flex-direction: column; gap: 8px; margin: 0 -4px; padding: 0 4px; }
+        .qi { border-left: 3px solid; background: #f8fafc; border-radius: 8px; padding: 10px 12px; }
+        .qi.ok { border-color: #22c55e; } .qi.no { border-color: #ef4444; }
+        .qi-q { font-weight: 800; font-size: 0.9375rem; color: var(--text); }
+        .qi-a { display: flex; flex-direction: column; gap: 2px; margin-top: 4px; font-size: 0.8125rem; color: var(--sub-text); line-height: 1.5; }
+        .qi-a .mine { color: #dc2626; }
+        .qi-a .ans { color: #15803d; font-weight: 600; }
       `}</style>
 
       {/* Detail Modal */}
-      {selectedAttempt && (
-        <div
-          style={{
-            position: 'fixed',
-            top: 0, left: 0, right: 0, bottom: 0,
-            backgroundColor: 'rgba(0,0,0,0.5)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            zIndex: 2000,
-            padding: '20px',
-          }}
-        >
-          <div className="card" style={{ maxWidth: '650px', width: '100%', maxHeight: '80vh', overflowY: 'auto', padding: '28px' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
-              <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)' }}>
-                풀이 상세: {selectedAttempt.user.name} ({selectedAttempt.subject})
-              </h3>
-              <button onClick={() => setSelectedAttempt(null)} className="btn-outline" style={{ padding: '4px 10px' }}>
-                닫기
-              </button>
-            </div>
-
-            <div style={{ backgroundColor: '#F8FAFC', padding: '12px 16px', borderRadius: '8px', marginBottom: '20px', fontSize: '0.875rem' }}>
-              <div><strong>점수:</strong> {selectedAttempt.score}점 (정답 {selectedAttempt.correctCount} / 오답 {selectedAttempt.wrongCount})</div>
-              <div><strong>응시 일시:</strong> {new Date(selectedAttempt.createdAt).toLocaleString('ko-KR')}</div>
-            </div>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-              {Array.isArray(selectedAttempt.details) && selectedAttempt.details.map((item: any, idx: number) => (
-                <div
-                  key={idx}
-                  style={{
-                    padding: '12px 16px',
-                    borderRadius: '8px',
-                    border: '1px solid',
-                    borderColor: item.isCorrect ? '#BBF7D0' : '#FECACA',
-                    backgroundColor: item.isCorrect ? '#F0FDF4' : '#FEF2F2',
-                  }}
-                >
-                  <div style={{ fontWeight: 700, fontSize: '0.9375rem', marginBottom: '6px' }}>
-                    {idx + 1}. {item.questionText}
-                  </div>
-                  <div style={{ fontSize: '0.8125rem', color: item.isCorrect ? '#166534' : '#991B1B' }}>
-                    <div><strong>제출한 답:</strong> {item.userAnswer || '(미응답)'}</div>
-                    <div><strong>정답:</strong> {item.correctAnswer}</div>
-                  </div>
+      {selectedAttempt && (() => {
+        const items: any[] = Array.isArray(selectedAttempt.details) ? selectedAttempt.details : [];
+        const shown = onlyWrong ? items.filter(it => !it.isCorrect) : items;
+        return (
+          <div className="ov" onClick={() => setSelectedAttempt(null)}>
+            <div className="sheet" onClick={e => e.stopPropagation()}>
+              <div className="sh-head">
+                <div>
+                  <div className="sh-name">{selectedAttempt.user.name}</div>
+                  <div className="sh-sub">{selectedAttempt.subject}{selectedAttempt.category ? ` · ${selectedAttempt.category}` : ''} · {fmt(selectedAttempt.createdAt, true)}</div>
                 </div>
-              ))}
+                <button className="sh-close" onClick={() => setSelectedAttempt(null)} aria-label="닫기">닫기</button>
+              </div>
+              <div className="sh-score">
+                <b className={tone(selectedAttempt.score)}>{selectedAttempt.score}<i>점</i></b>
+                <span>정답 {selectedAttempt.correctCount} · 오답 {selectedAttempt.wrongCount}</span>
+              </div>
+              <div className="seg sm">
+                <button className={onlyWrong ? 'on' : ''} onClick={() => setOnlyWrong(true)}>오답 {items.filter(it => !it.isCorrect).length}</button>
+                <button className={!onlyWrong ? 'on' : ''} onClick={() => setOnlyWrong(false)}>전체 {items.length}</button>
+              </div>
+              <div className="sh-list">
+                {shown.map((item, idx) => (
+                  <div key={idx} className={`qi ${item.isCorrect ? 'ok' : 'no'}`}>
+                    <div className="qi-q">{item.questionText}</div>
+                    <div className="qi-a">
+                      {item.isCorrect ? (
+                        <span>{item.correctAnswer}</span>
+                      ) : (
+                        <>
+                          <span className="mine">내 답 · {item.userAnswer || '미응답'}</span>
+                          <span className="ans">정답 · {item.correctAnswer}</span>
+                        </>
+                      )}
+                    </div>
+                  </div>
+                ))}
+                {shown.length === 0 && <div className="empty">오답이 없어요.</div>}
+              </div>
             </div>
           </div>
-        </div>
-      )}
+        );
+      })()}
     </div>
   );
 }

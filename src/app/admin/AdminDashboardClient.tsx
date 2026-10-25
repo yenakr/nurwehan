@@ -73,7 +73,6 @@ export default function AdminDashboardClient({
           <div className="grid">
             {g.items.map(it => (
               <button key={it.href} onClick={() => router.push(it.href)} className="tile">
-                <span className="tileIcon">{it.icon}</span>
                 <span className="tileText">
                   <span className="tileLabel">
                     {it.label}
