@@ -72,25 +72,11 @@ export default function AdminCalendarClient({ initialEvents }: AdminCalendarClie
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-      <div className="card" style={{ padding: '20px' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <div>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--primary)' }}>
-              캘린더 관리
-            </h2>
-            <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)' }}>
-              학년별 학사일정, 중간/기말고사, 임상실습 OT, 학생회/공식행사 일정을 관리합니다.
-            </p>
-          </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <Link href="/admin" className="btn-outline" style={{ fontSize: '0.84rem' }}>
-              ← 관리자 메인
-            </Link>
-            <button onClick={() => setIsAdding(!isAdding)} className="btn-primary" style={{ fontSize: '0.84rem' }}>
-              {isAdding ? '닫기' : '+ 새 공식 일정 추가'}
-            </button>
-          </div>
-        </div>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '12px' }}>
+        <h1 style={{ fontSize: '1.375rem', fontWeight: 800, color: 'var(--text)', margin: 0 }}>캘린더 관리</h1>
+        <button onClick={() => setIsAdding(!isAdding)} className="btn-primary" style={{ fontSize: '0.875rem', padding: '8px 16px' }}>
+          {isAdding ? '닫기' : '+ 일정 추가'}
+        </button>
       </div>
 
       {isAdding && (
