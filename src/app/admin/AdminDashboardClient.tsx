@@ -425,10 +425,10 @@ function ScheduleManagement() {
         }
         .add-rule-form {
           background: #f8fafc;
-          padding: 24px;
+          padding: 16px;
           border-radius: 12px;
           border: 1px solid var(--border);
-          margin-bottom: 24px;
+          margin-bottom: 16px;
         }
         .form-grid {
           display: grid;
@@ -635,34 +635,25 @@ function SkillManagement({ initialSkills }: { initialSkills: any[] }) {
                   </div>
                 ) : (
                   <>
-                    <div className="skill-info" style={{ flex: 1 }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                        <span className="skill-name">{skill.name}</span>
-                        <button 
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setEditingSkillId(skill.id);
-                            setEditingSkillName(skill.name);
-                          }}
-                          className="skill-edit-btn"
-                          title="이름 수정"
-                        >
-                          ✏️
-                        </button>
-                      </div>
-                      <button 
+                    <span className="skill-name">{skill.name}</span>
+                    <div className="skill-actions" onClick={(e) => e.stopPropagation()}>
+                      <button
                         className={`status-badge ${skill.isActive ? 'active' : 'inactive'}`}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          toggleSkillStatus(skill.id, skill.isActive);
-                        }}
-                        style={{ cursor: 'pointer', border: 'none', textAlign: 'center' }}
+                        onClick={() => toggleSkillStatus(skill.id, skill.isActive)}
+                        title="눌러서 활성/비활성 전환"
                       >
                         {skill.isActive ? '활성' : '비활성'}
                       </button>
-                    </div>
-                    <div className="skill-actions" onClick={(e) => e.stopPropagation()}>
-                      <button onClick={() => handleDeleteSkill(skill.id)} className="icon-btn" title="삭제">🗑️</button>
+                      <button
+                        onClick={() => {
+                          setEditingSkillId(skill.id);
+                          setEditingSkillName(skill.name);
+                        }}
+                        className="txt-btn"
+                      >
+                        수정
+                      </button>
+                      <button onClick={() => handleDeleteSkill(skill.id)} className="txt-btn danger">삭제</button>
                     </div>
                   </>
                 )}
@@ -685,124 +676,67 @@ function SkillManagement({ initialSkills }: { initialSkills: any[] }) {
       <style jsx>{`
         .skill-mgmt-container {
           display: grid;
-          grid-template-columns: 320px 1fr;
-          gap: 0;
+          grid-template-columns: 340px 1fr;
           background: white;
           border-radius: 16px;
           border: 1px solid var(--border);
           overflow: hidden;
-          min-height: 600px;
-          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
         }
         .skill-list-pane {
           border-right: 1px solid var(--border);
-          padding: 24px;
+          padding: 16px;
           background: #f8fafc;
         }
-        .supply-list-pane {
-          padding: 32px;
-        }
+        .supply-list-pane { padding: 20px 24px; min-width: 0; }
         .inline-form {
-          margin-bottom: 16px;
-          padding: 16px;
+          margin: 12px 0;
+          padding: 12px;
           background: white;
           border-radius: 12px;
           border: 1px solid var(--primary);
         }
-        .inline-form input {
-          width: 100%;
-          padding: 8px;
-          border: 1px solid var(--border);
-          border-radius: 6px;
-        }
+        .inline-form input { width: 100%; padding: 8px; border: 1px solid var(--border); border-radius: 6px; }
         .skill-items {
           display: flex;
           flex-direction: column;
-          gap: 10px;
-          margin-top: 16px;
+          gap: 6px;
+          margin-top: 12px;
+          max-height: 70vh;
+          overflow-y: auto;
         }
         .skill-item {
-          padding: 16px;
+          padding: 10px 12px;
           border: 1px solid var(--border);
-          border-radius: 12px;
+          border-radius: 10px;
           cursor: pointer;
           display: flex;
           justify-content: space-between;
           align-items: center;
+          gap: 8px;
           background: white;
-          transition: all 0.2s;
         }
-        .skill-item:hover {
-          border-color: var(--primary);
-          transform: translateY(-2px);
-        }
-        .skill-item.active {
-          border-color: var(--primary);
-          background: #f0f7ff;
-          box-shadow: 0 2px 4px rgba(14, 74, 132, 0.1);
-        }
-        .skill-item.inactive-skill {
-          opacity: 0.6;
-          background: #f1f5f9;
-        }
-        .skill-item.inactive-skill:hover {
-          opacity: 0.85;
-        }
-        .skill-item.active.inactive-skill {
-          border-color: var(--primary);
-          background: #f0f7ff;
-          opacity: 0.85;
-        }
-        .skill-info {
-          display: flex;
-          flex-direction: column;
-          gap: 6px;
-        }
-        .skill-name {
-          font-weight: 700;
-          font-size: 0.9375rem;
-          color: var(--text);
-        }
-        .skill-edit-btn {
-          background: none;
-          border: none;
-          cursor: pointer;
-          font-size: 0.875rem;
-          padding: 2px 4px;
-          border-radius: 4px;
-          opacity: 0.4;
-          transition: all 0.2s;
-        }
-        .skill-edit-btn:hover {
-          opacity: 1;
-          background: #e2e8f0;
-        }
+        .skill-item:hover { border-color: var(--primary); }
+        .skill-item.active { border-color: var(--primary); background: #f0f7ff; box-shadow: inset 0 0 0 1px var(--primary); }
+        .skill-item.inactive-skill .skill-name { color: var(--sub-text); }
+        .skill-name { font-weight: 700; font-size: 0.875rem; color: var(--text); min-width: 0; flex: 1; }
+        .skill-actions { display: flex; align-items: center; gap: 2px; flex: 0 0 auto; }
         .status-badge {
-          font-size: 0.6875rem;
-          font-weight: 800;
-          padding: 2px 8px;
-          border-radius: 4px;
-          width: fit-content;
+          font-size: 0.6875rem; font-weight: 800; padding: 3px 8px; border-radius: 999px;
+          border: none; cursor: pointer; margin-right: 4px;
         }
-        .status-badge.active {
-          background: #dcfce7;
-          color: #166534;
+        .status-badge.active { background: #dcfce7; color: #166534; }
+        .status-badge.inactive { background: #e2e8f0; color: #64748b; }
+        .txt-btn {
+          background: none; border: none; cursor: pointer; padding: 4px 6px; border-radius: 6px;
+          font-size: 0.75rem; font-weight: 700; color: var(--sub-text);
         }
-        .status-badge.inactive {
-          background: #fee2e2;
-          color: #991b1b;
-        }
-        .icon-btn {
-          background: none;
-          border: none;
-          cursor: pointer;
-          padding: 8px;
-          border-radius: 8px;
-          font-size: 1rem;
-          transition: background 0.2s;
-        }
-        .icon-btn:hover {
-          background: #f1f5f9;
+        .txt-btn:hover { background: #f1f5f9; color: var(--text); }
+        .txt-btn.danger:hover { background: #fee2e2; color: #b91c1c; }
+        @media (max-width: 760px) {
+          .skill-mgmt-container { grid-template-columns: 1fr; }
+          .skill-list-pane { border-right: none; border-bottom: 1px solid var(--border); }
+          .skill-items { max-height: 40vh; }
+          .supply-list-pane { padding: 16px; }
         }
         .empty-state {
           display: flex;
@@ -908,10 +842,10 @@ function SupplyList({ skill, onUpdate }: { skill: any, onUpdate: () => void }) {
   return (
     <div className="supply-list-content">
       <div className="section-header">
-        <h3 style={{ fontSize: '1.25rem', fontWeight: '800' }}>
-          <span style={{ color: 'var(--primary)' }}>[{skill.name}]</span> 준비물 관리
+        <h3 style={{ fontSize: '1.0625rem', fontWeight: '800', minWidth: 0 }}>
+          {skill.name} <span style={{ color: 'var(--sub-text)', fontWeight: 600, fontSize: '0.875rem' }}>준비물 {skill.supplies.length}</span>
         </h3>
-        <button className="btn-small btn-primary" onClick={() => setIsAdding(true)}>+ 준비물 추가</button>
+        <button className="btn-small btn-primary" onClick={() => setIsAdding(true)}>+ 추가</button>
       </div>
 
       {isAdding && (
@@ -1065,28 +999,14 @@ function SupplyList({ skill, onUpdate }: { skill: any, onUpdate: () => void }) {
 
               return (
                 <tr key={supply.id}>
-                  <td style={{ fontWeight: '600' }}>{supply.supplyName}</td>
+                  <td style={{ fontWeight: '600', fontSize: '0.875rem' }}>{supply.supplyName}</td>
                   <td>{supply.quantity}</td>
                   <td>{supply.unit}</td>
                   <td style={{ color: 'var(--sub-text)', fontSize: '0.8125rem' }}>{supply.note || '-'}</td>
                   <td style={{ textAlign: 'right' }}>
-                    <div style={{ display: 'flex', gap: '6px', justifyContent: 'flex-end' }}>
-                      <button 
-                        onClick={() => handleStartEditSupply(supply)} 
-                        className="icon-btn" 
-                        title="수정"
-                        style={{ fontSize: '1rem' }}
-                      >
-                        ✏️
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(supply.id)} 
-                        className="icon-btn" 
-                        title="삭제"
-                        style={{ fontSize: '1rem' }}
-                      >
-                        🗑️
-                      </button>
+                    <div style={{ display: 'flex', gap: '2px', justifyContent: 'flex-end' }}>
+                      <button onClick={() => handleStartEditSupply(supply)} className="txt-btn">수정</button>
+                      <button onClick={() => handleDelete(supply.id)} className="txt-btn danger">삭제</button>
                     </div>
                   </td>
                 </tr>
@@ -1106,10 +1026,10 @@ function SupplyList({ skill, onUpdate }: { skill: any, onUpdate: () => void }) {
       <style jsx>{`
         .supply-form-card {
           background: #f8fafc;
-          padding: 24px;
+          padding: 16px;
           border-radius: 12px;
           border: 1px solid var(--border);
-          margin-bottom: 24px;
+          margin-bottom: 16px;
         }
         .form-grid {
           display: grid;
@@ -1132,8 +1052,21 @@ function SupplyList({ skill, onUpdate }: { skill: any, onUpdate: () => void }) {
           border: 1px solid var(--border);
           border-radius: 8px;
         }
-        th { font-size: 0.8125rem; color: var(--sub-text); padding: 12px; }
-        td { padding: 16px 12px; border-bottom: 1px solid #f1f5f9; }
+        th { font-size: 0.75rem; font-weight: 700; color: var(--sub-text); padding: 8px 10px; text-align: left; background: #f8fafc; }
+        td { padding: 10px; border-bottom: 1px solid #f1f5f9; font-size: 0.875rem; }
+        table { width: 100%; border-collapse: collapse; }
+        .card-table { overflow-x: auto; }
+        .txt-btn {
+          background: none; border: none; cursor: pointer; padding: 4px 6px; border-radius: 6px;
+          font-size: 0.75rem; font-weight: 700; color: var(--sub-text); white-space: nowrap;
+        }
+        .txt-btn:hover { background: #f1f5f9; color: var(--text); }
+        .txt-btn.danger:hover { background: #fee2e2; color: #b91c1c; }
+        @media (max-width: 600px) {
+          th:nth-child(4), td:nth-child(4) { display: none; }
+          .form-grid { grid-template-columns: 1fr 1fr; }
+          .form-item.wide { grid-column: span 2; }
+        }
       `}</style>
     </div>
   );
