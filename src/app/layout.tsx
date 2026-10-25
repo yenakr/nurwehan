@@ -2,8 +2,8 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "NUR위한 | 한양대학교 간호대학",
-  description: "한양대학교 간호대학 OPEN LAB 신청",
+  title: "NUR위한",
+  description: "한양대 간호학과 학습·실습 도우미",
 };
 
 import Header from "@/components/Header";

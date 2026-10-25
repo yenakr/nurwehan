@@ -65,7 +65,7 @@ export default function HomeDashboardClient({
               {todayStr}
             </div>
             <h1 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '4px' }}>
-              {user ? `${user.name}님, 안녕하세요` : '한양대학교 간호대학'}
+              {user ? `${user.name}님, 안녕하세요` : 'NUR위한'}
             </h1>
           </div>
 
@@ -107,9 +107,9 @@ export default function HomeDashboardClient({
       {notices && notices.length > 0 && (
         <section>
           <div className="section-title">
-            <span>주요 공지사항</span>
+            <span>공지</span>
             <Link href="/notices" style={{ fontSize: '0.84rem', fontWeight: 600, color: 'var(--primary)' }}>
-              전체 공지 보기 →
+              전체 →
             </Link>
           </div>
           <div className="card" style={{ padding: '0' }}>

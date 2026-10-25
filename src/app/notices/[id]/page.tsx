@@ -20,8 +20,8 @@ export default async function NoticeDetailPage({ params }: { params: Promise<{ i
       <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '40px 0' }}>
         <div className="container" style={{ maxWidth: '800px' }}>
           <div className="card" style={{ textAlign: 'center', padding: '60px 20px' }}>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '16px' }}>공지사항을 찾을 수 없습니다.</h1>
-            <p style={{ color: 'var(--sub-text)', marginBottom: '32px' }}>존재하지 않거나 삭제된 공지사항입니다.</p>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '16px' }}>공지를 찾을 수 없어요.</h1>
+            <p style={{ color: 'var(--sub-text)', marginBottom: '32px' }}>삭제됐거나 없는 공지예요.</p>
             <Link href="/notices" className="btn-outline">목록으로 돌아가기</Link>
           </div>
         </div>
@@ -41,8 +41,8 @@ export default async function NoticeDetailPage({ params }: { params: Promise<{ i
               {notice.title}
             </h1>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: 'var(--sub-text)', fontSize: '0.875rem' }}>
-              <span>작성자: {notice.user.name || '행정팀'}</span>
-              <span>작성일: {new Date(notice.createdAt).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+              <span />
+              <span>{new Date(notice.createdAt).toLocaleDateString('ko-KR', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
             </div>
           </div>
 
