@@ -79,6 +79,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
   const [purpose, setPurpose] = useState('');
   
   // Filter State
+  const [showAllSlots, setShowAllSlots] = useState(false);
   const [gradeFilter, setGradeFilter] = useState(user ? user.grade.toString() : '2');
   
   // Selection State
@@ -182,7 +183,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
   const isAdmin = user && (user.role === 'ADMIN' || user.role === 'ASSISTANT' || user.role === 'SUPER_ADMIN');
   const filteredSlots = allSlots.filter(slot => {
     const isMatchingGrade = slot.grade.toString() === gradeFilter;
-    if (isAdmin) return isMatchingGrade;
+    if (isAdmin && showAllSlots) return isMatchingGrade;
     return isMatchingGrade && (slot.isAvailable ?? false);
   });
 
@@ -502,6 +503,16 @@ export default function ApplyForm({ user }: ApplyFormProps) {
                     {g}
                   </button>
                 ))}
+                {isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => setShowAllSlots(v => !v)}
+                    className={`filter-btn ${showAllSlots ? 'active' : ''}`}
+                    style={{ marginLeft: 'auto' }}
+                  >
+                    마감·예정 포함
+                  </button>
+                )}
               </div>
             </div>
           </div>
@@ -753,7 +764,8 @@ export default function ApplyForm({ user }: ApplyFormProps) {
         }
         .section-title small { font-size: 0.8125rem; font-weight: 600; color: var(--sub-text); margin-left: 6px; }
         .slot-groups { display: flex; flex-direction: column; gap: 14px; }
-        .slot-group { display: flex; flex-direction: column; gap: 6px; }
+        .slot-group { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 8px; }
+        .slot-group .slot-date { grid-column: 1 / -1; }
         .slot-date { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-weight: 800; font-size: 0.9375rem; color: var(--text); margin-bottom: 2px; }
         .slot-date em { font-style: normal; font-size: 0.75rem; font-weight: 600; color: #ef4444; }
         .slot-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; background: white; text-align: left; cursor: pointer; }
