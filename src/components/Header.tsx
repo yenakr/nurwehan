@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
-import Logo from './Logo';
 import { isAdminRole } from '@/lib/auth-core';
 import LogoutButton from './LogoutButton';
 import { usePathname } from 'next/navigation';
@@ -100,7 +99,6 @@ export default function Header() {
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: '10px', flexShrink: 0 }}>
-            <Logo width={110} />
             <span className="logo-text">NUR위한</span>
           </Link>
 
@@ -261,12 +259,10 @@ export default function Header() {
 
       <style jsx>{`
         .logo-text {
-          font-size: 1.125rem;
+          font-size: 1.25rem;
           font-weight: 800;
           color: var(--primary);
           letter-spacing: -0.02em;
-          border-left: 1px solid var(--border);
-          padding-left: 10px;
           white-space: nowrap;
         }
         .desktop-nav {
@@ -373,9 +369,6 @@ export default function Header() {
           .desktop-nav { display: block; }
           .mobile-toggle { display: none; }
           .user-name-label { display: inline; }
-        }
-        @media (max-width: 520px) {
-          .logo-text { display: none; }
         }
       `}</style>
     </header>
