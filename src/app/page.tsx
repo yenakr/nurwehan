@@ -64,7 +64,6 @@ export default async function Home() {
               <p style={{ fontWeight: 700, color: 'var(--text)', marginBottom: '4px', fontSize: '0.9375rem' }}>
                 NUR위한
               </p>
-              <p>한양대 간호 학생들이 만든 사이트</p>
             </div>
             <div style={{ display: 'flex', gap: '20px', fontWeight: 500 }}>
               <a href="#">개인정보처리방침</a>
