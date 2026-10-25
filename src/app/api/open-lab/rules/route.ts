@@ -10,6 +10,7 @@ export async function GET(request: NextRequest) {
       where: {
         grade: grade ? parseInt(grade) : undefined,
         isActive: true,
+        semester: { isActive: true },
       },
       include: {
         semester: true
