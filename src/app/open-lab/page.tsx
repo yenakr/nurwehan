@@ -45,12 +45,10 @@ export default async function OpenLabApplyPage() {
   return (
     <main style={{ backgroundColor: 'var(--muted-background)', padding: '40px 0' }}>
       <div className="container" style={{ maxWidth: '800px' }}>
-        <div className="card">
-          <h1 style={{ fontSize: '1.5rem', fontWeight: '800', borderBottom: '2px solid var(--primary)', paddingBottom: '12px', marginBottom: '32px' }}>
-            OPEN LAB 사용 신청 {!userData && <span style={{ fontSize: '0.875rem', fontWeight: '500', color: 'var(--sub-text)', marginLeft: '8px' }}>(비회원 신청)</span>}
-          </h1>
-          <ApplyForm user={userData} />
-        </div>
+        <h1 style={{ fontSize: '1.375rem', fontWeight: 800, marginBottom: '16px', color: 'var(--text)' }}>
+          OPEN LAB 신청서 생성 {!userData && <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--sub-text)', marginLeft: '6px' }}>비회원</span>}
+        </h1>
+        <ApplyForm user={userData} />
       </div>
     </main>
   );

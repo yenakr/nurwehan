@@ -62,9 +62,9 @@ export default function Header() {
       title: '실습 & OPEN LAB',
       key: 'clinical',
       items: [
-        { label: 'OPEN LAB 신청', href: '/open-lab', desc: '실습실 및 기자재 자율연습 신청' },
+        { label: 'OPEN LAB 신청서', href: '/open-lab', desc: '신청서 생성·출력' },
         { label: '임상실습 가이드', href: '/clinical', desc: '건강요건 및 실습전후 체크' },
-        { label: '신청서 작성 내역', href: '/history', desc: '내 OPEN LAB 신청 확인' },
+        { label: '신청서 작성 내역', href: '/history', desc: '내가 만든 신청서' },
       ],
     },
     {

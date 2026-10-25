@@ -341,7 +341,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
         alert('신청서 생성이 완료되었습니다.');
         router.push(`/open-lab/success/${data.id}`);
       } else {
-        alert(data.message || '신청에 실패했습니다.');
+        alert(data.message || '신청서를 만들지 못했어요.');
       }
     } catch (err) {
       alert('오류가 발생했습니다.');
@@ -377,7 +377,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
 
        {/* 1. Applicant Details */}
       <section className="form-section">
-        <h3 className="section-title">1. 신청자 기본 정보</h3>
+        <h3 className="section-title">신청자</h3>
         {user ? (
           <div className="info-box">
             <div className="info-item">
@@ -457,7 +457,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
 
       {/* 2. Practice Paper Details (Subject, Professor) */}
       <section className="form-section">
-        <h3 className="section-title">2. 실습 상세 정보 (신청서 출력 양식 반영)</h3>
+        <h3 className="section-title">실습 정보</h3>
         <div className="input-row">
           <div className="input-group">
             <label>실습과목 <span className="req">*</span></label>
@@ -485,7 +485,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
 
       {/* 3. Schedule Selection Section */}
       <section className="form-section">
-        <h3 className="section-title">3. OPEN LAB 일정 선택</h3>
+        <h3 className="section-title">일정</h3>
         
         {user && (
           <div className="filters">
@@ -512,40 +512,40 @@ export default function ApplyForm({ user }: ApplyFormProps) {
         ) : filteredSlots.length === 0 ? (
           <div className="no-slots">신청 가능한 일정이 없어요.</div>
         ) : (
-          <div className="slots-grid">
-            {filteredSlots.map((slot) => {
-              const isSelected = selectedSlot?.ruleId === slot.ruleId && selectedSlot?.date === slot.date && selectedSlot?.room === slot.room;
-              const dateObj = new Date(slot.date);
-              const dateStr = dateObj.toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' });
+          <div className="slot-groups">
+            {Object.entries(
+              filteredSlots.reduce<Record<string, typeof filteredSlots>>((acc, sl) => {
+                (acc[sl.date] = acc[sl.date] || []).push(sl);
+                return acc;
+              }, {})
+            ).map(([date, list]) => (
+              <div key={date} className="slot-group">
+                <div className="slot-date">
+                  {new Date(date).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })}
+                </div>
+                {list.map(slot => {
+                  const isSelected = selectedSlot?.ruleId === slot.ruleId && selectedSlot?.date === slot.date && selectedSlot?.room === slot.room;
+                  return (
+                    <button
+                      key={`${slot.ruleId}-${slot.date}-${slot.room}`}
+                      type="button"
+                      onClick={() => setSelectedSlot(slot)}
+                      className={`slot-row ${isSelected ? 'selected' : ''}`}
+                    >
+                      <span className="slot-main">
+                        <b>{slot.startTime} ~ {slot.endTime}</b>
+                        <em>{slot.room}</em>
+                      </span>
+                      <span className="slot-side">
+                        <b>{slot.maxCapacity - slot.remaining}/{slot.maxCapacity}명</b>
+                        {slot.deadlineText && <em>마감 {slot.deadlineText}</em>}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
 
-              return (
-                <button
-                  key={`${slot.ruleId}-${slot.date}-${slot.room}`}
-                  type="button"
-                  onClick={() => setSelectedSlot(slot)}
-                  className={`slot-card ${isSelected ? 'selected' : ''}`}
-                >
-                  {isSelected && <span className="selection-badge">선택됨</span>}
-                  <div className="slot-date">{dateStr}</div>
-                  <div className="slot-time">{slot.startTime} ~ {slot.endTime}</div>
-                  <div className="slot-room">{slot.room}</div>
-                  
-                  <div className="capacity-badge" style={{ background: '#f1f5f9', color: '#475569', display: 'flex', flexDirection: 'column', gap: '2px', alignItems: 'flex-start', fontSize: '0.75rem', width: '100%', boxSizing: 'border-box' }}>
-                    <div>정원: {slot.maxCapacity}명</div>
-                    <div style={{ fontSize: '0.6875rem', color: '#64748b', fontWeight: 600 }}>
-                      본 사이트 작성: {slot.maxCapacity - slot.remaining}명
-                    </div>
-                  </div>
-                  {slot.deadlineText && (
-                    <div style={{ fontSize: '0.6875rem', color: '#ef4444', fontWeight: 700, marginTop: '8px', borderTop: '1px dashed #cbd5e1', paddingTop: '6px', width: '100%', textAlign: 'left' }}>
-                      신청 마감: {slot.deadlineText}
-                    </div>
-                  )}
-                </button>
-              );
-            })}
-
-            {/* Custom/Holiday Alternative schedule button */}
             <button
               type="button"
               onClick={() => setSelectedSlot({
@@ -558,23 +558,14 @@ export default function ApplyForm({ user }: ApplyFormProps) {
                 maxCapacity: 20,
                 remaining: 20
               })}
-              className={`slot-card custom-slot-card ${selectedSlot?.ruleId === 'custom' ? 'selected' : ''}`}
-              style={{ borderStyle: 'dashed' }}
+              className={`slot-row custom ${selectedSlot?.ruleId === 'custom' ? 'selected' : ''}`}
             >
-              {selectedSlot?.ruleId === 'custom' && <span className="selection-badge">선택됨</span>}
-              <div className="slot-date">기타 일정</div>
-              <div className="slot-time" style={{ color: 'var(--sub-text)' }}>대체 일정 직접 입력</div>
-              <div className="slot-room">공휴일/대체용</div>
-              <div className="capacity-badge" style={{ background: '#f1f5f9', color: '#475569', fontSize: '0.75rem' }}>
-                직접 설정
-              </div>
+              <span className="slot-main"><b>기타 일정</b><em>직접 입력 (공휴일·대체)</em></span>
             </button>
           </div>
         )}
 
-        <p style={{ fontSize: '0.8125rem', color: 'var(--sub-text)', marginTop: '16px', margin: '16px 0 0 0', lineHeight: '1.5' }}>
-          ※ 각 일별 표시되는 <strong>'본 사이트 작성 인원'</strong>은 본 웹사이트(NUR위한)를 통해 신청서를 작성한 내역만 집계한 수치입니다. 공식 예약 시스템의 실시간 신청 현황과 다를 수 있으므로, 실제 실습실 예약은 반드시 공식 채널을 확인하시기 바랍니다.
-        </p>
+        <p className="slot-note">작성 인원은 이 사이트에서 만든 신청서만 집계돼요.</p>
 
         {selectedSlot?.ruleId === 'custom' && (
           <div className="custom-schedule-inputs" style={{ marginTop: '24px', padding: '20px', background: '#f8fafc', borderRadius: '12px', border: '1px solid var(--border)' }}>
@@ -638,7 +629,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
 
       {/* 4. Skill Selection */}
       <section className="form-section">
-        <h3 className="section-title">4. 실습 술기 선택 (최대 2개)</h3>
+        <h3 className="section-title">술기 <small>최대 2개</small></h3>
         
         <div style={{ marginBottom: '16px' }}>
           <input 
@@ -650,11 +641,11 @@ export default function ApplyForm({ user }: ApplyFormProps) {
           />
         </div>
 
-        <div className="skills-grid">
+        <div className="skills-chips">
           {skills
             .filter(skill => skill.name.toLowerCase().includes(skillSearchQuery.toLowerCase()))
             .map(skill => (
-              <label key={skill.id} className={`skill-item ${selectedSkills.includes(skill.id) ? 'checked' : ''}`}>
+              <label key={skill.id} className={`skill-chip ${selectedSkills.includes(skill.id) ? 'checked' : ''}`}>
                 <input 
                   type="checkbox" 
                   checked={selectedSkills.includes(skill.id)} 
@@ -677,60 +668,33 @@ export default function ApplyForm({ user }: ApplyFormProps) {
         )}
       </section>
 
-      {/* 5. Participants Management */}
+      {/* 5. Participants + notes */}
       <section className="form-section">
-        <h3 className="section-title">5. 동반 실습 학생</h3>
-        
-        <div className="input-row" style={{ display: 'flex', gap: '16px', marginBottom: '20px' }}>
-          <div className="input-group" style={{ flex: 2 }}>
-            <label style={{ fontSize: '0.8125rem', fontWeight: '700', color: 'var(--sub-text)', display: 'block', marginBottom: '6px' }}>대표 신청자</label>
-            <div className="info-value-box" style={{ 
-              padding: '12px 16px', 
-              background: '#f8fafc', 
-              borderRadius: '8px', 
-              fontSize: '0.9375rem', 
-              fontWeight: 700,
-              border: '1px solid var(--border)',
-              color: 'var(--primary)'
-            }}>
-              {user ? `${user.name} (${user.studentId})` : (guestName && guestStudentId ? `${guestName} (${guestStudentId})` : '신청자 정보(이름, 학번)를 입력해주세요.')}
-            </div>
-          </div>
-
-          <div className="input-group" style={{ flex: 1 }}>
-            <label style={{ fontSize: '0.8125rem', fontWeight: '700', color: 'var(--sub-text)', display: 'block', marginBottom: '6px' }}>총 사용인원 (본인 포함) <span className="req">*</span></label>
-            <input 
-              type="number" 
+        <h3 className="section-title">인원 · 전달사항</h3>
+        <div className="input-row">
+          <div className="input-group" style={{ flex: '0 0 120px' }}>
+            <label>총 인원 <span className="req">*</span></label>
+            <input
+              type="number"
               min="1"
-              value={totalCount} 
+              value={totalCount}
               onChange={(e) => setTotalCount(e.target.value)}
-              placeholder="예: 2"
-              style={{ padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', fontWeight: 600 }}
+              placeholder="본인 포함"
+            />
+          </div>
+          <div className="input-group">
+            <label>동반 학생 (선택)</label>
+            <input
+              type="text"
+              placeholder="김민지, 이서연"
+              value={accompanyingNames}
+              onChange={(e) => setAccompanyingNames(e.target.value)}
             />
           </div>
         </div>
-
-        <div className="input-group">
-          <label style={{ fontSize: '0.8125rem', fontWeight: '700', color: 'var(--sub-text)', display: 'block', marginBottom: '6px' }}>동반 실습 학생 이름 (선택)</label>
-          <input 
-            type="text" 
-            placeholder="예: 김민지, 이서연" 
-            value={accompanyingNames}
-            onChange={(e) => setAccompanyingNames(e.target.value)}
-          />
-          <p style={{ fontSize: '0.8125rem', color: 'var(--sub-text)', marginTop: '8px', margin: '8px 0 0 0' }}>
-            동반 학생 이름만 입력해주세요. 예: 김민지, 이서연
-          </p>
-        </div>
-      </section>
-
-      {/* 6. Additional Info */}
-      <section className="form-section">
-        <h3 className="section-title">6. 전달사항</h3>
-        <div className="textarea-group">
-          <label style={{ fontSize: '0.8125rem', fontWeight: '700', color: 'var(--sub-text)', display: 'block', marginBottom: '6px' }}>전달사항 (선택)</label>
-          <textarea 
-            placeholder="추가 요청사항을 입력해주세요. (메일 전송 시 추가되는 내용입니다)"
+        <div className="textarea-group" style={{ marginTop: '16px' }}>
+          <textarea
+            placeholder="전달사항 (선택)"
             value={additionalRequest}
             onChange={(e) => setAdditionalRequest(e.target.value)}
           />
@@ -751,7 +715,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
         .apply-form {
           display: flex;
           flex-direction: column;
-          gap: 40px;
+          gap: 16px;
         }
         .template-box {
           background: #f0f7ff;
@@ -776,18 +740,35 @@ export default function ApplyForm({ user }: ApplyFormProps) {
         }
         .form-section {
           background: white;
-          padding: 32px;
+          padding: 24px;
           border-radius: 16px;
           border: 1px solid var(--border);
-          box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
           position: relative;
         }
         .section-title {
-          font-size: 1.25rem;
+          font-size: 1.0625rem;
           font-weight: 800;
-          margin-bottom: 24px;
+          margin-bottom: 16px;
           color: var(--text);
         }
+        .section-title small { font-size: 0.8125rem; font-weight: 600; color: var(--sub-text); margin-left: 6px; }
+        .slot-groups { display: flex; flex-direction: column; gap: 14px; }
+        .slot-group { display: flex; flex-direction: column; gap: 6px; }
+        .slot-date { font-weight: 800; font-size: 0.9375rem; color: var(--text); margin-bottom: 2px; }
+        .slot-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; background: white; text-align: left; cursor: pointer; }
+        .slot-row.selected { border-color: var(--primary); background: #f0f7ff; box-shadow: inset 0 0 0 1px var(--primary); }
+        .slot-row.custom { border-style: dashed; }
+        .slot-main, .slot-side { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+        .slot-side { text-align: right; flex: 0 0 auto; }
+        .slot-main b { font-size: 0.9375rem; font-weight: 800; color: var(--primary); }
+        .slot-side b { font-size: 0.875rem; font-weight: 800; color: var(--text); }
+        .slot-main em, .slot-side em { font-style: normal; font-size: 0.75rem; color: var(--sub-text); }
+        .slot-side em { color: #ef4444; font-weight: 600; }
+        .slot-note { font-size: 0.75rem; color: var(--sub-text); margin: 12px 0 0; }
+        .skills-chips { display: flex; flex-wrap: wrap; gap: 8px; }
+        .skill-chip { display: inline-flex; align-items: center; padding: 8px 14px; border: 1px solid var(--border); border-radius: 999px; font-size: 0.875rem; font-weight: 600; cursor: pointer; background: white; }
+        .skill-chip input { display: none; }
+        .skill-chip.checked { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 700; }
         
         .req {
           color: #ef4444;
@@ -1138,8 +1119,7 @@ export default function ApplyForm({ user }: ApplyFormProps) {
         
         @media (max-width: 600px) {
           .info-box { grid-template-columns: 1fr; }
-          .form-section { padding: 24px; }
-          .slots-grid { grid-template-columns: 1fr; }
+          .form-section { padding: 18px 16px; }
           .input-row { flex-direction: column; gap: 16px; }
         }
       `}</style>

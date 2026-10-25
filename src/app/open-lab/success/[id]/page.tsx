@@ -70,7 +70,7 @@ export default async function OpenLabSuccessPage({ params }: { params: Promise<{
         {/* Banner: Guest Info */}
         {isGuest && (
           <div className="guest-promo-banner no-print">
-            <span>회원가입 후 로그인하여 신청하시면 신청 내역 저장 및 자동 완성 기능을 이용하실 수 있습니다.</span>
+            <span>로그인하면 신청서가 저장되고 다음엔 자동으로 채워져요.</span>
             <Link href="/register" className="banner-link">회원가입</Link>
           </div>
         )}
