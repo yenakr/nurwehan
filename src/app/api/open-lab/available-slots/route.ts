@@ -12,7 +12,7 @@ export async function GET(request: Request) {
     
     // 1. Get all active rules
     const rules = await prisma.openLabGradeRule.findMany({
-      where: { isActive: true },
+      where: { isActive: true, semester: { isActive: true } },
       orderBy: [
         { dayOfWeek: 'asc' },
         { startTime: 'asc' }

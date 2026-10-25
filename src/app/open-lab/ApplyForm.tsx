@@ -521,7 +521,8 @@ export default function ApplyForm({ user }: ApplyFormProps) {
             ).map(([date, list]) => (
               <div key={date} className="slot-group">
                 <div className="slot-date">
-                  {new Date(date).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })}
+                  <span>{new Date(date).toLocaleDateString('ko-KR', { month: 'long', day: 'numeric', weekday: 'short' })}</span>
+                  {list[0]?.deadlineText && <em>마감 {list[0].deadlineText}</em>}
                 </div>
                 {list.map(slot => {
                   const isSelected = selectedSlot?.ruleId === slot.ruleId && selectedSlot?.date === slot.date && selectedSlot?.room === slot.room;
@@ -538,7 +539,6 @@ export default function ApplyForm({ user }: ApplyFormProps) {
                       </span>
                       <span className="slot-side">
                         <b>{slot.maxCapacity - slot.remaining}/{slot.maxCapacity}명</b>
-                        {slot.deadlineText && <em>마감 {slot.deadlineText}</em>}
                       </span>
                     </button>
                   );
@@ -754,7 +754,8 @@ export default function ApplyForm({ user }: ApplyFormProps) {
         .section-title small { font-size: 0.8125rem; font-weight: 600; color: var(--sub-text); margin-left: 6px; }
         .slot-groups { display: flex; flex-direction: column; gap: 14px; }
         .slot-group { display: flex; flex-direction: column; gap: 6px; }
-        .slot-date { font-weight: 800; font-size: 0.9375rem; color: var(--text); margin-bottom: 2px; }
+        .slot-date { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; font-weight: 800; font-size: 0.9375rem; color: var(--text); margin-bottom: 2px; }
+        .slot-date em { font-style: normal; font-size: 0.75rem; font-weight: 600; color: #ef4444; }
         .slot-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 12px; background: white; text-align: left; cursor: pointer; }
         .slot-row.selected { border-color: var(--primary); background: #f0f7ff; box-shadow: inset 0 0 0 1px var(--primary); }
         .slot-row.custom { border-style: dashed; }
@@ -763,7 +764,6 @@ export default function ApplyForm({ user }: ApplyFormProps) {
         .slot-main b { font-size: 0.9375rem; font-weight: 800; color: var(--primary); }
         .slot-side b { font-size: 0.875rem; font-weight: 800; color: var(--text); }
         .slot-main em, .slot-side em { font-style: normal; font-size: 0.75rem; color: var(--sub-text); }
-        .slot-side em { color: #ef4444; font-weight: 600; }
         .slot-note { font-size: 0.75rem; color: var(--sub-text); margin: 12px 0 0; }
         .skills-chips { display: flex; flex-wrap: wrap; gap: 8px; }
         .skill-chip { display: inline-flex; align-items: center; padding: 8px 14px; border: 1px solid var(--border); border-radius: 999px; font-size: 0.875rem; font-weight: 600; cursor: pointer; background: white; }
