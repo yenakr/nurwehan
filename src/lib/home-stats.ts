@@ -71,7 +71,7 @@ async function labStats(user: Viewer & {}): Promise<TileStat[]> {
       out.push({ value: `${d.getMonth() + 1}/${d.getDate()}(${WD[d.getDay()]})`, label: '다음 사용' });
     }
     out.push({ value: `${upcoming.length}건`, label: '예정' });
-    out.push({ value: `${apps.length}건`, label: '전체 신청' });
+    out.push({ value: `${apps.length}건`, label: '전체 신청서' });
     return out;
   } catch {
     return [];

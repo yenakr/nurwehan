@@ -61,7 +61,7 @@ export default async function MyPage() {
 
           {/* Recent Applications Section */}
           <section className="card">
-            <h2 style={{ fontSize: '1.125rem', fontWeight: '700', marginBottom: '16px' }}>최근 신청 내역</h2>
+            <h2 style={{ fontSize: '1.125rem', fontWeight: '700', marginBottom: '16px' }}>최근 신청서</h2>
             
             {/* Desktop View */}
             <div className="table-container hide-mobile">
