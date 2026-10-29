@@ -93,6 +93,25 @@ interface QuizClientProps {
 }
 
 
+// 한글과 영문이 섞인 문장은 글자 종류별로 나눠 각각 알맞은 언어 목소리로 읽는다.
+// (영어를 한국어 목소리로 읽거나 그 반대가 되지 않도록)
+function splitByScript(text: string): { text: string; lang: string }[] {
+  const kind = (ch: string) => (/[가-힣ㄱ-ㅎㅏ-ㅣ]/.test(ch) ? 'ko' : /[A-Za-z]/.test(ch) ? 'en' : null);
+  const runs: { text: string; k: 'ko' | 'en' | null }[] = [];
+  for (const ch of text) {
+    const k = kind(ch);
+    const last = runs[runs.length - 1];
+    if (!last || (k !== null && last.k !== null && last.k !== k)) runs.push({ text: ch, k });
+    else {
+      last.text += ch;
+      if (last.k === null && k !== null) last.k = k;
+    }
+  }
+  return runs
+    .filter(r => r.text.trim())
+    .map(r => ({ text: r.text, lang: r.k === 'en' ? 'en-US' : 'ko-KR' }));
+}
+
 // 음성 선택: 맥에는 장난스러운 효과음 목소리(Bells, Organ, Zarvox 등)가 섞여 있어 기본값이 이상하게 들릴 수 있다.
 // 자연스러운 목소리를 우선 고르고, 효과음 목소리는 제외한다.
 const NOVELTY_VOICES = /^(Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Deranged|Good News|Hysterical|Jester|Organ|Superstar|Trinoids|Whisper|Wobble|Zarvox|Fred|Junior|Kathy|Ralph)\b/i;
@@ -218,10 +237,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
       return;
     }
     window.speechSynthesis.cancel();
-    const segs: SpeechSeg[] = (typeof input === 'string'
-      ? [{ text: input, lang: /^[A-Za-z0-9\s.,?!'()-]+$/.test(input.trim()) ? 'en-US' : 'ko-KR' }]
-      : input
-    ).filter(g => g.text);
+    const segs: SpeechSeg[] = (typeof input === 'string' ? splitByScript(input) : input).filter(g => g.text.trim());
     if (segs.length === 0) {
       if (onEnd) onEnd();
       return;
