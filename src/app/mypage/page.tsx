@@ -45,6 +45,12 @@ export default async function MyPage() {
     return `${x.getMonth() + 1}/${x.getDate()} (${w})`;
   };
 
+  const fmtCreated = (d: Date | string) => {
+    const x = new Date(d);
+    const p2 = (n: number) => String(n).padStart(2, '0');
+    return `${x.getMonth() + 1}/${x.getDate()} ${p2(x.getHours())}:${p2(x.getMinutes())}`;
+  };
+
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '20px 0 40px' }}>
       <div className="container" style={{ maxWidth: '720px' }}>
@@ -73,6 +79,7 @@ export default async function MyPage() {
                     <span className="mp-room">{app.slot.room}</span>
                   </div>
                   <div className="mp-skills">{app.skills.map(s => s.skill.name).join(', ')}</div>
+                  <div className="mp-created">생성 {fmtCreated(app.createdAt)}</div>
                 </li>
               ))}
             </ul>
@@ -89,6 +96,7 @@ export default async function MyPage() {
         .mp-row1 span{color:var(--sub-text)}
         .mp-row1 .mp-room{margin-left:auto;font-size:.8125rem}
         .mp-skills{font-size:.8125rem;color:var(--primary);margin-top:3px;line-height:1.4}
+        .mp-created{font-size:.75rem;color:var(--sub-text);margin-top:2px}
         .mp-empty{text-align:center;color:var(--sub-text);font-size:.875rem;padding:16px 0 4px;margin:0}
       `}</style>
     </main>
