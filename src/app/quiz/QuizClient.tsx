@@ -1831,7 +1831,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                     <button
                       type="button"
                       onClick={handleTypingNext}
-                      className="btn-accent"
+                      className="btn-primary"
                       style={{ padding: '12px 24px', fontSize: '0.95rem', fontWeight: 800 }}
                     >
                       {typingIndex + 1 < filteredStudyTerms.length ? '다음' : '완료'}
@@ -2026,27 +2026,16 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                         { label: '용어', ok: r.full, answer: currentQuestion.englishTerm },
                         { label: '국문', ok: r.meaning, answer: currentQuestion.definition },
                       ].map(row => (
-                        <div
-                          key={row.label}
-                          style={{
-                            padding: '12px 14px',
-                            borderRadius: '8px',
-                            backgroundColor: row.ok ? '#DCFCE7' : '#FEE2E2',
-                            border: `1px solid ${row.ok ? '#86EFAC' : '#FCA5A5'}`,
-                            color: row.ok ? '#166534' : '#991B1B',
-                            fontSize: '0.9375rem',
-                          }}
-                        >
-                          <strong>{row.label} {row.ok ? '정답' : '오답'}</strong> · {row.answer}
+                        <div key={row.label} className={`${s.fb} ${row.ok ? s.fbOk : s.fbNo}`}>
+                          <div className={s.fbTitle}>{row.label} {row.ok ? '정답' : '오답'}</div>
+                          <div className={s.fbAns}>{row.answer}</div>
                         </div>
                       ))}
                       <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px' }}>
-                        <span style={{ fontSize: '0.78125rem', color: 'var(--sub-text)' }}>채점 변경:</span>
-                        <button
+                                                <button
                           type="button"
                           onClick={() => handleToggleSelfCorrection(currentIndex)}
-                          className="btn-outline"
-                          style={{ fontSize: '0.75rem', padding: '4px 8px' }}
+                          className={s.selfToggle}
                         >
                           {(quizResults[currentIndex]?.overrideCorrect !== undefined
                             ? quizResults[currentIndex]?.overrideCorrect
@@ -2072,7 +2061,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                     <button
                       type="button"
                       onClick={handleNextQuestion}
-                      className="btn-accent"
+                      className="btn-primary"
                       style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
                     >
                       {currentIndex + 1 < quizQuestions.length ? '다음' : '퀴즈 결과 보기'}
@@ -2158,13 +2147,13 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
 
               {isAnswerSubmitted && (
                 <div style={{ marginTop: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <div style={{ fontSize: '0.875rem', color: '#475569', backgroundColor: '#F1F5F9', padding: '14px', borderRadius: '8px', border: '1px solid #CBD5E1' }}>
-                    <strong>해설/국문:</strong> {currentQuestion.definition}
-                  </div>
+                  {currentQuestion.definition && (
+                    <div className={s.fbNote} style={{ background: 'var(--q-primary-soft)', borderRadius: 10, padding: '12px 14px' }}>{currentQuestion.definition}</div>
+                  )}
                   <button
                     type="button"
                     onClick={handleNextQuestion}
-                    className="btn-accent"
+                    className="btn-primary"
                     style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
                   >
                     {currentIndex + 1 < quizQuestions.length ? '다음' : '퀴즈 결과 보기'}
@@ -2207,33 +2196,27 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
               {/* Answer Feedback after submit */}
               {isAnswerSubmitted && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  {checkAnswerCorrectness(userAnswer, currentQuestion) ? (
-                    <div style={{ backgroundColor: '#DCFCE7', border: '1px solid #86EFAC', padding: '16px', borderRadius: '8px', color: '#166534' }}>
-                      <div style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '4px' }}>정답</div>
-                      <div style={{ fontSize: '0.875rem' }}>
-                        <strong>정답:</strong> {currentQuestion.answer || currentQuestion.term}
+                  {(() => {
+                    const ok = checkAnswerCorrectness(userAnswer, currentQuestion);
+                    const ans = currentQuestion.answer || currentQuestion.term;
+                    const norm = (v?: string | null) => (v || '').trim().toLowerCase();
+                    const def = currentQuestion.definition;
+                    const showNote = !!def && ![currentQuestion.term, currentQuestion.englishTerm, ans].some(v => norm(v) === norm(def));
+                    return (
+                      <div className={`${s.fb} ${ok ? s.fbOk : s.fbNo}`}>
+                        <div className={s.fbTitle}>{ok ? '정답' : '오답'}</div>
+                        <div className={s.fbAns}>{ans}</div>
+                        {!ok && showNote && <div className={s.fbNote}>{def}</div>}
                       </div>
-                    </div>
-                  ) : (
-                    <div style={{ backgroundColor: '#FEE2E2', border: '1px solid #FCA5A5', padding: '16px', borderRadius: '8px', color: '#991B1B' }}>
-                      <div style={{ fontWeight: 800, fontSize: '1rem', marginBottom: '4px' }}>오답</div>
-                      <div style={{ fontSize: '0.875rem', marginBottom: '6px' }}>
-                        <strong>정답:</strong> <span style={{ fontWeight: 800, color: '#B91C1C' }}>{currentQuestion.answer || currentQuestion.term}</span>
-                      </div>
-                      <div style={{ fontSize: '0.8125rem', color: '#7F1D1D' }}>
-                        <strong>국문/해설:</strong> {currentQuestion.definition}
-                      </div>
-                    </div>
-                  )}
+                    );
+                  })()}
 
                   {/* Self Correction Toggle */}
                   <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px' }}>
-                    <span style={{ fontSize: '0.78125rem', color: 'var(--sub-text)' }}>채점 변경:</span>
-                    <button
+                                        <button
                       type="button"
                       onClick={() => handleToggleSelfCorrection(currentIndex)}
-                      className="btn-outline"
-                      style={{ fontSize: '0.75rem', padding: '4px 8px' }}
+                      className={s.selfToggle}
                     >
                       {(quizResults[currentIndex]?.overrideCorrect !== undefined
                         ? quizResults[currentIndex]?.overrideCorrect
@@ -2261,7 +2244,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                   <button
                     type="button"
                     onClick={handleNextQuestion}
-                    className="btn-accent"
+                    className="btn-primary"
                     style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
                   >
                     {currentIndex + 1 < quizQuestions.length ? '다음' : '퀴즈 결과 보기'}
