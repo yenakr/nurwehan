@@ -2062,8 +2062,24 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                 {(reviewIndex ?? currentIndex) + 1} / {quizQuestions.length}
               </span>
             </span>
-            <span style={{ fontSize: '0.8125rem', color: 'var(--sub-text)', textAlign: 'right' }}>
-              {currentQuestion.subject}{currentQuestion.category && currentQuestion.category !== 'all' ? ` · ${currentQuestion.category}` : ''}
+            <span style={{ fontSize: '0.8125rem', color: 'var(--sub-text)', textAlign: 'right', display: 'flex', alignItems: 'center', gap: 8 }}>
+              <span>{currentQuestion.subject}{currentQuestion.category && currentQuestion.category !== 'all' ? ` · ${currentQuestion.category}` : ''}</span>
+              {(() => {
+                const fq = reviewIndex !== null && quizResults[reviewIndex] ? quizResults[reviewIndex].term : currentQuestion;
+                const on = favIds.has(fq.id);
+                return (
+                  <button
+                    type="button"
+                    className={`${s.star} ${on ? s.starOn : ''}`}
+                    style={{ margin: 0 }}
+                    aria-label={on ? '즐겨찾기 해제' : '즐겨찾기'}
+                    aria-pressed={on}
+                    onClick={() => toggleFav(fq.id)}
+                  >
+                    {on ? '★' : '☆'}
+                  </button>
+                );
+              })()}
             </span>
           </div>
 
