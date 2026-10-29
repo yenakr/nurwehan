@@ -55,117 +55,67 @@ export default function ProfileForm({ user }: Props) {
   const isApproved = user.approvalStatus === 'APPROVED';
   const isRejected = user.approvalStatus === 'REJECTED';
 
-  return (
-    <section className="card">
-      {/* Rejection Reason Alert */}
-      {isRejected && !isEditing && (
-        <div style={{ backgroundColor: '#fef2f2', border: '1px solid #fee2e2', padding: '16px', borderRadius: '12px', marginBottom: '24px' }}>
-          <p style={{ color: '#b91c1c', fontWeight: '700', fontSize: '0.9375rem', marginBottom: '4px' }}>가입 확인이 거절됐어요.</p>
-          <p style={{ color: '#7f1d1d', fontSize: '0.875rem' }}>사유: {user.rejectedReason || '사유 없음'}</p>
-          <p style={{ color: '#b91c1c', fontSize: '0.8125rem', marginTop: '8px', fontWeight: '500' }}>정보를 수정한 후 저장하면 재확인이 요청돼요.</p>
-        </div>
-      )}
+  const status = isApproved ? { t: '확인완료', c: 'ok' } : isRejected ? { t: '거절됨', c: 'no' } : { t: '확인대기', c: 'wait' };
+  const input = (key: 'name' | 'studentId' | 'phone' | 'email', ph?: string, type = 'text') => (
+    <input type={type} value={formData[key]} placeholder={ph}
+      onChange={(e) => setFormData({ ...formData, [key]: e.target.value })} />
+  );
+  const lockedId = isEditing && !isApproved;
 
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-        <h2 style={{ fontSize: '1.125rem', fontWeight: '700' }}>기본 정보</h2>
+  return (
+    <section className="mp-card">
+      <div className="mp-head">
+        <div className="mp-who">
+          <h2>{user.name}</h2>
+          <span className={`mp-pill ${status.c}`}>{status.t}</span>
+        </div>
         {!isEditing ? (
-          <button className="btn-outline" style={{ padding: '4px 12px', fontSize: '0.8125rem' }} onClick={() => setIsEditing(true)}>
-            정보 수정
-          </button>
+          <button className="mp-btn ghost" onClick={() => setIsEditing(true)}>수정</button>
         ) : (
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <button className="btn-primary" style={{ padding: '4px 12px', fontSize: '0.8125rem' }} onClick={handleSave} disabled={loading}>
-              {isRejected ? '저장 및 재신청' : '저장'}
-            </button>
-            <button className="btn-outline" style={{ padding: '4px 12px', fontSize: '0.8125rem' }} onClick={() => setIsEditing(false)} disabled={loading}>
-              취소
-            </button>
+          <div style={{ display: 'flex', gap: 6 }}>
+            <button className="mp-btn" onClick={handleSave} disabled={loading}>{isRejected ? '저장 · 재신청' : '저장'}</button>
+            <button className="mp-btn ghost" onClick={() => setIsEditing(false)} disabled={loading}>취소</button>
           </div>
         )}
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px' }}>
-        <div>
-          <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--sub-text)', marginBottom: '4px' }}>이름</label>
-          {isEditing && !isApproved ? (
-            <input 
-              type="text" 
-              value={formData.name} 
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid var(--border)' }}
-            />
-          ) : (
-            <div style={{ fontWeight: '600', padding: '8px 0' }}>{user.name}</div>
-          )}
+      {isRejected && !isEditing && (
+        <div className="mp-note">
+          거절 사유: {user.rejectedReason || '없음'} · 정보를 수정해 저장하면 재확인을 요청해요.
         </div>
-        <div>
-          <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--sub-text)', marginBottom: '4px' }}>학번</label>
-          {isEditing && !isApproved ? (
-            <input 
-              type="text" 
-              value={formData.studentId} 
-              onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
-              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid var(--border)' }}
-            />
-          ) : (
-            <div style={{ fontWeight: '600', padding: '8px 0' }}>{user.studentId}</div>
-          )}
-        </div>
-        <div>
-          <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--sub-text)', marginBottom: '4px' }}>학년</label>
-          {isEditing ? (
-            <select 
-              value={formData.grade} 
-              onChange={(e) => setFormData({ ...formData, grade: parseInt(e.target.value) })}
-              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid var(--border)' }}
-            >
-              {[1, 2, 3, 4].map(g => <option key={g} value={g}>{g}학년</option>)}
-            </select>
-          ) : (
-            <div style={{ fontWeight: '600', padding: '8px 0' }}>{user.grade}학년</div>
-          )}
-        </div>
-        <div>
-          <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--sub-text)', marginBottom: '4px' }}>연락처</label>
-          {isEditing ? (
-            <input 
-              type="text" 
-              value={formData.phone} 
-              onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
-              placeholder="010-0000-0000"
-              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid var(--border)' }}
-            />
-          ) : (
-            <div style={{ fontWeight: '600', padding: '8px 0' }}>{user.phone || '-'}</div>
-          )}
-        </div>
-        <div>
-          <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--sub-text)', marginBottom: '4px' }}>이메일</label>
-          {isEditing ? (
-            <input 
-              type="email" 
-              value={formData.email} 
-              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-              placeholder="example@hanyang.ac.kr"
-              style={{ width: '100%', padding: '8px', borderRadius: '4px', border: '1px solid var(--border)' }}
-            />
-          ) : (
-            <div style={{ fontWeight: '600', padding: '8px 0' }}>{user.email || '-'}</div>
-          )}
-        </div>
-        <div>
-          <label style={{ display: 'block', fontSize: '0.8125rem', color: 'var(--sub-text)', marginBottom: '4px' }}>계정 상태</label>
-          <div style={{ 
-            fontWeight: '600', 
-            padding: '8px 0', 
-            color: user.approvalStatus === 'APPROVED' ? 'var(--primary)' : 
-                   user.approvalStatus === 'REJECTED' ? '#ef4444' : '#f59e0b' 
-          }}>
-            {user.approvalStatus === 'APPROVED' ? '확인완료' : 
-             user.approvalStatus === 'REJECTED' ? '거절됨' : '확인대기'}
-          </div>
-        </div>
-      </div>
+      )}
+
+      <dl className="mp-grid">
+        <div><dt>이름</dt><dd>{lockedId ? input('name') : user.name}</dd></div>
+        <div><dt>학번</dt><dd>{lockedId ? input('studentId') : user.studentId}</dd></div>
+        <div><dt>학년</dt><dd>{isEditing ? (
+          <select value={formData.grade} onChange={(e) => setFormData({ ...formData, grade: parseInt(e.target.value) })}>
+            {[1, 2, 3, 4].map(g => <option key={g} value={g}>{g}학년</option>)}
+          </select>
+        ) : `${user.grade ?? '-'}학년`}</dd></div>
+        <div><dt>연락처</dt><dd>{isEditing ? input('phone', '010-0000-0000') : (user.phone || '-')}</dd></div>
+        <div className="wide"><dt>이메일</dt><dd>{isEditing ? input('email', 'example@hanyang.ac.kr', 'email') : (user.email || '-')}</dd></div>
+      </dl>
+
+      <style>{`
+        .mp-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 16px}
+        .mp-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
+        .mp-head h2{font-size:1rem;font-weight:700;margin:0}
+        .mp-who{display:flex;align-items:center;gap:8px}
+        .mp-pill{font-size:.6875rem;font-weight:600;padding:2px 8px;border-radius:999px}
+        .mp-pill.ok{background:#e8eefb;color:var(--primary)}
+        .mp-pill.no{background:#fdecec;color:#c0392b}
+        .mp-pill.wait{background:#fff4e0;color:#b9770e}
+        .mp-btn{padding:6px 12px;font-size:.8125rem;font-weight:600;border-radius:8px;border:1px solid var(--primary);background:var(--primary);color:#fff;cursor:pointer}
+        .mp-btn.ghost{background:#fff;color:var(--primary)}
+        .mp-btn:disabled{opacity:.5}
+        .mp-note{font-size:.8125rem;color:var(--sub-text);border-left:3px solid #e0a43a;padding:2px 0 2px 10px;margin:4px 0 10px;line-height:1.45}
+        .mp-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;margin:0}
+        .mp-grid .wide{grid-column:1/-1}
+        .mp-grid dt{font-size:.75rem;color:var(--sub-text);margin-bottom:2px}
+        .mp-grid dd{margin:0;font-size:.9375rem;font-weight:600;word-break:break-all}
+        .mp-grid input,.mp-grid select{width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:.875rem;background:#fff}
+      `}</style>
     </section>
   );
 }

@@ -39,82 +39,58 @@ export default async function MyPage() {
   const isRestricted = activeRestrictions.length > 0;
   const warningCount = fullUser.warnings.length;
 
+  const fmtDate = (d: Date | string) => {
+    const x = new Date(d);
+    const w = ['일', '월', '화', '수', '목', '금', '토'][x.getDay()];
+    return `${x.getMonth() + 1}/${x.getDate()} (${w})`;
+  };
+
   return (
-    <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '40px 0' }}>
-      <div className="container" style={{ maxWidth: '900px' }}>
-        <h1 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '24px', borderBottom: '2px solid var(--primary)', paddingBottom: '12px', display: 'inline-block' }}>
-          마이페이지
-        </h1>
+    <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '20px 0 40px' }}>
+      <div className="container" style={{ maxWidth: '720px' }}>
+        <h1 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 14px' }}>마이페이지</h1>
 
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
-          {/* Profile Section */}
-          <ProfileForm user={{
-            id: fullUser.id,
-            name: fullUser.name,
-            studentId: fullUser.studentId,
-            grade: fullUser.grade,
-            email: fullUser.email,
-            phone: fullUser.phone,
-            approvalStatus: fullUser.approvalStatus,
-            rejectedReason: fullUser.rejectedReason
-          }} />
+        <ProfileForm user={{
+          id: fullUser.id,
+          name: fullUser.name,
+          studentId: fullUser.studentId,
+          grade: fullUser.grade,
+          email: fullUser.email,
+          phone: fullUser.phone,
+          approvalStatus: fullUser.approvalStatus,
+          rejectedReason: fullUser.rejectedReason
+        }} />
 
-          {/* Recent Applications Section */}
-          <section className="card">
-            <h2 style={{ fontSize: '1.125rem', fontWeight: '700', marginBottom: '16px' }}>최근 신청서</h2>
-            
-            {/* Desktop View */}
-            <div className="table-container hide-mobile">
-              <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-                <thead>
-                  <tr style={{ textAlign: 'left', borderBottom: '2px solid var(--border)' }}>
-                    <th style={{ padding: '12px', fontSize: '0.8125rem' }}>날짜</th>
-                    <th style={{ padding: '12px', fontSize: '0.8125rem' }}>시간</th>
-                    <th style={{ padding: '12px', fontSize: '0.8125rem' }}>장소</th>
-                    <th style={{ padding: '12px', fontSize: '0.8125rem' }}>술기</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {fullUser.applications.length > 0 ? fullUser.applications.map(app => (
-                    <tr key={app.id} style={{ borderBottom: '1px solid var(--border)' }}>
-                      <td style={{ padding: '12px', fontSize: '0.875rem' }}>{new Date(app.slot.date).toLocaleDateString('ko-KR')}</td>
-                      <td style={{ padding: '12px', fontSize: '0.875rem' }}>{app.slot.startTime} ~ {app.slot.endTime}</td>
-                      <td style={{ padding: '12px', fontSize: '0.875rem' }}>{app.slot.room}</td>
-                      <td style={{ padding: '12px', fontSize: '0.875rem' }}>
-                        <div style={{ maxWidth: '180px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
-                          {app.skills.map(s => s.skill.name).join(', ')}
-                        </div>
-                      </td>
-                    </tr>
-                  )) : (
-                    <tr>
-                      <td colSpan={4} style={{ padding: '24px', textAlign: 'center', color: 'var(--sub-text)', fontSize: '0.875rem' }}>작성 내역이 없어요.</td>
-                    </tr>
-                  )}
-                </tbody>
-              </table>
-            </div>
-
-            {/* Mobile View */}
-            <div className="show-mobile" style={{ display: 'none' }}>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {fullUser.applications.length > 0 ? fullUser.applications.map(app => (
-                  <div key={app.id} style={{ border: '1px solid var(--border)', borderRadius: '8px', padding: '16px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                      <span style={{ fontWeight: '700', fontSize: '0.9375rem' }}>{new Date(app.slot.date).toLocaleDateString('ko-KR')}</span>
-                    </div>
-                    <div style={{ fontSize: '0.875rem', color: 'var(--sub-text)', marginBottom: '4px' }}>시간: {app.slot.startTime} ~ {app.slot.endTime}</div>
-                    <div style={{ fontSize: '0.875rem', color: 'var(--sub-text)', marginBottom: '4px' }}>장소: {app.slot.room}</div>
-                    <div style={{ fontSize: '0.875rem', color: 'var(--primary)', fontWeight: '500' }}>술기: {app.skills.map(s => s.skill.name).join(', ')}</div>
+        <section className="mp-card" style={{ marginTop: 12 }}>
+          <div className="mp-head"><h2>최근 신청서</h2></div>
+          {fullUser.applications.length > 0 ? (
+            <ul className="mp-list">
+              {fullUser.applications.map(app => (
+                <li key={app.id}>
+                  <div className="mp-row1">
+                    <b>{fmtDate(app.slot.date)}</b>
+                    <span>{app.slot.startTime}~{app.slot.endTime}</span>
+                    <span className="mp-room">{app.slot.room}</span>
                   </div>
-                )) : (
-                  <p style={{ textAlign: 'center', padding: '20px', color: 'var(--sub-text)' }}>작성 내역이 없어요.</p>
-                )}
-              </div>
-            </div>
-          </section>
-        </div>
+                  <div className="mp-skills">{app.skills.map(s => s.skill.name).join(', ')}</div>
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mp-empty">아직 없어요</p>
+          )}
+        </section>
       </div>
+      <style>{`
+        .mp-list{list-style:none;margin:0;padding:0}
+        .mp-list li{padding:10px 0;border-top:1px solid var(--border)}
+        .mp-list li:first-child{border-top:0}
+        .mp-row1{display:flex;gap:8px;align-items:baseline;font-size:.875rem}
+        .mp-row1 span{color:var(--sub-text)}
+        .mp-row1 .mp-room{margin-left:auto;font-size:.8125rem}
+        .mp-skills{font-size:.8125rem;color:var(--primary);margin-top:3px;line-height:1.4}
+        .mp-empty{text-align:center;color:var(--sub-text);font-size:.875rem;padding:16px 0 4px;margin:0}
+      `}</style>
     </main>
   );
 }
