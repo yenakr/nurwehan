@@ -184,7 +184,7 @@ export default function ApplyForm({ user, clinicalWeeks = [] }: ApplyFormProps) 
   const isAdmin = user && (user.role === 'ADMIN' || user.role === 'ASSISTANT' || user.role === 'SUPER_ADMIN');
   // 내 임상실습 주(Day 근무)와 겹치는 날은 회색으로 표시
   const isClinicalDay = (date: string) =>
-    clinicalWeeks.some(w => w.shift !== 'Eve' && date >= w.start && date <= w.end);
+    clinicalWeeks.some(w => date >= w.start && date <= w.end);
   const filteredSlots = allSlots.filter(slot => {
     const isMatchingGrade = slot.grade.toString() === gradeFilter;
     if (isAdmin && showAllSlots) return isMatchingGrade;
