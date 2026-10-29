@@ -57,3 +57,18 @@ export function buildSubjects(terms: NursingTerm[]): SubjectEntry[] {
   }
   return Array.from(map, ([name, grade]) => ({ name, grade })).sort((a, b) => a.name.localeCompare(b.name, 'ko'));
 }
+
+// 약어처럼 보이는지: 공백 없이 짧고 대문자/숫자/기호 위주 (CPD, C/S, PROM, T&A ...)
+function looksAbbr(v: string): boolean {
+  const t = v.trim();
+  return /^[A-Za-z0-9/.&+\-]{1,10}$/.test(t) && /[A-Z]{2}|[A-Z][/&.+\-][A-Z]|[0-9]/.test(t);
+}
+
+// 예전에 약어/풀네임이 서로 바뀌어 저장된 용어를 바로잡는다 (term=약어, englishTerm=풀네임)
+export function normalizeTerm<T extends { term: string; englishTerm?: string | null }>(t: T): T {
+  const en = t.englishTerm?.trim();
+  if (en && looksAbbr(en) && !looksAbbr(t.term) && /\s|[a-z]{4,}/.test(t.term.trim())) {
+    return { ...t, term: en, englishTerm: t.term };
+  }
+  return t;
+}
