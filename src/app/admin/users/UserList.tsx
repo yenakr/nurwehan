@@ -269,14 +269,14 @@ export default function UserList({ initialUsers, superAdmin = false }: { initial
         .gtitle { font-size: 0.9375rem; font-weight: 800; color: #1e293b; margin: 8px 0 8px; }
         .gtitle span { color: var(--sub-text); font-weight: 600; margin-left: 4px; }
         .list { background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
-        .row { display: flex; flex-direction: column; gap: 10px; padding: 14px; border-top: 1px solid #f1f5f9; }
+        .row { display: flex; align-items: center; gap: 10px; padding: 8px 12px; border-top: 1px solid #f1f5f9; }
         .row.pending { flex-direction: row; align-items: center; justify-content: space-between; gap: 12px; }
-        .top { display: flex; align-items: baseline; gap: 8px; min-width: 0; }
+        .top { display: flex; align-items: center; gap: 8px; min-width: 0; flex: 1; }
         .top .name { white-space: nowrap; }
         .top .sid { font-size: 0.8125rem; color: #94a3b8; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
         .top .st { align-self: center; flex: 0 0 auto; }
-        .ctl { display: flex; gap: 8px; }
-        .ctl select { flex: 1; min-width: 0; }
+        .ctl { display: flex; gap: 6px; flex: 0 0 auto; }
+        .ctl select { min-width: 0; }
         .row:first-child { border-top: none; }
                 .name { font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 6px; }
         .sub { font-size: 0.8125rem; color: #94a3b8; margin-top: 2px; word-break: break-all; }
@@ -285,14 +285,18 @@ export default function UserList({ initialUsers, superAdmin = false }: { initial
         .st.pending { background: #fef9c3; color: #a16207; }
         .st.rejected { background: #fee2e2; color: #b91c1c; }
         .who { flex: 1; min-width: 0; }
-        .row select { padding: 9px 10px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 0.875rem; }
+        .row select { padding: 5px 6px; border: 1px solid #e2e8f0; border-radius: 8px; background: #f8fafc; font-size: 0.8125rem; }
         .btns { display: flex; gap: 8px; flex: 0 0 auto; }
         .btns button { padding: 9px 16px; border-radius: 9px; font-size: 0.875rem; font-weight: 800; cursor: pointer; border: 1px solid transparent; white-space: nowrap; }
         .btns .ok { background: var(--primary); color: #fff; }
         .btns .no { background: #fff; color: #ef4444; border-color: #fecaca; }
         .btns button:disabled { opacity: 0.5; }
         .empty { text-align: center; color: #94a3b8; padding: 40px 12px; }
-        @media (max-width: 480px) {
+        @media (max-width: 560px) {
+          .row:not(.pending) { flex-wrap: wrap; gap: 6px; padding: 10px 12px; }
+          .row:not(.pending) .top { flex: 1 1 100%; }
+          .ctl { flex: 1 1 100%; }
+          .ctl select { flex: 1; }
           .row.pending { flex-direction: column; align-items: stretch; }
           .row.pending .btns button { flex: 1; padding: 11px; }
         }
