@@ -364,7 +364,7 @@ function ScheduleManagement() {
                   <tbody>
                     {slots.map(sl => (
                       <tr key={sl}>
-                        <th className="tcol">{sl.replace('~', '\n')}</th>
+                        <th className="tcol">{sl.split('~')[0]}</th>
                         {days.map(d => {
                           const cell = rules.filter(r => r.dayOfWeek === d && `${r.startTime}~${r.endTime}` === sl);
                           return (
@@ -440,21 +440,20 @@ function ScheduleManagement() {
         .legend { display: flex; gap: 12px; margin-bottom: 8px; }
         .lg { display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; color: var(--sub-text); }
         .lg i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; display: inline-block; }
-        .lg.g2 { color: #4f6bd8; } .lg.g3 { color: #2f9a82; } .lg.g4 { color: #c98a2b; }
+        .lg.g2 { color: #b9c3e6; } .lg.g3 { color: #6f82c4; } .lg.g4 { color: #233a8a; }
         .gridwrap { overflow-x: auto; }
-        .tt { width: 100%; min-width: 440px; border-collapse: separate; border-spacing: 4px; table-layout: fixed; }
+        .tt { border-collapse: separate; border-spacing: 4px; table-layout: fixed; width: max-content; }
         .tt th { font-size: 0.75rem; font-weight: 600; color: var(--sub-text); padding: 2px 0 4px; background: none; text-align: center; }
-        .tt th.tcol { width: 44px; font-size: 0.6875rem; font-weight: 500; white-space: pre-line; line-height: 1.25; text-align: right; padding-right: 6px; font-variant-numeric: tabular-nums; vertical-align: middle; }
-        .tt td { padding: 0; vertical-align: top; height: 38px; background: #f8fafc; border-radius: 8px; }
+        .tt th.tcol { width: 48px; font-size: 0.75rem; font-weight: 500; white-space: pre-line; line-height: 1.25; text-align: right; padding-right: 6px; font-variant-numeric: tabular-nums; vertical-align: middle; }
+        .tt td { padding: 0; vertical-align: top; width: 76px; height: 36px; background: #f8fafc; border-radius: 8px; }
         .tt td:has(.chip) { background: none; }
-        .chip { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; min-height: 38px; padding: 0 6px; margin: 0 0 3px; border-radius: 8px; border: 1.5px solid transparent; font-size: 0.8125rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+        .chip { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; min-height: 36px; padding: 0 6px; margin: 0 0 3px; border-radius: 8px; border: 1.5px solid transparent; font-size: 0.8125rem; font-weight: 700; cursor: pointer; font-family: inherit; }
         .chip:last-child { margin-bottom: 0; }
-        .chip.g1 { background: #fdf0d5; color: #8a5a14; }
-        .chip.g2 { background: #e6ecfb; color: #2b45a8; }
-        .chip.g3 { background: #def2ec; color: #1d6b5a; }
-        .chip.g4 { background: #f8ecd8; color: #9a6410; }
+        .chip.g1, .chip.g2 { background: #e6e9f5; color: #233a8a; }
+        .chip.g3 { background: #8c9bd0; color: #fff; }
+        .chip.g4 { background: #233a8a; color: #fff; }
         .chip.off { opacity: 0.4; border-style: dashed; border-color: currentColor; }
-        .chip.sel { border-color: var(--primary); }
+        .chip.sel { box-shadow: 0 0 0 2px #fff, 0 0 0 4px #f59e0b; }
         .sel-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid #eef2f7; font-size: 0.875rem; }
         .groups { display: flex; flex-direction: column; gap: 18px; }
         .gtitle { font-size: 0.9375rem; font-weight: 800; margin: 0 0 8px; }
