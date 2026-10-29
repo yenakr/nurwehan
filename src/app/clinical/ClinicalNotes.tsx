@@ -125,15 +125,14 @@ export default function ClinicalNotes({
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       <div
         style={{
-          padding: '12px 14px',
-          backgroundColor: '#FEF2F2',
-          border: '1px solid #FCA5A5',
-          borderRadius: '8px',
-          color: '#991B1B',
+          padding: '2px 0 2px 12px',
+          borderLeft: '3px solid #f59e0b',
+          color: 'var(--sub-text)',
           fontSize: '0.8125rem',
+          lineHeight: 1.6,
         }}
       >
-        <strong>환자를 알아볼 수 있는 정보는 적지 마세요.</strong> 이름, 등록번호, 병실 번호, 생년월일 등은 저장하지 않아요. 이 메모는 나만 볼 수 있어요.
+        환자 식별 정보(이름·등록번호·병실·생년월일)는 적지 마세요. 메모는 나만 볼 수 있어요.
       </div>
 
       {unavailable && (
