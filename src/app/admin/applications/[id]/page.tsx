@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { redirect, notFound } from 'next/navigation';
 import Link from 'next/link';
 import { formatInTimeZone } from 'date-fns-tz';
-import ApplicationStatusActions from './ApplicationStatusActions';
+import DeleteButton from './DeleteButton';
 
 const TIME_ZONE = 'Asia/Seoul';
 
@@ -58,7 +58,6 @@ export default async function AdminApplicationDetailPage({ params }: { params: P
           <Link href="/admin/applications" style={{ color: 'var(--sub-text)', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
             ← 신청서 내역
           </Link>
-          {application.status === 'CANCELLED' && <span className="badge" style={{ padding: '6px 12px', fontSize: '0.875rem' }}>취소됨</span>}
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -201,12 +200,9 @@ export default async function AdminApplicationDetailPage({ params }: { params: P
             </div>
           </div>
 
-          {/* Actions Section */}
-          <ApplicationStatusActions 
-            applicationId={application.id} 
-            currentStatus={application.status} 
-            participants={application.participants}
-          />
+          <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+            <DeleteButton applicationId={application.id} />
+          </div>
         </div>
       </div>
     </main>
