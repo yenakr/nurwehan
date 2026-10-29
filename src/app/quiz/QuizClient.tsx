@@ -2102,6 +2102,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
             const showTermAsQuestion = isStructured || quizType === 'term_to_def' || quizType === 'abbr_both';
             const promptText = showTermAsQuestion ? q.term : q.definition;
             const ok = res.overrideCorrect !== undefined ? res.overrideCorrect : res.isCorrect;
+            const hintOnly = !!res.hinted && res.overrideCorrect === undefined && checkAnswerCorrectness(res.userAns || '', q);
             const ans = quizType === 'abbr_both' ? `${q.englishTerm || ''} / ${q.definition}` : (q.answer || q.term);
             return (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
@@ -2109,8 +2110,8 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                   <h3 style={{ fontSize: '1.125rem', fontWeight: 800, color: '#1E293B', lineHeight: 1.6, margin: 0 }}>{promptText}</h3>
                 </div>
                 <div className={s.rvMine}><span>내 답안</span>{res.userAns?.trim() ? res.userAns : '미입력'}</div>
-                <div className={`${s.fb} ${res.hinted && res.overrideCorrect === undefined ? s.fbHint : ok ? s.fbOk : s.fbNo}`}>
-                  <div className={s.fbTitle}>{res.hinted ? '▲ ' : ''}{ok ? '정답' : '오답'}{res.hinted ? ' · 힌트 사용' : ''}</div>
+                <div className={`${s.fb} ${hintOnly ? s.fbHint : ok ? s.fbOk : s.fbNo}`}>
+                  <div className={s.fbTitle}>{hintOnly ? '▲ ' : ''}{ok ? '정답' : '오답'}{hintOnly ? ' · 힌트 사용' : ''}</div>
                   <div className={s.fbAns}>{ans}</div>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -2346,8 +2347,8 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                     const def = currentQuestion.definition;
                     const showNote = !!def && ![currentQuestion.term, currentQuestion.englishTerm, ans].some(v => norm(v) === norm(def));
                     return (
-                      <div className={`${s.fb} ${hinted ? s.fbHint : ok ? s.fbOk : s.fbNo}`}>
-                        <div className={s.fbTitle}>{hinted ? (ok ? '▲ 힌트 사용 · 오답으로 처리돼요' : '▲ 힌트 사용 · 오답') : ok ? '정답' : '오답'}</div>
+                      <div className={`${s.fb} ${hinted && ok ? s.fbHint : ok && !hinted ? s.fbOk : s.fbNo}`}>
+                        <div className={s.fbTitle}>{hinted && ok ? '▲ 힌트 사용 · 오답으로 처리돼요' : ok ? '정답' : '오답'}</div>
                         <div className={s.fbAns}>{ans}</div>
                         {!ok && showNote && <div className={s.fbNote}>{def}</div>}
                       </div>
@@ -2711,7 +2712,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                     return (
                       <article key={res.term.id ?? idx} className={`${s.rsItem} ${finalCorrect ? s.rsOk : s.rsNo}`}>
                         <div className={s.rsHead}>
-                          <span className={s.rsNum}>#{idx + 1} {res.hinted && <span className={s.hintMark}>▲</span>}{finalCorrect ? '정답' : '오답'}</span>
+                          <span className={s.rsNum}>#{idx + 1} {res.hinted && checkAnswerCorrectness(res.userAns || '', res.term) && <span className={s.hintMark}>▲</span>}{finalCorrect ? '정답' : '오답'}</span>
                           <button type="button" className={s.rsToggle} onClick={() => handleToggleSelfCorrection(idx)}>
                             {finalCorrect ? '오답 처리' : '정답 처리'}
                           </button>
@@ -2781,7 +2782,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
               {Array.isArray(selectedHistoryAttempt.details) && selectedHistoryAttempt.details.map((item: any, idx: number) => (
                 <article key={idx} className={`${s.rsItem} ${item.isCorrect ? s.rsOk : s.rsNo}`}>
                   <div className={s.rsHead}>
-                    <span className={s.rsNum}>#{idx + 1} {item.hinted && <span className={s.hintMark}>▲</span>}{item.isCorrect ? '정답' : '오답'}</span>
+                    <span className={s.rsNum}>#{idx + 1} {item.hinted && checkAnswerCorrectness(item.userAns || '', item.term) && <span className={s.hintMark}>▲</span>}{item.isCorrect ? '정답' : '오답'}</span>
                   </div>
                   <div className={s.rsTerm}>{item.questionText}</div>
                   <div className={s.rsAns}>{item.correctAnswer}</div>
