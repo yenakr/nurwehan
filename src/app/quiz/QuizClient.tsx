@@ -196,14 +196,27 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
   const [autoTTS, setAutoTTS] = useState<boolean>(false);
   const [ttsRate, setTtsRate] = useState<number>(1.0);
 
-  // 음성 목록은 브라우저가 비동기로 불러오므로 미리 요청해 둔다
+  // 영어 음성: 기본은 자동 선택. 맞지 않으면 직접 고를 수 있고, 고른 값은 브라우저에 기억한다.
+  const [enVoiceName, setEnVoiceName] = useState<string>('');
+  const [enVoices, setEnVoices] = useState<string[]>([]);
   useEffect(() => {
+    try { setEnVoiceName(localStorage.getItem('nursing_quiz_en_voice') || ''); } catch {}
     if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
-    window.speechSynthesis.getVoices();
-    const warm = () => window.speechSynthesis.getVoices();
-    window.speechSynthesis.addEventListener?.('voiceschanged', warm);
-    return () => window.speechSynthesis.removeEventListener?.('voiceschanged', warm);
+    const load = () => {
+      const names = window.speechSynthesis
+        .getVoices()
+        .filter(v => v.lang.toLowerCase().replace('_', '-').startsWith('en') && !NOVELTY_VOICES.test(v.name))
+        .map(v => v.name);
+      setEnVoices(Array.from(new Set(names)));
+    };
+    load();
+    window.speechSynthesis.addEventListener?.('voiceschanged', load);
+    return () => window.speechSynthesis.removeEventListener?.('voiceschanged', load);
   }, []);
+  const changeEnVoice = (name: string) => {
+    setEnVoiceName(name);
+    try { localStorage.setItem('nursing_quiz_en_voice', name); } catch {}
+  };
 
   const toggleAutoTTS = useCallback(() => {
     const next = !autoTTS;
@@ -245,8 +258,13 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
     segs.forEach((g, i) => {
       const utterance = new SpeechSynthesisUtterance(g.text);
       utterance.lang = g.lang;
-      const voice = pickVoice(g.lang);
-      if (voice) utterance.voice = voice;
+      // 영어만 목소리를 지정한다. 한국어는 브라우저 기본 한국어 목소리를 그대로 쓴다.
+      if (g.lang.toLowerCase().startsWith('en')) {
+        const chosen = enVoiceName
+          ? window.speechSynthesis.getVoices().find(v => v.name === enVoiceName)
+          : pickVoice(g.lang);
+        if (chosen) utterance.voice = chosen;
+      }
       utterance.rate = ttsRate;
       if (i === segs.length - 1 && onEnd) {
         utterance.onend = () => onEnd();
@@ -254,7 +272,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
       }
       window.speechSynthesis.speak(utterance);
     });
-  }, [ttsRate]);
+  }, [ttsRate, enVoiceName]);
 
   // Quiz Setup States
   const [quizSubject, setQuizSubject] = useState<string>('');
@@ -1588,6 +1606,12 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                 {autoTTS && (
                   <select aria-label="음성 배속" className={s.ttsSelect} value={ttsRate} onChange={e => setTtsRate(parseFloat(e.target.value))}>
                     {[0.75, 1, 1.25, 1.5, 2].map(r => <option key={r} value={r}>{r}x</option>)}
+                  </select>
+                )}
+                {autoTTS && enVoices.length > 0 && (
+                  <select aria-label="영어 음성" className={s.ttsSelect} style={{ maxWidth: 110 }} value={enVoiceName} onChange={e => changeEnVoice(e.target.value)}>
+                    <option value="">영어 음성 · 자동</option>
+                    {enVoices.map(n => <option key={n} value={n}>{n}</option>)}
                   </select>
                 )}
               </div>
