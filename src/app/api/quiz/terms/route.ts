@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
 import { hiddenSubjectsFor } from '@/lib/access';
+import { normalizeTerm } from '@/lib/quiz/taxonomy';
 import { guestAllowed } from '@/lib/quiz-gate';
 
 export async function GET(req: Request) {
@@ -38,7 +39,7 @@ export async function GET(req: Request) {
     const subjects = Array.from(new Set(allTerms.map(t => t.subject).filter(Boolean)));
     const categories = Array.from(new Set(allTerms.map(t => t.category).filter(Boolean)));
 
-    return NextResponse.json({ terms, subjects, categories });
+    return NextResponse.json({ terms: terms.map(normalizeTerm), subjects, categories });
   } catch (error) {
     return NextResponse.json({ error: 'Failed to fetch terms' }, { status: 500 });
   }

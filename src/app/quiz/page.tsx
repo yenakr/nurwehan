@@ -1,5 +1,6 @@
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
+import { normalizeTerm } from '@/lib/quiz/taxonomy';
 import QuizClient from './QuizClient';
 import GateForm from './GateForm';
 import { gateEnabled, guestAllowed } from '@/lib/quiz-gate';
@@ -38,10 +39,12 @@ export default async function QuizPage({
     orderBy: [{ subject: 'asc' }, { createdAt: 'asc' }, { category: 'asc' }, { term: 'asc' }],
   });
 
+  const normalized = terms.map(normalizeTerm);
+
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '32px 0' }}>
       <div className="container">
-        <QuizClient initialTerms={terms} user={user} initialSubject={subject} subjectLevels={subjectLevels} superAdmin={!!user && isSuperAdmin(user.role)} guest={guest} />
+        <QuizClient initialTerms={normalized} user={user} initialSubject={subject} subjectLevels={subjectLevels} superAdmin={!!user && isSuperAdmin(user.role)} guest={guest} />
       </div>
     </main>
   );
