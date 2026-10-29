@@ -135,6 +135,21 @@ function pickVoice(lang: string): SpeechSynthesisVoice | undefined {
   return pool.find(v => v.localService) || pool[0];
 }
 
+function fmtSec(n: number) {
+  const m = Math.floor(n / 60);
+  return `${m}:${String(n % 60).padStart(2, '0')}`;
+}
+
+function ElapsedClock({ startRef }: { startRef: { current: number } }) {
+  const [, force] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => force(v => v + 1), 1000);
+    return () => clearInterval(id);
+  }, []);
+  const sec = startRef.current ? Math.max(0, Math.floor((Date.now() - startRef.current) / 1000)) : 0;
+  return <span style={{ fontSize: '0.8125rem', color: 'var(--sub-text)', fontVariantNumeric: 'tabular-nums' }}>{fmtSec(sec)}</span>;
+}
+
 export default function QuizClient({ initialTerms, user, initialSubject, subjectLevels, guest, superAdmin }: QuizClientProps) {
   const isAdmin = isAdminRole(user?.role);
   const router = useRouter();
@@ -297,6 +312,9 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
   const [showHint, setShowHint] = useState<boolean>(false);
   const [isAnswerSubmitted, setIsAnswerSubmitted] = useState<boolean>(false);
   const submitTimestampRef = useRef<number>(0);
+  const quizStartRef = useRef<number>(0);
+  const qStartRef = useRef<number>(0);
+  const qSec = () => Math.max(0, Math.round((Date.now() - qStartRef.current) / 1000));
   const answerInputRef = useRef<HTMLInputElement | null>(null);
   
   // Generated Multiple-Choice Options
@@ -304,7 +322,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
 
   // User answers record
   const [quizResults, setQuizResults] = useState<
-    Array<{ term: NursingTerm; userAns: string; isCorrect: boolean; overrideCorrect?: boolean; hinted?: boolean }>
+    Array<{ term: NursingTerm; userAns: string; isCorrect: boolean; overrideCorrect?: boolean; hinted?: boolean; sec?: number }>
   >([]);
 
   // PDF Export Mode: 'wrong_only' | 'all'
@@ -562,6 +580,9 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
         correctAnswer: r.term.answer || r.term.definition,
         isCorrect: r.overrideCorrect !== undefined ? r.overrideCorrect : r.isCorrect,
         hinted: !!r.hinted,
+        sec: r.sec ?? null,
+        startedAt: new Date(quizStartRef.current || Date.now()).toISOString(),
+        totalSec: Math.round((Date.now() - (quizStartRef.current || Date.now())) / 1000),
         options: r.term.options || [],
         fullTerm: r.term,
       }));
@@ -935,6 +956,13 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
     };
   };
 
+  useEffect(() => {
+    if (activeTab === 'quiz_play') quizStartRef.current = Date.now();
+  }, [activeTab]);
+  useEffect(() => {
+    if (activeTab === 'quiz_play') qStartRef.current = Date.now();
+  }, [activeTab, currentIndex]);
+
   const handleSubmitBoth = () => {
     if (!currentQuestion || isAnswerSubmitted) return;
     submitTimestampRef.current = Date.now();
@@ -945,6 +973,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
         term: currentQuestion,
         userAns: `${userAnswer.trim() || '(미입력)'} / ${userAnswer2.trim() || '(미입력)'}`,
         isCorrect: r.full && r.meaning,
+        sec: qSec(),
       },
     ]);
     setIsAnswerSubmitted(true);
@@ -992,6 +1021,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
       userAns: userAnswer,
       isCorrect,
       hinted: showHint,
+      sec: qSec(),
     };
 
     setQuizResults(prev => [...prev, resultItem]);
@@ -1011,6 +1041,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
       term: currentQuestion,
       userAns: choiceText,
       isCorrect,
+      sec: qSec(),
     };
 
     setQuizResults(prev => [...prev, resultItem]);
@@ -1058,6 +1089,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
           userAns: quizType === 'abbr_both' ? '(미입력) / (미입력)' : '',
           isCorrect: false,
           hinted: showHint,
+          sec: qSec(),
         },
       ]);
     }
@@ -2061,6 +2093,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
               <span style={{ fontSize: '1.0625rem', fontWeight: 800, color: 'var(--primary)', whiteSpace: 'nowrap' }}>
                 {(reviewIndex ?? currentIndex) + 1} / {quizQuestions.length}
               </span>
+              <ElapsedClock startRef={quizStartRef} />
             </span>
             <span style={{ fontSize: '0.8125rem', color: 'var(--sub-text)', textAlign: 'right', display: 'flex', alignItems: 'center', gap: 8 }}>
               <span>{currentQuestion.subject}{currentQuestion.category && currentQuestion.category !== 'all' ? ` · ${currentQuestion.category}` : ''}</span>
@@ -2681,6 +2714,27 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                     <div className={s.rsCount}>{correctCount} / {totalQuizCount}</div>
                   </div>
                   <div className={s.rsBar} aria-hidden="true"><div style={{ width: `${scorePercent}%` }} /></div>
+                  {(() => {
+                    const timed = quizResults.filter(r => typeof r.sec === 'number');
+                    if (timed.length === 0) return null;
+                    const total = timed.reduce((a, r) => a + (r.sec || 0), 0);
+                    const slow = [...timed].sort((a, b) => (b.sec || 0) - (a.sec || 0)).slice(0, 5);
+                    return (
+                      <div className={s.rsTime}>
+                        <div className={s.rsTimeHead}>
+                          <span>총 {fmtSec(total)}</span>
+                          <span>문제당 평균 {Math.round(total / timed.length)}초</span>
+                        </div>
+                        <div className={s.rsSlowTitle}>오래 걸린 순</div>
+                        {slow.map((r, i) => (
+                          <div key={i} className={s.rsSlow}>
+                            <span>{r.term.term}</span>
+                            <b>{r.sec}초</b>
+                          </div>
+                        ))}
+                      </div>
+                    );
+                  })()}
                   <div className={s.rsActions}>
                     {wrongResults.length > 0 && (
                       <button type="button" className={`${s.btn} ${s.btnPrimary}`} onClick={() => startRetry(wrongResults.map(w => w.term))}>

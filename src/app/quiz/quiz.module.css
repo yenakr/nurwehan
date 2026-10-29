@@ -248,3 +248,10 @@
 .fbHint { border-left-color: #eab308; background: #fffbeb; }
 .fbHint .fbTitle { color: #a16207; }
 .hintMark { color: #eab308; margin-right: 4px; }
+
+.rsTime { display: flex; flex-direction: column; gap: 4px; padding-top: 10px; border-top: 1px solid var(--q-border); font-size: 0.8125rem; color: var(--q-text-2); }
+.rsTimeHead { display: flex; justify-content: space-between; font-weight: 700; margin-bottom: 4px; }
+.rsSlowTitle { font-size: 0.75rem; color: var(--q-muted); }
+.rsSlow { display: flex; justify-content: space-between; gap: 10px; }
+.rsSlow span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rsSlow b { flex: 0 0 auto; font-variant-numeric: tabular-nums; }

@@ -29,7 +29,11 @@ const modeLabel = (q: string, kind: QuizKind) => (kind === 'MULTIPLE_CHOICE' ? '
 const quizName = (c?: string | null) => (!c || c === 'all' ? '전체' : c);
 const fmtDate = (iso: string) => {
   const d = new Date(iso);
-  return `${d.getMonth() + 1}월 ${d.getDate()}일`;
+  return `${d.getMonth() + 1}월 ${d.getDate()}일 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
+};
+const startOf = (a: Attempt) => {
+  const st = Array.isArray(a.details) ? a.details[0]?.startedAt : null;
+  return typeof st === 'string' ? st : a.createdAt;
 };
 
 export default function RecordView({
@@ -115,7 +119,7 @@ export default function RecordView({
             <div key={a.id} className={s.row}>
               <div className={s.rowMain}>
                 <div className={s.rowTitle}>{quizName(a.category)} · {modeLabel(a.quizType, kind)}</div>
-                <div className={s.rowSub}>{fmtDate(a.createdAt)}</div>
+                <div className={s.rowSub}>{fmtDate(startOf(a))}</div>
               </div>
               <div className={s.rowEnd}>
                 <span style={{ fontSize: '0.875rem' }}>{a.correctCount} / {a.totalQuestions}</span>
