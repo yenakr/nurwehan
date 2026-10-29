@@ -3,6 +3,7 @@ import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import ApplyForm from './ApplyForm';
+import { findMyAssignments } from '@/lib/clinical';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,13 +43,16 @@ export default async function OpenLabApplyPage() {
     role: user.role
   } : null;
 
+  const mine = user ? await findMyAssignments(user) : [];
+  const clinicalWeeks = mine.map(a => ({ start: a.startDate, end: a.endDate, shift: a.shift }));
+
   return (
     <main style={{ backgroundColor: 'var(--muted-background)', padding: '40px 0' }}>
       <div className="container" style={{ maxWidth: '680px' }}>
         <h1 style={{ fontSize: '1.375rem', fontWeight: 800, marginBottom: '16px', color: 'var(--text)' }}>
           OPEN LAB 신청서 생성 {!userData && <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--sub-text)', marginLeft: '6px' }}>비회원</span>}
         </h1>
-        <ApplyForm user={userData} />
+        <ApplyForm user={userData} clinicalWeeks={clinicalWeeks} />
       </div>
     </main>
   );
