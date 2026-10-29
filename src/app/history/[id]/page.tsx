@@ -68,12 +68,6 @@ export default async function HistoryDetailPage({ params }: { params: Promise<{ 
             <h1 style={{ fontSize: '1.5rem', fontWeight: '800' }}>신청서 작성 상세 정보</h1>
           </div>
 
-          {application.status === 'REJECTED' && application.rejectedReason && (
-            <div className="rejection-notice">
-              <strong>반려 사유:</strong> {application.rejectedReason}
-            </div>
-          )}
-          
           {application.status === 'CANCELLED' && application.cancelReason && (
             <div className="rejection-notice">
               <strong>취소 사유:</strong> {application.cancelReason}

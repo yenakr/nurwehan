@@ -15,17 +15,17 @@ export async function PATCH(
 
     const { id } = await context.params;
     const body = await request.json();
-    const { status, rejectedReason, cancelReason } = body;
+    const { status, cancelReason } = body;
+    if (status !== 'CANCELLED') {
+      return NextResponse.json({ message: '지원하지 않는 요청입니다.' }, { status: 400 });
+    }
 
     const application = await prisma.application.update({
       where: { id },
       data: {
         status,
-        rejectedReason: status === 'REJECTED' ? (rejectedReason || null) : undefined,
-        cancelReason: status === 'CANCELLED' ? (cancelReason || null) : undefined,
-        cancelledAt: status === 'CANCELLED' ? new Date() : undefined,
-        approvedAt: status === 'APPROVED' ? new Date() : undefined,
-        approvedById: status === 'APPROVED' ? user.id : undefined,
+        cancelReason: cancelReason || null,
+        cancelledAt: new Date(),
       }
     });
 

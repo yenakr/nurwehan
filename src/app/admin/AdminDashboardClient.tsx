@@ -40,7 +40,7 @@ export default function AdminDashboardClient({
     {
       title: 'OPEN LAB',
       items: [
-        { icon: '', label: '신청서 내역', desc: '생성된 신청서 보기·승인', href: '/admin/applications' },
+        { icon: '', label: '신청서 내역', desc: '생성된 신청서 보기', href: '/admin/applications' },
       ],
     },
     {
