@@ -143,6 +143,7 @@ export default function AdminDashboardClient({
 function ScheduleManagement() {
   const [rules, setRules] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [selectedRuleId, setSelectedRuleId] = useState<string | null>(null);
   const [isAdding, setIsAdding] = useState(false);
   const [editingRuleId, setEditingRuleId] = useState<string | null>(null);
 
@@ -340,72 +341,122 @@ function ScheduleManagement() {
       ) : rules.length === 0 ? (
         <div style={{ textAlign: 'center', padding: '60px', color: 'var(--sub-text)', border: '2px dashed var(--border)', borderRadius: '12px' }}>등록된 운영시간 정보가 없습니다.</div>
       ) : (
-        <div className="groups">
-          {Array.from(new Set(rules.map(r => r.grade as number)))
-            .sort((x, y) => x - y)
-            .map(g => (
-              <section key={g}>
-                <h4 className="gtitle">{g}학년</h4>
-                <div className="rlist">
-                  {rules
-                    .filter(r => r.grade === g)
-                    .sort((x, y) => (x.dayOfWeek || 7) - (y.dayOfWeek || 7) || x.startTime.localeCompare(y.startTime))
-                    .map(rule => {
-                      const isEditing = editingRuleId === rule.id;
-                      const shortRoom = (rule.room.match(/\((.*?)\)/)?.[1] ?? rule.room) as string;
-                      return isEditing ? (
-                        <div key={rule.id} className="redit">
-                          <div className="form-grid">
-                            <select value={editForm.grade} onChange={e => setEditForm({ ...editForm, grade: e.target.value })}>
-                              <option value="2">2학년</option>
-                              <option value="3">3학년</option>
-                              <option value="4">4학년</option>
-                            </select>
-                            <select value={editForm.dayOfWeek} onChange={e => setEditForm({ ...editForm, dayOfWeek: e.target.value })}>
-                              {[1, 2, 3, 4, 5, 6, 0].map(d => (
-                                <option key={d} value={d}>{dayNames[d]}요일</option>
+        (() => {
+          const gradeCls = (g: number) => `g${g}`;
+          const days = [1, 2, 3, 4, 5, 6, 0].filter(d => d >= 1 && d <= 5 || rules.some(r => r.dayOfWeek === d));
+          const slots = Array.from(new Set(rules.map(r => `${r.startTime}~${r.endTime}`))).sort();
+          const selected = rules.find(r => r.id === selectedRuleId) || null;
+          const shortOf = (room: string) => (room.match(/\((.*?)\)/)?.[1] ?? room) as string;
+          return (
+            <>
+              <div className="legend">
+                {Array.from(new Set(rules.map(r => r.grade as number))).sort((x, y) => x - y).map(g => (
+                  <span key={g} className={`chip ${gradeCls(g)}`}>{g}학년</span>
+                ))}
+              </div>
+              <div className="gridwrap">
+                <table className="tt">
+                  <thead>
+                    <tr>
+                      <th></th>
+                      {days.map(d => <th key={d}>{dayNames[d]}</th>)}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {slots.map(sl => (
+                      <tr key={sl}>
+                        <th className="tcol">{sl.replace('~', '\n')}</th>
+                        {days.map(d => {
+                          const cell = rules.filter(r => r.dayOfWeek === d && `${r.startTime}~${r.endTime}` === sl);
+                          return (
+                            <td key={d}>
+                              {cell.map(r => (
+                                <button
+                                  key={r.id}
+                                  type="button"
+                                  className={`chip ${gradeCls(r.grade)} ${r.isActive ? '' : 'off'} ${selectedRuleId === r.id ? 'sel' : ''}`}
+                                  onClick={() => { setSelectedRuleId(selectedRuleId === r.id ? null : r.id); setEditingRuleId(null); }}
+                                >
+                                  <b>{r.grade}학년</b>
+                                  <small>{shortOf(r.room)} · {r.maxCapacity}명</small>
+                                </button>
                               ))}
-                            </select>
-                            <input value={editForm.startTime} onChange={e => setEditForm({ ...editForm, startTime: e.target.value })} placeholder="시작 09:00" />
-                            <input value={editForm.endTime} onChange={e => setEditForm({ ...editForm, endTime: e.target.value })} placeholder="종료 10:00" />
-                            <select value={editForm.room} onChange={e => setEditForm({ ...editForm, room: e.target.value })}>
-                              <option value="임상수기실습실 (5층)">임상수기실습실 (5층)</option>
-                              <option value="시뮬레이션실습실 (6층)">시뮬레이션실습실 (6층)</option>
-                            </select>
-                            <input type="number" value={editForm.maxCapacity} onChange={e => setEditForm({ ...editForm, maxCapacity: e.target.value })} placeholder="정원" />
-                          </div>
-                          <div className="rbtns" style={{ marginTop: '10px' }}>
-                            <button onClick={() => handleSaveEdit(rule.id)} className="btn-small btn-primary">저장</button>
-                            <button onClick={() => setEditingRuleId(null)} className="btn-small btn-outline">취소</button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div key={rule.id} className={`rrow ${rule.isActive ? '' : 'off'}`}>
-                          <div className="rtime">
-                            <b>{dayNames[rule.dayOfWeek]}</b>
-                            <span>{rule.startTime}~{rule.endTime}</span>
-                          </div>
-                          <div className="rmeta">{shortRoom} · {rule.maxCapacity}명</div>
-                          <div className="rbtns">
-                            <button
-                              className={`status-toggle-btn ${rule.isActive ? 'active' : 'inactive'}`}
-                              onClick={() => toggleActive(rule.id, rule.isActive)}
-                            >
-                              {rule.isActive ? '사용' : '중지'}
-                            </button>
-                            <button onClick={() => handleStartEdit(rule)} className="btn-small btn-outline">수정</button>
-                            <button onClick={() => handleDelete(rule.id)} className="btn-small btn-danger-outline">삭제</button>
-                          </div>
-                        </div>
-                      );
-                    })}
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+
+              {selected && editingRuleId !== selected.id && (
+                <div className="sel-bar">
+                  <span><b>{selected.grade}학년</b> {dayNames[selected.dayOfWeek]} {selected.startTime}~{selected.endTime} · {shortOf(selected.room)} · {selected.maxCapacity}명</span>
+                  <div className="rbtns">
+                    <button
+                      className={`status-toggle-btn ${selected.isActive ? 'active' : 'inactive'}`}
+                      onClick={() => toggleActive(selected.id, selected.isActive)}
+                    >
+                      {selected.isActive ? '사용' : '중지'}
+                    </button>
+                    <button onClick={() => handleStartEdit(selected)} className="btn-small btn-outline">수정</button>
+                    <button onClick={() => { handleDelete(selected.id); setSelectedRuleId(null); }} className="btn-small btn-danger-outline">삭제</button>
+                  </div>
                 </div>
-              </section>
-            ))}
-        </div>
+              )}
+
+              {selected && editingRuleId === selected.id && (
+                <div className="redit">
+                  <div className="form-grid">
+                    <select value={editForm.grade} onChange={e => setEditForm({ ...editForm, grade: e.target.value })}>
+                      <option value="2">2학년</option>
+                      <option value="3">3학년</option>
+                      <option value="4">4학년</option>
+                    </select>
+                    <select value={editForm.dayOfWeek} onChange={e => setEditForm({ ...editForm, dayOfWeek: e.target.value })}>
+                      {[1, 2, 3, 4, 5, 6, 0].map(d => (
+                        <option key={d} value={d}>{dayNames[d]}요일</option>
+                      ))}
+                    </select>
+                    <input value={editForm.startTime} onChange={e => setEditForm({ ...editForm, startTime: e.target.value })} placeholder="시작 09:00" />
+                    <input value={editForm.endTime} onChange={e => setEditForm({ ...editForm, endTime: e.target.value })} placeholder="종료 10:00" />
+                    <select value={editForm.room} onChange={e => setEditForm({ ...editForm, room: e.target.value })}>
+                      <option value="임상수기실습실 (5층)">임상수기실습실 (5층)</option>
+                      <option value="시뮬레이션실습실 (6층)">시뮬레이션실습실 (6층)</option>
+                    </select>
+                    <input type="number" value={editForm.maxCapacity} onChange={e => setEditForm({ ...editForm, maxCapacity: e.target.value })} placeholder="정원" />
+                  </div>
+                  <div className="rbtns" style={{ marginTop: '10px' }}>
+                    <button onClick={() => handleSaveEdit(selected.id)} className="btn-small btn-primary">저장</button>
+                    <button onClick={() => setEditingRuleId(null)} className="btn-small btn-outline">취소</button>
+                  </div>
+                </div>
+              )}
+            </>
+          );
+        })()
       )}
 
       <style jsx>{`
+        .legend { display: flex; gap: 6px; margin-bottom: 10px; }
+        .gridwrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
+        .tt { width: 100%; min-width: 520px; border-collapse: collapse; table-layout: fixed; }
+        .tt th { font-size: 0.8125rem; font-weight: 800; padding: 8px 4px; background: #f8fafc; border-bottom: 1px solid var(--border); }
+        .tt th.tcol { width: 68px; font-size: 0.6875rem; color: var(--sub-text); font-weight: 600; white-space: pre-line; border-bottom: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; line-height: 1.3; }
+        .tt td { padding: 4px; vertical-align: top; border-bottom: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; height: 52px; }
+        .tt td:last-child, .tt th:last-child { border-right: none; }
+        .tt tr:last-child th, .tt tr:last-child td { border-bottom: none; }
+        .chip { display: inline-flex; flex-direction: column; gap: 1px; width: 100%; text-align: left; padding: 5px 7px; border-radius: 7px; border: 1px solid transparent; font-size: 0.8125rem; cursor: pointer; margin-bottom: 3px; }
+        .legend .chip { width: auto; flex-direction: row; padding: 3px 9px; font-weight: 700; cursor: default; margin: 0; }
+        .chip small { font-size: 0.6875rem; opacity: 0.8; }
+        .chip.g1 { background: #fef3c7; color: #92400e; }
+        .chip.g2 { background: #dbeafe; color: #1e40af; }
+        .chip.g3 { background: #dcfce7; color: #166534; }
+        .chip.g4 { background: #ede9fe; color: #5b21b6; }
+        .chip.off { opacity: 0.4; border-style: dashed; border-color: currentColor; }
+        .chip.sel { box-shadow: 0 0 0 2px var(--primary); }
+        .sel-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: #f8fafc; font-size: 0.875rem; }
         .groups { display: flex; flex-direction: column; gap: 18px; }
         .gtitle { font-size: 0.9375rem; font-weight: 800; margin: 0 0 8px; }
         .rlist { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
