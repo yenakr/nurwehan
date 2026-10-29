@@ -13,6 +13,7 @@ interface ApplyFormProps {
     grade: number;
     role?: string;
   } | null;
+  clinicalWeeks?: { start: string; end: string; shift: string | null }[];
 }
 
 interface Skill {
@@ -56,7 +57,7 @@ const SUBJECTS_BY_GRADE: Record<string, string[]> = {
   ]
 };
 
-export default function ApplyForm({ user }: ApplyFormProps) {
+export default function ApplyForm({ user, clinicalWeeks = [] }: ApplyFormProps) {
   const router = useRouter();
   
   // Data State
@@ -181,6 +182,9 @@ export default function ApplyForm({ user }: ApplyFormProps) {
 
   // 3. Filter Logic
   const isAdmin = user && (user.role === 'ADMIN' || user.role === 'ASSISTANT' || user.role === 'SUPER_ADMIN');
+  // 내 임상실습 주(Day 근무)와 겹치는 날은 회색으로 표시
+  const isClinicalDay = (date: string) =>
+    clinicalWeeks.some(w => w.shift !== 'Eve' && date >= w.start && date <= w.end);
   const filteredSlots = allSlots.filter(slot => {
     const isMatchingGrade = slot.grade.toString() === gradeFilter;
     if (isAdmin && showAllSlots) return isMatchingGrade;
@@ -542,11 +546,11 @@ export default function ApplyForm({ user }: ApplyFormProps) {
                       key={`${slot.ruleId}-${slot.date}-${slot.room}`}
                       type="button"
                       onClick={() => setSelectedSlot(slot)}
-                      className={`slot-row ${isSelected ? 'selected' : ''}`}
+                      className={`slot-row ${isSelected ? 'selected' : ''} ${isClinicalDay(slot.date) ? 'busy' : ''}`}
                     >
                       <span className="slot-main">
                         <b>{slot.startTime} ~ {slot.endTime}</b>
-                        <em>{slot.room}</em>
+                        <em>{isClinicalDay(slot.date) ? '실습 일정과 겹쳐요' : slot.room}</em>
                       </span>
                       <span className="slot-side">
                         <b>{slot.maxCapacity - slot.remaining}/{slot.maxCapacity}명</b>
@@ -858,6 +862,9 @@ export default function ApplyForm({ user }: ApplyFormProps) {
           border-color: var(--primary);
         }
 
+        .slot-row.busy { background: #f1f5f9; color: #94a3b8; }
+        .slot-row.busy b, .slot-row.busy em { color: #94a3b8; }
+        .slot-row.busy.selected { background: #e8ecf5; }
         .slots-grid {
           display: grid;
           grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
