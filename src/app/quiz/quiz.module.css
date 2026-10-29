@@ -238,3 +238,10 @@
 .selfToggle { border: 0; background: transparent; padding: 2px 0; font-size: 0.8125rem; color: var(--q-muted); text-decoration: underline; font-family: inherit; cursor: pointer; }
 .rvMine { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 10px; background: var(--q-primary-soft); font-size: 1rem; font-weight: 700; color: var(--q-text); }
 .rvMine span { font-size: 0.75rem; font-weight: 700; color: var(--q-muted); }
+.navRow { display: flex; align-items: stretch; gap: 8px; margin-top: 16px; }
+.navArrow { flex: 0 0 48px; display: inline-flex; align-items: center; justify-content: center; border: 1px solid var(--q-border-strong); background: var(--q-surface); border-radius: 10px; color: var(--q-text-2); cursor: pointer; font-family: inherit; }
+.navArrow:disabled { opacity: 0.35; cursor: default; }
+.navMain { flex: 1; display: flex; min-width: 0; }
+.navMain > button { width: 100%; }
+.hintWrap { position: relative; }
+.hintInline { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: 0; background: var(--q-primary-soft); color: var(--q-primary); border-radius: 999px; padding: 6px 12px; font-size: 0.8125rem; font-weight: 700; font-family: inherit; }
