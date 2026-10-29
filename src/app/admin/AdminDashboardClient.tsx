@@ -38,6 +38,12 @@ export default function AdminDashboardClient({
       ],
     },
     {
+      title: 'OPEN LAB',
+      items: [
+        { icon: '', label: '신청서 내역', desc: '생성된 신청서 보기·승인', href: '/admin/applications' },
+      ],
+    },
+    {
       title: '콘텐츠',
       items: [
         { icon: '📅', label: '캘린더', desc: '공식 일정 관리', href: '/admin/calendar' },

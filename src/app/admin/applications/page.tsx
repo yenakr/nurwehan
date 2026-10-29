@@ -23,12 +23,9 @@ export default async function AdminApplicationsPage() {
   });
 
   return (
-    <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '40px 0' }}>
-      <div className="container">
-        <h1 style={{ fontSize: '1.5rem', fontWeight: '800', marginBottom: '24px', borderBottom: '2px solid var(--primary)', paddingBottom: '12px', display: 'inline-block' }}>
-          신청 현황 관리
-        </h1>
-        
+    <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '20px 0 40px' }}>
+      <div className="container" style={{ maxWidth: '860px' }}>
+        <h1 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '0 0 14px' }}>신청서 내역</h1>
         <ApplicationListClient initialApplications={applications as any} />
       </div>
     </main>
