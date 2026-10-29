@@ -79,8 +79,7 @@ export default function ClientActions({
         .action-buttons-wrap {
           display: flex;
           flex-direction: column;
-          gap: 10px;
-          margin-top: 16px;
+          gap: 8px;
         }
 
         .action-buttons-secondary {
@@ -92,7 +91,7 @@ export default function ClientActions({
           background-color: #0E4A84;
           color: white;
           border: none;
-          padding: 14px;
+          padding: 12px;
           border-radius: 8px;
           font-weight: 700;
           font-size: 0.9375rem;
@@ -110,10 +109,10 @@ export default function ClientActions({
           background-color: white;
           color: #475569;
           border: 1px solid #cbd5e1;
-          padding: 12px;
+          padding: 10px;
           border-radius: 8px;
           font-weight: 700;
-          font-size: 0.875rem;
+          font-size: 0.8125rem;
           cursor: pointer;
           transition: all 0.2s;
           text-align: center;

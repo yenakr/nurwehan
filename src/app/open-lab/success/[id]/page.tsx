@@ -78,47 +78,19 @@ export default async function OpenLabSuccessPage({ params }: { params: Promise<{
         <div className="grid-layout">
           {/* Left panel: Actions */}
           <div className="actions-panel no-print">
-            <div className="card success-header-card">
-              <h2 style={{ fontSize: '1.25rem', fontWeight: '800', margin: '0 0 8px 0', color: 'var(--text)' }}>신청서 작성 완료</h2>
-              <p style={{ fontSize: '0.875rem', color: 'var(--sub-text)', margin: 0, lineHeight: '1.5' }}>
-                작성된 신청서를 다운로드하여 아래 절차에 따라 이메일로 제출해 주시기 바랍니다.
+            <div className="card side-card">
+              <h2 className="side-title">신청서 작성 완료</h2>
+
+              <dl className="sum">
+                <dt>실습실</dt><dd>{roomName}</dd>
+                <dt>일시</dt><dd>{dateStr} {timeStr}</dd>
+                <dt>신청자</dt><dd>{repName} ({repStudentId})</dd>
+                <dt>인원</dt><dd>{application.participants.length}명</dd>
+              </dl>
+
+              <p className="side-hint">
+                양식의 칸을 눌러 인쇄 전에 직접 고칠 수 있어요. PDF로 저장한 뒤 메일에 직접 첨부해 보내세요.
               </p>
-            </div>
-
-            <div className="card instructions-card">
-              {/* Summary List */}
-              <div className="summary-list">
-                <div className="summary-title">신청 정보 요약</div>
-                <div className="summary-grid">
-                  <span className="summary-label">실습실</span>
-                  <span className="summary-value">{roomName}</span>
-                  
-                  <span className="summary-label">실습일시</span>
-                  <span className="summary-value">{dateStr} {timeStr}</span>
-                  
-                  <span className="summary-label">신청자</span>
-                  <span className="summary-value">{repName} ({repStudentId})</span>
-                  
-                  <span className="summary-label">총 인원</span>
-                  <span className="summary-value">{application.participants.length}명</span>
-                </div>
-              </div>
-
-              <h3 className="card-title">제출 안내</h3>
-              
-              <div className="warning-note">
-                PDF 파일은 메일에 자동 첨부되지 않으니 직접 첨부해 주세요.
-              </div>
-
-              <div className="warning-note" style={{ backgroundColor: '#f0fdf4', borderColor: '#bbf7d0', color: '#166534' }}>
-                참고: 오른쪽 신청서 양식의 각 칸(과목, 이름, 목적, 필요물품 등)을 직접 클릭하여 인쇄 전에 자유롭게 수정하실 수 있습니다.
-              </div>
-
-              <ol className="guide-steps">
-                <li><strong>신청서 PDF 다운로드</strong>: 아래 버튼을 클릭하여 작성된 신청서를 PDF로 저장합니다.</li>
-                <li><strong>제출 이메일 준비</strong>: 메일 앱을 열거나 본문을 복사하여 제출용 이메일을 준비합니다.</li>
-                <li><strong>신청서 첨부 및 발송</strong>: 저장한 PDF 파일을 메일에 직접 첨부한 후 발송을 완료합니다.</li>
-              </ol>
 
               <ClientActions 
                 adminEmail={adminEmail} 
@@ -131,19 +103,13 @@ export default async function OpenLabSuccessPage({ params }: { params: Promise<{
               />
 
               <details className="email-preview-details">
-                <summary className="preview-summary">
-                  이메일 본문 미리보기
-                </summary>
-                <div className="preview-body">
-                  <pre className="preview-content">{emailBody}</pre>
-                </div>
+                <summary className="preview-summary">메일 본문 미리보기</summary>
+                <pre className="preview-content">{emailBody}</pre>
               </details>
 
-              <div style={{ marginTop: '24px', display: 'flex', gap: '12px' }}>
-                <Link href="/" className="btn-nav-secondary">홈으로</Link>
-                {application.representativeUserId && (
-                  <Link href="/history" className="btn-nav-secondary">내 신청내역</Link>
-                )}
+              <div className="side-nav">
+                <Link href="/">홈으로</Link>
+                {application.representativeUserId && <Link href="/history">내 신청내역</Link>}
               </div>
             </div>
           </div>
@@ -199,129 +165,17 @@ export default async function OpenLabSuccessPage({ params }: { params: Promise<{
           }
         }
 
-        .success-header-card {
-          padding: 24px !important;
-          border-top: 4px solid #0E4A84 !important;
-        }
-
-        .instructions-card {
-          margin-top: 16px;
-          padding: 24px !important;
-        }
-        
-        .summary-list {
-          margin-bottom: 20px;
-          border: 1px solid #e2e8f0;
-          border-radius: 8px;
-          padding: 16px;
-          background-color: #f8fafc;
-          font-size: 0.875rem;
-        }
-        .summary-title {
-          font-weight: 800;
-          color: var(--text);
-          margin-bottom: 12px;
-          border-bottom: 1px solid #e2e8f0;
-          padding-bottom: 8px;
-        }
-        .summary-grid {
-          display: grid;
-          grid-template-columns: 80px 1fr;
-          gap: 8px 16px;
-          line-height: 1.4;
-        }
-        .summary-label {
-          color: var(--sub-text);
-          font-weight: 600;
-        }
-        .summary-value {
-          font-weight: 700;
-          color: var(--text);
-        }
-
-        .card-title {
-          font-size: 1rem;
-          font-weight: 800;
-          margin: 0 0 12px 0;
-          color: var(--text);
-        }
-
-        .warning-note {
-          background-color: #f8fafc;
-          border: 1px solid #e2e8f0;
-          padding: 12px 16px;
-          border-radius: 8px;
-          font-size: 0.8125rem;
-          color: #475569;
-          margin-bottom: 16px;
-          font-weight: 600;
-          line-height: 1.4;
-        }
-
-        .guide-steps {
-          list-style-type: decimal;
-          padding-left: 20px;
-          margin: 0 0 20px 0;
-          font-size: 0.8125rem;
-          color: var(--text);
-          display: flex;
-          flex-direction: column;
-          gap: 8px;
-          line-height: 1.5;
-        }
-
-        .email-preview-details {
-          margin-top: 16px;
-          border: 1px solid #cbd5e1;
-          border-radius: 8px;
-          overflow: hidden;
-        }
-        .preview-summary {
-          padding: 10px 14px;
-          font-size: 0.8125rem;
-          font-weight: 700;
-          cursor: pointer;
-          background: #f8fafc;
-          user-select: none;
-          color: #475569;
-        }
-        .preview-summary:hover {
-          background: #edf2f7;
-        }
-        .preview-body {
-          background-color: #fff;
-          padding: 12px;
-          border-top: 1px solid #cbd5e1;
-        }
-        .preview-content {
-          margin: 0;
-          white-space: pre-wrap;
-          font-family: monospace;
-          font-size: 0.75rem;
-          color: #475569;
-          line-height: 1.5;
-          max-height: 150px;
-          overflow-y: auto;
-        }
-
-        .btn-nav-secondary {
-          flex: 1;
-          background-color: white;
-          color: #475569;
-          border: 1px solid #cbd5e1;
-          text-align: center;
-          padding: 12px;
-          border-radius: 8px;
-          font-size: 0.875rem;
-          font-weight: 700;
-          text-decoration: none;
-          transition: background-color 0.2s;
-        }
-        .btn-nav-secondary:hover {
-          background-color: #f8fafc;
-          border-color: #94a3b8;
-          color: #1e293b;
-        }
+        .side-card { padding: 18px !important; display: flex; flex-direction: column; gap: 14px; }
+        .side-title { font-size: 1.0625rem; font-weight: 800; margin: 0; color: var(--text); }
+        .sum { display: grid; grid-template-columns: 52px 1fr; gap: 6px 10px; margin: 0; font-size: 0.875rem; }
+        .sum dt { color: var(--sub-text); }
+        .sum dd { margin: 0; font-weight: 700; color: var(--text); }
+        .side-hint { margin: 0; font-size: 0.8125rem; color: var(--sub-text); line-height: 1.5; border-left: 3px solid #cbd5e1; padding-left: 10px; }
+        .email-preview-details summary { cursor: pointer; font-size: 0.8125rem; color: var(--sub-text); list-style: none; }
+        .email-preview-details summary::-webkit-details-marker { display: none; }
+        .preview-content { margin: 8px 0 0; white-space: pre-wrap; font-family: inherit; font-size: 0.8125rem; color: #475569; line-height: 1.5; background: #f8fafc; border-radius: 8px; padding: 10px 12px; }
+        .side-nav { display: flex; gap: 14px; justify-content: center; font-size: 0.8125rem; }
+        .side-nav a { color: var(--sub-text); text-decoration: underline; }
       `}} />
     </main>
   );
