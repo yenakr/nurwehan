@@ -101,12 +101,6 @@ export default function HistoryClient({ initialApplications, currentUser }: Hist
                 </span>
               </div>
 
-              {app.status === 'REJECTED' && app.rejectedReason && (
-                <div className="rejection-box">
-                  <strong>거절 사유:</strong> {app.rejectedReason}
-                </div>
-              )}
-              
               {app.status === 'CANCELLED' && app.cancelReason && (
                 <div className="rejection-box">
                   <strong>취소 사유:</strong> {app.cancelReason}

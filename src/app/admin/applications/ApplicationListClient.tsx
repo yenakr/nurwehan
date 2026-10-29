@@ -9,7 +9,7 @@ const TIME_ZONE = 'Asia/Seoul';
 
 interface Application {
   id: string;
-  status: 'PENDING' | 'APPROVED' | 'REJECTED' | 'COMPLETED';
+  status: string;
   slot: {
     date: Date | string;
     startTime: string;
@@ -27,7 +27,6 @@ interface Application {
 }
 
 export default function ApplicationListClient({ initialApplications }: { initialApplications: Application[] }) {
-  const [filter, setFilter] = useState<'ALL' | 'PENDING' | 'APPROVED' | 'REJECTED'>('ALL');
   const [weekOffset, setWeekOffset] = useState(0);
 
   const weekInterval = useMemo(() => {
@@ -39,14 +38,10 @@ export default function ApplicationListClient({ initialApplications }: { initial
 
   const filteredApplications = useMemo(() => {
     return initialApplications.filter(app => {
-      if (filter === 'PENDING' && app.status !== 'PENDING') return false;
-      if (filter === 'APPROVED' && app.status !== 'APPROVED' && app.status !== 'COMPLETED') return false;
-      if (filter === 'REJECTED' && app.status !== 'REJECTED') return false;
-      
       const appDate = typeof app.slot.date === 'string' ? parseISO(app.slot.date) : app.slot.date;
       return isWithinInterval(appDate, weekInterval);
     });
-  }, [initialApplications, filter, weekInterval]);
+  }, [initialApplications, weekInterval]);
 
   const grouped = useMemo(() => {
     const groups: { [key: string]: { dateStr: string; displayDate: string; timeSlots: { time: string; applications: Application[] }[] } } = {};
@@ -85,13 +80,6 @@ export default function ApplicationListClient({ initialApplications }: { initial
   return (
     <div className="admin-applications-view">
       <div className="header-controls no-print">
-        <div className="filter-tabs">
-          <button className={`tab ${filter === 'ALL' ? 'active' : ''}`} onClick={() => setFilter('ALL')}>전체</button>
-          <button className={`tab ${filter === 'PENDING' ? 'active' : ''}`} onClick={() => setFilter('PENDING')}>대기 중</button>
-          <button className={`tab ${filter === 'APPROVED' ? 'active' : ''}`} onClick={() => setFilter('APPROVED')}>승인됨</button>
-          <button className={`tab ${filter === 'REJECTED' ? 'active' : ''}`} onClick={() => setFilter('REJECTED')}>거절됨</button>
-        </div>
-
         <div className="week-switcher">
           <button className="week-btn" onClick={() => changeWeek(-1)}>← 저번 주</button>
           <div className="current-week-label" onClick={() => changeWeek(0)}>
@@ -110,7 +98,7 @@ export default function ApplicationListClient({ initialApplications }: { initial
             <section key={dateGroup.dateStr} className="dg">
               <div className="dg-head">
                 <h3>{dateGroup.displayDate}</h3>
-                <Link href={`/admin/attendance?date=${dateGroup.dateStr}`} className="jump no-print">승인 명단 ↗</Link>
+                <Link href={`/admin/attendance?date=${dateGroup.dateStr}`} className="jump no-print">출석 명단 ↗</Link>
               </div>
               {dateGroup.timeSlots.map(timeSlot => (
                 <div key={timeSlot.time} className="ts">
@@ -128,9 +116,7 @@ export default function ApplicationListClient({ initialApplications }: { initial
                         </span>
                         <span className="sk">{app.skills.map(sk => sk.skill.name).join(', ')}</span>
                         <span className="meta">
-                          <span className={`st ${app.status.toLowerCase()}`}>
-                            {app.status === 'PENDING' ? '대기' : app.status === 'APPROVED' ? '승인' : app.status === 'COMPLETED' ? '완료' : app.status === 'REJECTED' ? '거절' : app.status}
-                          </span>
+                          {app.status === 'CANCELLED' && <span className="st cancelled">취소</span>}
                           <span className="ct">생성 {formatInTimeZone(new Date(app.createdAt), TIME_ZONE, 'MM/dd HH:mm')}</span>
                         </span>
                       </Link>

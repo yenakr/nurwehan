@@ -7,32 +7,20 @@ import Link from 'next/link';
 interface Props {
   applicationId: string;
   currentStatus: string;
-  rejectedReason: string | null;
   participants: any[];
 }
 
 export default function ApplicationStatusActions({ 
   applicationId, 
   currentStatus, 
-  rejectedReason,
   participants
 }: Props) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleStatusUpdate = async (status: string) => {
-    let reason = null;
-    if (status === 'REJECTED') {
-      reason = prompt('반려 사유를 입력해주세요:');
-      if (reason === null) return;
-      if (!reason.trim()) {
-        alert('반려 사유를 입력해야 합니다.');
-        return;
-      }
-    } else if (status === 'CANCELLED') {
-      reason = prompt('취소 사유를 입력해주세요 (운영 일정 변경 등):');
-      if (reason === null) return;
-    }
+    const reason = prompt('취소 사유를 입력해주세요 (운영 일정 변경 등):');
+    if (reason === null) return;
 
     setLoading(true);
     try {
@@ -41,8 +29,7 @@ export default function ApplicationStatusActions({
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ 
           status, 
-          rejectedReason: status === 'REJECTED' ? reason : undefined,
-          cancelReason: status === 'CANCELLED' ? reason : undefined
+          cancelReason: reason
         }),
       });
 
@@ -83,37 +70,18 @@ export default function ApplicationStatusActions({
 
   return (
     <div className="card" style={{ borderTop: '3px solid var(--primary)' }}>
-      {currentStatus === 'PENDING' ? (
-        <div style={{ display: 'flex', justifyContent: 'center', gap: '16px' }}>
-          <button 
-            className="btn-primary" 
-            style={{ padding: '12px 40px' }}
-            disabled={loading}
-            onClick={() => handleStatusUpdate('APPROVED')}
-          >
-            {loading ? '처리 중...' : '신청 승인'}
-          </button>
-          <button 
-            className="btn-outline" 
-            style={{ padding: '12px 40px', color: '#ef4444', borderColor: '#ef4444' }}
-            disabled={loading}
-            onClick={() => handleStatusUpdate('REJECTED')}
-          >
-            반려하기
-          </button>
-        </div>
-      ) : (
+      {(
         <div style={{ textAlign: 'center' }}>
           <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginBottom: '24px' }}>
-            <h3 style={{ fontSize: '1.125rem', fontWeight: '700' }}>처리 완료</h3>
-            {currentStatus === 'APPROVED' && (
+            <h3 style={{ fontSize: '1.125rem', fontWeight: '700' }}>관리</h3>
+            {currentStatus !== 'CANCELLED' && (
               <button 
                 className="btn-small btn-outline" 
                 style={{ color: '#ef4444', borderColor: '#ef4444' }}
                 disabled={loading}
                 onClick={() => handleStatusUpdate('CANCELLED')}
               >
-                신청 취소 (관리자)
+                신청서 취소
               </button>
             )}
           </div>
@@ -139,12 +107,6 @@ export default function ApplicationStatusActions({
               </Link>
             </div>
           </div>
-
-          {currentStatus === 'REJECTED' && rejectedReason && (
-            <div style={{ color: '#ef4444', fontSize: '0.875rem', marginBottom: '16px', backgroundColor: '#fef2f2', padding: '12px', borderRadius: '4px' }}>
-              반려 사유: {rejectedReason}
-            </div>
-          )}
 
           {currentStatus === 'CANCELLED' && (
             <div style={{ color: '#475569', fontSize: '0.875rem', marginBottom: '16px', backgroundColor: '#f1f5f9', padding: '12px', borderRadius: '4px' }}>

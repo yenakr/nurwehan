@@ -177,7 +177,7 @@ export default function AttendanceClient({
     <div className={`attendance-container ${printingSlot ? 'printing-mode' : ''}`}>
       <div className="no-print admin-header-nav">
         <div className="title-row">
-          <h1>승인 명단</h1>
+          <h1>출석 명단</h1>
           <p>출석 상태 관리</p>
         </div>
         
@@ -230,7 +230,7 @@ export default function AttendanceClient({
         ) : processedGroups.length === 0 ? (
           <div className="premium-empty">
              <h3>신청 내역이 없어요</h3>
-             <p>이 날짜에 승인된 신청이 없어요.</p>
+             <p>이 날짜에 신청서가 없어요.</p>
           </div>
         ) : (
           processedGroups.map((group) => (
@@ -253,7 +253,7 @@ export default function AttendanceClient({
 
               {/* Print Header (Visible only when printing) */}
               <div className="print-header">
-                <h1>승인 명단 ({formatInTimeZone(new Date(currentDate), TIME_ZONE, 'yyyy.MM.dd')})</h1>
+                <h1>출석 명단 ({formatInTimeZone(new Date(currentDate), TIME_ZONE, 'yyyy.MM.dd')})</h1>
                 <div className="print-info">
                    <span>시간: {group.timeLabel}</span>
                    <span>인원: {group.roomGroups.reduce((sum, rg) => sum + rg.participants.length, 0)}명</span>

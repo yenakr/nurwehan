@@ -56,12 +56,9 @@ export default async function AdminApplicationDetailPage({ params }: { params: P
       <div className="container" style={{ maxWidth: '900px' }}>
         <div style={{ marginBottom: '24px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <Link href="/admin/applications" style={{ color: 'var(--sub-text)', fontSize: '0.875rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
-            ← 신청 현황 목록으로
+            ← 신청서 내역
           </Link>
-          <span className={`badge badge-${application.status.toLowerCase()}`} style={{ padding: '6px 12px', fontSize: '0.875rem' }}>
-            {application.status === 'PENDING' ? '대기 중' : application.status === 'APPROVED' ? '승인 완료' : 
-             application.status === 'REJECTED' ? '반려됨' : application.status}
-          </span>
+          {application.status === 'CANCELLED' && <span className="badge" style={{ padding: '6px 12px', fontSize: '0.875rem' }}>취소됨</span>}
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
@@ -208,7 +205,6 @@ export default async function AdminApplicationDetailPage({ params }: { params: P
           <ApplicationStatusActions 
             applicationId={application.id} 
             currentStatus={application.status} 
-            rejectedReason={application.rejectedReason} 
             participants={application.participants}
           />
         </div>
