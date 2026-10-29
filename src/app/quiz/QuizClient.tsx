@@ -572,7 +572,15 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
       const wrongCount = totalQuestions - correctCount;
       const score = totalQuestions > 0 ? Math.round((correctCount / totalQuestions) * 100) : 0;
 
+      const fullSize = termsList.filter(t =>
+        matchesContentType(t, quizKind) &&
+        (quizSubject === 'all' || t.subject === quizSubject) &&
+        (quizCategory === 'all' || t.category === quizCategory)
+      ).length;
+      const scope = retryPool ? '오답 다시 풀기' : quizFavOnly ? '즐겨찾기' : fullSize > 0 && totalQuestions < fullSize ? `${totalQuestions}문제` : null;
+
       const details = quizResults.map(r => ({
+        scope,
         termId: r.term.id,
         questionText: r.term.term,
         definition: r.term.definition,
@@ -607,7 +615,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
         })
         .catch(err => console.error('Save attempt error', err));
     }
-  }, [activeTab, attemptSaved, quizResults, quizQuestions, quizSubject, quizCategory, quizType, user, fetchMyAttempts]);
+  }, [activeTab, attemptSaved, quizResults, quizQuestions, quizSubject, quizCategory, quizType, user, fetchMyAttempts, termsList, quizKind, quizFavOnly, retryPool]);
 
   const handleReAttemptQuiz = (attempt: any) => {
     if (!attempt || !attempt.details || !Array.isArray(attempt.details)) {
