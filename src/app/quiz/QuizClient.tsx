@@ -116,6 +116,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
   const [gridLayout, setGridLayout] = useState<'multi' | 'single'>('multi');
 
   // Navigation tab: 'study' | 'quiz_setup' | 'quiz_play' | 'quiz_result' | 'my_history'
+  const [retryPool, setRetryPool] = useState<NursingTerm[] | null>(null);
   const [activeTab, setActiveTab] = useState<'study' | 'quiz_setup' | 'quiz_play' | 'quiz_result' | 'my_history'>('study');
   const [myAttempts, setMyAttempts] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState<boolean>(false);
@@ -694,6 +695,19 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [activeTab, studyViewMode, isCardFlipped, filteredStudyTerms.length]);
 
+
+  // 틀린 문제 다시 풀기: 바로 시작하지 않고 테스트 설정(유형·방식 선택)부터 보여준다
+  const startRetry = (pool: NursingTerm[]) => {
+    const originals = pool.map(t => termsList.find(x => x.id === t.id) ?? t);
+    setRetryPool(originals);
+    setQuizFormat('single');
+    setQuizFavOnly(false);
+    setActiveTab('quiz_setup');
+  };
+
+  useEffect(() => {
+    if (activeTab === 'study' || activeTab === 'my_history') setRetryPool(null);
+  }, [activeTab]);
 
   // Start Quiz
   const handleStartQuiz = (customTermsList?: NursingTerm[]) => {
@@ -1865,10 +1879,18 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
 
       {inShell && activeTab === 'quiz_setup' && (
         <TestSetup
-          kind={quizKind}
+          kind={retryPool ? (retryPool.every(isExamItem) ? 'MULTIPLE_CHOICE' : 'TERM') : quizKind}
           title={quizTitle}
-          poolSize={quizType === 'abbr_both' ? bothCount : selectedQuizTerms.length}
-          bothAvailable={bothCount > 0}
+          customCount={retryPool ? retryPool.length : undefined}
+          onClearCustom={() => setRetryPool(null)}
+          poolSize={
+            retryPool
+              ? quizType === 'abbr_both'
+                ? retryPool.filter(t => kindOf(t) === 'TERM' && !!t.englishTerm?.trim() && !!t.definition?.trim()).length
+                : retryPool.length
+              : quizType === 'abbr_both' ? bothCount : selectedQuizTerms.length
+          }
+          bothAvailable={retryPool ? retryPool.some(t => kindOf(t) === 'TERM' && !!t.englishTerm?.trim() && !!t.definition?.trim()) : bothCount > 0}
           favCount={user ? favIds.size : 0}
           favOnly={quizFavOnly}
           onFavOnly={setQuizFavOnly}
@@ -1882,7 +1904,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
           onReverse={setQuizReverse}
           worksheet={quizFormat === 'worksheet'}
           onWorksheet={v => setQuizFormat(v ? 'worksheet' : 'single')}
-          onStart={() => handleStartQuiz()}
+          onStart={() => handleStartQuiz(retryPool ?? undefined)}
         />
       )}
 
@@ -1896,7 +1918,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
           terms={termsList}
           onReview={a => setSelectedHistoryAttempt(a)}
           onRetry={handleReAttemptQuiz}
-          onRetryWrong={wrong => { setQuizFormat('single'); handleStartQuiz(wrong); }}
+          onRetryWrong={startRetry}
           guest={!user}
         />
       )}
@@ -2537,11 +2559,11 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                   <div className={s.rsBar} aria-hidden="true"><div style={{ width: `${scorePercent}%` }} /></div>
                   <div className={s.rsActions}>
                     {wrongResults.length > 0 && (
-                      <button type="button" className={`${s.btn} ${s.btnPrimary}`} onClick={() => handleStartQuiz(wrongResults.map(w => w.term))}>
+                      <button type="button" className={`${s.btn} ${s.btnPrimary}`} onClick={() => startRetry(wrongResults.map(w => w.term))}>
                         오답 {wrongResults.length}개 다시 풀기
                       </button>
                     )}
-                    <button type="button" className={s.btn} onClick={() => setActiveTab('quiz_setup')}>새 테스트</button>
+                    <button type="button" className={s.btn} onClick={() => { setRetryPool(null); setActiveTab('quiz_setup'); }}>새 테스트</button>
                   </div>
                 </section>
 
