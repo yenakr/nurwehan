@@ -93,6 +93,29 @@ interface QuizClientProps {
 }
 
 
+// 음성 선택: 맥에는 장난스러운 효과음 목소리(Bells, Organ, Zarvox 등)가 섞여 있어 기본값이 이상하게 들릴 수 있다.
+// 자연스러운 목소리를 우선 고르고, 효과음 목소리는 제외한다.
+const NOVELTY_VOICES = /^(Albert|Bad News|Bahh|Bells|Boing|Bubbles|Cellos|Deranged|Good News|Hysterical|Jester|Organ|Superstar|Trinoids|Whisper|Wobble|Zarvox|Fred|Junior|Kathy|Ralph)\b/i;
+const PREFERRED_VOICES: Record<string, RegExp[]> = {
+  en: [/^Samantha/i, /^Ava/i, /^Allison/i, /^Alex\b/i, /Google US English/i, /Microsoft (Aria|Jenny|Guy)/i, /^Daniel/i],
+  ko: [/^Yuna/i, /Google 한국의|Google 한국어/i, /Microsoft SunHi/i],
+};
+
+function pickVoice(lang: string): SpeechSynthesisVoice | undefined {
+  if (typeof window === 'undefined' || !('speechSynthesis' in window)) return undefined;
+  const base = lang.slice(0, 2).toLowerCase();
+  const all = window.speechSynthesis.getVoices().filter(v => !NOVELTY_VOICES.test(v.name));
+  const sameLang = all.filter(v => v.lang.toLowerCase().replace('_', '-').startsWith(base));
+  if (sameLang.length === 0) return undefined;
+  for (const re of PREFERRED_VOICES[base] || []) {
+    const hit = sameLang.find(v => re.test(v.name));
+    if (hit) return hit;
+  }
+  const exact = sameLang.filter(v => v.lang.toLowerCase().replace('_', '-') === lang.toLowerCase());
+  const pool = exact.length ? exact : sameLang;
+  return pool.find(v => v.localService) || pool[0];
+}
+
 export default function QuizClient({ initialTerms, user, initialSubject, subjectLevels, guest, superAdmin }: QuizClientProps) {
   const isAdmin = isAdminRole(user?.role);
   const router = useRouter();
@@ -154,6 +177,15 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
   const [autoTTS, setAutoTTS] = useState<boolean>(false);
   const [ttsRate, setTtsRate] = useState<number>(1.0);
 
+  // 음성 목록은 브라우저가 비동기로 불러오므로 미리 요청해 둔다
+  useEffect(() => {
+    if (typeof window === 'undefined' || !('speechSynthesis' in window)) return;
+    window.speechSynthesis.getVoices();
+    const warm = () => window.speechSynthesis.getVoices();
+    window.speechSynthesis.addEventListener?.('voiceschanged', warm);
+    return () => window.speechSynthesis.removeEventListener?.('voiceschanged', warm);
+  }, []);
+
   const toggleAutoTTS = useCallback(() => {
     const next = !autoTTS;
     setAutoTTS(next);
@@ -197,6 +229,8 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
     segs.forEach((g, i) => {
       const utterance = new SpeechSynthesisUtterance(g.text);
       utterance.lang = g.lang;
+      const voice = pickVoice(g.lang);
+      if (voice) utterance.voice = voice;
       utterance.rate = ttsRate;
       if (i === segs.length - 1 && onEnd) {
         utterance.onend = () => onEnd();
