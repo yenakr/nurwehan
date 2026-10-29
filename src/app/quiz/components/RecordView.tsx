@@ -31,6 +31,12 @@ const fmtDate = (iso: string) => {
   const d = new Date(iso);
   return `${d.getMonth() + 1}월 ${d.getDate()}일 ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 };
+const titleOf = (a: Attempt) => {
+  const sc = Array.isArray(a.details) ? a.details[0]?.scope : null;
+  const base = quizName(a.category);
+  if (!sc) return base;
+  return sc === '오답 다시 풀기' || sc === '즐겨찾기' ? `${base} · ${sc}` : `${base} 중 ${sc}`;
+};
 const startOf = (a: Attempt) => {
   const st = Array.isArray(a.details) ? a.details[0]?.startedAt : null;
   return typeof st === 'string' ? st : a.createdAt;
@@ -118,7 +124,7 @@ export default function RecordView({
           {rows.slice(0, 10).map(a => (
             <div key={a.id} className={s.row}>
               <div className={s.rowMain}>
-                <div className={s.rowTitle}>{quizName(a.category)} · {modeLabel(a.quizType, kind)}</div>
+                <div className={s.rowTitle}>{titleOf(a)} · {modeLabel(a.quizType, kind)}</div>
                 <div className={s.rowSub}>{fmtDate(startOf(a))}</div>
               </div>
               <div className={s.rowEnd}>
