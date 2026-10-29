@@ -75,29 +75,29 @@ export default function ApplicationListClient({ initialApplications }: { initial
         <button type="button" className="more" onClick={() => setLimit(l => l + PAGE)}>더 보기</button>
       )}
 
-      <style jsx>{`
-        .bar { display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        .bar input { flex: 1; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 0.9375rem; background: #fff; }
-        .bar span { font-size: 0.8125rem; color: var(--sub-text); white-space: nowrap; }
-        .list { list-style: none; margin: 0; padding: 0; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
-        .list li + li { border-top: 1px solid #f1f5f9; }
-        .row { display: grid; grid-template-columns: 112px 150px 1fr auto; gap: 12px; align-items: center; padding: 10px 14px; text-decoration: none; color: inherit; }
-        .row:hover { background: #f8fafc; }
-        .when, .who { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-        .when b, .who b { font-size: 0.875rem; font-weight: 800; }
-        .when i, .who i { font-style: normal; font-size: 0.75rem; color: #94a3b8; }
-        .who { flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: 2px 6px; }
-        .who em { font-style: normal; font-size: 0.625rem; background: #eef2f7; color: #475569; padding: 1px 6px; border-radius: 999px; }
-        .sk { font-size: 0.8125rem; color: #475569; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .ct { font-size: 0.75rem; color: #94a3b8; font-variant-numeric: tabular-nums; white-space: nowrap; }
-        .more { display: block; margin: 12px auto 0; padding: 8px 20px; border: 1px solid #e2e8f0; background: #fff; border-radius: 10px; font-size: 0.8125rem; font-weight: 700; color: var(--sub-text); cursor: pointer; }
-        .empty { text-align: center; padding: 40px 12px; color: #94a3b8; }
+      <style jsx global>{`
+        .al .bar{ display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
+        .al .bar input { flex: 1; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 0.9375rem; background: #fff; }
+        .al .bar span { font-size: 0.8125rem; color: var(--sub-text); white-space: nowrap; }
+        .al .list{ list-style: none; margin: 0; padding: 0; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
+        .al .list li + li { border-top: 1px solid #f1f5f9; }
+        .al .row{ display: grid; grid-template-columns: 112px 150px 1fr auto; gap: 12px; align-items: center; padding: 10px 14px; text-decoration: none; color: inherit; }
+        .al .row:hover { background: #f8fafc; }
+        .al .when, .al .who { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+        .al .when b, .al .who b { font-size: 0.875rem; font-weight: 800; }
+        .al .when i, .al .who i { font-style: normal; font-size: 0.75rem; color: #94a3b8; }
+        .al .who{ flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: 2px 6px; }
+        .al .who em { font-style: normal; font-size: 0.625rem; background: #eef2f7; color: #475569; padding: 1px 6px; border-radius: 999px; }
+        .al .sk{ font-size: 0.8125rem; color: #475569; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .al .ct{ font-size: 0.75rem; color: #94a3b8; font-variant-numeric: tabular-nums; white-space: nowrap; }
+        .al .more{ display: block; margin: 12px auto 0; padding: 8px 20px; border: 1px solid #e2e8f0; background: #fff; border-radius: 10px; font-size: 0.8125rem; font-weight: 700; color: var(--sub-text); cursor: pointer; }
+        .al .empty{ text-align: center; padding: 40px 12px; color: #94a3b8; }
         @media (max-width: 640px) {
-          .row { grid-template-columns: 1fr auto; gap: 2px 10px; }
-          .when { flex-direction: row; gap: 6px; align-items: baseline; grid-column: 2; grid-row: 1; justify-self: end; }
-          .who { grid-column: 1; grid-row: 1; }
-          .sk { grid-column: 1; grid-row: 2; }
-          .ct { grid-column: 2; grid-row: 2; justify-self: end; }
+          .al .row{ grid-template-columns: 1fr auto; gap: 2px 10px; }
+          .al .when{ flex-direction: row; gap: 6px; align-items: baseline; grid-column: 2; grid-row: 1; justify-self: end; }
+          .al .who{ grid-column: 1; grid-row: 1; }
+          .al .sk{ grid-column: 1; grid-row: 2; }
+          .al .ct{ grid-column: 2; grid-row: 2; justify-self: end; }
         }
       `}</style>
     </div>
