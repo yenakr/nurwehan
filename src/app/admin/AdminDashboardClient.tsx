@@ -346,12 +346,11 @@ function ScheduleManagement() {
           const days = [1, 2, 3, 4, 5, 6, 0].filter(d => d >= 1 && d <= 5 || rules.some(r => r.dayOfWeek === d));
           const slots = Array.from(new Set(rules.map(r => `${r.startTime}~${r.endTime}`))).sort();
           const selected = rules.find(r => r.id === selectedRuleId) || null;
-          const shortOf = (room: string) => (room.match(/\((.*?)\)/)?.[1] ?? room) as string;
           return (
             <>
               <div className="legend">
                 {Array.from(new Set(rules.map(r => r.grade as number))).sort((x, y) => x - y).map(g => (
-                  <span key={g} className={`chip ${gradeCls(g)}`}>{g}학년</span>
+                  <span key={g} className={`lg ${gradeCls(g)}`}><i />{g}학년</span>
                 ))}
               </div>
               <div className="gridwrap">
@@ -377,8 +376,7 @@ function ScheduleManagement() {
                                   className={`chip ${gradeCls(r.grade)} ${r.isActive ? '' : 'off'} ${selectedRuleId === r.id ? 'sel' : ''}`}
                                   onClick={() => { setSelectedRuleId(selectedRuleId === r.id ? null : r.id); setEditingRuleId(null); }}
                                 >
-                                  <b>{r.grade}학년</b>
-                                  <small>{shortOf(r.room)} · {r.maxCapacity}명</small>
+                                  {r.grade}학년
                                 </button>
                               ))}
                             </td>
@@ -392,7 +390,7 @@ function ScheduleManagement() {
 
               {selected && editingRuleId !== selected.id && (
                 <div className="sel-bar">
-                  <span><b>{selected.grade}학년</b> {dayNames[selected.dayOfWeek]} {selected.startTime}~{selected.endTime} · {shortOf(selected.room)} · {selected.maxCapacity}명</span>
+                  <span><b>{selected.grade}학년</b> {dayNames[selected.dayOfWeek]} {selected.startTime}~{selected.endTime}</span>
                   <div className="rbtns">
                     <button
                       className={`status-toggle-btn ${selected.isActive ? 'active' : 'inactive'}`}
@@ -439,24 +437,25 @@ function ScheduleManagement() {
       )}
 
       <style jsx>{`
-        .legend { display: flex; gap: 6px; margin-bottom: 10px; }
-        .gridwrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 10px; }
-        .tt { width: 100%; min-width: 520px; border-collapse: collapse; table-layout: fixed; }
-        .tt th { font-size: 0.8125rem; font-weight: 800; padding: 8px 4px; background: #f8fafc; border-bottom: 1px solid var(--border); }
-        .tt th.tcol { width: 68px; font-size: 0.6875rem; color: var(--sub-text); font-weight: 600; white-space: pre-line; border-bottom: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; line-height: 1.3; }
-        .tt td { padding: 4px; vertical-align: top; border-bottom: 1px solid #f1f5f9; border-right: 1px solid #f1f5f9; height: 52px; }
-        .tt td:last-child, .tt th:last-child { border-right: none; }
-        .tt tr:last-child th, .tt tr:last-child td { border-bottom: none; }
-        .chip { display: inline-flex; flex-direction: column; gap: 1px; width: 100%; text-align: left; padding: 5px 7px; border-radius: 7px; border: 1px solid transparent; font-size: 0.8125rem; cursor: pointer; margin-bottom: 3px; }
-        .legend .chip { width: auto; flex-direction: row; padding: 3px 9px; font-weight: 700; cursor: default; margin: 0; }
-        .chip small { font-size: 0.6875rem; opacity: 0.8; }
-        .chip.g1 { background: #fef3c7; color: #92400e; }
-        .chip.g2 { background: #dbeafe; color: #1e40af; }
-        .chip.g3 { background: #dcfce7; color: #166534; }
-        .chip.g4 { background: #ede9fe; color: #5b21b6; }
+        .legend { display: flex; gap: 12px; margin-bottom: 8px; }
+        .lg { display: inline-flex; align-items: center; gap: 5px; font-size: 0.75rem; color: var(--sub-text); }
+        .lg i { width: 8px; height: 8px; border-radius: 50%; background: currentColor; display: inline-block; }
+        .lg.g2 { color: #4f6bd8; } .lg.g3 { color: #2f9a82; } .lg.g4 { color: #c98a2b; }
+        .gridwrap { overflow-x: auto; }
+        .tt { width: 100%; min-width: 440px; border-collapse: separate; border-spacing: 4px; table-layout: fixed; }
+        .tt th { font-size: 0.75rem; font-weight: 600; color: var(--sub-text); padding: 2px 0 4px; background: none; text-align: center; }
+        .tt th.tcol { width: 44px; font-size: 0.6875rem; font-weight: 500; white-space: pre-line; line-height: 1.25; text-align: right; padding-right: 6px; font-variant-numeric: tabular-nums; vertical-align: middle; }
+        .tt td { padding: 0; vertical-align: top; height: 38px; background: #f8fafc; border-radius: 8px; }
+        .tt td:has(.chip) { background: none; }
+        .chip { display: flex; align-items: center; justify-content: center; width: 100%; height: 100%; min-height: 38px; padding: 0 6px; margin: 0 0 3px; border-radius: 8px; border: 1.5px solid transparent; font-size: 0.8125rem; font-weight: 700; cursor: pointer; font-family: inherit; }
+        .chip:last-child { margin-bottom: 0; }
+        .chip.g1 { background: #fdf0d5; color: #8a5a14; }
+        .chip.g2 { background: #e6ecfb; color: #2b45a8; }
+        .chip.g3 { background: #def2ec; color: #1d6b5a; }
+        .chip.g4 { background: #f8ecd8; color: #9a6410; }
         .chip.off { opacity: 0.4; border-style: dashed; border-color: currentColor; }
-        .chip.sel { box-shadow: 0 0 0 2px var(--primary); }
-        .sel-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 10px; padding: 10px 12px; border: 1px solid var(--border); border-radius: 10px; background: #f8fafc; font-size: 0.875rem; }
+        .chip.sel { border-color: var(--primary); }
+        .sel-bar { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin-top: 12px; padding-top: 12px; border-top: 1px solid #eef2f7; font-size: 0.875rem; }
         .groups { display: flex; flex-direction: column; gap: 18px; }
         .gtitle { font-size: 0.9375rem; font-weight: 800; margin: 0 0 8px; }
         .rlist { border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
