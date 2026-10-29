@@ -117,6 +117,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
 
   // Navigation tab: 'study' | 'quiz_setup' | 'quiz_play' | 'quiz_result' | 'my_history'
   const [retryPool, setRetryPool] = useState<NursingTerm[] | null>(null);
+  const [reviewIndex, setReviewIndex] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'study' | 'quiz_setup' | 'quiz_play' | 'quiz_result' | 'my_history'>('study');
   const [myAttempts, setMyAttempts] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState<boolean>(false);
@@ -544,6 +545,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
     setShowHint(false);
     setIsAnswerSubmitted(false);
     setQuizResults([]);
+    setReviewIndex(null);
     setAttemptSaved(false);
     setQuizSubject(attempt.subject);
     setQuizCategory(attempt.category || 'all');
@@ -800,6 +802,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
     setShowHint(false);
     setIsAnswerSubmitted(false);
     setQuizResults([]);
+    setReviewIndex(null);
     setActiveTab('quiz_play');
   };
 
@@ -975,7 +978,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
 
   // Keyboard navigation for Single Question Quiz Play mode (Enter key advances to next question when answer is submitted)
   useEffect(() => {
-    if (activeTab !== 'quiz_play' || quizFormat !== 'single' || !isAnswerSubmitted) return;
+    if (activeTab !== 'quiz_play' || quizFormat !== 'single' || !isAnswerSubmitted || reviewIndex !== null) return;
 
     const handleQuizKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'Enter') {
@@ -990,7 +993,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
 
     window.addEventListener('keydown', handleQuizKeyDown);
     return () => window.removeEventListener('keydown', handleQuizKeyDown);
-  }, [activeTab, quizFormat, isAnswerSubmitted, handleNextQuestion]);
+  }, [activeTab, quizFormat, isAnswerSubmitted, reviewIndex, handleNextQuestion]);
 
   // Typing practice handlers
   const currentTypingTerm = filteredStudyTerms[typingIndex];
@@ -1960,8 +1963,13 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
         <div className="card" style={{ maxWidth: '720px', margin: '0 auto', width: '100%', padding: '28px' }}>
           {/* Progress Header */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '12px', marginBottom: '10px' }}>
-            <span style={{ fontSize: '1.0625rem', fontWeight: 800, color: 'var(--primary)', whiteSpace: 'nowrap' }}>
-              {currentIndex + 1} / {quizQuestions.length}
+            <span style={{ display: 'flex', alignItems: 'baseline', gap: '10px' }}>
+              <span style={{ fontSize: '1.0625rem', fontWeight: 800, color: 'var(--primary)', whiteSpace: 'nowrap' }}>
+                {(reviewIndex ?? currentIndex) + 1} / {quizQuestions.length}
+              </span>
+              {reviewIndex === null && currentIndex > 0 && (
+                <button type="button" className={s.selfToggle} onClick={() => setReviewIndex(currentIndex - 1)}>이전 문제</button>
+              )}
             </span>
             <span style={{ fontSize: '0.8125rem', color: 'var(--sub-text)', textAlign: 'right' }}>
               {currentQuestion.subject}{currentQuestion.category && currentQuestion.category !== 'all' ? ` · ${currentQuestion.category}` : ''}
@@ -1972,7 +1980,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
           <div style={{ width: '100%', height: '8px', backgroundColor: '#E2E8F0', borderRadius: '4px', overflow: 'hidden', marginBottom: '24px' }}>
             <div
               style={{
-                width: `${((currentIndex + 1) / quizQuestions.length) * 100}%`,
+                width: `${(((reviewIndex ?? currentIndex) + 1) / quizQuestions.length) * 100}%`,
                 height: '100%',
                 backgroundColor: 'var(--primary)',
                 transition: 'width 0.3s ease',
@@ -1980,6 +1988,51 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
             />
           </div>
 
+          {reviewIndex !== null && quizResults[reviewIndex] ? (() => {
+            const res = quizResults[reviewIndex];
+            const q = res.term;
+            const isStructured = (q.options && q.options.length > 0) || q.itemType === 'MULTIPLE_CHOICE' || q.itemType === 'SHORT_ANSWER';
+            const showTermAsQuestion = isStructured || quizType === 'term_to_def' || quizType === 'abbr_both';
+            const promptText = showTermAsQuestion ? q.term : q.definition;
+            const ok = res.overrideCorrect !== undefined ? res.overrideCorrect : res.isCorrect;
+            const ans = quizType === 'abbr_both' ? `${q.englishTerm || ''} / ${q.definition}` : (q.answer || q.term);
+            return (
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
+                <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', padding: '16px 18px', borderRadius: '10px' }}>
+                  <h3 style={{ fontSize: '1.125rem', fontWeight: 800, color: '#1E293B', lineHeight: 1.6, margin: 0 }}>{promptText}</h3>
+                </div>
+                <div className={s.rvMine}><span>내 답안</span>{res.userAns?.trim() ? res.userAns : '미입력'}</div>
+                <div className={`${s.fb} ${ok ? s.fbOk : s.fbNo}`}>
+                  <div className={s.fbTitle}>{ok ? '정답' : '오답'}</div>
+                  <div className={s.fbAns}>{ans}</div>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+                  <button type="button" onClick={() => handleToggleSelfCorrection(reviewIndex)} className={s.selfToggle}>
+                    {ok ? '오답 처리' : '정답 처리'}
+                  </button>
+                </div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <button
+                    type="button"
+                    className="btn-outline"
+                    style={{ flex: 1, padding: '12px', fontSize: '1rem' }}
+                    disabled={reviewIndex === 0}
+                    onClick={() => setReviewIndex(reviewIndex - 1)}
+                  >
+                    이전
+                  </button>
+                  <button
+                    type="button"
+                    className="btn-primary"
+                    style={{ flex: 2, padding: '12px', fontSize: '1rem' }}
+                    onClick={() => setReviewIndex(reviewIndex + 1 < currentIndex ? reviewIndex + 1 : null)}
+                  >
+                    {reviewIndex + 1 < currentIndex ? '다음' : '현재 문제로'}
+                  </button>
+                </div>
+              </div>
+            );
+          })() : (<>
           {/* Question Box */}
           {(() => {
             const isStructured = (currentQuestion.options && currentQuestion.options.length > 0) || currentQuestion.itemType === 'MULTIPLE_CHOICE' || currentQuestion.itemType === 'SHORT_ANSWER';
@@ -2275,6 +2328,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
               </div>
             </div>
           )}
+          </>)}
           </>)}
         </div>
       )}

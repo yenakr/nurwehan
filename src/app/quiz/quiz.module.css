@@ -236,3 +236,5 @@
 .fbAns { font-size: 1.0625rem; font-weight: 800; color: var(--q-text); line-height: 1.5; }
 .fbNote { font-size: 0.875rem; color: var(--q-muted); line-height: 1.6; }
 .selfToggle { border: 0; background: transparent; padding: 2px 0; font-size: 0.8125rem; color: var(--q-muted); text-decoration: underline; font-family: inherit; cursor: pointer; }
+.rvMine { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 10px; background: var(--q-primary-soft); font-size: 1rem; font-weight: 700; color: var(--q-text); }
+.rvMine span { font-size: 0.75rem; font-weight: 700; color: var(--q-muted); }
