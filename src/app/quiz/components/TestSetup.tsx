@@ -25,6 +25,8 @@ export default function TestSetup({
   worksheet,
   onWorksheet,
   onStart,
+  customCount,
+  onClearCustom,
 }: {
   kind: QuizKind;
   title: string;
@@ -44,9 +46,12 @@ export default function TestSetup({
   worksheet: boolean;
   onWorksheet: (v: boolean) => void;
   onStart: () => void;
+  customCount?: number;
+  onClearCustom?: () => void;
 }) {
   const presets = [10, 30, 50].filter(n => n < poolSize);
-  const effective = quizCount === 'all' || quizCount >= poolSize ? poolSize : quizCount;
+  const custom = customCount != null;
+  const effective = custom || quizCount === 'all' || quizCount >= poolSize ? poolSize : quizCount;
   const countValue: number | 'all' = quizCount === 'all' || quizCount >= poolSize ? 'all' : quizCount;
 
   const mode: 'fwd' | 'rev' | 'both' = quizType === 'abbr_both' ? 'both' : reverse ? 'rev' : 'fwd';
@@ -61,9 +66,14 @@ export default function TestSetup({
 
   return (
     <section aria-label="테스트 설정" className={`${s.panel} ${s.panelNarrow}`}>
-      <h2 className={s.panelTitle}>{title}</h2>
+      <h2 className={s.panelTitle}>{custom ? `오답 ${customCount}개 다시 풀기` : title}</h2>
+      {custom && onClearCustom && (
+        <button type="button" className={s.selfToggle} onClick={onClearCustom} style={{ alignSelf: 'flex-start', marginTop: -8 }}>
+          {title} 전체로 돌아가기
+        </button>
+      )}
 
-      {favCount > 0 && (
+      {favCount > 0 && !custom && (
         <div className={s.field}>
           <div className={s.label}>범위</div>
           <Segmented<'all' | 'fav'>
@@ -123,6 +133,7 @@ export default function TestSetup({
         </div>
       )}
 
+      {!custom && (
       <div className={s.field}>
         <div className={s.label}>문제 수</div>
         <Segmented<number | 'all'>
@@ -136,6 +147,7 @@ export default function TestSetup({
           ]}
         />
       </div>
+      )}
 
       <div className={s.field}>
         <div className={s.label}>순서</div>
