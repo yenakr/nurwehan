@@ -304,7 +304,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
 
   // User answers record
   const [quizResults, setQuizResults] = useState<
-    Array<{ term: NursingTerm; userAns: string; isCorrect: boolean; overrideCorrect?: boolean }>
+    Array<{ term: NursingTerm; userAns: string; isCorrect: boolean; overrideCorrect?: boolean; hinted?: boolean }>
   >([]);
 
   // PDF Export Mode: 'wrong_only' | 'all'
@@ -561,6 +561,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
         userAnswer: r.userAns,
         correctAnswer: r.term.answer || r.term.definition,
         isCorrect: r.overrideCorrect !== undefined ? r.overrideCorrect : r.isCorrect,
+        hinted: !!r.hinted,
         options: r.term.options || [],
         fullTerm: r.term,
       }));
@@ -983,12 +984,14 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
     if (!currentQuestion || isAnswerSubmitted) return;
 
     submitTimestampRef.current = Date.now();
-    const isCorrect = checkAnswerCorrectness(userAnswer, currentQuestion);
+    // 힌트를 봤으면 맞혀도 기본은 오답으로 처리한다(다시 풀 수 있도록). 필요하면 '정답 처리'로 바꿀 수 있다.
+    const isCorrect = checkAnswerCorrectness(userAnswer, currentQuestion) && !showHint;
 
     const resultItem = {
       term: currentQuestion,
       userAns: userAnswer,
       isCorrect,
+      hinted: showHint,
     };
 
     setQuizResults(prev => [...prev, resultItem]);
@@ -1054,6 +1057,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
           term: currentQuestion,
           userAns: quizType === 'abbr_both' ? '(미입력) / (미입력)' : '',
           isCorrect: false,
+          hinted: showHint,
         },
       ]);
     }
@@ -2089,8 +2093,8 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                   <h3 style={{ fontSize: '1.125rem', fontWeight: 800, color: '#1E293B', lineHeight: 1.6, margin: 0 }}>{promptText}</h3>
                 </div>
                 <div className={s.rvMine}><span>내 답안</span>{res.userAns?.trim() ? res.userAns : '미입력'}</div>
-                <div className={`${s.fb} ${ok ? s.fbOk : s.fbNo}`}>
-                  <div className={s.fbTitle}>{ok ? '정답' : '오답'}</div>
+                <div className={`${s.fb} ${res.hinted && res.overrideCorrect === undefined ? s.fbHint : ok ? s.fbOk : s.fbNo}`}>
+                  <div className={s.fbTitle}>{res.hinted ? '▲ ' : ''}{ok ? '정답' : '오답'}{res.hinted ? ' · 힌트 사용' : ''}</div>
                   <div className={s.fbAns}>{ans}</div>
                 </div>
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
@@ -2319,14 +2323,15 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
               {isAnswerSubmitted && (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {(() => {
+                    const hinted = !!quizResults[currentIndex]?.hinted;
                     const ok = checkAnswerCorrectness(userAnswer, currentQuestion);
                     const ans = currentQuestion.answer || currentQuestion.term;
                     const norm = (v?: string | null) => (v || '').trim().toLowerCase();
                     const def = currentQuestion.definition;
                     const showNote = !!def && ![currentQuestion.term, currentQuestion.englishTerm, ans].some(v => norm(v) === norm(def));
                     return (
-                      <div className={`${s.fb} ${ok ? s.fbOk : s.fbNo}`}>
-                        <div className={s.fbTitle}>{ok ? '정답' : '오답'}</div>
+                      <div className={`${s.fb} ${hinted ? s.fbHint : ok ? s.fbOk : s.fbNo}`}>
+                        <div className={s.fbTitle}>{hinted ? (ok ? '▲ 힌트 사용 · 오답으로 처리돼요' : '▲ 힌트 사용 · 오답') : ok ? '정답' : '오답'}</div>
                         <div className={s.fbAns}>{ans}</div>
                         {!ok && showNote && <div className={s.fbNote}>{def}</div>}
                       </div>
@@ -2690,7 +2695,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                     return (
                       <article key={res.term.id ?? idx} className={`${s.rsItem} ${finalCorrect ? s.rsOk : s.rsNo}`}>
                         <div className={s.rsHead}>
-                          <span className={s.rsNum}>#{idx + 1} {finalCorrect ? '정답' : '오답'}</span>
+                          <span className={s.rsNum}>#{idx + 1} {res.hinted && <span className={s.hintMark}>▲</span>}{finalCorrect ? '정답' : '오답'}</span>
                           <button type="button" className={s.rsToggle} onClick={() => handleToggleSelfCorrection(idx)}>
                             {finalCorrect ? '오답 처리' : '정답 처리'}
                           </button>
@@ -2760,7 +2765,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
               {Array.isArray(selectedHistoryAttempt.details) && selectedHistoryAttempt.details.map((item: any, idx: number) => (
                 <article key={idx} className={`${s.rsItem} ${item.isCorrect ? s.rsOk : s.rsNo}`}>
                   <div className={s.rsHead}>
-                    <span className={s.rsNum}>#{idx + 1} {item.isCorrect ? '정답' : '오답'}</span>
+                    <span className={s.rsNum}>#{idx + 1} {item.hinted && <span className={s.hintMark}>▲</span>}{item.isCorrect ? '정답' : '오답'}</span>
                   </div>
                   <div className={s.rsTerm}>{item.questionText}</div>
                   <div className={s.rsAns}>{item.correctAnswer}</div>
