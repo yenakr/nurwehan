@@ -1632,7 +1632,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                         ) : (
                           <>
                             <div className={s.fcAbbr}>{abbr}</div>
-                            {full && <div className={s.fcFull}>{boldInitials(full)}</div>}
+                            {full && <div className={s.fcFull}>{boldInitials(full, abbr)}</div>}
                             <div className={s.fcMean}>{currentCard.definition}</div>
                           </>
                         )}

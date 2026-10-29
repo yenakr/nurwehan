@@ -15,8 +15,53 @@ function isCorrectOption(opt: string, answer?: string | null, definition?: strin
   return cleanOpt === cleanAns || (cleanAns.length > 3 && cleanOpt.includes(cleanAns)) || (cleanOpt.length > 3 && cleanAns.includes(cleanOpt));
 }
 
-// 풀네임에서 각 단어의 첫 글자를 굵게 (약어 풀이를 한눈에 보도록)
-export function boldInitials(text: string) {
+// 풀네임에서 약어를 이루는 글자를 굵게 (BPD → Biparietal Diameter 의 B, p, D).
+// 단어 첫 글자를 우선해서 맞추고, 필요하면 단어 안쪽 글자도 쓴다. 맞추지 못하면 단어 첫 글자만 굵게.
+function matchAbbr(full: string, abbr: string): Set<number> | null {
+  const letters = abbr.replace(/[^A-Za-z0-9]/g, '').toLowerCase();
+  const n = full.length;
+  const m = letters.length;
+  if (!m) return null;
+  const isStart = (i: number) => i === 0 || /[\s\-/(]/.test(full[i - 1]);
+  const NEG = -1e9;
+  // best[j][i]: abbr 앞 j글자를 full 의 i 이전에서 맞췄을 때 최고 점수
+  const best: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(NEG));
+  const from: number[][] = Array.from({ length: m + 1 }, () => new Array(n + 1).fill(-1));
+  for (let i = 0; i <= n; i++) best[0][i] = 0;
+  for (let j = 1; j <= m; j++) {
+    for (let i = 1; i <= n; i++) {
+      // i 번째 글자(인덱스 i-1)를 쓰지 않는 경우
+      if (best[j][i - 1] > best[j][i]) {
+        best[j][i] = best[j][i - 1];
+        from[j][i] = from[j][i - 1];
+      }
+      // 사용하는 경우
+      if (full[i - 1].toLowerCase() === letters[j - 1] && best[j - 1][i - 1] > NEG) {
+        const sc = best[j - 1][i - 1] + (isStart(i - 1) ? 3 : 1);
+        if (sc >= best[j][i]) {
+          best[j][i] = sc;
+          from[j][i] = i - 1;
+        }
+      }
+    }
+  }
+  if (best[m][n] <= NEG) return null;
+  const used = new Set<number>();
+  let i = n;
+  for (let j = m; j >= 1; j--) {
+    const pos = from[j][i];
+    if (pos < 0) return null;
+    used.add(pos);
+    i = pos;
+  }
+  return used;
+}
+
+export function boldInitials(text: string, abbr?: string) {
+  const used = abbr ? matchAbbr(text, abbr) : null;
+  if (used) {
+    return Array.from(text).map((ch, i) => (used.has(i) ? <b key={i}>{ch}</b> : ch));
+  }
   return text.split(/(\s+|-)/).map((part, i) =>
     /^(\s+|-)$/.test(part) || !part ? (
       part
@@ -75,7 +120,7 @@ export default function TermCards({
                   {favorites?.has(t.id) ? '★' : '☆'}
                 </button>
               )}
-              {en && <span className={s.cardEn} style={hidden ? { visibility: 'hidden' } : undefined} aria-hidden={hidden}>{boldInitials(en)}</span>}
+              {en && <span className={s.cardEn} style={hidden ? { visibility: 'hidden' } : undefined} aria-hidden={hidden}>{boldInitials(en, t.term)}</span>}
             </div>
             <div className={s.maskWrap}>
               <div style={hidden ? { visibility: 'hidden' } : undefined} aria-hidden={hidden}>
