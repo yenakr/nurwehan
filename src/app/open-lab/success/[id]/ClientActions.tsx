@@ -59,6 +59,8 @@ export default function ClientActions({
         신청서 PDF 다운로드
       </button>
 
+      <pre className="mail-preview">{body}</pre>
+
       <div className="action-buttons-secondary">
         <button 
           onClick={handleSendEmail} 
@@ -81,6 +83,8 @@ export default function ClientActions({
           flex-direction: column;
           gap: 8px;
         }
+
+        .mail-preview { margin: 0; white-space: pre-wrap; font-family: inherit; font-size: 0.8125rem; color: #475569; line-height: 1.5; background: #f8fafc; border-radius: 8px; padding: 10px 12px; }
 
         .action-buttons-secondary {
           display: flex;
