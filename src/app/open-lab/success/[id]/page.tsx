@@ -101,12 +101,6 @@ export default async function OpenLabSuccessPage({ params }: { params: Promise<{
                 startTime={application.slot.startTime}
                 endTime={application.slot.endTime}
               />
-
-              <details className="email-preview-details">
-                <summary className="preview-summary">메일 본문 미리보기</summary>
-                <pre className="preview-content">{emailBody}</pre>
-              </details>
-
               <div className="side-nav">
                 <Link href="/">홈으로</Link>
                 {application.representativeUserId && <Link href="/history">내 신청내역</Link>}
