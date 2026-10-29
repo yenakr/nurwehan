@@ -1044,6 +1044,22 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
     }
   }, [currentIndex, quizQuestions.length]);
 
+  // 풀지 않고 건너뛰기: 미응답(오답)으로 기록하고 다음 문제로 넘어간다
+  const handleSkip = () => {
+    if (!currentQuestion) return;
+    if (!isAnswerSubmitted) {
+      setQuizResults(prev => [
+        ...prev,
+        {
+          term: currentQuestion,
+          userAns: quizType === 'abbr_both' ? '(미입력) / (미입력)' : '',
+          isCorrect: false,
+        },
+      ]);
+    }
+    handleNextQuestion();
+  };
+
   // Keyboard navigation for Single Question Quiz Play mode (Enter key advances to next question when answer is submitted)
   useEffect(() => {
     if (activeTab !== 'quiz_play' || quizFormat !== 'single' || !isAnswerSubmitted || reviewIndex !== null) return;
@@ -2041,9 +2057,6 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
               <span style={{ fontSize: '1.0625rem', fontWeight: 800, color: 'var(--primary)', whiteSpace: 'nowrap' }}>
                 {(reviewIndex ?? currentIndex) + 1} / {quizQuestions.length}
               </span>
-              {reviewIndex === null && currentIndex > 0 && (
-                <button type="button" className={s.selfToggle} onClick={() => setReviewIndex(currentIndex - 1)}>이전 문제</button>
-              )}
             </span>
             <span style={{ fontSize: '0.8125rem', color: 'var(--sub-text)', textAlign: 'right' }}>
               {currentQuestion.subject}{currentQuestion.category && currentQuestion.category !== 'all' ? ` · ${currentQuestion.category}` : ''}
@@ -2085,24 +2098,16 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                     {ok ? '오답 처리' : '정답 처리'}
                   </button>
                 </div>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <button
-                    type="button"
-                    className="btn-outline"
-                    style={{ flex: 1, padding: '12px', fontSize: '1rem' }}
-                    disabled={reviewIndex === 0}
-                    onClick={() => setReviewIndex(reviewIndex - 1)}
-                  >
-                    이전
+                <div className={s.navRow}>
+                  <button type="button" className={s.navArrow} aria-label="이전 문제" disabled={reviewIndex === 0} onClick={() => setReviewIndex(reviewIndex - 1)}>
+                    <Icon d={['m15 18-6-6 6-6']} />
                   </button>
-                  <button
-                    type="button"
-                    className="btn-primary"
-                    style={{ flex: 2, padding: '12px', fontSize: '1rem' }}
-                    onClick={() => setReviewIndex(reviewIndex + 1 < currentIndex ? reviewIndex + 1 : null)}
-                  >
-                    {reviewIndex + 1 < currentIndex ? '다음' : '현재 문제로'}
-                  </button>
+                  <div className={s.navMain}>
+                    <button type="button" className="btn-primary" style={{ padding: '12px', fontSize: '1rem' }} onClick={() => setReviewIndex(reviewIndex + 1 < currentIndex ? reviewIndex + 1 : null)}>
+                      {reviewIndex + 1 < currentIndex ? '다음' : '현재 문제로'}
+                    </button>
+                  </div>
+                  <span className={s.navArrow} style={{ visibility: 'hidden' }} aria-hidden="true" />
                 </div>
               </div>
             );
@@ -2196,26 +2201,6 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                     </div>
                   )}
 
-                  {!isAnswerSubmitted ? (
-                    <button
-                      type="button"
-                      onClick={handleSubmitBoth}
-                      disabled={!canSubmit}
-                      className="btn-primary"
-                      style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
-                    >
-                      다음
-                    </button>
-                  ) : (
-                    <button
-                      type="button"
-                      onClick={handleNextQuestion}
-                      className="btn-primary"
-                      style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
-                    >
-                      {currentIndex + 1 < quizQuestions.length ? '다음' : '퀴즈 결과 보기'}
-                    </button>
-                  )}
                 </div>
               );
             })()
@@ -2299,21 +2284,13 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                   {currentQuestion.definition && (
                     <div className={s.fbNote} style={{ background: 'var(--q-primary-soft)', borderRadius: 10, padding: '12px 14px' }}>{currentQuestion.definition}</div>
                   )}
-                  <button
-                    type="button"
-                    onClick={handleNextQuestion}
-                    className="btn-primary"
-                    style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
-                  >
-                    {currentIndex + 1 < quizQuestions.length ? '다음' : '퀴즈 결과 보기'}
-                  </button>
                 </div>
               )}
             </div>
           ) : (
             /* SUBJECTIVE MODE VIEW */
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div>
+              <div className={s.hintWrap}>
                 <input
                   ref={answerInputRef}
                   aria-label="정답 입력"
@@ -2327,20 +2304,16 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                       handleSubmitAnswer();
                     }
                   }}
-                  style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
+                  style={{ width: '100%', padding: '12px 84px 12px 12px', fontSize: '1rem' }}
                 />
-              </div>
-
-              {/* Hint Section */}
-              {!isAnswerSubmitted && (
-                <div style={{ textAlign: 'center' }}>
-                  {showHint ? (
-                    <span className={s.hintChip}>첫글자: {(currentQuestion.answer || currentQuestion.term)[0]}</span>
+                {!isAnswerSubmitted && (
+                  showHint ? (
+                    <span className={s.hintInline}>{(currentQuestion.answer || currentQuestion.term)[0]} …</span>
                   ) : (
-                    <button type="button" onClick={() => setShowHint(true)} className={s.hintBtn}>힌트</button>
-                  )}
-                </div>
-              )}
+                    <button type="button" onClick={() => setShowHint(true)} className={s.hintInline}>힌트</button>
+                  )
+                )}
+              </div>
 
               {/* Answer Feedback after submit */}
               {isAnswerSubmitted && (
@@ -2377,32 +2350,33 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                 </div>
               )}
 
-              {/* Action Buttons */}
-              <div style={{ display: 'flex', gap: '10px', justifyContent: 'flex-end', marginTop: '12px' }}>
-                {!isAnswerSubmitted ? (
-                  <button
-                    type="button"
-                    onClick={handleSubmitAnswer}
-                    disabled={!userAnswer.trim()}
-                    className="btn-primary"
-                    style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
-                  >
-                    다음
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={handleNextQuestion}
-                    className="btn-primary"
-                    style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
-                  >
-                    {currentIndex + 1 < quizQuestions.length ? '다음' : '퀴즈 결과 보기'}
-                  </button>
-                )}
-              </div>
             </div>
           )}
           </>)}
+          {(() => {
+            const last = currentIndex + 1 >= quizQuestions.length;
+            const isBoth = quizType === 'abbr_both';
+            const isMc = !isBoth && ((currentQuestion.options?.length ?? 0) > 0 || (mcOptionsMap[currentIndex]?.length ?? 0) > 0);
+            let main: React.ReactNode = null;
+            if (isAnswerSubmitted) {
+              main = <button type="button" className="btn-primary" style={{ padding: '12px', fontSize: '1rem' }} onClick={handleNextQuestion}>{last ? '퀴즈 결과 보기' : '다음'}</button>;
+            } else if (isBoth) {
+              main = <button type="button" className="btn-primary" style={{ padding: '12px', fontSize: '1rem' }} disabled={!userAnswer.trim() && !userAnswer2.trim()} onClick={handleSubmitBoth}>다음</button>;
+            } else if (!isMc) {
+              main = <button type="button" className="btn-primary" style={{ padding: '12px', fontSize: '1rem' }} disabled={!userAnswer.trim()} onClick={handleSubmitAnswer}>다음</button>;
+            }
+            return (
+              <div className={s.navRow}>
+                <button type="button" className={s.navArrow} aria-label="이전 문제" title="이전 문제" disabled={currentIndex === 0} onClick={() => setReviewIndex(currentIndex - 1)}>
+                  <Icon d={['m15 18-6-6 6-6']} />
+                </button>
+                <div className={s.navMain}>{main}</div>
+                <button type="button" className={s.navArrow} aria-label="건너뛰기" title="건너뛰기" onClick={handleSkip}>
+                  <Icon d={['m9 18 6-6-6-6']} />
+                </button>
+              </div>
+            );
+          })()}
           </>)}
         </div>
       )}
