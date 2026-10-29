@@ -245,3 +245,6 @@
 .navMain > button { width: 100%; }
 .hintWrap { position: relative; }
 .hintInline { position: absolute; right: 8px; top: 50%; transform: translateY(-50%); border: 0; background: var(--q-primary-soft); color: var(--q-primary); border-radius: 999px; padding: 6px 12px; font-size: 0.8125rem; font-weight: 700; font-family: inherit; }
+.fbHint { border-left-color: #eab308; background: #fffbeb; }
+.fbHint .fbTitle { color: #a16207; }
+.hintMark { color: #eab308; margin-right: 4px; }
