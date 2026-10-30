@@ -32,7 +32,8 @@ export default function ApplicationListClient({ initialApplications }: { initial
         guest: !a.representativeUser,
         skills: a.skills.map(s => s.skill.name).join(', '),
         created: formatInTimeZone(new Date(a.createdAt), TZ, 'MM/dd HH:mm'),
-        day: formatInTimeZone(new Date(a.slot.date), TZ, 'MM/dd (EEE)'),
+        md: formatInTimeZone(new Date(a.slot.date), TZ, 'M/d'),
+        wd: ['일', '월', '화', '수', '목', '금', '토'][new Date(formatInTimeZone(new Date(a.slot.date), TZ, "yyyy-MM-dd'T'12:00:00")).getDay()],
         time: `${a.slot.startTime}~${a.slot.endTime}`,
         ts: new Date(a.createdAt).getTime(),
       }))
@@ -54,17 +55,22 @@ export default function ApplicationListClient({ initialApplications }: { initial
           {rows.slice(0, limit).map(r => (
             <li key={r.id}>
               <Link href={`/admin/applications/${r.id}`} className="row">
-                <span className="when">
-                  <b>{r.day}</b>
-                  <i>{r.time}</i>
+                <span className="date">
+                  <b>{r.md}</b>
+                  <i>{r.wd}</i>
                 </span>
-                <span className="who">
-                  <b>{r.name}</b>
-                  <i>{r.sid}</i>
-                  {r.guest && <em>비회원</em>}
+                <span className="main">
+                  <span className="l1">
+                    <b>{r.name}</b>
+                    <i>{r.sid}</i>
+                    {r.guest && <em>비회원</em>}
+                  </span>
+                  <span className="l2">{r.skills || '-'}</span>
                 </span>
-                <span className="sk">{r.skills || '-'}</span>
-                <span className="ct">{r.created}</span>
+                <span className="side">
+                  <b>{r.time}</b>
+                  <i>생성 {r.created}</i>
+                </span>
               </Link>
             </li>
           ))}
@@ -76,29 +82,27 @@ export default function ApplicationListClient({ initialApplications }: { initial
       )}
 
       <style jsx global>{`
-        .al .bar{ display: flex; align-items: center; gap: 10px; margin-bottom: 10px; }
-        .al .bar input { flex: 1; padding: 10px 12px; border: 1px solid #e2e8f0; border-radius: 10px; font-size: 0.9375rem; background: #fff; }
+        .al .bar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
+        .al .bar input { flex: 1; padding: 11px 14px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 0.9375rem; background: #fff; }
+        .al .bar input:focus { outline: none; border-color: var(--primary); }
         .al .bar span { font-size: 0.8125rem; color: var(--sub-text); white-space: nowrap; }
-        .al .list{ list-style: none; margin: 0; padding: 0; background: #fff; border: 1px solid #e2e8f0; border-radius: 12px; overflow: hidden; }
-        .al .list li + li { border-top: 1px solid #f1f5f9; }
-        .al .row{ display: grid; grid-template-columns: 112px 150px 1fr auto; gap: 12px; align-items: center; padding: 10px 14px; text-decoration: none; color: inherit; }
-        .al .row:hover { background: #f8fafc; }
-        .al .when, .al .who { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-        .al .when b, .al .who b { font-size: 0.875rem; font-weight: 800; }
-        .al .when i, .al .who i { font-style: normal; font-size: 0.75rem; color: #94a3b8; }
-        .al .who{ flex-direction: row; align-items: baseline; flex-wrap: wrap; gap: 2px 6px; }
-        .al .who em { font-style: normal; font-size: 0.625rem; background: #eef2f7; color: #475569; padding: 1px 6px; border-radius: 999px; }
-        .al .sk{ font-size: 0.8125rem; color: #475569; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .al .ct{ font-size: 0.75rem; color: #94a3b8; font-variant-numeric: tabular-nums; white-space: nowrap; }
-        .al .more{ display: block; margin: 12px auto 0; padding: 8px 20px; border: 1px solid #e2e8f0; background: #fff; border-radius: 10px; font-size: 0.8125rem; font-weight: 700; color: var(--sub-text); cursor: pointer; }
-        .al .empty{ text-align: center; padding: 40px 12px; color: #94a3b8; }
-        @media (max-width: 640px) {
-          .al .row{ grid-template-columns: 1fr auto; gap: 2px 10px; }
-          .al .when{ flex-direction: row; gap: 6px; align-items: baseline; grid-column: 2; grid-row: 1; justify-self: end; }
-          .al .who{ grid-column: 1; grid-row: 1; }
-          .al .sk{ grid-column: 1; grid-row: 2; }
-          .al .ct{ grid-column: 2; grid-row: 2; justify-self: end; }
-        }
+        .al .list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+        .al .row { display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: #fff; border: 1px solid #e8edf3; border-radius: 14px; text-decoration: none; color: inherit; transition: border-color .15s, box-shadow .15s; }
+        .al .row:hover { border-color: #c5cff0; box-shadow: 0 2px 8px rgba(35, 58, 138, 0.06); }
+        .al .date { flex: 0 0 48px; height: 48px; border-radius: 12px; background: #eef1fa; color: var(--primary); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.15; }
+        .al .date b { font-size: 0.9375rem; font-weight: 800; font-variant-numeric: tabular-nums; }
+        .al .date i { font-style: normal; font-size: 0.6875rem; font-weight: 600; opacity: 0.75; }
+        .al .main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+        .al .l1 { display: flex; align-items: baseline; gap: 6px; }
+        .al .l1 b { font-size: 0.9375rem; font-weight: 800; color: #1e293b; }
+        .al .l1 i { font-style: normal; font-size: 0.75rem; color: #94a3b8; }
+        .al .l1 em { font-style: normal; font-size: 0.625rem; font-weight: 700; background: #f1f5f9; color: #64748b; padding: 1px 7px; border-radius: 999px; align-self: center; }
+        .al .l2 { font-size: 0.8125rem; color: #64748b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .al .side { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; font-variant-numeric: tabular-nums; }
+        .al .side b { font-size: 0.8125rem; font-weight: 700; color: #334155; }
+        .al .side i { font-style: normal; font-size: 0.6875rem; color: #94a3b8; }
+        .al .more { display: block; margin: 14px auto 0; padding: 9px 22px; border: 1px solid #e2e8f0; background: #fff; border-radius: 12px; font-size: 0.8125rem; font-weight: 700; color: var(--sub-text); cursor: pointer; }
+        .al .empty { text-align: center; padding: 48px 12px; color: #94a3b8; }
       `}</style>
     </div>
   );
