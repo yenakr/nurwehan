@@ -18,7 +18,8 @@ export default async function AdminApplicationsPage() {
     include: {
       representativeUser: true,
       slot: true,
-      skills: { include: { skill: true } }
+      skills: { include: { skill: true } },
+      _count: { select: { participants: true } }
     }
   });
 
