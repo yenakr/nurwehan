@@ -5,7 +5,7 @@ import { useCallback, useEffect, useRef, type PointerEvent as RPointerEvent } fr
 type Pt = { x: number; y: number; w: number };
 
 // 손글씨 연습용 메모판. 인식 없이 그냥 써보는 용도 (Apple Pencil·마우스·터치).
-export default function PenPad({ height = 180 }: { height?: number }) {
+export default function PenPad({ height = 180, compact = false }: { height?: number; compact?: boolean }) {
   const wrapRef = useRef<HTMLDivElement>(null);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const strokes = useRef<Pt[][]>([]);
@@ -95,27 +95,24 @@ export default function PenPad({ height = 180 }: { height?: number }) {
     redraw();
   };
 
+  const lineH = compact ? Math.round(height / 2) : 44;
+  const btn = { fontSize: '0.6875rem', padding: '2px 8px', borderRadius: '6px', background: 'rgba(255,255,255,0.9)' } as const;
+
   return (
     <div>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-        <span style={{ fontSize: '0.8125rem', fontWeight: 800, color: '#0E4A84' }}>손글씨</span>
-        <div style={{ display: 'flex', gap: '6px' }}>
-          <button type="button" onClick={undo} className="btn-outline" style={{ fontSize: '0.75rem', padding: '3px 10px', borderRadius: '6px' }}>
-            되돌리기
-          </button>
-          <button type="button" onClick={clear} className="btn-outline" style={{ fontSize: '0.75rem', padding: '3px 10px', borderRadius: '6px' }}>
-            지우기
-          </button>
+      {!compact && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+          <span style={{ fontSize: '0.8125rem', fontWeight: 800, color: '#0E4A84' }}>손글씨</span>
         </div>
-      </div>
+      )}
       <div
         ref={wrapRef}
         style={{
+          position: 'relative',
           border: '1px solid var(--border)',
           borderRadius: '8px',
           overflow: 'hidden',
-          background:
-            'repeating-linear-gradient(to bottom, #fff 0, #fff 43px, #eef2f7 43px, #eef2f7 44px)',
+          background: `repeating-linear-gradient(to bottom, #fff 0, #fff ${lineH - 1}px, #eef2f7 ${lineH - 1}px, #eef2f7 ${lineH}px)`,
         }}
       >
         <canvas
@@ -126,6 +123,10 @@ export default function PenPad({ height = 180 }: { height?: number }) {
           onPointerCancel={up}
           style={{ display: 'block', touchAction: 'none', cursor: 'crosshair' }}
         />
+        <div style={{ position: 'absolute', top: 4, right: 4, display: 'flex', gap: '4px' }}>
+          <button type="button" onClick={undo} className="btn-outline" style={btn}>↶</button>
+          <button type="button" onClick={clear} className="btn-outline" style={btn}>지우기</button>
+        </div>
       </div>
     </div>
   );
