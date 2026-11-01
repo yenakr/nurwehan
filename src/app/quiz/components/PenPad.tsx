@@ -145,7 +145,7 @@ export default function PenPad({ height = 180, compact = false }: { height?: num
   };
 
   const lineH = compact ? Math.round(height / 2) : 44;
-  const btn = { fontSize: '0.6875rem', padding: '2px 8px', borderRadius: '6px', background: 'rgba(255,255,255,0.9)' } as const;
+  const btn = { fontSize: '0.6875rem', padding: '0 4px', borderRadius: '6px', background: '#fff', flex: 1, minHeight: 0 } as const;
 
   return (
     <div>
@@ -154,30 +154,34 @@ export default function PenPad({ height = 180, compact = false }: { height?: num
           <span style={{ fontSize: '0.8125rem', fontWeight: 800, color: '#0E4A84' }}>손글씨</span>
         </div>
       )}
-      <div
-        ref={wrapRef}
-        style={{
-          position: 'relative',
-          userSelect: 'none',
-          WebkitUserSelect: 'none',
-          WebkitTouchCallout: 'none',
-          WebkitTapHighlightColor: 'transparent',
-          border: '1px solid var(--border)',
-          borderRadius: '8px',
-          overflow: 'hidden',
-          background: `repeating-linear-gradient(to bottom, #fff 0, #fff ${lineH - 1}px, #eef2f7 ${lineH - 1}px, #eef2f7 ${lineH}px)`,
-        }}
-      >
-        <canvas
-          ref={canvasRef}
-          onPointerDown={down}
-          onPointerMove={move}
-          onPointerUp={up}
-          onPointerCancel={up}
-          onContextMenu={e => e.preventDefault()}
-          style={{ display: 'block', touchAction: 'none', cursor: erase ? 'cell' : 'crosshair', userSelect: 'none', WebkitUserSelect: 'none', WebkitTouchCallout: 'none' }}
-        />
-        <div style={{ position: 'absolute', top: 4, right: 4, display: 'flex', gap: '4px' }}>
+      <div style={{ display: 'flex', gap: '6px', alignItems: 'stretch' }}>
+        <div
+          ref={wrapRef}
+          style={{
+            position: 'relative',
+            flex: '1 1 auto',
+            minWidth: 0,
+            userSelect: 'none',
+            WebkitUserSelect: 'none',
+            WebkitTouchCallout: 'none',
+            WebkitTapHighlightColor: 'transparent',
+            border: '1px solid var(--border)',
+            borderRadius: '8px',
+            overflow: 'hidden',
+            background: `repeating-linear-gradient(to bottom, #fff 0, #fff ${lineH - 1}px, #eef2f7 ${lineH - 1}px, #eef2f7 ${lineH}px)`,
+          }}
+        >
+          <canvas
+            ref={canvasRef}
+            onPointerDown={down}
+            onPointerMove={move}
+            onPointerUp={up}
+            onPointerCancel={up}
+            onContextMenu={e => e.preventDefault()}
+            style={{ display: 'block', touchAction: 'none', cursor: erase ? 'cell' : 'crosshair', userSelect: 'none', WebkitUserSelect: 'none', WebkitTouchCallout: 'none' }}
+          />
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', width: '52px', flex: '0 0 auto' }}>
           <button
             type="button"
             onClick={() => { eraseRef.current = !eraseRef.current; setErase(eraseRef.current); }}

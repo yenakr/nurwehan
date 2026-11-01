@@ -1923,7 +1923,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
 
           {/* MODE 2: TYPING PRACTICE MODE (타자 연습 모드) */}
           {studyViewMode === 'typing' && (
-            <div style={{ maxWidth: '720px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ maxWidth: '1120px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}>
               {filteredStudyTerms.length > 0 && currentTypingTerm ? (
                 <div className="card" style={{ padding: '18px' }}>
                   {/* Header Progress & Prev/Next Buttons */}
