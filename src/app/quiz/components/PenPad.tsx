@@ -1,6 +1,6 @@
 'use client';
 
-import { useCallback, useEffect, useRef, type PointerEvent as RPointerEvent } from 'react';
+import { useCallback, useEffect, useRef, useState, type PointerEvent as RPointerEvent } from 'react';
 
 type Pt = { x: number; y: number; w: number };
 
@@ -11,6 +11,9 @@ export default function PenPad({ height = 180, compact = false }: { height?: num
   const strokes = useRef<Pt[][]>([]);
   const current = useRef<Pt[] | null>(null);
   const penSeen = useRef(false);
+  const [erase, setErase] = useState(false);
+  const eraseRef = useRef(false);
+  const erasingNow = useRef(false);
 
   const redraw = useCallback(() => {
     const c = canvasRef.current;
@@ -63,22 +66,48 @@ export default function PenPad({ height = 180, compact = false }: { height?: num
   const pos = (e: RPointerEvent<HTMLCanvasElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
     const pressure = e.pointerType === 'pen' ? Math.max(0.15, e.pressure || 0.5) : 0.5;
-    return { x: e.clientX - r.left, y: e.clientY - r.top, w: 1.2 + pressure * 3 };
+    return { x: e.clientX - r.left, y: e.clientY - r.top, w: 1.7 + pressure * 3.4 };
+  };
+
+  // 지우개: 지나간 자리에 닿은 획을 통째로 지운다
+  const eraseAt = (x: number, y: number) => {
+    const R = 14;
+    const before = strokes.current.length;
+    strokes.current = strokes.current.filter(st => !st.some(p => Math.hypot(p.x - x, p.y - y) < R));
+    if (strokes.current.length !== before) redraw();
   };
 
   const down = (e: RPointerEvent<HTMLCanvasElement>) => {
     if (e.pointerType === 'pen') penSeen.current = true;
     if (e.pointerType === 'touch' && penSeen.current) return; // 펜을 쓰는 중이면 손바닥 터치 무시
+    e.preventDefault();
     e.currentTarget.setPointerCapture(e.pointerId);
-    current.current = [pos(e)];
+    // 펜슬 뒷면(지우개) 버튼이 눌렸거나 지우개 모드면 지우기
+    erasingNow.current = eraseRef.current || (e.buttons & 32) === 32;
+    const p = pos(e);
+    if (erasingNow.current) {
+      eraseAt(p.x, p.y);
+      return;
+    }
+    current.current = [p];
     redraw();
   };
   const move = (e: RPointerEvent<HTMLCanvasElement>) => {
+    if (erasingNow.current) {
+      if (e.buttons === 0) return;
+      const p = pos(e);
+      eraseAt(p.x, p.y);
+      return;
+    }
     if (!current.current) return;
     current.current.push(pos(e));
     redraw();
   };
   const up = () => {
+    if (erasingNow.current) {
+      erasingNow.current = false;
+      return;
+    }
     if (!current.current) return;
     strokes.current.push(current.current);
     current.current = null;
@@ -109,6 +138,10 @@ export default function PenPad({ height = 180, compact = false }: { height?: num
         ref={wrapRef}
         style={{
           position: 'relative',
+          userSelect: 'none',
+          WebkitUserSelect: 'none',
+          WebkitTouchCallout: 'none',
+          WebkitTapHighlightColor: 'transparent',
           border: '1px solid var(--border)',
           borderRadius: '8px',
           overflow: 'hidden',
@@ -121,11 +154,21 @@ export default function PenPad({ height = 180, compact = false }: { height?: num
           onPointerMove={move}
           onPointerUp={up}
           onPointerCancel={up}
-          style={{ display: 'block', touchAction: 'none', cursor: 'crosshair' }}
+          onContextMenu={e => e.preventDefault()}
+          style={{ display: 'block', touchAction: 'none', cursor: erase ? 'cell' : 'crosshair', userSelect: 'none', WebkitUserSelect: 'none', WebkitTouchCallout: 'none' }}
         />
         <div style={{ position: 'absolute', top: 4, right: 4, display: 'flex', gap: '4px' }}>
+          <button
+            type="button"
+            onClick={() => { eraseRef.current = !eraseRef.current; setErase(eraseRef.current); }}
+            className="btn-outline"
+            style={erase ? { ...btn, background: '#233a8a', color: '#fff', borderColor: '#233a8a' } : btn}
+            aria-pressed={erase}
+          >
+            지우개
+          </button>
           <button type="button" onClick={undo} className="btn-outline" style={btn}>↶</button>
-          <button type="button" onClick={clear} className="btn-outline" style={btn}>지우기</button>
+          <button type="button" onClick={clear} className="btn-outline" style={btn}>전체</button>
         </div>
       </div>
     </div>
