@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { isAdminRole } from '@/lib/auth-core';
 import s from './quiz.module.css';
 import HubView from './components/HubView';
-import PenPad from './components/PenPad';
+import PenPad, { PenProvider } from './components/PenPad';
 import ContextBar from './components/ContextBar';
 import TestSetup from './components/TestSetup';
 import RecordView from './components/RecordView';
@@ -163,8 +163,7 @@ function TypingRow({
 }) {
   return (
     <div style={{ marginBottom: '14px' }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-        <div style={{ fontSize: '1.0625rem', fontWeight: 800, color: '#0E4A84', lineHeight: 1.4 }}>{text}</div>
+      <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
         <button
           type="button"
           onClick={onSpeak}
@@ -174,11 +173,14 @@ function TypingRow({
         >
           듣기
         </button>
+        <div style={{ flex: 1, fontSize: '1.0625rem', fontWeight: 800, color: '#0E4A84', lineHeight: 1.4 }}>{text}</div>
       </div>
       {extra}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '8px', alignItems: 'start' }}>
-        <div>{input}</div>
-        <PenPad key={resetKey} height={76} compact />
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'flex-start' }}>
+        <div style={{ flex: '1 1 200px', minWidth: 0 }}>{input}</div>
+        <div style={{ flex: '2.4 1 340px', minWidth: 0 }}>
+          <PenPad key={resetKey} height={76} />
+        </div>
       </div>
     </div>
   );
@@ -1964,6 +1966,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                     />
                   </div>
 
+                  <PenProvider>
                   <TypingRow
                     resetKey={`t${typingIndex}`}
                     text={currentTypingTerm.answer || currentTypingTerm.term}
@@ -2041,6 +2044,8 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                       />
                     }
                   />
+
+                  </PenProvider>
 
                   {/* Action / Navigation Bar */}
                   <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginTop: '16px', borderTop: '1px solid #E2E8F0', paddingTop: '16px' }}>
