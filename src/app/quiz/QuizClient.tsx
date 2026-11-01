@@ -449,6 +449,18 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
       .catch(() => {});
   }, [user]);
 
+  // 즐겨찾기 개수는 현재 과목 기준으로만 센다
+  const studyFavCount = useMemo(
+    () => termsList.filter(t => t.subject === studySubject && favIds.has(t.id)).length,
+    [termsList, studySubject, favIds]
+  );
+  const quizFavCount = useMemo(
+    () => termsList.filter(t => (quizSubject === 'all' || t.subject === quizSubject) && matchesContentType(t, quizKind) && favIds.has(t.id)).length,
+    [termsList, quizSubject, quizKind, favIds]
+  );
+  useEffect(() => { setFavOnly(false); }, [studySubject]);
+  useEffect(() => { setQuizFavOnly(false); }, [quizSubject]);
+
   const toggleFav = (id: string) => {
     if (!user) {
       setGuestNotice(true);
@@ -1643,14 +1655,14 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                   국문
                 </button>
               )}
-              {user && (favIds.size > 0 || favOnly) && (
+              {user && (studyFavCount > 0 || favOnly) && (
                 <button
                   type="button"
                   aria-pressed={favOnly}
                   className={`${s.favToggle} ${favOnly ? s.favToggleOn : ''}`}
                   onClick={() => setFavOnly(v => !v)}
                 >
-                  ★ {favIds.size}
+                  ★ {studyFavCount}
                 </button>
               )}
               <div className={s.ttsGroup}>
@@ -2028,7 +2040,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
               : quizType === 'abbr_both' ? bothCount : selectedQuizTerms.length
           }
           bothAvailable={retryPool ? retryPool.some(t => kindOf(t) === 'TERM' && !!t.englishTerm?.trim() && !!t.definition?.trim()) : bothCount > 0}
-          favCount={user ? favIds.size : 0}
+          favCount={user ? quizFavCount : 0}
           favOnly={quizFavOnly}
           onFavOnly={setQuizFavOnly}
           quizType={quizType}
