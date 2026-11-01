@@ -63,6 +63,26 @@ export default function PenPad({ height = 180, compact = false }: { height?: num
     return () => ro.disconnect();
   }, [height, redraw]);
 
+  // iOS/Safari: 길게 누름(선택·복사 메뉴)과 선택 시작을 원천 차단
+  useEffect(() => {
+    const wrap = wrapRef.current;
+    const c = canvasRef.current;
+    if (!wrap || !c) return;
+    const stop = (e: Event) => e.preventDefault();
+    c.addEventListener('touchstart', stop, { passive: false });
+    c.addEventListener('touchmove', stop, { passive: false });
+    wrap.addEventListener('selectstart', stop);
+    wrap.addEventListener('contextmenu', stop);
+    wrap.addEventListener('dragstart', stop);
+    return () => {
+      c.removeEventListener('touchstart', stop);
+      c.removeEventListener('touchmove', stop);
+      wrap.removeEventListener('selectstart', stop);
+      wrap.removeEventListener('contextmenu', stop);
+      wrap.removeEventListener('dragstart', stop);
+    };
+  }, []);
+
   const pos = (e: RPointerEvent<HTMLCanvasElement>) => {
     const r = e.currentTarget.getBoundingClientRect();
     const pressure = e.pointerType === 'pen' ? Math.max(0.15, e.pressure || 0.5) : 0.5;
