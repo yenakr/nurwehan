@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useCallback, useRef } from 'react';
+import { useState, useMemo, useEffect, useCallback, useRef, type ReactNode, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { isAdminRole } from '@/lib/auth-core';
 import s from './quiz.module.css';
@@ -134,6 +134,54 @@ function pickVoice(lang: string): SpeechSynthesisVoice | undefined {
   const exact = sameLang.filter(v => v.lang.toLowerCase().replace('_', '-') === lang.toLowerCase());
   const pool = exact.length ? exact : sameLang;
   return pool.find(v => v.localService) || pool[0];
+}
+
+const typingInputStyle: CSSProperties = {
+  width: '100%',
+  padding: '10px 12px',
+  fontSize: '1rem',
+  fontWeight: 600,
+  color: '#0F172A',
+  backgroundColor: '#FFFFFF',
+  border: '1px solid var(--border)',
+  borderRadius: '8px',
+};
+
+// 학습 '타이핑' 한 칸: 정답 텍스트(제목 자리) + 입력칸 + 손글씨칸
+function TypingRow({
+  text,
+  onSpeak,
+  input,
+  extra,
+  resetKey,
+}: {
+  text: string;
+  onSpeak: () => void;
+  input: ReactNode;
+  extra?: ReactNode;
+  resetKey: string;
+}) {
+  return (
+    <div style={{ marginBottom: '14px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+        <div style={{ fontSize: '1.0625rem', fontWeight: 800, color: '#0E4A84', lineHeight: 1.4 }}>{text}</div>
+        <button
+          type="button"
+          onClick={onSpeak}
+          className="btn-outline"
+          style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: '6px', flex: '0 0 auto' }}
+          title="음성으로 들려주기"
+        >
+          듣기
+        </button>
+      </div>
+      {extra}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '8px', alignItems: 'start' }}>
+        <div>{input}</div>
+        <PenPad key={resetKey} height={76} compact />
+      </div>
+    </div>
+  );
 }
 
 function fmtSec(n: number) {
@@ -1877,7 +1925,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
           {studyViewMode === 'typing' && (
             <div style={{ maxWidth: '720px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}>
               {filteredStudyTerms.length > 0 && currentTypingTerm ? (
-                <div className="card" style={{ padding: '28px' }}>
+                <div className="card" style={{ padding: '18px' }}>
                   {/* Header Progress & Prev/Next Buttons */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
                     <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--primary)' }}>
@@ -1916,157 +1964,83 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                     />
                   </div>
 
-                  {/* SECTION 1: TERM / ANSWER TYPING */}
-                  <div style={{ marginBottom: '24px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                      <span style={{ fontSize: '0.8125rem', fontWeight: 800, color: '#0E4A84' }}>
-                        {currentTypingTerm.englishTerm?.trim() ? '약어' : '용어'}
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => speakText(termSpeech(currentTypingTerm))}
-                        className="btn-outline"
-                        style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: '6px' }}
-                        title="음성으로 들려주기"
-                      >
-                        듣기
-                      </button>
-                    </div>
-                    <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #CBD5E1', padding: '12px 16px', borderRadius: '8px', marginBottom: '8px', fontSize: '1rem', fontWeight: 700, color: '#64748B', lineHeight: 1.6 }}>
-                      {currentTypingTerm.answer || currentTypingTerm.term}
-                    </div>
-                    <input
-                      type="text"
-                      autoFocus
-                      value={typingInput}
-                      onChange={e => setTypingInput(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter') {
-                          e.preventDefault();
-                          const nx = document.getElementById(currentTypingTerm.englishTerm?.trim() ? 'typing-full' : 'typing-def');
-                          if (nx) (nx as HTMLElement).focus(); else handleTypingNext();
-                        }
-                      }}
-                      style={{
-                        width: '100%',
-                        padding: '14px',
-                        fontSize: '1.0625rem',
-                        fontWeight: 700,
-                        color: '#0F172A',
-                        backgroundColor: '#FFFFFF',
-                        borderColor: 'var(--border)',
-                        borderRadius: '8px',
-                      }}
-                    />
-                  </div>
-
-                  {/* SECTION 1-2: FULL NAME TYPING */}
-                  {currentTypingTerm.englishTerm?.trim() && (
-                    <div style={{ marginBottom: '24px' }}>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                        <span style={{ fontSize: '0.8125rem', fontWeight: 800, color: '#0E4A84' }}>
-                          풀네임
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => speakText(currentTypingTerm.englishTerm || '')}
-                          className="btn-outline"
-                          style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: '6px' }}
-                          title="음성으로 들려주기"
-                        >
-                          듣기
-                        </button>
-                      </div>
-                      <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #CBD5E1', padding: '12px 16px', borderRadius: '8px', marginBottom: '8px', fontSize: '1rem', fontWeight: 700, color: '#64748B', lineHeight: 1.6 }}>
-                        {currentTypingTerm.englishTerm}
-                      </div>
+                  <TypingRow
+                    resetKey={`t${typingIndex}`}
+                    text={currentTypingTerm.answer || currentTypingTerm.term}
+                    onSpeak={() => speakText(termSpeech(currentTypingTerm))}
+                    input={
                       <input
-                        id="typing-full"
                         type="text"
-                        value={typingFullInput}
-                        onChange={e => setTypingFullInput(e.target.value)}
+                        autoFocus
+                        value={typingInput}
+                        onChange={e => setTypingInput(e.target.value)}
                         onKeyDown={e => {
                           if (e.key === 'Enter') {
                             e.preventDefault();
-                            const nx = document.getElementById('typing-def');
+                            const nx = document.getElementById(currentTypingTerm.englishTerm?.trim() ? 'typing-full' : 'typing-def');
                             if (nx) (nx as HTMLElement).focus(); else handleTypingNext();
                           }
                         }}
-                        style={{
-                          width: '100%',
-                          padding: '14px',
-                          fontSize: '1.0625rem',
-                          fontWeight: 700,
-                          color: '#0F172A',
-                          backgroundColor: '#FFFFFF',
-                          borderColor: 'var(--border)',
-                          borderRadius: '8px',
-                        }}
+                        style={typingInputStyle}
                       />
-                    </div>
+                    }
+                  />
+
+                  {currentTypingTerm.englishTerm?.trim() && (
+                    <TypingRow
+                      resetKey={`f${typingIndex}`}
+                      text={currentTypingTerm.englishTerm}
+                      onSpeak={() => speakText(currentTypingTerm.englishTerm || '')}
+                      input={
+                        <input
+                          id="typing-full"
+                          type="text"
+                          value={typingFullInput}
+                          onChange={e => setTypingFullInput(e.target.value)}
+                          onKeyDown={e => {
+                            if (e.key === 'Enter') {
+                              e.preventDefault();
+                              const nx = document.getElementById('typing-def');
+                              if (nx) (nx as HTMLElement).focus(); else handleTypingNext();
+                            }
+                          }}
+                          style={typingInputStyle}
+                        />
+                      }
+                    />
                   )}
 
-                  {/* SECTION 2: DEFINITION TYPING */}
-                  <div style={{ marginBottom: '24px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
-                      <span style={{ fontSize: '0.8125rem', fontWeight: 800, color: '#0E4A84' }}>
-                        국문
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => speakText(currentTypingTerm.definition)}
-                        className="btn-outline"
-                        style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: '6px' }}
-                        title="음성으로 들려주기"
-                      >
-                        듣기
-                      </button>
-                    </div>
-                    {/* Target Definition Gray Preview Box */}
-                    <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #CBD5E1', padding: '14px 16px', borderRadius: '8px', marginBottom: '8px' }}>
-                      <div style={{ fontSize: '1rem', fontWeight: 700, color: '#64748B', lineHeight: 1.6 }}>
-                        {currentTypingTerm.definition}
-                      </div>
-                      {currentTypingTerm.options && currentTypingTerm.options.length > 0 && (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', marginTop: '10px' }}>
+                  <TypingRow
+                    resetKey={`d${typingIndex}`}
+                    text={currentTypingTerm.definition}
+                    onSpeak={() => speakText(currentTypingTerm.definition)}
+                    extra={
+                      currentTypingTerm.options && currentTypingTerm.options.length > 0 ? (
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '6px' }}>
                           {currentTypingTerm.options.map((opt, oIdx) => (
-                            <span key={oIdx} style={{ fontSize: '0.8125rem', backgroundColor: '#FFFFFF', border: '1px solid #CBD5E1', padding: '3px 8px', borderRadius: '6px', color: '#475569' }}>
+                            <span key={oIdx} style={{ fontSize: '0.8125rem', backgroundColor: '#F8FAFC', border: '1px solid #CBD5E1', padding: '2px 8px', borderRadius: '6px', color: '#475569' }}>
                               ● {opt}
                             </span>
                           ))}
                         </div>
-                      )}
-                    </div>
-                    <textarea
-                      id="typing-def"
-                      rows={3}
-                      placeholder={currentTypingTerm.definition}
-                      value={typingDefInput}
-                      onChange={e => setTypingDefInput(e.target.value)}
-                      onKeyDown={e => {
-                        if (e.key === 'Enter' && !e.shiftKey) {
-                          e.preventDefault();
-                          handleTypingNext();
-                        }
-                      }}
-                      style={{
-                        width: '100%',
-                        padding: '14px',
-                        fontSize: '0.95rem',
-                        fontWeight: 600,
-                        color: '#0F172A',
-                        backgroundColor: '#FFFFFF',
-                        borderColor: 'var(--border)',
-                        borderRadius: '8px',
-                        lineHeight: 1.6,
-                        resize: 'vertical',
-                      }}
-                    />
-                  </div>
-
-                  <div style={{ marginBottom: '8px' }}>
-                    <PenPad key={typingIndex} />
-                  </div>
+                      ) : null
+                    }
+                    input={
+                      <textarea
+                        id="typing-def"
+                        rows={2}
+                        value={typingDefInput}
+                        onChange={e => setTypingDefInput(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter' && !e.shiftKey) {
+                            e.preventDefault();
+                            handleTypingNext();
+                          }
+                        }}
+                        style={{ ...typingInputStyle, resize: 'vertical', lineHeight: 1.5 }}
+                      />
+                    }
+                  />
 
                   {/* Action / Navigation Bar */}
                   <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginTop: '16px', borderTop: '1px solid #E2E8F0', paddingTop: '16px' }}>
