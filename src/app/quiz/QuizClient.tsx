@@ -2969,7 +2969,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
               {/* Question / Term Title */}
               <div>
                 <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
-                  {formItemType === 'MULTIPLE_CHOICE' ? '문제 질문 (발문) *' : '용어명 / 키워드 *'}
+                  {formItemType === 'MULTIPLE_CHOICE' ? '문제 질문 (발문) *' : '약어 *'}
                 </label>
                 <textarea
                   rows={formItemType === 'MULTIPLE_CHOICE' ? 2 : 1}
@@ -2979,7 +2979,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                   placeholder={
                     formItemType === 'MULTIPLE_CHOICE'
                       ? '예: 1. 우측 슬관절에 퇴행성 관절염을 앓고 있는 노인에게 시행할 간호로 부적절한 것은?'
-                      : '예: Heberden\'s node (헤베르덴 결절)'
+                      : '예: ABGA'
                   }
                   style={{ width: '100%', resize: 'vertical' }}
                 />
@@ -3045,12 +3045,12 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
               {/* Eng Term for Term type */}
               {formItemType === 'TERM' && (
                 <div>
-                  <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>영문/약어</label>
+                  <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>영문 풀네임</label>
                   <input
                     type="text"
                     value={formEngTerm}
                     onChange={e => setFormEngTerm(e.target.value)}
-                    placeholder="예: OA (Osteoarthritis)"
+                    placeholder="예: arterial blood gas analysis"
                     style={{ width: '100%' }}
                   />
                 </div>
@@ -3059,7 +3059,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
               {/* Definition / Explanation */}
               <div>
                 <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
-                  {formItemType === 'MULTIPLE_CHOICE' ? '문제 해설 및 정답 설명 *' : '국문 / 상세 정의 *'}
+                  {formItemType === 'MULTIPLE_CHOICE' ? '문제 해설 및 정답 설명 *' : '국문 *'}
                 </label>
                 <textarea
                   rows={3}
@@ -3069,7 +3069,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                   placeholder={
                     formItemType === 'MULTIPLE_CHOICE'
                       ? '예: 관절의 부동은 관절 가동성 감소와 강직을 유발하므로 부적절함.'
-                      : '상세한 국문 및 정의 입력'
+                      : '예: 동맥혈가스분석'
                   }
                   style={{ width: '100%' }}
                 />
