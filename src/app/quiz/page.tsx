@@ -43,7 +43,7 @@ export default async function QuizPage({
 
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '32px 0' }}>
-      <div className="container">
+      <div className="container" style={{ maxWidth: "1200px" }}>
         <QuizClient initialTerms={normalized} user={user} initialSubject={subject} subjectLevels={subjectLevels} superAdmin={!!user && isSuperAdmin(user.role)} guest={guest} />
       </div>
     </main>
