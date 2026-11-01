@@ -298,6 +298,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
   const [quizOrder, setQuizOrder] = useState<'shuffle' | 'normal'>('shuffle');
   const [quizCount, setQuizCount] = useState<number | 'all'>('all');
   const [quizReverse, setQuizReverse] = useState<boolean>(false);
+  const [quizFull, setQuizFull] = useState<boolean>(false); // 약어 보고 영문 풀네임 쓰기
   const [quizFormat, setQuizFormat] = useState<'single' | 'worksheet'>('single');
   const [worksheetAnswers, setWorksheetAnswers] = useState<Record<number, string>>({});
   const [worksheetAnswers2, setWorksheetAnswers2] = useState<Record<number, string>>({});
@@ -836,6 +837,11 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
       pool = pool.filter(t => kindOf(t) === 'TERM' && !!t.englishTerm?.trim() && !!t.definition?.trim());
     }
 
+    const fullOn = quizFull && quizType === 'def_to_term' && quizKind === 'TERM' && !bothMode && !customTermsList?.some(isExamItem);
+    if (fullOn) {
+      pool = pool.filter(t => kindOf(t) === 'TERM' && !!t.englishTerm?.trim());
+    }
+
     if (pool.length === 0) {
       alert('조건에 맞는 문항이 없습니다.');
       return;
@@ -853,7 +859,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
     const allPossibleTerms = termsList.map(t => t.term);
 
     // '용어 → 뜻' 방향: 용어형 문항만 뜻과 용어를 맞바꿔 출제한다(문제형은 그대로).
-    const reverseOn = !bothMode && quizReverse && quizKind === 'TERM' && !customTermsList?.some(isExamItem);
+    const reverseOn = !bothMode && !fullOn && quizReverse && quizKind === 'TERM' && !customTermsList?.some(isExamItem);
     pool.forEach((q, idx) => {
       if (bothMode) {
         optionsMap[idx] = [];
@@ -886,6 +892,17 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
         optionsMap[idx] = [];
       }
     });
+
+    if (fullOn) {
+      // 문제: 약어, 정답: 영문 풀네임 (국문은 해설로 보여준다)
+      pool = pool.map(q => ({
+        ...q,
+        term: q.englishTerm as string,
+        englishTerm: null,
+        definition: q.term,
+        answer: q.englishTerm as string,
+      }));
+    }
 
     if (reverseOn) {
       pool = pool.map(q =>
@@ -930,6 +947,10 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
 
     const cleanInput = normalize(input);
     if (!cleanInput) return false;
+
+    if (quizFull && quizType === 'def_to_term' && term.answer) {
+      return variantsOf(term.answer).has(looseNorm(input));
+    }
 
     if (term.answer) {
       const answers = term.answer.split(/[/,]/);
@@ -2036,8 +2057,8 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
             retryPool
               ? quizType === 'abbr_both'
                 ? retryPool.filter(t => kindOf(t) === 'TERM' && !!t.englishTerm?.trim() && !!t.definition?.trim()).length
-                : retryPool.length
-              : quizType === 'abbr_both' ? bothCount : selectedQuizTerms.length
+                : quizFull ? retryPool.filter(t => !!t.englishTerm?.trim()).length : retryPool.length
+              : quizType === 'abbr_both' ? bothCount : quizFull ? selectedQuizTerms.filter(t => kindOf(t) === 'TERM' && !!t.englishTerm?.trim()).length : selectedQuizTerms.length
           }
           bothAvailable={retryPool ? retryPool.some(t => kindOf(t) === 'TERM' && !!t.englishTerm?.trim() && !!t.definition?.trim()) : bothCount > 0}
           favCount={user ? quizFavCount : 0}
@@ -2051,6 +2072,8 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
           onQuizOrder={setQuizOrder}
           reverse={quizReverse}
           onReverse={setQuizReverse}
+          fullName={quizFull}
+          onFullName={setQuizFull}
           worksheet={quizFormat === 'worksheet'}
           onWorksheet={v => setQuizFormat(v ? 'worksheet' : 'single')}
           onStart={() => handleStartQuiz(retryPool ?? undefined)}
@@ -2398,7 +2421,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                     const ans = currentQuestion.answer || currentQuestion.term;
                     const norm = (v?: string | null) => (v || '').trim().toLowerCase();
                     const def = currentQuestion.definition;
-                    const showNote = !!def && ![currentQuestion.term, currentQuestion.englishTerm, ans].some(v => norm(v) === norm(def));
+                    const showNote = !quizFull && !!def && ![currentQuestion.term, currentQuestion.englishTerm, ans].some(v => norm(v) === norm(def));
                     return (
                       <div className={`${s.fb} ${hinted && ok ? s.fbHint : ok && !hinted ? s.fbOk : s.fbNo}`}>
                         <div className={s.fbTitle}>{hinted && ok ? '▲ 힌트 사용 · 오답으로 처리돼요' : ok ? '정답' : '오답'}</div>

@@ -22,6 +22,8 @@ export default function TestSetup({
   onQuizOrder,
   reverse,
   onReverse,
+  fullName,
+  onFullName,
   worksheet,
   onWorksheet,
   onStart,
@@ -43,6 +45,8 @@ export default function TestSetup({
   onQuizOrder: (o: 'shuffle' | 'normal') => void;
   reverse: boolean;
   onReverse: (v: boolean) => void;
+  fullName: boolean;
+  onFullName: (v: boolean) => void;
   worksheet: boolean;
   onWorksheet: (v: boolean) => void;
   onStart: () => void;
@@ -54,14 +58,15 @@ export default function TestSetup({
   const effective = custom || quizCount === 'all' || quizCount >= poolSize ? poolSize : quizCount;
   const countValue: number | 'all' = quizCount === 'all' || quizCount >= poolSize ? 'all' : quizCount;
 
-  const mode: 'fwd' | 'rev' | 'both' = quizType === 'abbr_both' ? 'both' : reverse ? 'rev' : 'fwd';
-  const pickMode = (m: 'fwd' | 'rev' | 'both') => {
+  const mode: 'fwd' | 'rev' | 'full' | 'both' = quizType === 'abbr_both' ? 'both' : fullName ? 'full' : reverse ? 'rev' : 'fwd';
+  const pickMode = (m: 'fwd' | 'rev' | 'full' | 'both') => {
     if (m === 'both') {
       onQuizType('abbr_both');
       return;
     }
-    if (quizType === 'abbr_both') onQuizType('def_to_term');
+    if (quizType === 'abbr_both' || m === 'full') onQuizType('def_to_term');
     onReverse(m === 'rev');
+    onFullName(m === 'full');
   };
 
   return (
@@ -96,8 +101,9 @@ export default function TestSetup({
             {([
               { v: 'fwd', title: '국문 보고 약어 쓰기', ex: '전대뇌동맥 → ACA' },
               { v: 'rev', title: '약어 보고 국문 쓰기', ex: 'ACA → 전대뇌동맥' },
+              ...(bothAvailable ? [{ v: 'full', title: '약어 보고 풀네임 쓰기', ex: 'ACA → Anterior cerebral artery' }] : []),
               ...(bothAvailable ? [{ v: 'both', title: '약어 보고 용어·국문 쓰기', ex: 'ACA → Anterior cerebral artery, 전대뇌동맥' }] : []),
-            ] as Array<{ v: 'fwd' | 'rev' | 'both'; title: string; ex: string }>).map(o => {
+            ] as Array<{ v: 'fwd' | 'rev' | 'full' | 'both'; title: string; ex: string }>).map(o => {
               const on = o.v === mode;
               return (
                 <button
@@ -117,7 +123,7 @@ export default function TestSetup({
         </div>
       )}
 
-      {kind === 'TERM' && quizType !== 'abbr_both' && (
+      {kind === 'TERM' && quizType !== 'abbr_both' && mode !== 'full' && (
         <div className={s.field}>
           <div className={s.label}>답하는 방식</div>
           <Segmented<QuizType>
