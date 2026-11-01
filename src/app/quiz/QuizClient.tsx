@@ -202,6 +202,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
   const [typingIndex, setTypingIndex] = useState<number>(0);
   const [typingInput, setTypingInput] = useState<string>('');
   const [typingDefInput, setTypingDefInput] = useState<string>('');
+  const [typingFullInput, setTypingFullInput] = useState<string>('');
   const [isTypingSubmitted, setIsTypingSubmitted] = useState<boolean>(false);
   const [typingCorrectCount, setTypingCorrectCount] = useState<number>(0);
   const [typingHistory, setTypingHistory] = useState<Record<number, boolean>>({});
@@ -1173,6 +1174,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
     if (typingIndex + 1 < filteredStudyTerms.length) {
       setTypingIndex(prev => prev + 1);
       setTypingInput('');
+      setTypingFullInput('');
       setTypingDefInput('');
     } else {
       alert('모든 학습 문항의 타자 연습을 완료했습니다.');
@@ -1183,6 +1185,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
     if (typingIndex > 0) {
       setTypingIndex(prev => prev - 1);
       setTypingInput('');
+      setTypingFullInput('');
       setTypingDefInput('');
     }
   };
@@ -1916,7 +1919,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                   <div style={{ marginBottom: '24px' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
                       <span style={{ fontSize: '0.8125rem', fontWeight: 800, color: '#0E4A84' }}>
-                        용어
+                        {currentTypingTerm.englishTerm?.trim() ? '약어' : '용어'}
                       </span>
                       <button
                         type="button"
@@ -1937,7 +1940,8 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                       onKeyDown={e => {
                         if (e.key === 'Enter') {
                           e.preventDefault();
-                          handleTypingNext();
+                          const nx = document.getElementById(currentTypingTerm.englishTerm?.trim() ? 'typing-full' : 'typing-def');
+                          if (nx) (nx as HTMLElement).focus(); else handleTypingNext();
                         }
                       }}
                       style={{
@@ -1952,6 +1956,50 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                       }}
                     />
                   </div>
+
+                  {/* SECTION 1-2: FULL NAME TYPING */}
+                  {currentTypingTerm.englishTerm?.trim() && (
+                    <div style={{ marginBottom: '24px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                        <span style={{ fontSize: '0.8125rem', fontWeight: 800, color: '#0E4A84' }}>
+                          풀네임
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => speakText(currentTypingTerm.englishTerm || '')}
+                          className="btn-outline"
+                          style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: '6px' }}
+                          title="음성으로 들려주기"
+                        >
+                          듣기
+                        </button>
+                      </div>
+                      <input
+                        id="typing-full"
+                        type="text"
+                        placeholder={currentTypingTerm.englishTerm}
+                        value={typingFullInput}
+                        onChange={e => setTypingFullInput(e.target.value)}
+                        onKeyDown={e => {
+                          if (e.key === 'Enter') {
+                            e.preventDefault();
+                            const nx = document.getElementById('typing-def');
+                            if (nx) (nx as HTMLElement).focus(); else handleTypingNext();
+                          }
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '14px',
+                          fontSize: '1.0625rem',
+                          fontWeight: 700,
+                          color: '#0F172A',
+                          backgroundColor: '#FFFFFF',
+                          borderColor: 'var(--border)',
+                          borderRadius: '8px',
+                        }}
+                      />
+                    </div>
+                  )}
 
                   {/* SECTION 2: DEFINITION TYPING */}
                   <div style={{ marginBottom: '24px' }}>
@@ -1985,6 +2033,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                       )}
                     </div>
                     <textarea
+                      id="typing-def"
                       rows={3}
                       placeholder={currentTypingTerm.definition}
                       value={typingDefInput}
