@@ -61,8 +61,7 @@ export function PenProvider({ children }: { children: ReactNode }) {
 
   return (
     <PenCtx.Provider value={ctx}>
-      <div style={{ display: 'flex', gap: '6px', alignItems: 'center', flexWrap: 'wrap', marginBottom: '12px' }}>
-        <span style={{ fontSize: '0.75rem', color: 'var(--sub-text)', marginRight: '2px' }}>손글씨</span>
+      <div style={{ display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap', marginBottom: '12px' }}>
         <button
           type="button"
           onClick={toggleErase}
