@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { isAdminRole } from '@/lib/auth-core';
 import s from './quiz.module.css';
 import HubView from './components/HubView';
+import PenPad from './components/PenPad';
 import ContextBar from './components/ContextBar';
 import TestSetup from './components/TestSetup';
 import RecordView from './components/RecordView';
@@ -1931,10 +1932,12 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                         듣기
                       </button>
                     </div>
+                    <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #CBD5E1', padding: '12px 16px', borderRadius: '8px', marginBottom: '8px', fontSize: '1rem', fontWeight: 700, color: '#64748B', lineHeight: 1.6 }}>
+                      {currentTypingTerm.answer || currentTypingTerm.term}
+                    </div>
                     <input
                       type="text"
                       autoFocus
-                      placeholder={currentTypingTerm.answer || currentTypingTerm.term}
                       value={typingInput}
                       onChange={e => setTypingInput(e.target.value)}
                       onKeyDown={e => {
@@ -1974,10 +1977,12 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                           듣기
                         </button>
                       </div>
+                      <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #CBD5E1', padding: '12px 16px', borderRadius: '8px', marginBottom: '8px', fontSize: '1rem', fontWeight: 700, color: '#64748B', lineHeight: 1.6 }}>
+                        {currentTypingTerm.englishTerm}
+                      </div>
                       <input
                         id="typing-full"
                         type="text"
-                        placeholder={currentTypingTerm.englishTerm}
                         value={typingFullInput}
                         onChange={e => setTypingFullInput(e.target.value)}
                         onKeyDown={e => {
@@ -2057,6 +2062,10 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                         resize: 'vertical',
                       }}
                     />
+                  </div>
+
+                  <div style={{ marginBottom: '8px' }}>
+                    <PenPad key={typingIndex} />
                   </div>
 
                   {/* Action / Navigation Bar */}
