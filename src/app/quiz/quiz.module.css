@@ -271,3 +271,5 @@
 .wsOpt i { flex: 0 0 auto; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--q-bg-seg); color: var(--q-muted); font-size: 0.6875rem; font-style: normal; font-weight: 800; }
 .wsOptOn { border-color: var(--q-primary); background: var(--q-primary-soft); color: var(--q-primary); font-weight: 800; }
 .wsOptOn i { background: var(--q-primary); color: #fff; }
+
+.maskChip { border: 0; border-radius: 6px; background: var(--q-primary-soft); color: var(--q-muted); font-size: 0.75rem; font-weight: 600; padding: 2px 10px; font-family: inherit; }
