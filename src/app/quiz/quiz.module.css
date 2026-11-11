@@ -255,3 +255,19 @@
 .rsSlow { display: flex; justify-content: space-between; gap: 10px; }
 .rsSlow span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .rsSlow b { flex: 0 0 auto; font-variant-numeric: tabular-nums; }
+
+/* 시험지 모드 */
+.ws { display: flex; flex-direction: column; gap: 10px; }
+.wsItem { display: flex; flex-direction: column; gap: 10px; padding: 14px; background: var(--q-surface); border: 1px solid var(--q-border); border-radius: 12px; }
+.wsDone { border-color: var(--q-primary); }
+.wsQ { display: flex; gap: 10px; align-items: flex-start; }
+.wsNo { flex: 0 0 auto; min-width: 24px; height: 24px; padding: 0 6px; box-sizing: border-box; display: inline-flex; align-items: center; justify-content: center; border-radius: 999px; background: var(--q-primary-soft); color: var(--q-primary); font-size: 0.75rem; font-weight: 800; }
+.wsDone .wsNo { background: var(--q-primary); color: #fff; }
+.wsText { font-size: 0.9375rem; font-weight: 600; color: var(--q-text); line-height: 1.55; white-space: pre-wrap; padding-top: 1px; }
+.wsInput { box-sizing: border-box; width: 100%; height: 42px; padding: 0 12px; border: 1px solid var(--q-border-strong); border-radius: 8px; background: #fff; font-size: 0.9375rem; font-weight: 600; color: var(--q-text); font-family: inherit; }
+.wsInput:focus { outline: 2px solid var(--q-primary); outline-offset: -1px; }
+.wsOpts { display: flex; flex-direction: column; gap: 6px; }
+.wsOpt { display: flex; align-items: center; gap: 10px; text-align: left; padding: 10px 12px; border: 1px solid var(--q-border); border-radius: 8px; background: #fff; color: var(--q-text-2); font-size: 0.875rem; font-weight: 600; font-family: inherit; }
+.wsOpt i { flex: 0 0 auto; width: 20px; height: 20px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; background: var(--q-bg-seg); color: var(--q-muted); font-size: 0.6875rem; font-style: normal; font-weight: 800; }
+.wsOptOn { border-color: var(--q-primary); background: var(--q-primary-soft); color: var(--q-primary); font-weight: 800; }
+.wsOptOn i { background: var(--q-primary); color: #fff; }
