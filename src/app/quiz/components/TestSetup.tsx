@@ -4,6 +4,13 @@ import s from '../quiz.module.css';
 import { Icon, ICON_CHEVRON, Segmented } from './ui';
 import type { QuizKind } from '@/lib/quiz/taxonomy';
 
+export type Field = 'term' | 'full' | 'def';
+const FIELDS: Array<{ v: Field; label: string }> = [
+  { v: 'term', label: '약어' },
+  { v: 'full', label: '풀네임' },
+  { v: 'def', label: '국문' },
+];
+
 type QuizType = 'def_to_term' | 'term_to_def' | 'multiple_choice' | 'abbr_both';
 
 export default function TestSetup({
@@ -20,10 +27,9 @@ export default function TestSetup({
   onQuizCount,
   quizOrder,
   onQuizOrder,
-  reverse,
-  onReverse,
-  fullName,
-  onFullName,
+  prompt,
+  targets,
+  onSpec,
   worksheet,
   onWorksheet,
   onStart,
@@ -43,10 +49,9 @@ export default function TestSetup({
   onQuizCount: (c: number | 'all') => void;
   quizOrder: 'shuffle' | 'normal';
   onQuizOrder: (o: 'shuffle' | 'normal') => void;
-  reverse: boolean;
-  onReverse: (v: boolean) => void;
-  fullName: boolean;
-  onFullName: (v: boolean) => void;
+  prompt: Field;
+  targets: Record<Field, boolean>;
+  onSpec: (p: Field, t: Record<Field, boolean>) => void;
   worksheet: boolean;
   onWorksheet: (v: boolean) => void;
   onStart: () => void;
@@ -58,15 +63,17 @@ export default function TestSetup({
   const effective = custom || quizCount === 'all' || quizCount >= poolSize ? poolSize : quizCount;
   const countValue: number | 'all' = quizCount === 'all' || quizCount >= poolSize ? 'all' : quizCount;
 
-  const mode: 'fwd' | 'rev' | 'full' | 'both' = quizType === 'abbr_both' ? 'both' : fullName ? 'full' : reverse ? 'rev' : 'fwd';
-  const pickMode = (m: 'fwd' | 'rev' | 'full' | 'both') => {
-    if (m === 'both') {
-      onQuizType('abbr_both');
-      return;
-    }
-    if (quizType === 'abbr_both' || m === 'full') onQuizType('def_to_term');
-    onReverse(m === 'rev');
-    onFullName(m === 'full');
+  const eff = FIELDS.filter(f => f.v !== prompt && targets[f.v]);
+  const legacyMode = quizType !== 'abbr_both' && eff.length === 1 && ((prompt === 'def' && eff[0].v === 'term') || (prompt === 'term' && eff[0].v === 'def'));
+  const pickPrompt = (p: Field) => {
+    const t = { ...targets };
+    if (!FIELDS.some(f => f.v !== p && t[f.v])) t[FIELDS.find(f => f.v !== p)!.v] = true;
+    onSpec(p, t);
+  };
+  const toggleTarget = (f: Field) => {
+    const t = { ...targets, [f]: !targets[f] };
+    if (!FIELDS.some(x => x.v !== prompt && t[x.v])) return; // 최소 하나는 선택
+    onSpec(prompt, t);
   };
 
   return (
@@ -95,35 +102,41 @@ export default function TestSetup({
       )}
 
       {kind === 'TERM' && (
-        <div className={s.field}>
-          <div className={s.label}>어떤 문제를 풀까요?</div>
-          <div role="radiogroup" aria-label="문제 유형" className={s.choices}>
-            {([
-              { v: 'fwd', title: '국문 보고 약어 쓰기', ex: '전대뇌동맥 → ACA' },
-              { v: 'rev', title: '약어 보고 국문 쓰기', ex: 'ACA → 전대뇌동맥' },
-              ...(bothAvailable ? [{ v: 'full', title: '약어 보고 풀네임 쓰기', ex: 'ACA → Anterior cerebral artery' }] : []),
-              ...(bothAvailable ? [{ v: 'both', title: '약어 보고 용어·국문 쓰기', ex: 'ACA → Anterior cerebral artery, 전대뇌동맥' }] : []),
-            ] as Array<{ v: 'fwd' | 'rev' | 'full' | 'both'; title: string; ex: string }>).map(o => {
-              const on = o.v === mode;
-              return (
-                <button
-                  key={o.v}
-                  type="button"
-                  role="radio"
-                  aria-checked={on}
-                  className={`${s.choice} ${on ? s.choiceOn : ''}`}
-                  onClick={() => pickMode(o.v)}
-                >
-                  <span className={s.choiceTitle}>{o.title}</span>
-                  <span className={s.choiceEx}>{o.ex}</span>
-                </button>
-              );
-            })}
+        <>
+          <div className={s.field}>
+            <div className={s.label}>제시</div>
+            <Segmented<Field>
+              full
+              label="제시"
+              value={prompt}
+              onChange={pickPrompt}
+              options={FIELDS.map(f => ({ value: f.v, label: f.label, disabled: f.v === 'full' && !bothAvailable }))}
+            />
           </div>
-        </div>
+          <div className={s.field}>
+            <div className={s.label}>쓰기</div>
+            <div className={s.chips}>
+              {FIELDS.filter(f => f.v !== prompt).map(f => {
+                const on = !!targets[f.v];
+                return (
+                  <button
+                    key={f.v}
+                    type="button"
+                    aria-pressed={on}
+                    disabled={f.v === 'full' && !bothAvailable}
+                    className={`${s.chip} ${on ? s.chipOn : ''}`}
+                    onClick={() => toggleTarget(f.v)}
+                  >
+                    {f.label}
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        </>
       )}
 
-      {kind === 'TERM' && quizType !== 'abbr_both' && mode !== 'full' && (
+      {kind === 'TERM' && legacyMode && (
         <div className={s.field}>
           <div className={s.label}>답하는 방식</div>
           <Segmented<QuizType>

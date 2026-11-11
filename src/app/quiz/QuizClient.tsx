@@ -350,7 +350,9 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
   const [quizOrder, setQuizOrder] = useState<'shuffle' | 'normal'>('shuffle');
   const [quizCount, setQuizCount] = useState<number | 'all'>('all');
   const [quizReverse, setQuizReverse] = useState<boolean>(false);
-  const [quizFull, setQuizFull] = useState<boolean>(false); // 약어 보고 영문 풀네임 쓰기
+  const [quizFull, setQuizFull] = useState<boolean>(false); // 풀네임이 낀 단일 답 유형(느슨한 채점)
+  const [quizPrompt, setQuizPrompt] = useState<'term' | 'full' | 'def'>('def'); // 제시할 항목
+  const [quizTargets, setQuizTargets] = useState<Record<'term' | 'full' | 'def', boolean>>({ term: true, full: false, def: false }); // 쓸 항목
   const [quizFormat, setQuizFormat] = useState<'single' | 'worksheet'>('single');
   const [worksheetAnswers, setWorksheetAnswers] = useState<Record<number, string>>({});
   const [worksheetAnswers2, setWorksheetAnswers2] = useState<Record<number, string>>({});
@@ -715,7 +717,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
     setUserAnswer2('');
     setWorksheetAnswers({});
     setWorksheetAnswers2({});
-    if (attempt.quizType === 'abbr_both') setQuizType('abbr_both');
+    if (attempt.quizType === 'abbr_both') setTestSpec('term', { term: false, full: true, def: true });
     else if (quizType === 'abbr_both') setQuizType('def_to_term');
     setSelectedHistoryAttempt(null);
     setActiveTab('quiz_play');
@@ -861,6 +863,34 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
   }, [activeTab, studyViewMode, isCardFlipped, filteredStudyTerms.length]);
 
 
+  const FIELD_ORDER = ['term', 'full', 'def'] as const;
+  const FIELD_LABEL = { term: '약어', full: '풀네임', def: '국문' } as const;
+  const bothLabels = FIELD_ORDER.filter(f => f !== quizPrompt).slice(0, 2) as Array<'term' | 'full' | 'def'>;
+  const setTestSpec = (p: 'term' | 'full' | 'def', t: Record<'term' | 'full' | 'def', boolean>) => {
+    setQuizPrompt(p);
+    setQuizTargets(t);
+    const eff = FIELD_ORDER.filter(f => f !== p && t[f]);
+    if (eff.length >= 2) {
+      setQuizType('abbr_both');
+      setQuizReverse(false);
+      setQuizFull(false);
+      return;
+    }
+    const e = eff[0];
+    setQuizType(prev => (prev === 'abbr_both' ? 'def_to_term' : prev));
+    if (p === 'def' && e === 'term') {
+      setQuizReverse(false);
+      setQuizFull(false);
+    } else if (p === 'term' && e === 'def') {
+      setQuizReverse(true);
+      setQuizFull(false);
+    } else {
+      setQuizType('def_to_term');
+      setQuizReverse(false);
+      setQuizFull(true);
+    }
+  };
+
   // 틀린 문제 다시 풀기: 바로 시작하지 않고 테스트 설정(유형·방식 선택)부터 보여준다
   const startRetry = (pool: NursingTerm[]) => {
     const originals = pool.map(t => termsList.find(x => x.id === t.id) ?? t);
@@ -945,14 +975,29 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
       }
     });
 
+    const fieldText = (q: NursingTerm, f: 'term' | 'full' | 'def') => (f === 'term' ? (q.answer || q.term) : f === 'full' ? (q.englishTerm || '') : q.definition);
+    const effTargets = FIELD_ORDER.filter(f => f !== quizPrompt && quizTargets[f]);
+
     if (fullOn) {
-      // 문제: 약어, 정답: 영문 풀네임 (국문은 해설로 보여준다)
+      // 문제는 definition 칸에, 정답은 term/answer 칸에 담는다 (기존 단답형 화면 재사용)
+      const e = effTargets[0] ?? 'full';
       pool = pool.map(q => ({
         ...q,
-        term: q.englishTerm as string,
+        term: fieldText(q, e),
         englishTerm: null,
-        definition: q.term,
-        answer: q.englishTerm as string,
+        definition: fieldText(q, quizPrompt),
+        answer: fieldText(q, e),
+      }));
+    }
+
+    if (bothMode && quizPrompt !== 'term') {
+      // 문제: term 칸, 정답 두 칸: englishTerm / definition 칸
+      pool = pool.map(q => ({
+        ...q,
+        term: fieldText(q, quizPrompt),
+        englishTerm: fieldText(q, effTargets[0]),
+        definition: fieldText(q, effTargets[1]),
+        answer: fieldText(q, quizPrompt),
       }));
     }
 
@@ -2107,10 +2152,9 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
           onQuizCount={setQuizCount}
           quizOrder={quizOrder}
           onQuizOrder={setQuizOrder}
-          reverse={quizReverse}
-          onReverse={setQuizReverse}
-          fullName={quizFull}
-          onFullName={setQuizFull}
+          prompt={quizPrompt}
+          targets={quizTargets}
+          onSpec={setTestSpec}
           worksheet={quizFormat === 'worksheet'}
           onWorksheet={v => setQuizFormat(v ? 'worksheet' : 'single')}
           onStart={() => handleStartQuiz(retryPool ?? undefined)}
@@ -2277,10 +2321,10 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   <input
                     ref={answerInputRef}
-                    aria-label="용어"
+                    aria-label={FIELD_LABEL[bothLabels[0]]}
                     type="text"
                     disabled={isAnswerSubmitted}
-                    placeholder="용어 (영문)"
+                    placeholder={FIELD_LABEL[bothLabels[0]]}
                     value={userAnswer}
                     onChange={e => setUserAnswer(e.target.value)}
                     onKeyDown={e => {
@@ -2293,10 +2337,10 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                   />
                   <input
                     ref={answerInput2Ref}
-                    aria-label="국문"
+                    aria-label={FIELD_LABEL[bothLabels[1]]}
                     type="text"
                     disabled={isAnswerSubmitted}
-                    placeholder="국문"
+                    placeholder={FIELD_LABEL[bothLabels[1]]}
                     value={userAnswer2}
                     onChange={e => setUserAnswer2(e.target.value)}
                     onKeyDown={e => {
@@ -2311,8 +2355,8 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                   {isAnswerSubmitted && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       {[
-                        { label: '용어', ok: r.full, answer: currentQuestion.englishTerm },
-                        { label: '국문', ok: r.meaning, answer: currentQuestion.definition },
+                        { label: FIELD_LABEL[bothLabels[0]], ok: r.full, answer: currentQuestion.englishTerm },
+                        { label: FIELD_LABEL[bothLabels[1]], ok: r.meaning, answer: currentQuestion.definition },
                       ].map(row => (
                         <div key={row.label} className={`${s.fb} ${row.ok ? s.fbOk : s.fbNo}`}>
                           <div className={s.fbTitle}>{row.label} {row.ok ? '정답' : '오답'}</div>
@@ -2496,9 +2540,9 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
             if (isAnswerSubmitted) {
               main = <button type="button" className="btn-primary" style={{ padding: '12px', fontSize: '1rem' }} onClick={handleNextQuestion}>{last ? '퀴즈 결과 보기' : '다음'}</button>;
             } else if (isBoth) {
-              main = <button type="button" className="btn-primary" style={{ padding: '12px', fontSize: '1rem' }} disabled={!userAnswer.trim() && !userAnswer2.trim()} onClick={handleSubmitBoth}>다음</button>;
+              main = <button type="button" className="btn-primary" style={{ padding: '12px', fontSize: '1rem' }} onClick={handleSubmitBoth}>다음</button>;
             } else if (!isMc) {
-              main = <button type="button" className="btn-primary" style={{ padding: '12px', fontSize: '1rem' }} disabled={!userAnswer.trim()} onClick={handleSubmitAnswer}>다음</button>;
+              main = <button type="button" className="btn-primary" style={{ padding: '12px', fontSize: '1rem' }} onClick={handleSubmitAnswer}>다음</button>;
             }
             return (
               <div className={s.navRow}>
