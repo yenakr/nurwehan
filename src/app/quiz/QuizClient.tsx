@@ -154,12 +154,14 @@ function TypingRow({
   input,
   extra,
   resetKey,
+  penOn = true,
 }: {
   text: string;
   onSpeak: () => void;
   input: ReactNode;
   extra?: ReactNode;
   resetKey: string;
+  penOn?: boolean;
 }) {
   return (
     <div style={{ marginBottom: '14px' }}>
@@ -178,9 +180,11 @@ function TypingRow({
       {extra}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'flex-start' }}>
         <div style={{ flex: '1 1 200px', minWidth: 0 }}>{input}</div>
-        <div style={{ flex: '2.4 1 340px', minWidth: 0 }}>
-          <PenPad key={resetKey} height={76} />
-        </div>
+        {penOn && (
+          <div style={{ flex: '2.4 1 340px', minWidth: 0 }}>
+            <PenPad key={resetKey} height={76} />
+          </div>
+        )}
       </div>
     </div>
   );
@@ -252,6 +256,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
   // Typing Mode State
   const [typingIndex, setTypingIndex] = useState<number>(0);
   const [typingDone, setTypingDone] = useState<boolean>(false);
+  const [penOn, setPenOn] = useState<boolean>(true); // 손글씨 칸 표시 (끄면 다시 켤 때까지 유지)
   const [typingInput, setTypingInput] = useState<string>('');
   const [typingDefInput, setTypingDefInput] = useState<string>('');
   const [typingFullInput, setTypingFullInput] = useState<string>('');
@@ -402,6 +407,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
   useEffect(() => {
     try {
       if (localStorage.getItem('nursing_quiz_tts') === 'on') setAutoTTS(true);
+      if (localStorage.getItem('nursing_quiz_pen') === 'off') setPenOn(false);
     } catch {}
   }, []);
 
@@ -1313,6 +1319,13 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
     }
   };
 
+  const togglePen = () => {
+    setPenOn(v => {
+      try { localStorage.setItem('nursing_quiz_pen', v ? 'off' : 'on'); } catch {}
+      return !v;
+    });
+  };
+
   const handleTypingNext = () => {
     if (typingIndex + 1 < filteredStudyTerms.length) {
       setTypingIndex(prev => prev + 1);
@@ -2034,7 +2047,17 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                     <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--primary)' }}>
                       {typingIndex + 1} / {filteredStudyTerms.length}
                     </span>
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <button
+                        type="button"
+                        role="switch"
+                        aria-checked={penOn}
+                        onClick={togglePen}
+                        className={`${s.btn} ${s.btnSm} ${penOn ? s.btnPrimary : ''}`}
+                        title="손글씨 칸 켜기/끄기"
+                      >
+                        손글씨 {penOn ? 'ON' : 'OFF'}
+                      </button>
                       <button
                         type="button"
                         onClick={handleTypingPrev}
@@ -2067,8 +2090,9 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                     />
                   </div>
 
-                  <PenProvider>
+                  <PenProvider showToolbar={penOn}>
                   <TypingRow
+                    penOn={penOn}
                     resetKey={`t${typingIndex}`}
                     text={currentTypingTerm.answer || currentTypingTerm.term}
                     onSpeak={() => speakText(termSpeech(currentTypingTerm))}
@@ -2092,6 +2116,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
 
                   {currentTypingTerm.englishTerm?.trim() && (
                     <TypingRow
+                      penOn={penOn}
                       resetKey={`f${typingIndex}`}
                       text={currentTypingTerm.englishTerm}
                       onSpeak={() => speakText(currentTypingTerm.englishTerm || '')}
@@ -2115,6 +2140,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                   )}
 
                   <TypingRow
+                    penOn={penOn}
                     resetKey={`d${typingIndex}`}
                     text={currentTypingTerm.definition}
                     onSpeak={() => speakText(currentTypingTerm.definition)}
