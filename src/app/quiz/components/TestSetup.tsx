@@ -6,9 +6,9 @@ import type { QuizKind } from '@/lib/quiz/taxonomy';
 
 export type Field = 'term' | 'full' | 'def';
 const FIELDS: Array<{ v: Field; label: string }> = [
-  { v: 'term', label: '약어' },
-  { v: 'full', label: '풀네임' },
   { v: 'def', label: '국문' },
+  { v: 'full', label: '용어' },
+  { v: 'term', label: '약어' },
 ];
 
 type QuizType = 'def_to_term' | 'term_to_def' | 'multiple_choice' | 'abbr_both';
@@ -64,7 +64,7 @@ export default function TestSetup({
   const countValue: number | 'all' = quizCount === 'all' || quizCount >= poolSize ? 'all' : quizCount;
 
   const eff = FIELDS.filter(f => f.v !== prompt && targets[f.v]);
-  const legacyMode = quizType !== 'abbr_both' && eff.length === 1 && ((prompt === 'def' && eff[0].v === 'term') || (prompt === 'term' && eff[0].v === 'def'));
+  const legacyMode = quizType !== 'abbr_both' && eff.length === 1 && ((prompt === 'def' && eff[0].v === 'full') || (prompt === 'full' && eff[0].v === 'def'));
   const pickPrompt = (p: Field) => {
     const t = { ...targets };
     if (!FIELDS.some(f => f.v !== p && t[f.v])) t[FIELDS.find(f => f.v !== p)!.v] = true;
@@ -110,7 +110,7 @@ export default function TestSetup({
               label="제시"
               value={prompt}
               onChange={pickPrompt}
-              options={FIELDS.map(f => ({ value: f.v, label: f.label, disabled: f.v === 'full' && !bothAvailable }))}
+              options={FIELDS.map(f => ({ value: f.v, label: f.label, disabled: f.v === 'term' && !bothAvailable }))}
             />
           </div>
           <div className={s.field}>
@@ -123,7 +123,7 @@ export default function TestSetup({
                     key={f.v}
                     type="button"
                     aria-pressed={on}
-                    disabled={f.v === 'full' && !bothAvailable}
+                    disabled={f.v === 'term' && !bothAvailable}
                     className={`${s.chip} ${on ? s.chipOn : ''}`}
                     onClick={() => toggleTarget(f.v)}
                   >
