@@ -156,7 +156,7 @@ function TypingRow({
   resetKey,
   penOn = true,
 }: {
-  text: string;
+  text: ReactNode;
   onSpeak: () => void;
   input: ReactNode;
   extra?: ReactNode;
@@ -2118,7 +2118,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                     <TypingRow
                       penOn={penOn}
                       resetKey={`f${typingIndex}`}
-                      text={currentTypingTerm.englishTerm}
+                      text={<span style={{ fontWeight: 400 }}>{boldInitials(currentTypingTerm.englishTerm, currentTypingTerm.answer || currentTypingTerm.term)}</span>}
                       onSpeak={() => speakText(currentTypingTerm.englishTerm || '')}
                       input={
                         <input
