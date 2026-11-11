@@ -102,7 +102,7 @@ export default function TermCards({
   return (
     <div className={s.grid}>
       {terms.map((t, idx) => {
-        const hidden = hideDefinition && !revealed[t.id];
+        const hidden = hideDefinition && !revealed[`${t.id}:def`];
         const hasOptions = (t.options?.length ?? 0) > 0;
         const en = t.englishTerm?.trim();
         return (
@@ -120,7 +120,11 @@ export default function TermCards({
                   {favorites?.has(t.id) ? '★' : '☆'}
                 </button>
               )}
-              {en && <span className={s.cardEn} style={hidden ? { visibility: 'hidden' } : undefined} aria-hidden={hidden}>{boldInitials(en, t.term)}</span>}
+              {en && (hideDefinition && !revealed[`${t.id}:en`] ? (
+                <button type="button" className={s.maskChip} onClick={() => onReveal(`${t.id}:en`)}>용어</button>
+              ) : (
+                <span className={s.cardEn}>{boldInitials(en, t.term)}</span>
+              ))}
             </div>
             <div className={s.maskWrap}>
               <div style={hidden ? { visibility: 'hidden' } : undefined} aria-hidden={hidden}>
@@ -137,8 +141,8 @@ export default function TermCards({
                 {t.example && <div className={s.cardNote}>{t.example}</div>}
               </div>
               {hidden && (
-                <button type="button" className={s.maskBtn} onClick={() => onReveal(t.id)}>
-                  {en ? '눌러서 용어·국문 보기' : '눌러서 국문 보기'}
+                <button type="button" className={s.maskBtn} onClick={() => onReveal(`${t.id}:def`)}>
+                  {hasOptions ? '보기' : '국문'}
                 </button>
               )}
             </div>
