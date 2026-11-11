@@ -782,6 +782,36 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
   }, [flashcardIndex, isCardFlipped, flashcardDirection, studyViewMode, autoTTS, isAutoPlay, filteredStudyTerms, speakText]);
 
   // Synchronized Auto-play effect for Flashcard mode (waits for TTS completion)
+  // 플래시카드 자동재생·음성 재생 중에는 화면이 꺼지지 않게 한다(Screen Wake Lock)
+  const keepAwake = activeTab === 'study' && studyViewMode === 'flashcard' && (isAutoPlay || autoTTS);
+  useEffect(() => {
+    if (!keepAwake || typeof navigator === 'undefined' || !('wakeLock' in navigator)) return;
+    let lock: { release: () => Promise<void> } | null = null;
+    let cancelled = false;
+    const acquire = async () => {
+      try {
+        const l = await (navigator as any).wakeLock.request('screen');
+        if (cancelled) {
+          l.release().catch(() => {});
+          return;
+        }
+        lock = l;
+      } catch {
+        /* 지원 안 하거나 거부되면 무시 */
+      }
+    };
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') acquire(); // 탭 복귀 시 잠금이 풀려 있으므로 다시 요청
+    };
+    acquire();
+    document.addEventListener('visibilitychange', onVisible);
+    return () => {
+      cancelled = true;
+      document.removeEventListener('visibilitychange', onVisible);
+      lock?.release().catch(() => {});
+    };
+  }, [keepAwake]);
+
   useEffect(() => {
     if (activeTab !== 'study' || studyViewMode !== 'flashcard' || !isAutoPlay) return;
     if (filteredStudyTerms.length === 0) return;
