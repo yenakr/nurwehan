@@ -25,7 +25,7 @@ interface Ctx {
 const PenCtx = createContext<Ctx | null>(null);
 
 // 손글씨칸들이 공유하는 도구(지우개/되돌리기/전체 지우기). 마지막으로 쓴 칸에 적용된다.
-export function PenProvider({ children }: { children: ReactNode }) {
+export function PenProvider({ children, showToolbar = true }: { children: ReactNode; showToolbar?: boolean }) {
   const [erase, setEraseState] = useState(false);
   const eraseRef = useRef(false);
   const pads = useRef(new Map<string, PadApi>());
@@ -61,7 +61,7 @@ export function PenProvider({ children }: { children: ReactNode }) {
 
   return (
     <PenCtx.Provider value={ctx}>
-      <div style={{ display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap', marginBottom: '12px' }}>
+      {showToolbar && <div style={{ display: 'flex', gap: '6px', alignItems: 'center', justifyContent: 'flex-end', flexWrap: 'wrap', marginBottom: '12px' }}>
         <button
           type="button"
           onClick={toggleErase}
@@ -77,7 +77,7 @@ export function PenProvider({ children }: { children: ReactNode }) {
         <button type="button" onClick={() => pads.current.forEach(p => p.clear())} className="btn-outline" style={btn}>
           전체 지우기
         </button>
-      </div>
+      </div>}
       {children}
     </PenCtx.Provider>
   );
