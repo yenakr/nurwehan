@@ -251,6 +251,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
 
   // Typing Mode State
   const [typingIndex, setTypingIndex] = useState<number>(0);
+  const [typingDone, setTypingDone] = useState<boolean>(false);
   const [typingInput, setTypingInput] = useState<string>('');
   const [typingDefInput, setTypingDefInput] = useState<string>('');
   const [typingFullInput, setTypingFullInput] = useState<string>('');
@@ -755,6 +756,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
     setFlashcardIndex(0);
     setIsCardFlipped(false);
     setTypingIndex(0);
+    setTypingDone(false);
     setTypingInput('');
     setIsTypingSubmitted(false);
     setTypingCorrectCount(0);
@@ -1318,7 +1320,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
       setTypingFullInput('');
       setTypingDefInput('');
     } else {
-      alert('모든 학습 문항의 타자 연습을 완료했습니다.');
+      setTypingDone(true);
     }
   };
 
@@ -2013,10 +2015,19 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
             </div>
           )}
 
-          {/* MODE 2: TYPING PRACTICE MODE (타자 연습 모드) */}
+          {/* MODE 2: TYPING PRACTICE MODE (학습 모드) */}
           {studyViewMode === 'typing' && (
             <div style={{ maxWidth: '1120px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {filteredStudyTerms.length > 0 && currentTypingTerm ? (
+              {typingDone ? (
+                <div className={s.doneCard}>
+                  <div className={s.doneTitle}>학습 완료</div>
+                  <div className={s.doneSub}>{filteredStudyTerms.length}개를 모두 봤어요</div>
+                  <div className={s.doneActions}>
+                    <button type="button" className={`${s.btn} ${s.btnPrimary}`} onClick={() => { setTypingDone(false); setTypingIndex(0); setTypingInput(''); setTypingFullInput(''); setTypingDefInput(''); }}>처음부터</button>
+                    <button type="button" className={s.btn} onClick={() => { setTypingDone(false); setStudyViewMode('grid'); }}>목록으로</button>
+                  </div>
+                </div>
+              ) : filteredStudyTerms.length > 0 && currentTypingTerm ? (
                 <div className="card" style={{ padding: '18px' }}>
                   {/* Header Progress & Prev/Next Buttons */}
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
