@@ -351,8 +351,8 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
   const [quizCount, setQuizCount] = useState<number | 'all'>('all');
   const [quizReverse, setQuizReverse] = useState<boolean>(false);
   const [quizFull, setQuizFull] = useState<boolean>(false); // 풀네임이 낀 단일 답 유형(느슨한 채점)
-  const [quizPrompt, setQuizPrompt] = useState<'term' | 'full' | 'def'>('def'); // 제시할 항목
-  const [quizTargets, setQuizTargets] = useState<Record<'term' | 'full' | 'def', boolean>>({ term: true, full: false, def: false }); // 쓸 항목
+  const [quizPrompt, setQuizPrompt] = useState<'term' | 'full' | 'def'>('def'); // 제시할 항목 (term=약어, full=용어)
+  const [quizTargets, setQuizTargets] = useState<Record<'term' | 'full' | 'def', boolean>>({ term: false, full: true, def: false }); // 쓸 항목
   const [quizFormat, setQuizFormat] = useState<'single' | 'worksheet'>('single');
   const [worksheetAnswers, setWorksheetAnswers] = useState<Record<number, string>>({});
   const [worksheetAnswers2, setWorksheetAnswers2] = useState<Record<number, string>>({});
@@ -893,9 +893,14 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
   }, [activeTab, studyViewMode, isCardFlipped, filteredStudyTerms.length]);
 
 
-  const FIELD_ORDER = ['term', 'full', 'def'] as const;
-  const FIELD_LABEL = { term: '약어', full: '풀네임', def: '국문' } as const;
+  const normTerm = (t: NursingTerm) => t.englishTerm?.trim() || t.term;
+  const FIELD_ORDER = ['full', 'def', 'term'] as const;
+  const FIELD_LABEL = { term: '약어', full: '용어', def: '국문' } as const;
   const bothLabels = FIELD_ORDER.filter(f => f !== quizPrompt).slice(0, 2) as Array<'term' | 'full' | 'def'>;
+  const fullOk = (t: NursingTerm) => {
+    const need = [quizPrompt, ...FIELD_ORDER.filter(f => f !== quizPrompt && quizTargets[f]).slice(0, 1)];
+    return (!need.includes('term') || !!t.englishTerm?.trim()) && (!need.includes('def') || !!t.definition?.trim());
+  };
   const setTestSpec = (p: 'term' | 'full' | 'def', t: Record<'term' | 'full' | 'def', boolean>) => {
     setQuizPrompt(p);
     setQuizTargets(t);
@@ -908,10 +913,10 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
     }
     const e = eff[0];
     setQuizType(prev => (prev === 'abbr_both' ? 'def_to_term' : prev));
-    if (p === 'def' && e === 'term') {
+    if (p === 'def' && e === 'full') {
       setQuizReverse(false);
       setQuizFull(false);
-    } else if (p === 'term' && e === 'def') {
+    } else if (p === 'full' && e === 'def') {
       setQuizReverse(true);
       setQuizFull(false);
     } else {
@@ -944,6 +949,15 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
       return true;
     });
 
+    // 용어 = 풀네임(없으면 기존 term), 약어는 추가 학습용이라 englishTerm 칸으로 옮겨 다룬다.
+    if (quizKind === 'TERM' && !customTermsList?.some(isExamItem)) {
+      pool = pool.map(q => {
+        if (kindOf(q) !== 'TERM' || isExamItem(q)) return q;
+        const full = q.englishTerm?.trim();
+        return full ? { ...q, term: full, englishTerm: q.term, answer: undefined } : q;
+      });
+    }
+
     const bothMode = quizType === 'abbr_both' && quizKind === 'TERM';
     if (bothMode) {
       pool = pool.filter(t => kindOf(t) === 'TERM' && !!t.englishTerm?.trim() && !!t.definition?.trim());
@@ -951,7 +965,8 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
 
     const fullOn = quizFull && quizType === 'def_to_term' && quizKind === 'TERM' && !bothMode && !customTermsList?.some(isExamItem);
     if (fullOn) {
-      pool = pool.filter(t => kindOf(t) === 'TERM' && !!t.englishTerm?.trim());
+      const need = [quizPrompt, ...FIELD_ORDER.filter(f => f !== quizPrompt && quizTargets[f]).slice(0, 1)];
+      pool = pool.filter(t => kindOf(t) === 'TERM' && (!need.includes('term') || !!t.englishTerm?.trim()) && (!need.includes('def') || !!t.definition?.trim()));
     }
 
     if (pool.length === 0) {
@@ -991,8 +1006,8 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
         const sameSubjectTerms = Array.from(
           new Set(
             termsList
-              .filter(t => t.subject === q.subject && t.term !== correct)
-              .map(t => t.term)
+              .filter(t => t.subject === q.subject && normTerm(t) !== correct)
+              .map(normTerm)
           )
         );
         const distractors = sameSubjectTerms
@@ -1005,7 +1020,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
       }
     });
 
-    const fieldText = (q: NursingTerm, f: 'term' | 'full' | 'def') => (f === 'term' ? (q.answer || q.term) : f === 'full' ? (q.englishTerm || '') : q.definition);
+    const fieldText = (q: NursingTerm, f: 'term' | 'full' | 'def') => (f === 'term' ? (q.englishTerm || '') : f === 'full' ? (q.answer || q.term) : q.definition);
     const effTargets = FIELD_ORDER.filter(f => f !== quizPrompt && quizTargets[f]);
 
     if (fullOn) {
@@ -1020,7 +1035,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
       }));
     }
 
-    if (bothMode && quizPrompt !== 'term') {
+    if (bothMode) {
       // 문제: term 칸, 정답 두 칸: englishTerm / definition 칸
       pool = pool.map(q => ({
         ...q,
@@ -2169,8 +2184,8 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
             retryPool
               ? quizType === 'abbr_both'
                 ? retryPool.filter(t => kindOf(t) === 'TERM' && !!t.englishTerm?.trim() && !!t.definition?.trim()).length
-                : quizFull ? retryPool.filter(t => !!t.englishTerm?.trim()).length : retryPool.length
-              : quizType === 'abbr_both' ? bothCount : quizFull ? selectedQuizTerms.filter(t => kindOf(t) === 'TERM' && !!t.englishTerm?.trim()).length : selectedQuizTerms.length
+                : quizFull ? retryPool.filter(fullOk).length : retryPool.length
+              : quizType === 'abbr_both' ? bothCount : quizFull ? selectedQuizTerms.filter(t => kindOf(t) === 'TERM' && fullOk(t)).length : selectedQuizTerms.length
           }
           bothAvailable={retryPool ? retryPool.some(t => kindOf(t) === 'TERM' && !!t.englishTerm?.trim() && !!t.definition?.trim()) : bothCount > 0}
           favCount={user ? quizFavCount : 0}
