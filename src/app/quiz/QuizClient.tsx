@@ -169,6 +169,7 @@ function TypingRow({
         <button
           type="button"
           onClick={onSpeak}
+          tabIndex={-1}
           className="btn-outline"
           style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: '6px', flex: '0 0 auto' }}
           title="음성으로 들려주기"
@@ -250,6 +251,8 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
 
   // Flashcard Mode State
   const [flashcardIndex, setFlashcardIndex] = useState<number>(0);
+  const [fcOx, setFcOx] = useState<boolean>(false); // O/X 모드: O 누른 카드는 빠지고 X는 계속 돌아온다
+  const [fcKnown, setFcKnown] = useState<Set<string>>(new Set());
   const [isCardFlipped, setIsCardFlipped] = useState<boolean>(false);
   const [flashcardDirection, setFlashcardDirection] = useState<'term_first' | 'def_first'>('term_first');
 
@@ -767,7 +770,29 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
     setIsTypingSubmitted(false);
     setTypingCorrectCount(0);
     setTypingHistory({});
+    setFcKnown(new Set());
   }, [studySubject, studyCategory]);
+
+  const fcTerms = useMemo(
+    () => (fcOx ? filteredStudyTerms.filter(t => !fcKnown.has(t.id)) : filteredStudyTerms),
+    [fcOx, fcKnown, filteredStudyTerms]
+  );
+  const fcMark = (known: boolean) => {
+    const cur = fcTerms[flashcardIndex];
+    if (!cur) return;
+    setIsCardFlipped(false);
+    if (known) {
+      setFcKnown(prev => new Set(prev).add(cur.id));
+      setFlashcardIndex(i => (i >= fcTerms.length - 1 ? 0 : i));
+    } else {
+      setFlashcardIndex(i => (i + 1 < fcTerms.length ? i + 1 : 0));
+    }
+  };
+  const fcResetOx = () => {
+    setFcKnown(new Set());
+    setFlashcardIndex(0);
+    setIsCardFlipped(false);
+  };
 
   // Auto TTS effect for Typing Practice Mode
   useEffect(() => {
@@ -778,8 +803,8 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
 
   // Auto TTS effect for Flashcard Mode (manual mode when auto-play is OFF)
   useEffect(() => {
-    if (studyViewMode === 'flashcard' && autoTTS && !isAutoPlay && filteredStudyTerms[flashcardIndex]) {
-      const card = filteredStudyTerms[flashcardIndex];
+    if (studyViewMode === 'flashcard' && autoTTS && !isAutoPlay && fcTerms[flashcardIndex]) {
+      const card = fcTerms[flashcardIndex];
       const showTermOnFront = flashcardDirection === 'term_first';
       const isFront = !isCardFlipped;
       const text = (isFront === showTermOnFront)
@@ -787,7 +812,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
         : card.definition;
       speakText(text);
     }
-  }, [flashcardIndex, isCardFlipped, flashcardDirection, studyViewMode, autoTTS, isAutoPlay, filteredStudyTerms, speakText]);
+  }, [flashcardIndex, isCardFlipped, flashcardDirection, studyViewMode, autoTTS, isAutoPlay, fcTerms, speakText]);
 
   // Synchronized Auto-play effect for Flashcard mode (waits for TTS completion)
   // 플래시카드 자동재생·음성 재생 중에는 화면이 꺼지지 않게 한다(Screen Wake Lock)
@@ -822,12 +847,12 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
 
   useEffect(() => {
     if (activeTab !== 'study' || studyViewMode !== 'flashcard' || !isAutoPlay) return;
-    if (filteredStudyTerms.length === 0) return;
+    if (fcTerms.length === 0) return;
 
     let timerId: NodeJS.Timeout | null = null;
     let cancelled = false;
 
-    const currentCard = filteredStudyTerms[flashcardIndex];
+    const currentCard = fcTerms[flashcardIndex];
     if (!currentCard) return;
 
     const showTermOnFront = flashcardDirection === 'term_first';
@@ -842,7 +867,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
         setIsCardFlipped(true);
       } else {
         setIsCardFlipped(false);
-        setFlashcardIndex(prev => (prev + 1) % filteredStudyTerms.length);
+        setFlashcardIndex(prev => (prev + 1) % fcTerms.length);
       }
     };
 
@@ -863,7 +888,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
         window.speechSynthesis.cancel();
       }
     };
-  }, [activeTab, studyViewMode, isAutoPlay, isCardFlipped, flashcardIndex, autoPlayIntervalSec, autoTTS, flashcardDirection, filteredStudyTerms, speakText]);
+  }, [activeTab, studyViewMode, isAutoPlay, isCardFlipped, flashcardIndex, autoPlayIntervalSec, autoTTS, flashcardDirection, fcTerms, speakText]);
 
   // Keyboard navigation for Flashcard mode (Space/Enter to flip, Arrow/Enter to next)
   useEffect(() => {
@@ -883,14 +908,16 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
           setIsCardFlipped(true);
         } else {
           setIsCardFlipped(false);
-          setFlashcardIndex(prev => Math.min(prev + 1, filteredStudyTerms.length - 1));
+          setFlashcardIndex(prev => Math.min(prev + 1, fcTerms.length - 1));
         }
       } else if (e.key === 'ArrowRight') {
         e.preventDefault();
+        if (fcOx) { fcMark(true); return; }
         setIsCardFlipped(false);
-        setFlashcardIndex(prev => Math.min(prev + 1, filteredStudyTerms.length - 1));
+        setFlashcardIndex(prev => Math.min(prev + 1, fcTerms.length - 1));
       } else if (e.key === 'ArrowLeft') {
         e.preventDefault();
+        if (fcOx) { fcMark(false); return; }
         setIsCardFlipped(false);
         setFlashcardIndex(prev => Math.max(prev - 1, 0));
       }
@@ -898,7 +925,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeTab, studyViewMode, isCardFlipped, filteredStudyTerms.length]);
+  }, [activeTab, studyViewMode, isCardFlipped, fcTerms, fcOx, flashcardIndex]);
 
 
   const normTerm = (t: NursingTerm) => t.englishTerm?.trim() || t.term;
@@ -1883,11 +1910,28 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
           {/* MODE 1: QUIZLET FLASHCARD FLIP MODE (플래시 카드 모드) */}
           {studyViewMode === 'flashcard' && (
             <div style={{ maxWidth: '640px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {filteredStudyTerms.length > 0 ? (
+              {fcOx && filteredStudyTerms.length > 0 && fcTerms.length === 0 ? (
+                <div className={s.doneCard}>
+                  <div className={s.doneTitle}>모두 외웠어요</div>
+                  <div className={s.doneSub}>{filteredStudyTerms.length}개 완료</div>
+                  <div className={s.doneActions}>
+                    <button type="button" className={`${s.btn} ${s.btnPrimary}`} onClick={fcResetOx}>다시</button>
+                    <button type="button" className={s.btn} onClick={() => { setFcOx(false); fcResetOx(); }}>O/X 끄기</button>
+                  </div>
+                </div>
+              ) : fcTerms.length > 0 ? (
                 <>
                   <div className={s.fcHead}>
-                    <span className={s.fcCount}>{flashcardIndex + 1} / {filteredStudyTerms.length}</span>
+                    <span className={s.fcCount}>{fcOx ? `남은 ${fcTerms.length} · 완료 ${fcKnown.size}` : `${flashcardIndex + 1} / ${fcTerms.length}`}</span>
                     <div className={s.fcTools}>
+                      <button
+                        type="button"
+                        aria-pressed={fcOx}
+                        className={`${s.btn} ${s.btnSm} ${fcOx ? s.btnPrimary : ''}`}
+                        onClick={() => { setFcOx(v => !v); fcResetOx(); setIsAutoPlay(false); }}
+                      >
+                        O/X
+                      </button>
                       <button
                         type="button"
                         aria-pressed={isAutoPlay}
@@ -1921,7 +1965,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                         type="button"
                         className={`${s.btn} ${s.btnSm}`}
                         onClick={() => {
-                          const shuffled = [...filteredStudyTerms].sort(() => Math.random() - 0.5);
+                          const shuffled = [...fcTerms].sort(() => Math.random() - 0.5);
                           const shuffleIds = new Set(shuffled.map(t => t.id));
                           setTermsList(prev => {
                             let k = 0;
@@ -1936,10 +1980,10 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                     </div>
                   </div>
 
-                  <div className={s.rsBar} aria-hidden="true"><div style={{ width: `${((flashcardIndex + 1) / filteredStudyTerms.length) * 100}%` }} /></div>
+                  <div className={s.rsBar} aria-hidden="true"><div style={{ width: fcOx ? `${(fcKnown.size / Math.max(1, filteredStudyTerms.length)) * 100}%` : `${((flashcardIndex + 1) / fcTerms.length) * 100}%` }} /></div>
 
                   {(() => {
-                    const currentCard = filteredStudyTerms[flashcardIndex];
+                    const currentCard = fcTerms[flashcardIndex];
                     if (!currentCard) return null;
 
                     const abbr = currentCard.answer || currentCard.term;
@@ -1991,34 +2035,42 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                   })()}
 
                   {/* Navigation Buttons (Prev / Next) */}
+                  {fcOx ? (
+                    <div className={s.oxRow}>
+                      <button type="button" className={`${s.oxBtn} ${s.oxX}`} onClick={() => fcMark(false)} aria-label="몰라요">X</button>
+                      <button type="button" className={`${s.oxBtn} ${s.oxO}`} onClick={() => fcMark(true)} aria-label="알아요">O</button>
+                    </div>
+                  ) : (
                   <div style={{ display: 'flex', gap: '12px', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px' }}>
-                    <button
-                      onClick={() => {
-                        setIsCardFlipped(false);
-                        setFlashcardIndex(prev => Math.max(prev - 1, 0));
-                      }}
-                      disabled={flashcardIndex === 0}
-                      className="btn-outline"
-                      style={{ flex: 1, padding: '12px', fontSize: '0.9375rem', fontWeight: 700 }}
-                    >
-                      이전
-                    </button>
-
-                    <button
-                      onClick={() => {
-                        if (!isCardFlipped) {
-                          setIsCardFlipped(true);
-                        } else {
+                      <button
+                        onClick={() => {
                           setIsCardFlipped(false);
-                          setFlashcardIndex(prev => Math.min(prev + 1, filteredStudyTerms.length - 1));
-                        }
-                      }}
-                      className="btn-primary"
-                      style={{ flex: 1, padding: '12px', fontSize: '0.9375rem', fontWeight: 800 }}
-                    >
-                      {!isCardFlipped ? '확인' : '다음'}
-                    </button>
-                  </div>
+                          setFlashcardIndex(prev => Math.max(prev - 1, 0));
+                        }}
+                        disabled={flashcardIndex === 0}
+                        className="btn-outline"
+                        style={{ flex: 1, padding: '12px', fontSize: '0.9375rem', fontWeight: 700 }}
+                      >
+                        이전
+                      </button>
+  
+                      <button
+                        onClick={() => {
+                          if (!isCardFlipped) {
+                            setIsCardFlipped(true);
+                          } else {
+                            setIsCardFlipped(false);
+                            setFlashcardIndex(prev => Math.min(prev + 1, fcTerms.length - 1));
+                          }
+                        }}
+                        className="btn-primary"
+                        style={{ flex: 1, padding: '12px', fontSize: '0.9375rem', fontWeight: 800 }}
+                      >
+                        {!isCardFlipped ? '확인' : '다음'}
+                      </button>
+                    </div>
+  
+                  )}
                 </>
               ) : (
                 <div className="card" style={{ padding: '40px', textAlign: 'center', color: 'var(--sub-text)' }}>

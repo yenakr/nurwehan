@@ -279,3 +279,9 @@
 .doneTitle { font-size: 1.375rem; font-weight: 800; color: var(--q-primary); }
 .doneSub { font-size: 0.875rem; color: var(--q-muted); }
 .doneActions { display: flex; gap: 8px; margin-top: 14px; flex-wrap: wrap; justify-content: center; }
+
+/* 플래시카드 O/X */
+.oxRow { display: flex; gap: 12px; }
+.oxBtn { flex: 1; height: 56px; border-radius: 12px; border: 1px solid var(--q-border-strong); background: #fff; font-size: 1.5rem; font-weight: 800; font-family: inherit; }
+.oxX { color: #b91c1c; }
+.oxO { color: #fff; background: var(--q-primary); border-color: var(--q-primary); }
