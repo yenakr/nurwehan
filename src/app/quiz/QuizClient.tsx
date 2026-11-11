@@ -2607,218 +2607,58 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
 
       {/* VIEW 3-B: 전체 시험지 모드 (Worksheet / Full Exam Mode) */}
       {activeTab === 'quiz_play' && quizFormat === 'worksheet' && quizType !== 'abbr_both' && quizQuestions.length > 0 && (() => {
-        const isMcSheet = quizQuestions.some(q => q.itemType === 'MULTIPLE_CHOICE' || (q.options && q.options.length > 0));
-
+        const answered = Object.keys(worksheetAnswers).filter(k => worksheetAnswers[Number(k)]?.trim()).length;
         return (
-          <div style={{ maxWidth: '840px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-            <div>
-              {/* Questions Container */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                {quizQuestions.map((q, idx) => {
-                  const userAns = worksheetAnswers[idx] || '';
-                  const isStructuredItem = q.itemType === 'MULTIPLE_CHOICE' || (q.options && q.options.length > 0);
-                  // 용어를 4지선다로 낼 때는 보기가 자동 생성되므로 그것도 보기형으로 취급한다
-                  const hasGeneratedChoices = !isStructuredItem && (mcOptionsMap[idx]?.length ?? 0) > 0;
-                  const isMcItem = isStructuredItem || hasGeneratedChoices;
-
-                  if (isMcItem) {
-                    const optionsList = (q.options && q.options.length > 0) ? q.options : (mcOptionsMap[idx] || []);
-                    return (
-                      <div
-                        key={q.id || idx}
-                        style={{
-                          border: '1px solid #CBD5E1',
-                          borderRadius: '10px',
-                          padding: '20px',
-                          backgroundColor: '#FFFFFF',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                          <span style={{ fontSize: '0.8125rem', fontWeight: 800, backgroundColor: '#EFF6FF', color: '#1D4ED8', padding: '4px 10px', borderRadius: '6px' }}>
-                            문제 {idx + 1}
-                          </span>
-                          <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}>
-                            {q.subject} {q.category ? `• ${q.category}` : ''}
-                          </span>
-                        </div>
-
-                        <div style={{ fontSize: '1rem', fontWeight: 800, color: '#1E293B', lineHeight: 1.6, marginBottom: '14px' }}>
-                          {hasGeneratedChoices ? q.definition : q.term}
-                        </div>
-
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                          {optionsList.map((optText, oIdx) => {
-                            const isSelected = userAns === optText;
-                            return (
-                              <button
-                                key={oIdx}
-                                type="button"
-                                onClick={() => setWorksheetAnswers(prev => ({ ...prev, [idx]: optText }))}
-                                style={{
-                                  padding: '12px 14px',
-                                  borderRadius: '8px',
-                                  border: isSelected ? '2px solid #2563EB' : '1px solid #E2E8F0',
-                                  backgroundColor: isSelected ? '#EFF6FF' : '#F8FAFC',
-                                  color: isSelected ? '#1E40AF' : '#334155',
-                                  fontWeight: isSelected ? 800 : 600,
-                                  textAlign: 'left',
-                                  cursor: 'pointer',
-                                  fontSize: '0.9rem',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  gap: '10px',
-                                  transition: 'all 0.15s',
-                                }}
-                              >
-                                <span
-                                  style={{
-                                    width: '22px',
-                                    height: '22px',
-                                    borderRadius: '50%',
-                                    backgroundColor: isSelected ? '#2563EB' : '#CBD5E1',
-                                    color: '#FFFFFF',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    fontSize: '0.75rem',
-                                    fontWeight: 800,
-                                    flexShrink: 0,
-                                  }}
-                                >
-                                  {oIdx + 1}
-                                </span>
-                                {optText}
-                              </button>
-                            );
-                          })}
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  /* Subjective Short Answer or Term Row */
-                  const isShortAns = q.itemType === 'SHORT_ANSWER';
-                  if (isShortAns) {
-                    return (
-                      <div
-                        key={q.id || idx}
-                        style={{
-                          border: '1px solid #CBD5E1',
-                          borderRadius: '10px',
-                          padding: '20px',
-                          backgroundColor: '#FFFFFF',
-                          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
-                          <span style={{ fontSize: '0.8125rem', fontWeight: 800, backgroundColor: '#FEF3C7', color: '#D97706', padding: '4px 10px', borderRadius: '6px' }}>
-                            문제 {idx + 1} (주관식)
-                          </span>
-                          <span style={{ fontSize: '0.78rem', color: '#64748B', fontWeight: 600 }}>
-                            {q.subject} {q.category ? `• ${q.category}` : ''}
-                          </span>
-                        </div>
-
-                        <div style={{ fontSize: '1rem', fontWeight: 800, color: '#1E293B', lineHeight: 1.6, marginBottom: '14px' }}>
-                          {q.term}
-                        </div>
-
-                        <div>
-                          <input
-                            type="text"
-                            placeholder="정답"
-                            value={userAns}
-                            onChange={e => setWorksheetAnswers(prev => ({ ...prev, [idx]: e.target.value }))}
-                            style={{
-                              width: '100%',
-                              padding: '12px 14px',
-                              fontSize: '0.95rem',
-                              fontWeight: 700,
-                              borderRadius: '8px',
-                              border: userAns ? '2px solid #2563EB' : '1px solid #CBD5E1',
-                              backgroundColor: userAns ? '#F0F9FF' : '#FFFFFF',
-                              color: '#0F172A',
-                            }}
-                          />
-                        </div>
-                      </div>
-                    );
-                  }
-
-                  /* Vocabulary Term Row */
-                  return (
-                    <div
-                      key={q.id || idx}
-                      style={{
-                        display: 'grid',
-                        gridTemplateColumns: 'minmax(180px, 35%) 1fr',
-                        border: '1px solid #CBD5E1',
-                        borderRadius: '8px',
-                        overflow: 'hidden',
-                        backgroundColor: '#FFFFFF',
-                      }}
-                    >
-                      {/* Left Column: Blank Answer Input Box */}
-                      <div
-                        style={{
-                          padding: '12px 14px',
-                          borderRight: '1px solid #CBD5E1',
-                          backgroundColor: userAns ? '#F0F9FF' : '#FFFFFF',
-                          display: 'flex',
-                          alignItems: 'center',
-                        }}
-                      >
-                        <input
-                          type="text"
-                          placeholder={`#${idx + 1}`}
-                          value={userAns}
-                          onChange={e => setWorksheetAnswers(prev => ({ ...prev, [idx]: e.target.value }))}
-                          style={{
-                            width: '100%',
-                            padding: '10px 12px',
-                            fontSize: '0.95rem',
-                            fontWeight: 700,
-                            border: 'none',
-                            outline: 'none',
-                            backgroundColor: 'transparent',
-                            borderRadius: '6px',
-                            color: '#0F172A',
-                          }}
-                        />
-                      </div>
-
-                      {/* Right Column: Definition Prompt */}
-                      <div
-                        style={{
-                          padding: '14px 16px',
-                          fontSize: '0.9375rem',
-                          fontWeight: 600,
-                          color: '#334155',
-                          lineHeight: 1.6,
-                          display: 'flex',
-                          alignItems: 'center',
-                        }}
-                      >
-                        {q.definition}
-                      </div>
+          <div style={{ maxWidth: '760px', margin: '0 auto', width: '100%' }}>
+            <div className={s.ws}>
+              {quizQuestions.map((q, idx) => {
+                const userAns = worksheetAnswers[idx] || '';
+                const isStructuredItem = q.itemType === 'MULTIPLE_CHOICE' || (q.options && q.options.length > 0);
+                // 용어를 4지선다로 낼 때는 보기가 자동 생성되므로 그것도 보기형으로 취급한다
+                const hasGeneratedChoices = !isStructuredItem && (mcOptionsMap[idx]?.length ?? 0) > 0;
+                const optionsList = isStructuredItem ? (q.options || []) : (mcOptionsMap[idx] || []);
+                const isMcItem = isStructuredItem || hasGeneratedChoices;
+                const isShortAns = q.itemType === 'SHORT_ANSWER';
+                const prompt = isMcItem ? (hasGeneratedChoices ? q.definition : q.term) : isShortAns ? q.term : (quizReverse && !quizFull ? q.term : q.definition);
+                return (
+                  <div key={q.id || idx} className={`${s.wsItem} ${userAns.trim() ? s.wsDone : ''}`}>
+                    <div className={s.wsQ}>
+                      <span className={s.wsNo}>{idx + 1}</span>
+                      <span className={s.wsText}>{prompt}</span>
                     </div>
-                  );
-                })}
-              </div>
-
-              {/* Grade All Button */}
-              <div style={{ marginTop: '24px' }}>
-                <button
-                  type="button"
-                  onClick={() => handleGradeWorksheet()}
-                  className="btn-primary"
-                  style={{ width: '100%', padding: '16px', fontSize: '1.125rem', fontWeight: 900, textAlign: 'center' }}
-                >
-                  채점하기 ({Object.keys(worksheetAnswers).filter(k => worksheetAnswers[Number(k)]?.trim()).length} / {quizQuestions.length})
-                </button>
-              </div>
+                    {isMcItem ? (
+                      <div className={s.wsOpts}>
+                        {optionsList.map((optText, oIdx) => (
+                          <button
+                            key={oIdx}
+                            type="button"
+                            aria-pressed={userAns === optText}
+                            className={`${s.wsOpt} ${userAns === optText ? s.wsOptOn : ''}`}
+                            onClick={() => setWorksheetAnswers(prev => ({ ...prev, [idx]: optText }))}
+                          >
+                            <i>{oIdx + 1}</i>
+                            {optText}
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <input
+                        type="text"
+                        aria-label={`${idx + 1}번 답`}
+                        placeholder="답"
+                        value={userAns}
+                        onChange={e => setWorksheetAnswers(prev => ({ ...prev, [idx]: e.target.value }))}
+                        className={s.wsInput}
+                      />
+                    )}
+                  </div>
+                );
+              })}
             </div>
+
+            <button type="button" onClick={() => handleGradeWorksheet()} className={`${s.btn} ${s.btnPrimary}`} style={{ width: '100%', height: 48, marginTop: 18, fontSize: '1rem' }}>
+              채점하기 · {answered} / {quizQuestions.length}
+            </button>
           </div>
         );
       })()}
@@ -2830,26 +2670,26 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
             <div className={s.sheet}>
               <div className={`${s.sheetRow} ${s.sheetHead}`}>
                 <span>#</span>
-                <span>약어</span>
-                <span>용어</span>
-                <span>국문</span>
+                <span>{FIELD_LABEL[quizPrompt]}</span>
+                <span>{FIELD_LABEL[bothLabels[0]]}</span>
+                <span>{FIELD_LABEL[bothLabels[1]]}</span>
               </div>
               {quizQuestions.map((q, idx) => (
                 <div key={q.id ?? idx} className={s.sheetRow}>
                   <span className={s.sheetNo}>{idx + 1}</span>
                   <span className={s.sheetAbbr}>{q.term}</span>
                   <input
-                    aria-label={`${q.term} 용어`}
+                    aria-label={`${q.term} ${FIELD_LABEL[bothLabels[0]]}`}
                     type="text"
-                    placeholder="용어"
+                    placeholder={FIELD_LABEL[bothLabels[0]]}
                     value={worksheetAnswers[idx] || ''}
                     onChange={e => setWorksheetAnswers(prev => ({ ...prev, [idx]: e.target.value }))}
                     className={s.sheetInput}
                   />
                   <input
-                    aria-label={`${q.term} 국문`}
+                    aria-label={`${q.term} ${FIELD_LABEL[bothLabels[1]]}`}
                     type="text"
-                    placeholder="국문"
+                    placeholder={FIELD_LABEL[bothLabels[1]]}
                     value={worksheetAnswers2[idx] || ''}
                     onChange={e => setWorksheetAnswers2(prev => ({ ...prev, [idx]: e.target.value }))}
                     className={s.sheetInput}
@@ -2936,9 +2776,21 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                       <article key={res.term.id ?? idx} className={`${s.rsItem} ${finalCorrect ? s.rsOk : s.rsNo}`}>
                         <div className={s.rsHead}>
                           <span className={s.rsNum}>#{idx + 1} {res.hinted && checkAnswerCorrectness(res.userAns || '', res.term) && <span className={s.hintMark}>▲</span>}{finalCorrect ? '정답' : '오답'}</span>
-                          <button type="button" className={s.rsToggle} onClick={() => handleToggleSelfCorrection(idx)}>
-                            {finalCorrect ? '오답 처리' : '정답 처리'}
-                          </button>
+                          <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
+                            <button type="button" className={s.rsToggle} onClick={() => handleToggleSelfCorrection(idx)}>
+                              {finalCorrect ? '오답 처리' : '정답 처리'}
+                            </button>
+                            <button
+                              type="button"
+                              className={`${s.star} ${favIds.has(res.term.id) ? s.starOn : ''}`}
+                              style={{ margin: 0 }}
+                              aria-label={favIds.has(res.term.id) ? '즐겨찾기 해제' : '즐겨찾기'}
+                              aria-pressed={favIds.has(res.term.id)}
+                              onClick={() => toggleFav(res.term.id)}
+                            >
+                              {favIds.has(res.term.id) ? '★' : '☆'}
+                            </button>
+                          </span>
                         </div>
                         <div className={s.rsTerm}>
                           {res.term.term}
