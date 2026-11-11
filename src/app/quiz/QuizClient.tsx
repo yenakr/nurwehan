@@ -147,45 +147,6 @@ const typingInputStyle: CSSProperties = {
   borderRadius: '8px',
 };
 
-// 학습 '타이핑' 한 칸: 정답 텍스트(제목 자리) + 입력칸 + 손글씨칸
-function TypingRow({
-  text,
-  onSpeak,
-  input,
-  extra,
-  resetKey,
-}: {
-  text: string;
-  onSpeak: () => void;
-  input: ReactNode;
-  extra?: ReactNode;
-  resetKey: string;
-}) {
-  return (
-    <div style={{ marginBottom: '14px' }}>
-      <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
-        <button
-          type="button"
-          onClick={onSpeak}
-          className="btn-outline"
-          style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: '6px', flex: '0 0 auto' }}
-          title="음성으로 들려주기"
-        >
-          듣기
-        </button>
-        <div style={{ flex: 1, fontSize: '1.0625rem', fontWeight: 800, color: '#0E4A84', lineHeight: 1.4 }}>{text}</div>
-      </div>
-      {extra}
-      <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'flex-start' }}>
-        <div style={{ flex: '1 1 200px', minWidth: 0 }}>{input}</div>
-        <div style={{ flex: '2.4 1 340px', minWidth: 0 }}>
-          <PenPad key={resetKey} height={76} />
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function fmtSec(n: number) {
   const m = Math.floor(n / 60);
   return `${m}:${String(n % 60).padStart(2, '0')}`;
@@ -254,6 +215,10 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
   const [typingInput, setTypingInput] = useState<string>('');
   const [typingDefInput, setTypingDefInput] = useState<string>('');
   const [typingFullInput, setTypingFullInput] = useState<string>('');
+  type TypingField = 'term' | 'full' | 'def';
+  const [typingPrompt, setTypingPrompt] = useState<TypingField>('def');
+  const [typingTargets, setTypingTargets] = useState<Record<TypingField, boolean>>({ term: true, full: true, def: false });
+  const [typingRevealed, setTypingRevealed] = useState<boolean>(false);
   const [isTypingSubmitted, setIsTypingSubmitted] = useState<boolean>(false);
   const [typingCorrectCount, setTypingCorrectCount] = useState<number>(0);
   const [typingHistory, setTypingHistory] = useState<Record<number, boolean>>({});
@@ -759,12 +724,28 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
     setTypingHistory({});
   }, [studySubject, studyCategory]);
 
+  // 타이핑 연습: 풀네임을 제시로 쓰는 설정이면 풀네임이 있는 용어만 사용
+  const typingFieldText = (t: NursingTerm, f: TypingField) =>
+    f === 'term' ? (t.answer || t.term) : f === 'full' ? (t.englishTerm || '') : t.definition;
+  const typingTargetFields = (['term', 'full', 'def'] as TypingField[]).filter(f => typingTargets[f] && f !== typingPrompt);
+  const typingTerms = useMemo(
+    () => filteredStudyTerms.filter(t => typingPrompt !== 'full' || !!t.englishTerm?.trim()),
+    [filteredStudyTerms, typingPrompt]
+  );
+  useEffect(() => {
+    setTypingIndex(0);
+    setTypingRevealed(false);
+    setTypingInput('');
+  }, [typingPrompt]);
+
   // Auto TTS effect for Typing Practice Mode
   useEffect(() => {
-    if (studyViewMode === 'typing' && autoTTS && filteredStudyTerms[typingIndex]) {
-      speakText(filteredStudyTerms[typingIndex].definition);
+    const t = typingTerms[typingIndex];
+    if (studyViewMode === 'typing' && autoTTS && t) {
+      speakText(typingPrompt === 'term' ? termSpeech(t) : typingFieldText(t, typingPrompt));
     }
-  }, [typingIndex, studyViewMode, autoTTS, filteredStudyTerms, speakText]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [typingIndex, studyViewMode, autoTTS, typingTerms, typingPrompt, speakText]);
 
   // Auto TTS effect for Flashcard Mode (manual mode when auto-play is OFF)
   useEffect(() => {
@@ -1209,35 +1190,33 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
   }, [activeTab, quizFormat, isAnswerSubmitted, reviewIndex, handleNextQuestion]);
 
   // Typing practice handlers
-  const currentTypingTerm = filteredStudyTerms[typingIndex];
-  
-  const handleTypingSubmit = () => {
-    if (!currentTypingTerm || isTypingSubmitted) return;
-    const isCorr = checkAnswerCorrectness(typingInput, currentTypingTerm);
-    setIsTypingSubmitted(true);
-    setTypingHistory(prev => ({ ...prev, [typingIndex]: isCorr }));
-    if (isCorr) {
-      setTypingCorrectCount(prev => prev + 1);
-    }
+  const currentTypingTerm = typingTerms[typingIndex];
+
+  const resetTypingCard = () => {
+    setTypingInput('');
+    setTypingFullInput('');
+    setTypingDefInput('');
+    setTypingRevealed(false);
   };
 
+  // 1번째 누름: 정답 공개 / 2번째 누름: 다음 문제
   const handleTypingNext = () => {
-    if (typingIndex + 1 < filteredStudyTerms.length) {
+    if (!typingRevealed) {
+      setTypingRevealed(true);
+      return;
+    }
+    if (typingIndex + 1 < typingTerms.length) {
       setTypingIndex(prev => prev + 1);
-      setTypingInput('');
-      setTypingFullInput('');
-      setTypingDefInput('');
+      resetTypingCard();
     } else {
-      alert('모든 학습 문항의 타자 연습을 완료했습니다.');
+      alert('모든 문항을 다 연습했어요.');
     }
   };
 
   const handleTypingPrev = () => {
     if (typingIndex > 0) {
       setTypingIndex(prev => prev - 1);
-      setTypingInput('');
-      setTypingFullInput('');
-      setTypingDefInput('');
+      resetTypingCard();
     }
   };
 
@@ -1926,12 +1905,56 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
           {/* MODE 2: TYPING PRACTICE MODE (타자 연습 모드) */}
           {studyViewMode === 'typing' && (
             <div style={{ maxWidth: '1120px', margin: '0 auto', width: '100%', display: 'flex', flexDirection: 'column', gap: '20px' }}>
-              {filteredStudyTerms.length > 0 && currentTypingTerm ? (
+              {typingTerms.length > 0 && currentTypingTerm ? (
                 <div className="card" style={{ padding: '18px' }}>
+                  {/* 설정: 무엇을 보고 무엇을 쓸지 */}
+                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px 16px', alignItems: 'center', marginBottom: '14px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--sub-text)' }}>제시</span>
+                      <div style={{ display: 'inline-flex', background: '#f1f5f9', padding: '3px', borderRadius: '10px' }}>
+                        {([['term', '약어'], ['full', '풀네임'], ['def', '국문']] as [TypingField, string][]).map(([k, label]) => (
+                          <button
+                            key={k}
+                            type="button"
+                            onClick={() => setTypingPrompt(k)}
+                            style={{ padding: '5px 12px', border: 'none', borderRadius: '8px', fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer', background: typingPrompt === k ? '#fff' : 'transparent', color: typingPrompt === k ? 'var(--primary)' : '#64748b', boxShadow: typingPrompt === k ? '0 1px 3px rgba(0,0,0,0.1)' : 'none' }}
+                          >
+                            {label}
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--sub-text)' }}>쓰기</span>
+                      {([['term', '약어'], ['full', '풀네임'], ['def', '국문']] as [TypingField, string][])
+                        .filter(([k]) => k !== typingPrompt)
+                        .map(([k, label]) => {
+                          const on = typingTargets[k];
+                          return (
+                            <button
+                              key={k}
+                              type="button"
+                              aria-pressed={on}
+                              onClick={() => {
+                                const next = { ...typingTargets, [k]: !on };
+                                const left = (['term', 'full', 'def'] as TypingField[]).filter(f => next[f] && f !== typingPrompt);
+                                if (left.length === 0) return; // 최소 하나는 선택
+                                setTypingTargets(next);
+                                setTypingRevealed(false);
+                              }}
+                              style={{ padding: '5px 12px', borderRadius: '999px', fontSize: '0.8125rem', fontWeight: 700, cursor: 'pointer', border: '1px solid', borderColor: on ? 'var(--primary)' : '#e2e8f0', background: on ? 'var(--primary)' : '#fff', color: on ? '#fff' : '#64748b' }}
+                            >
+                              {label}
+                            </button>
+                          );
+                        })}
+                    </div>
+                  </div>
+
                   {/* Header Progress & Prev/Next Buttons */}
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
                     <span style={{ fontSize: '0.9rem', fontWeight: 800, color: 'var(--primary)' }}>
-                      {typingIndex + 1} / {filteredStudyTerms.length}
+                      {typingIndex + 1} / {typingTerms.length}
                     </span>
                     <div style={{ display: 'flex', gap: '8px' }}>
                       <button
@@ -1949,105 +1972,66 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                         className="btn-primary"
                         style={{ padding: '6px 16px', fontSize: '0.8125rem', fontWeight: 800 }}
                       >
-                        {typingIndex + 1 < filteredStudyTerms.length ? '다음' : '완료'}
+                        {typingRevealed ? (typingIndex + 1 < typingTerms.length ? '다음' : '완료') : '정답 보기'}
                       </button>
                     </div>
                   </div>
 
-                  {/* Progress Bar */}
-                  <div style={{ width: '100%', height: '6px', backgroundColor: '#E2E8F0', borderRadius: '3px', overflow: 'hidden', marginBottom: '24px' }}>
-                    <div
-                      style={{
-                        width: `${((typingIndex + 1) / filteredStudyTerms.length) * 100}%`,
-                        height: '100%',
-                        backgroundColor: 'var(--primary)',
-                        transition: 'width 0.3s ease',
-                      }}
-                    />
+                  <div style={{ width: '100%', height: '6px', backgroundColor: '#E2E8F0', borderRadius: '3px', overflow: 'hidden', marginBottom: '18px' }}>
+                    <div style={{ width: `${((typingIndex + 1) / typingTerms.length) * 100}%`, height: '100%', backgroundColor: 'var(--primary)', transition: 'width 0.3s ease' }} />
                   </div>
 
-                  <PenProvider>
-                  <TypingRow
-                    resetKey={`t${typingIndex}`}
-                    text={currentTypingTerm.answer || currentTypingTerm.term}
-                    onSpeak={() => speakText(termSpeech(currentTypingTerm))}
-                    input={
-                      <input
-                        type="text"
-                        autoFocus
-                        value={typingInput}
-                        onChange={e => setTypingInput(e.target.value)}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter') {
-                            e.preventDefault();
-                            const nx = document.getElementById(currentTypingTerm.englishTerm?.trim() ? 'typing-full' : 'typing-def');
-                            if (nx) (nx as HTMLElement).focus(); else handleTypingNext();
-                          }
-                        }}
-                        style={typingInputStyle}
-                      />
-                    }
-                  />
+                  {/* 문제 */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '12px' }}>
+                    <button
+                      type="button"
+                      onClick={() => speakText(typingPrompt === 'term' ? termSpeech(currentTypingTerm) : typingFieldText(currentTypingTerm, typingPrompt))}
+                      className="btn-outline"
+                      style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: '6px', flex: '0 0 auto' }}
+                      title="음성으로 들려주기"
+                    >
+                      듣기
+                    </button>
+                    <div style={{ flex: 1, fontSize: '1.25rem', fontWeight: 800, color: '#0E4A84', lineHeight: 1.4 }}>
+                      {typingFieldText(currentTypingTerm, typingPrompt)}
+                    </div>
+                  </div>
 
-                  {currentTypingTerm.englishTerm?.trim() && (
-                    <TypingRow
-                      resetKey={`f${typingIndex}`}
-                      text={currentTypingTerm.englishTerm}
-                      onSpeak={() => speakText(currentTypingTerm.englishTerm || '')}
-                      input={
-                        <input
-                          id="typing-full"
-                          type="text"
-                          value={typingFullInput}
-                          onChange={e => setTypingFullInput(e.target.value)}
+                  {/* 쓰는 곳: 입력 + 손글씨 한 세트 */}
+                  <PenProvider>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'flex-start' }}>
+                      <div style={{ flex: '1 1 200px', minWidth: 0 }}>
+                        <textarea
+                          rows={3}
+                          autoFocus
+                          value={typingInput}
+                          onChange={e => setTypingInput(e.target.value)}
                           onKeyDown={e => {
-                            if (e.key === 'Enter') {
+                            if (e.key === 'Enter' && !e.shiftKey) {
                               e.preventDefault();
-                              const nx = document.getElementById('typing-def');
-                              if (nx) (nx as HTMLElement).focus(); else handleTypingNext();
+                              handleTypingNext();
                             }
                           }}
-                          style={typingInputStyle}
+                          style={{ ...typingInputStyle, resize: 'vertical', lineHeight: 1.5 }}
                         />
-                      }
-                    />
-                  )}
-
-                  <TypingRow
-                    resetKey={`d${typingIndex}`}
-                    text={currentTypingTerm.definition}
-                    onSpeak={() => speakText(currentTypingTerm.definition)}
-                    extra={
-                      currentTypingTerm.options && currentTypingTerm.options.length > 0 ? (
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginBottom: '6px' }}>
-                          {currentTypingTerm.options.map((opt, oIdx) => (
-                            <span key={oIdx} style={{ fontSize: '0.8125rem', backgroundColor: '#F8FAFC', border: '1px solid #CBD5E1', padding: '2px 8px', borderRadius: '6px', color: '#475569' }}>
-                              ● {opt}
-                            </span>
-                          ))}
-                        </div>
-                      ) : null
-                    }
-                    input={
-                      <textarea
-                        id="typing-def"
-                        rows={2}
-                        value={typingDefInput}
-                        onChange={e => setTypingDefInput(e.target.value)}
-                        onKeyDown={e => {
-                          if (e.key === 'Enter' && !e.shiftKey) {
-                            e.preventDefault();
-                            handleTypingNext();
-                          }
-                        }}
-                        style={{ ...typingInputStyle, resize: 'vertical', lineHeight: 1.5 }}
-                      />
-                    }
-                  />
-
+                      </div>
+                      <div style={{ flex: '2.4 1 340px', minWidth: 0 }}>
+                        <PenPad key={`p${typingIndex}`} height={120} />
+                      </div>
+                    </div>
                   </PenProvider>
 
-                  {/* Action / Navigation Bar */}
+                  {/* 정답 */}
+                  {typingRevealed && (
+                    <div style={{ marginTop: '14px', padding: '12px 14px', background: '#F8FAFC', border: '1px solid #CBD5E1', borderRadius: '8px', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                      {typingTargetFields.map(f => (
+                        <div key={f} style={{ fontSize: '1rem', fontWeight: 700, color: '#0F172A', lineHeight: 1.5 }}>
+                          {typingFieldText(currentTypingTerm, f) || '-'}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
                   <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', marginTop: '16px', borderTop: '1px solid #E2E8F0', paddingTop: '16px' }}>
                     <button
                       type="button"
@@ -2055,7 +2039,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
                       className="btn-primary"
                       style={{ padding: '12px 24px', fontSize: '0.95rem', fontWeight: 800 }}
                     >
-                      {typingIndex + 1 < filteredStudyTerms.length ? '다음' : '완료'}
+                      {typingRevealed ? (typingIndex + 1 < typingTerms.length ? '다음' : '완료') : '정답 보기'}
                     </button>
                   </div>
                 </div>
