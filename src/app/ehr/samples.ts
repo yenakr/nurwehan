@@ -18,11 +18,11 @@ const basic = (extra: Row[] = []): Row[] => [
 export const SAMPLES: Sample[] = [
   {
     key: 'adult',
-    subject: '성인간호',
+    subject: '내과',
     title: '성인 · 심부전 악화',
     data: {
       info: {
-        sampleKey: 'adult', bed: '5203-1', ptNo: '00000001', name: '김OO', ageSex: '72/F', ward: '52병동', dept: 'CV', doctor: '홍OO', admit: '2026-11-10', allergy: '페니실린 (발진)',
+        sampleKey: 'adult', bed: '5103-1', ptNo: '00000001', name: '김OO', ageSex: '72/F', ward: '순환기내과', dept: 'CV', doctor: '홍OO', admit: '2026-11-10', allergy: '페니실린 (발진)',
         dx: 'Acute decompensated heart failure',
         cc: '호흡곤란, 하지 부종', onset: '2026-11-07',
         hpi: '3일 전부터 계단 오를 때 숨이 차고 밤에 기침 및 누우면 숨이 찬 증상 있어 외래 경유하여 입원함.\n체중 3일간 2.5kg 증가.',
@@ -98,7 +98,7 @@ export const SAMPLES: Sample[] = [
     title: '아동 · RSV 세기관지염',
     data: {
       info: {
-        sampleKey: 'child', bed: '6103-1', ptNo: '00000002', name: '이OO', ageSex: '8M/M', ward: '소아병동', dept: 'PD', doctor: '박OO', admit: '2026-11-11', allergy: '무',
+        sampleKey: 'child', bed: '3103-1', ptNo: '00000002', name: '이OO', ageSex: '8M/M', ward: '소아병동', dept: 'PD', doctor: '박OO', admit: '2026-11-11', allergy: '무',
         dx: 'RSV bronchiolitis', cc: '기침, 쌕쌕거림, 수유 거부', onset: '2026-11-09',
         hpi: '2일 전부터 콧물, 기침 시작. 어제부터 쌕쌕거리고 수유량 절반으로 감소하여 내원함.', pmh: '만삭 출생, 특이사항 없음', fh: '형 감기 증상', social: '무', drink: '-', smoke: '-',
         pe: '체온 38.2 (C)  맥박 168  호흡 58  SpO2 91%\nGeneral: Irritable  Chest: wheezing(+), retraction(+)', plan: '- O2, 흡인, 수액 유지\n- 접촉·비말 격리',
@@ -129,7 +129,7 @@ export const SAMPLES: Sample[] = [
     title: '모성 · 제왕절개 산후 1일',
     data: {
       info: {
-        sampleKey: 'women', bed: '4302-1', ptNo: '00000003', name: '박OO', ageSex: '33/F', ward: '산부인과병동', dept: 'OB', doctor: '최OO', admit: '2026-11-10', allergy: '무',
+        sampleKey: 'women', bed: '3202-1', ptNo: '00000003', name: '박OO', ageSex: '33/F', ward: '산부인과병동', dept: 'OB', doctor: '최OO', admit: '2026-11-10', allergy: '무',
         dx: 'Cesarean section POD#1 (G1P1)', cc: '수술 부위 통증', onset: '2026-11-11',
         hpi: '38주 3일, 아두골반불균형으로 2026-11-11 제왕절개 분만함.', pmh: '특이사항 무', fh: '무', social: '무', drink: '무', smoke: '무',
         pe: '혈압 112/70  맥박 82  호흡 18  체온 37.4\nFundus: 제하 1횡지, firm  Lochia: rubra, 소량', plan: '- 조기 이상\n- 자궁저부 마사지, 오로 관찰\n- 모유수유 교육',
@@ -155,7 +155,7 @@ export const SAMPLES: Sample[] = [
     title: '정신 · 조현병 급성기',
     data: {
       info: {
-        sampleKey: 'psych', bed: '7102-1', ptNo: '00000004', name: '최OO', ageSex: '27/M', ward: '정신건강의학과병동', dept: 'PSY', doctor: '윤OO', admit: '2026-11-09', allergy: '무',
+        sampleKey: 'psych', bed: '3302-1', ptNo: '00000004', name: '최OO', ageSex: '27/M', ward: '정신건강의학과병동', dept: 'PSY', doctor: '윤OO', admit: '2026-11-09', allergy: '무',
         dx: 'Schizophrenia, acute exacerbation', cc: '환청, 피해망상', onset: '2026-10-25',
         hpi: '2주 전 약물 임의 중단 후 "나를 감시한다", "목소리가 들린다"며 불면 및 불안정, 가족과 내원함.', pmh: '조현병(유) 5년', fh: '무', social: '무', drink: '가끔', smoke: '유 (10개비/일)',
         pe: '혈압 124/80  맥박 88\nMental status: Alert, auditory hallucination(+), persecutory delusion(+)', plan: '- 약물 순응도 확인(입안 확인)\n- 자극 최소화\n- 낮병동 프로그램',
@@ -173,6 +173,151 @@ export const SAMPLES: Sample[] = [
       labs: [],
       notes: [{ time: '11-12 10:00', focus: '환청', text: 'D)\n\nA)\n\nR)\n', author: '' }],
       care: [{ dx: '감각지각 장애(환청)', goal: '', plan: '', eval: '' }],
+    },
+  },
+  {
+    key: 'gi',
+    subject: '내과',
+    title: '소화기 · 위장관 출혈',
+    data: {
+      info: {
+        sampleKey: 'gi', bed: '5202-1', ptNo: '00000005', name: '윤OO', ageSex: '47/M', ward: '소화기내과', dept: 'GE', doctor: '오OO', admit: '2026-11-11', allergy: '무',
+        dx: 'GI bleeding, r/o colon cancer', cc: '혈변', onset: '2026-11-08',
+        hpi: '3일 전부터 붉은색 혈변(총 3회, 회당 소량) 및 우하복부 통증, 오심 있어 응급실 통해 입원함.', pmh: '고혈압(무), 당뇨(무), 기타(Trigger finger 수술력)', fh: '부) 위암, 모) 대장암', social: '무', drink: '무', smoke: '무',
+        pe: '혈압 100/67 (mmHg)  맥박 102 (/min)  호흡 18 (/min)  체온 36.8 (C)\nGeneral: Not so ill looking  Mental status: Alert\nAbd: RLQ tenderness(+)', plan: '- NPO, 수액 유지\n- 대장내시경 및 조직검사, Tumor marker, Abd CT\n- 수혈 필요 시 시행',
+        route: '응급실', method: '걸어서', informant: '환자', job: '건설업', religion: '무교', marital: '미혼', lang: '한국어', purpose: 'supportive care', insight: '유', bedsore: '22', fall: '35', pain: 'NRS 3',
+      },
+      progress: [{ time: '2026-11-11 08:40', dept: 'GE', text: 'S) 혈변 소량 지속, 우하복부 통증 NRS 3\nO) BP 111/69, HR 113, Hb 6.7\nA) GI bleeding, anemia\nP) NPO, F-RBC 2pint 수혈, 대장내시경 예정', author: '오OO' }],
+      orders: [
+        sec('▶ 기본처방 ◀'),
+        od('Check V/S q [4] hrs', '', '', '', '', '', [], '1'),
+        od('Check I/O q [24] hrs', '', '', '', '', '', [], '1'),
+        od('Stool 횟수, 양, 성상', '', '', '', '', ''),
+        od('금식 (NPO)', '', '', '', '', ''),
+        sec('▶ 주사약 ◀'),
+        od('5% Dextrose / 0.45% NaCl 1L', '1', 'L', '1회', 'CIV', '집계완료', ['08:00/종']),
+        od('Esomach 40mg (에소메졸)', '40', 'mg', '1회', 'IV', '집계완료', ['10:00/종']),
+        od('Pantoloc 40mg', '40', 'mg', '2회', 'IV', '집계완료', ['10:00/', '22:00/']),
+        sec('▶ 먹는약 ◀'),
+        od('Coolprep gold pow 0.8L/BOX (장청소)', '1', 'BOX', '1회', 'PO', '집계완료', ['06:00/종']),
+        sec('▶ 검 사 ◀'),
+        od('Colonofiberscopy (Sleeping) (Group)', '', '', '', '', '접수'),
+        od('MLH-1 / MSH-2 / MSH-6 / PMS-2', '', '', '', '', '접수'),
+        memo('※ 대장내시경 조직검사 시 MMR 검사 같이 시행'),
+        sec('▶ 예약 검사 ◀'),
+        od('Chest CT / Abd CT CE', '', '', '', '추가', '접수'),
+        memo('◎ 예약일시: 11-12 07:15  예약장소: CT 예약접수'),
+      ],
+      vitals: [
+        { time: '04:00', bp: '100/67', hr: '102', rr: '18', bt: '36.8', spo2: '97', pain: '3' },
+        { time: '08:00', bp: '111/69', hr: '113', rr: '20', bt: '36.8', spo2: '97', pain: '3' },
+      ],
+      io: [{ time: '08-12', intake: 'IV 500', output: '소변 400, 혈변 소량', note: '' }],
+      labs: [
+        { name: 'Hemoglobin (Hb)', value: '6.7', unit: 'g/dL', min: '13', max: '17', sample: 'Blood', time: '11-11 05:08' },
+        { name: 'WBC', value: '10.3', unit: '10^3/uL', min: '4', max: '10', sample: 'Blood', time: '11-11 05:08' },
+        { name: 'Platelet', value: '384', unit: '10^3/uL', min: '150', max: '400', sample: 'Blood', time: '11-11 05:08' },
+        { name: 'BUN', value: '11.3', unit: 'mg/dL', min: '8', max: '21', sample: 'Blood', time: '11-11 05:08' },
+      ],
+      notes: [
+        { time: '11-11 07:30', focus: '출혈', text: 'D)\n혈변 소량 지속됨, 어지러움 호소 없음\n\nA)\n출혈 증상 시 알리도록 설명함. 대변양상 관찰 및 배변 시 호출벨 사용 교육함.\n\nR)\n출혈 증상 알리겠다고 함', author: '' },
+      ],
+      care: [{ dx: '체액 부족 위험', goal: '', plan: '', eval: '' }],
+      transfusion: [{ time: '2026-11-11 11:26', step: '시작', blood: 'F-RBC(400cc)', bno: '000000000', bp: '120/80', pr: '96', rr: '20', bt: '36.8', note: '' }],
+      imaging: [{ time: '11-12 07:15', name: 'Abd CT (CE)', result: '', st: '접수' }],
+    },
+  },
+  {
+    key: 'pul',
+    subject: '내과',
+    title: '호흡기 · 폐렴',
+    data: {
+      info: {
+        sampleKey: 'pul', bed: '5304-1', ptNo: '00000006', name: '조OO', ageSex: '81/M', ward: '호흡기내과', dept: 'PUL', doctor: '민OO', admit: '2026-11-10', allergy: '무',
+        dx: 'Community-acquired pneumonia', cc: '기침, 가래, 발열', onset: '2026-11-07',
+        hpi: '4일 전부터 기침과 황색 가래, 38도 발열 있어 내원. 식사량 감소.', pmh: '고혈압(유), 만성폐쇄성폐질환(유)', fh: '무', social: '무', drink: '무', smoke: '유 (과거 40갑년)',
+        pe: '혈압 128/76  맥박 98  호흡 24  체온 38.1  SpO2 92%\nChest: rhonchi RLL(+)', plan: '- 항생제 정주, O2 적용\n- 객담 배양, 흉부 X-ray f/u\n- 호흡 운동 교육',
+        route: '외래', method: '휠체어', informant: '보호자(아들)', purpose: 'treatment', insight: '유', bedsore: '17', fall: '45', pain: '무',
+      },
+      progress: [],
+      orders: [
+        ...basic([od('O2 2L/min NC (SpO2 92% 이상 유지)', '', '', '', '', ''), od('객담 배양 (Sputum C/S)', '', '', '', '', '접수')]),
+        sec('▶ 주사약 ◀'),
+        od('Ceftriaxone 2g', '2', 'g', '1회', 'IV', '집계완료', ['09:00/종']),
+        od('0.9% Sod. Chloride 100ml/B', '100', 'ml', '1회', 'IV', '집계완료', ['09:00/종']),
+        sec('▶ 흡입약 ◀'),
+        od('Combivent (벤토린)', '1', 'amp', '3회', 'Inh', '집계완료', ['09:00/종', '15:00/', '21:00/']),
+      ],
+      vitals: [
+        { time: '08:00', bp: '128/76', hr: '98', rr: '24', bt: '38.1', spo2: '92', pain: '0' },
+        { time: '12:00', bp: '124/74', hr: '92', rr: '22', bt: '37.6', spo2: '94', pain: '0' },
+      ],
+      io: [],
+      labs: [
+        { name: 'WBC', value: '14.2', unit: '10^3/uL', min: '4', max: '10', sample: 'Blood', time: '11-10 06:00' },
+        { name: 'CRP', value: '8.6', unit: 'mg/dL', min: '0', max: '0.5', sample: 'Blood', time: '11-10 06:00' },
+      ],
+      notes: [{ time: '11-10 10:00', focus: '호흡곤란', text: 'D)\n\nA)\n\nR)\n', author: '' }],
+      care: [{ dx: '비효율적 기도청결', goal: '', plan: '', eval: '' }],
+      imaging: [{ time: '11-10 08:00', name: 'Chest PA', result: 'RLL consolidation, pneumonia', st: '판독완료' }],
+    },
+  },
+  {
+    key: 'gs',
+    subject: '외과',
+    title: '일반외과 · 충수절제술 후 1일',
+    data: {
+      info: {
+        sampleKey: 'gs', bed: '7103-1', ptNo: '00000007', name: '임OO', ageSex: '29/M', ward: '일반외과', dept: 'GS', doctor: '장OO', admit: '2026-11-11', allergy: '무',
+        dx: 'Acute appendicitis, POD#1 Lap. appendectomy', cc: '우하복부 통증', onset: '2026-11-10',
+        hpi: '어제 아침부터 상복부 통증이 우하복부로 이동하고 발열 있어 응급실 경유, 복강경 충수절제술 시행함.', pmh: '특이사항 무', fh: '무', social: '무', drink: '가끔', smoke: '무',
+        pe: '혈압 122/74  맥박 88  호흡 18  체온 37.4\nAbd: 상처 부위 dressing clean, bowel sound(+)', plan: '- 조기 이상, 장운동 회복 시 식이 진행\n- 상처 관찰\n- PCA 유지',
+        route: '응급실', method: '침대', informant: '환자', job: '회사원', religion: '무교', marital: '미혼', lang: '한국어', purpose: 'operation', insight: '유', bedsore: '-', fall: '25', pain: 'NRS 4',
+      },
+      progress: [],
+      orders: [
+        ...basic([od('수술 부위 dressing 관찰', '', '', '', '', ''), od('조기 이상 격려', '', '', '', '', '')]),
+        sec('▶ 주사약 ◀'),
+        od('Cefazolin 1g', '1', 'g', '3회', 'IV', '집계완료', ['09:00/종', '17:00/', '01:00/']),
+        od('Ketorolac 30mg', '30', 'mg', '3회', 'IV', '집계완료', ['09:00/', '17:00/', '01:00/']),
+        sec('▶ 약주시 PRN ◀'),
+        od('Pethidine 25mg', '25', 'mg', '0회/3회', 'IM', ''),
+        memo('※ 통증 NRS 7 이상 시, 최소투여간격 6시간'),
+      ],
+      vitals: [{ time: '08:00', bp: '122/74', hr: '88', rr: '18', bt: '37.4', spo2: '98', pain: '4' }],
+      io: [{ time: '08-12', intake: 'IV 600', output: '소변 350', note: '' }],
+      labs: [{ name: 'WBC', value: '12.1', unit: '10^3/uL', min: '4', max: '10', sample: 'Blood', time: '11-12 05:30' }],
+      notes: [{ time: '11-12 10:00', focus: '수술 부위 통증', text: 'D)\n\nA)\n\nR)\n', author: '' }],
+      care: [{ dx: '급성 통증', goal: '', plan: '', eval: '' }],
+      surgery: [{ date: '2026-11-11', dept: 'GS', name: 'Laparoscopic appendectomy', anes: '전신마취', note: '합병증 없음' }],
+    },
+  },
+  {
+    key: 'os',
+    subject: '외과',
+    title: '정형외과 · 슬관절 전치환술 후 1일',
+    data: {
+      info: {
+        sampleKey: 'os', bed: '7201-1', ptNo: '00000008', name: '신OO', ageSex: '69/F', ward: '정형외과', dept: 'OS', doctor: '하OO', admit: '2026-11-10', allergy: '무',
+        dx: 'Osteoarthritis, rt knee, POD#1 TKA', cc: '우측 무릎 통증', onset: '2020',
+        hpi: '수년 전부터 우측 무릎 통증, 보행 장애 진행. 보존치료 실패하여 전치환술 시행함.', pmh: '고혈압(유)', fh: '무', social: '무', drink: '무', smoke: '무',
+        pe: '혈압 130/80  맥박 80  체온 37.2\nRt knee: dressing clean, JP drain 유지, 하지 말초순환 양호', plan: '- CPM, 조기 재활\n- 항응고제(DVT 예방)\n- JP drain 관찰',
+        route: '외래', method: '휠체어', informant: '환자', job: '무직', religion: '기독교', marital: '기혼', lang: '한국어', purpose: 'operation', insight: '유', bedsore: '18', fall: '55', pain: 'NRS 6',
+      },
+      progress: [],
+      orders: [
+        ...basic([od('JP drain 배액량 확인', '', '', '', '', ''), od('우하지 말초순환·감각 사정 q4h', '', '', '', '', '')]),
+        sec('▶ 주사약 ◀'),
+        od('Cefazolin 1g', '1', 'g', '3회', 'IV', '집계완료', ['09:00/종', '17:00/', '01:00/']),
+        sec('▶ 먹는약 ◀'),
+        od('Rivaroxaban 10mg (자렐토)', '1', 'T', '1회', 'PO', '집계완료', ['09:00/종']),
+      ],
+      vitals: [{ time: '08:00', bp: '130/80', hr: '80', rr: '18', bt: '37.2', spo2: '97', pain: '6' }],
+      io: [{ time: '08-12', intake: 'PO 400 / IV 500', output: '소변 500, JP 80', note: '' }],
+      labs: [{ name: 'Hemoglobin (Hb)', value: '9.8', unit: 'g/dL', min: '12', max: '16', sample: 'Blood', time: '11-11 05:30' }],
+      notes: [{ time: '11-11 10:00', focus: '낙상위험', text: 'D)\n\nA)\n\nR)\n', author: '' }],
+      care: [{ dx: '신체 손상 위험', goal: '', plan: '', eval: '' }],
+      surgery: [{ date: '2026-11-10', dept: 'OS', name: 'Total knee arthroplasty, rt', anes: '척추마취', note: '' }],
     },
   },
   {
@@ -289,11 +434,17 @@ export const SAMPLES: Sample[] = [
   },
 ];
 
-export type Ward = { name: string; code: string; beds: number };
+export type Ward = { name: string; code: string; beds: number; group: '내과' | '외과' | null };
 export const WARDS: Ward[] = [
-  { name: '52병동', code: '52', beds: 8 },
-  { name: '소아병동', code: '61', beds: 6 },
-  { name: '산부인과병동', code: '43', beds: 6 },
-  { name: '정신건강의학과병동', code: '71', beds: 6 },
+  { name: '순환기내과', code: '51', beds: 6, group: '내과' },
+  { name: '소화기내과', code: '52', beds: 6, group: '내과' },
+  { name: '호흡기내과', code: '53', beds: 6, group: '내과' },
+  { name: '내분비내과', code: '54', beds: 6, group: '내과' },
+  { name: '일반외과', code: '71', beds: 6, group: '외과' },
+  { name: '정형외과', code: '72', beds: 6, group: '외과' },
+  { name: '신경외과', code: '73', beds: 6, group: '외과' },
+  { name: '소아병동', code: '31', beds: 6, group: null },
+  { name: '산부인과병동', code: '32', beds: 6, group: null },
+  { name: '정신건강의학과병동', code: '33', beds: 6, group: null },
 ];
 export const bedLabel = (w: Ward, i: number) => `${w.code}${String(i).padStart(2, '0')}-1`;
