@@ -25,12 +25,28 @@ const nowHM = () => {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 };
 
-type View = { kind: 'ward' | 'op' | 'er'; name: string };
-const VIEWS: View[] = [...WARDS.map(w => ({ kind: 'ward' as const, name: w.name })), { kind: 'op', name: '외래' }, { kind: 'er', name: '응급' }];
+type View = { kind: 'ward' | 'op' | 'er'; name: string; group: string | null };
+const VIEWS: View[] = [
+  ...WARDS.map(w => ({ kind: 'ward' as const, name: w.name, group: w.group })),
+  { kind: 'op', name: '외래', group: null },
+  { kind: 'er', name: '응급', group: null },
+];
+// 상단 탭: 내과 ▾ / 외과 ▾ 는 묶음, 나머지는 단독
+const TOP: { label: string; idx: number[] }[] = (() => {
+  const out: { label: string; idx: number[] }[] = [];
+  VIEWS.forEach((v, i) => {
+    const label = v.group || v.name;
+    const g = out.find(o => o.label === label);
+    if (g) g.idx.push(i);
+    else out.push({ label, idx: [i] });
+  });
+  return out;
+})();
 
 export default function EhrHome({ cases }: { cases: Item[] }) {
   const router = useRouter();
   const [vi, setVi] = useState(0);
+  const [openG, setOpenG] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState('');
   const view = VIEWS[vi];
@@ -63,7 +79,7 @@ export default function EhrHome({ cases }: { cases: Item[] }) {
     entries = Array.from({ length: w.beds }, (_, k) => {
       const bed = bedLabel(w, k + 1);
       const sample = SAMPLES.find(s => s.data.info.ward === w.name && s.data.info.bed === bed);
-      const saved = cases.find(c => c.ward === w.name && c.bed === bed);
+      const saved = sample ? cases.find(c => c.sampleKey === sample.key) : cases.find(c => c.ward === w.name && c.bed === bed);
       return {
         key: `${w.name}:${bed}`,
         label: bed,
@@ -99,11 +115,34 @@ export default function EhrHome({ cases }: { cases: Item[] }) {
         <div className="top">
           <span className="logo">병동뷰</span>
           <nav role="tablist">
-            {VIEWS.map((v, i) => (
-              <button key={v.name} type="button" role="tab" aria-selected={i === vi} className={`${i === vi ? 'on' : ''} ${v.kind !== 'ward' ? 'sp' : ''}`} onClick={() => setVi(i)}>
-                {v.name}
-              </button>
-            ))}
+            {TOP.map(t => {
+              const active = t.idx.includes(vi);
+              const multi = t.idx.length > 1;
+              const special = VIEWS[t.idx[0]].kind !== 'ward';
+              return (
+                <div key={t.label} className="mi">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    className={`${active ? 'on' : ''} ${special ? 'sp' : ''}`}
+                    onClick={() => {
+                      if (multi) setOpenG(openG === t.label ? null : t.label);
+                      else { setVi(t.idx[0]); setOpenG(null); }
+                    }}
+                  >
+                    {multi && active ? `${t.label} · ${view.name}` : t.label}{multi ? ' ▾' : ''}
+                  </button>
+                  {multi && openG === t.label && (
+                    <div className="dd">
+                      {t.idx.map(i => (
+                        <button key={i} type="button" className={vi === i ? 'on' : ''} onClick={() => { setVi(i); setOpenG(null); }}>{VIEWS[i].name}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </nav>
         </div>
         <div className="tw">
@@ -163,10 +202,15 @@ export default function EhrHome({ cases }: { cases: Item[] }) {
         .ehrWard .shell { border: 1px solid #94a3b8; background: #fff; border-radius: 4px; overflow: hidden; font-size: 13px; color: #1f2937; }
         .ehrWard .top { display: flex; align-items: stretch; background: linear-gradient(#233a5c, #17283f); }
         .ehrWard .logo { flex: 0 0 auto; display: flex; align-items: center; padding: 0 18px; color: #e8c97a; font-weight: 800; letter-spacing: 1px; border-right: 1px solid rgba(255,255,255,0.15); }
-        .ehrWard .top nav { display: flex; overflow-x: auto; }
-        .ehrWard .top nav button { flex: 0 0 auto; border: 0; background: transparent; color: #e5ebf3; padding: 12px 16px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; border-right: 1px solid rgba(255,255,255,0.08); }
-        .ehrWard .top nav button.sp { color: #f5d98b; }
-        .ehrWard .top nav button.on { color: #38d6ff; box-shadow: inset 0 -3px 0 #38d6ff; }
+        .ehrWard .top nav { display: flex; flex-wrap: wrap; }
+        .ehrWard .mi { position: relative; }
+        .ehrWard .top nav .mi > button { flex: 0 0 auto; border: 0; background: transparent; color: #e5ebf3; padding: 12px 16px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; border-right: 1px solid rgba(255,255,255,0.08); }
+        .ehrWard .dd { position: absolute; top: 100%; left: 0; z-index: 20; min-width: 130px; background: #fff; border: 1px solid #94a3b8; box-shadow: 0 6px 16px rgba(15,23,42,0.18); display: flex; flex-direction: column; }
+        .ehrWard .dd button { border: 0; background: #fff; text-align: left; padding: 9px 14px; font-size: 13px; font-family: inherit; color: #1f2937; cursor: pointer; white-space: nowrap; }
+        .ehrWard .dd button:hover { background: #eef6ff; }
+        .ehrWard .dd button.on { color: #0e4a84; font-weight: 800; }
+        .ehrWard .top nav .mi > button.sp { color: #f5d98b; }
+        .ehrWard .top nav .mi > button.on { color: #38d6ff; box-shadow: inset 0 -3px 0 #38d6ff; }
         .ehrWard .tw { overflow-x: auto; }
         .ehrWard table { width: 100%; border-collapse: collapse; }
         .ehrWard th { background: #e9edf1; border: 1px solid #cfd5dc; padding: 7px 8px; font-size: 12px; font-weight: 700; white-space: nowrap; }

@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { ChartData, Row } from '../types';
+import { PHRASES } from '../phrases';
 
 type ListKey =
   | 'progress' | 'vitals' | 'io' | 'labs' | 'notes' | 'care'
@@ -219,6 +220,76 @@ const NURSE: { key: string; label: string }[] = [
 const ORDER_STATUS = ['', '집계완료', '접수', '추가', '완료'];
 const ROUTES = ['', 'PO', 'IV', 'IM', 'SC', 'SL', 'Inh', 'CIV', 'Top'];
 
+const nowStamp = () => {
+  const d = new Date();
+  const p = (n: number) => String(n).padStart(2, '0');
+  return `${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+};
+
+// 간호기록 작성: Focus를 고르고 상용구를 눌러 D/A/R에 채운 뒤 직접 수정해서 기록한다
+function NoteComposer({ onAdd }: { onAdd: (n: Row) => void }) {
+  const [focus, setFocus] = useState('');
+  const [txt, setTxt] = useState<{ d: string; a: string; r: string }>({ d: '', a: '', r: '' });
+  const [time, setTime] = useState('');
+  const ph = PHRASES.find(p => p.focus === focus);
+
+  const push = (k: 'd' | 'a' | 'r', phrase: string) =>
+    setTxt(t => ({ ...t, [k]: t[k] ? `${t[k]}\n${phrase}` : phrase }));
+  const empty = !txt.d.trim() && !txt.a.trim() && !txt.r.trim();
+
+  const add = () => {
+    if (empty) return;
+    const body = [txt.d.trim() && `D)\n${txt.d.trim()}`, txt.a.trim() && `A)\n${txt.a.trim()}`, txt.r.trim() && `R)\n${txt.r.trim()}`].filter(Boolean).join('\n\n');
+    onAdd({ time: time || nowStamp(), focus, text: body, author: '' });
+    setTxt({ d: '', a: '', r: '' });
+    setTime('');
+  };
+
+  const cols: { k: 'd' | 'a' | 'r'; label: string }[] = [
+    { k: 'd', label: 'D (자료)' },
+    { k: 'a', label: 'A (중재)' },
+    { k: 'r', label: 'R (반응)' },
+  ];
+
+  return (
+    <div className="nc">
+      <div className="ncHead">
+        <b>간호기록 작성</b>
+        <label>
+          기록일시
+          <input value={time} placeholder={nowStamp()} onChange={e => setTime(e.target.value)} />
+        </label>
+        <label>
+          Focus
+          <input value={focus} placeholder="직접 입력 또는 아래에서 선택" onChange={e => setFocus(e.target.value)} />
+        </label>
+      </div>
+      <div className="chips">
+        {PHRASES.map(p => (
+          <button key={p.focus} type="button" className={focus === p.focus ? 'on' : ''} onClick={() => setFocus(p.focus)}>{p.focus}</button>
+        ))}
+      </div>
+      <div className="ncGrid">
+        {cols.map(c => (
+          <div key={c.k} className="ncCol">
+            <div className="lbl">{c.label}</div>
+            <div className="phs">
+              {ph ? ph[c.k].map(t => (
+                <button key={t} type="button" onClick={() => push(c.k, t)}>{t}</button>
+              )) : <span className="hint">Focus를 선택하세요</span>}
+            </div>
+            <textarea rows={5} value={txt[c.k]} onChange={e => setTxt(t => ({ ...t, [c.k]: e.target.value }))} />
+          </div>
+        ))}
+      </div>
+      <div className="ncFoot">
+        <button type="button" className="clr" onClick={() => setTxt({ d: '', a: '', r: '' })}>지우기</button>
+        <button type="button" className="sv" disabled={empty} onClick={add}>기록 저장</button>
+      </div>
+    </div>
+  );
+}
+
 export default function EhrEditor({
   id,
   initialTitle,
@@ -233,7 +304,7 @@ export default function EhrEditor({
   const router = useRouter();
   const [title, setTitle] = useState(initialTitle);
   const [data, setData] = useState<ChartData>(initial);
-  const [tab, setTab] = useState<TabId>('orders');
+  const [tab, setTab] = useState<TabId>('notes');
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<'saved' | 'saving' | 'error'>('saved');
@@ -279,14 +350,14 @@ export default function EhrEditor({
   const hasAllergy = !!info.allergy && !/^(없음|무|none|-)$/i.test(info.allergy.trim());
 
   // 값이 비어 있어도 EMR처럼 보이도록 공통 입력 컴포넌트
-  const Side = ({ k, label, big }: { k: string; label: string; big?: boolean }) => (
-    <label className="sd">
+  const side = (k: string, label: string, big?: boolean) => (
+    <label className="sd" key={k}>
       <em>{label}</em>
       <input className={big ? 'big' : ''} value={info[k] || ''} onChange={e => setInfo(k, e.target.value)} />
     </label>
   );
 
-  const Tbl = ({ lk }: { lk: ListKey }) => {
+  const tbl = (lk: ListKey) => {
     const cols = COLS[lk];
     const rows = data[lk];
     return (
@@ -395,16 +466,16 @@ export default function EhrEditor({
         <div className="body">
           <aside className="side">
             <div className="brand">병동뷰</div>
-            <Side k="ptNo" label="환자번호" />
-            <Side k="name" label="이름" big />
-            <Side k="ageSex" label="나이/성별" />
-            <Side k="ward" label="병동" />
-            {info.ward === '응급실' ? <Side k="ktas" label="KTAS (1~5)" /> : <Side k="bed" label="병상" />}
-            <Side k="dept" label="진료과" />
-            <Side k="doctor" label="주치의" />
-            <Side k="admit" label="입원일" />
-            <Side k="dx" label="진단명" />
-            <Side k="allergy" label="알레르기" />
+            {side('ptNo', '환자번호')}
+            {side('name', '이름', true)}
+            {side('ageSex', '나이/성별')}
+            {side('ward', '병동')}
+            {info.ward === '응급실' ? side('ktas', 'KTAS (1~5)') : side('bed', '병상')}
+            {side('dept', '진료과')}
+            {side('doctor', '주치의')}
+            {side('admit', '입원일')}
+            {side('dx', '진단명')}
+            {side('allergy', '알레르기')}
             {hasAllergy && <div className="alg">알레르기 있음</div>}
           </aside>
 
@@ -493,6 +564,13 @@ export default function EhrEditor({
               </div>
             )}
 
+            {tab === 'notes' && (
+              <>
+                <NoteComposer onAdd={n => setData(d => ({ ...d, notes: [n, ...d.notes] }))} />
+                {tbl('notes')}
+              </>
+            )}
+
             {(tab === 'admission' || tab === 'discharge') && (
               <div className="doc">
                 <div className="dh">{info.admit || '입원일'}<span>{tab === 'admission' ? '입원기록' : '퇴원계획'}</span></div>
@@ -526,13 +604,13 @@ export default function EhrEditor({
             {tab === 'vitals' && (
               <>
                 <h4 className="ph">활력징후</h4>
-                <Tbl lk="vitals" />
+                {tbl('vitals')}
                 <h4 className="ph">섭취/배설 (I&amp;O)</h4>
-                <Tbl lk="io" />
+                {tbl('io')}
               </>
             )}
 
-            {tab !== 'orders' && tab !== 'admission' && tab !== 'discharge' && tab !== 'nurseinfo' && tab !== 'vitals' && <Tbl lk={tab} />}
+            {tab !== 'notes' && tab !== 'orders' && tab !== 'admission' && tab !== 'discharge' && tab !== 'nurseinfo' && tab !== 'vitals' && tbl(tab)}
           </section>
         </div>
       </div>
@@ -616,6 +694,29 @@ export default function EhrEditor({
         .ehr .nl label { display: flex; align-items: center; gap: 8px; }
         .ehr .nl b { flex: 0 0 112px; font-size: 12px; color: #334155; font-weight: 600; white-space: nowrap; }
 
+
+        .ehr .nc { background: #fff; border: 1px solid var(--ln); margin-bottom: 10px; padding: 10px 12px 12px; }
+        .ehr .ncHead { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 14px; margin-bottom: 8px; }
+        .ehr .ncHead b { color: #1d4e89; font-size: 13px; }
+        .ehr .ncHead label { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #475569; }
+        .ehr .ncHead input { border: 1px solid var(--ln); padding: 4px 8px; font-size: 12.5px; font-family: inherit; }
+        .ehr .ncHead label:last-child input { width: 220px; }
+        .ehr .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
+        .ehr .chips button { border: 1px solid #c5d3e3; background: #f4f8fc; color: #1d4e89; border-radius: 999px; padding: 4px 11px; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; }
+        .ehr .chips button.on { background: #1d4e89; color: #fff; border-color: #1d4e89; }
+        .ehr .ncGrid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+        .ehr .ncCol .lbl { font-size: 12px; font-weight: 800; color: #12303a; background: var(--tl); padding: 3px 8px; margin-bottom: 6px; }
+        .ehr .phs { display: flex; flex-direction: column; gap: 3px; margin-bottom: 6px; }
+        .ehr .phs button { text-align: left; border: 1px solid #e1e5ea; background: #fafbfc; padding: 4px 8px; font-size: 12px; font-family: inherit; color: #1f2937; cursor: pointer; border-radius: 3px; }
+        .ehr .phs button:hover { background: #eef6ff; border-color: #9bbbe0; }
+        .ehr .phs .hint { color: #94a3b8; font-size: 12px; padding: 4px 2px; }
+        .ehr .ncCol textarea { box-sizing: border-box; width: 100%; border: 1px solid var(--ln); padding: 6px 8px; font-size: 12.5px; font-family: inherit; line-height: 1.55; resize: vertical; }
+        .ehr .ncCol textarea:focus { outline: 1px solid #2563eb; outline-offset: -1px; background: #fffdf0; }
+        .ehr .ncFoot { display: flex; justify-content: flex-end; gap: 6px; margin-top: 10px; }
+        .ehr .ncFoot button { border: 1px solid var(--ln); background: #f8fafc; padding: 6px 16px; font-size: 12.5px; font-weight: 700; font-family: inherit; cursor: pointer; border-radius: 4px; }
+        .ehr .ncFoot .sv { background: #1d4e89; border-color: #1d4e89; color: #fff; }
+        .ehr .ncFoot .sv:disabled { opacity: 0.4; cursor: default; }
+        @media (max-width: 860px) { .ehr .ncGrid { grid-template-columns: 1fr; } }
         @media (max-width: 860px) {
           .ehr .body { grid-template-columns: 1fr; }
           .ehr .side { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 12px; }
