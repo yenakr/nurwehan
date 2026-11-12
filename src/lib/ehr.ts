@@ -2,11 +2,19 @@ import { randomUUID } from 'crypto';
 import { prisma } from './prisma';
 
 export type EhrRow = { id: string; title: string; subject: string | null; updatedAt: Date };
+export type EhrListRow = EhrRow & {
+  ward: string | null; bed: string | null; sampleKey: string | null;
+  ptNo: string | null; name: string | null; ageSex: string | null; dx: string | null; doctor: string | null; admit: string | null;
+};
 
-export async function listCases(userId: string): Promise<EhrRow[]> {
+export async function listCases(userId: string): Promise<EhrListRow[]> {
   try {
-    return await prisma.$queryRaw<EhrRow[]>`
-      SELECT "id", "title", "subject", "updatedAt" FROM "EhrCase"
+    return await prisma.$queryRaw<EhrListRow[]>`
+      SELECT "id", "title", "subject", "updatedAt",
+        "data"->'info'->>'ward' AS "ward", "data"->'info'->>'bed' AS "bed", "data"->'info'->>'sampleKey' AS "sampleKey",
+        "data"->'info'->>'ptNo' AS "ptNo", "data"->'info'->>'name' AS "name", "data"->'info'->>'ageSex' AS "ageSex",
+        "data"->'info'->>'dx' AS "dx", "data"->'info'->>'doctor' AS "doctor", "data"->'info'->>'admit' AS "admit"
+      FROM "EhrCase"
       WHERE "userId" = ${userId} ORDER BY "updatedAt" DESC LIMIT 100`;
   } catch {
     return [];
