@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { ChartData, Row } from '../types';
-import { PHRASES } from '../phrases';
+import { PHRASES, CARE_DX } from '../phrases';
 import { VIEW_LIST } from '../samples';
 import { ALLERGIES, DEPTS, DOCTORS, WARD_OPTIONS, bedOptions } from '../directory';
 
@@ -21,7 +21,8 @@ const MENU: MenuNode[] = [
   { label: '임상관찰', items: [{ id: 'vitals', label: '임상관찰' }] },
   { label: '치료/검사', items: [{ id: 'labs', label: '검사결과' }, { id: 'imaging', label: '영상검사' }, { id: 'transfusion', label: '수혈기록' }] },
   { label: '영양기록', items: [{ id: 'nutrition', label: '영양기록' }] },
-  { label: '간호기록', items: [{ id: 'notes', label: '간호기록' }, { id: 'care', label: '간호과정' }, { id: 'risk', label: '위험도평가' }, { id: 'handover', label: '인계(SBAR)' }] },
+  { label: '간호기록', items: [{ id: 'notes', label: '간호기록' }, { id: 'risk', label: '위험도평가' }, { id: 'handover', label: '인계(SBAR)' }] },
+  { label: '간호과정', items: [{ id: 'care', label: '간호과정' }] },
   { label: '동의서', items: [{ id: 'consent', label: '동의서' }] },
   { label: '외래예약', items: [{ id: 'appts', label: '외래예약' }] },
   { label: '퇴원', items: [{ id: 'discharge', label: '퇴원계획' }] },
@@ -142,7 +143,8 @@ const COLS: Record<ListKey, Col[]> = {
     { key: 'st', label: '상태', w: 90, type: 'select', opts: ['', '접수', '촬영완료', '판독완료'] },
   ],
   care: [
-    { key: 'dx', label: '간호진단', w: 200, type: 'area' },
+    { key: 'dx', label: '간호진단', w: 150, type: 'area' },
+    { key: 'data', label: '사정(자료)', w: 220, type: 'area' },
     { key: 'goal', label: '목표', w: 200, type: 'area' },
     { key: 'plan', label: '중재', w: 300, type: 'area' },
     { key: 'eval', label: '평가', w: 200, type: 'area' },
@@ -286,6 +288,58 @@ function NoteComposer({ onAdd }: { onAdd: (n: Row) => void }) {
       <div className="ncFoot">
         <button type="button" className="clr" onClick={() => setTxt({ d: '', a: '', r: '' })}>지우기</button>
         <button type="button" className="sv" disabled={empty} onClick={add}>기록 저장</button>
+      </div>
+    </div>
+  );
+}
+
+// 간호과정 작성: 간호진단을 고르고 상용구를 눌러 사정·목표·중재·평가를 채운 뒤 직접 수정해서 저장한다
+function CareComposer({ onAdd }: { onAdd: (r: Row) => void }) {
+  const [dx, setDx] = useState('');
+  const [txt, setTxt] = useState<{ data: string; goal: string; plan: string; eval: string }>({ data: '', goal: '', plan: '', eval: '' });
+  const lib = CARE_DX.find(c => c.dx === dx);
+  const push = (k: 'data' | 'goal' | 'plan' | 'eval', v: string) => setTxt(t => ({ ...t, [k]: t[k] ? `${t[k]}\n${v}` : v }));
+  const empty = !dx.trim() && !txt.data.trim() && !txt.goal.trim() && !txt.plan.trim() && !txt.eval.trim();
+  const cols: { k: 'data' | 'goal' | 'plan' | 'eval'; label: string; src: string[] }[] = [
+    { k: 'data', label: '사정 (자료)', src: lib?.data || [] },
+    { k: 'goal', label: '목표', src: lib?.goal || [] },
+    { k: 'plan', label: '중재', src: lib?.plan || [] },
+    { k: 'eval', label: '평가', src: lib?.evalu || [] },
+  ];
+  const add = () => {
+    if (empty) return;
+    onAdd({ dx: dx.trim(), data: txt.data.trim(), goal: txt.goal.trim(), plan: txt.plan.trim(), eval: txt.eval.trim() });
+    setDx('');
+    setTxt({ data: '', goal: '', plan: '', eval: '' });
+  };
+  return (
+    <div className="nc">
+      <div className="ncHead">
+        <b>간호과정 작성</b>
+        <label>
+          간호진단
+          <input value={dx} placeholder="직접 입력 또는 아래에서 선택" onChange={e => setDx(e.target.value)} />
+        </label>
+      </div>
+      <div className="chips">
+        {CARE_DX.map(c => (
+          <button key={c.dx} type="button" className={dx === c.dx ? 'on' : ''} onClick={() => setDx(c.dx)}>{c.dx}</button>
+        ))}
+      </div>
+      <div className="ncGrid four">
+        {cols.map(c => (
+          <div key={c.k} className="ncCol">
+            <div className="lbl">{c.label}</div>
+            <div className="phs">
+              {lib ? c.src.map(t => <button key={t} type="button" onClick={() => push(c.k, t)}>{t}</button>) : <span className="hint">간호진단을 선택하세요</span>}
+            </div>
+            <textarea rows={5} value={txt[c.k]} onChange={e => setTxt(t => ({ ...t, [c.k]: e.target.value }))} />
+          </div>
+        ))}
+      </div>
+      <div className="ncFoot">
+        <button type="button" className="clr" onClick={() => { setDx(''); setTxt({ data: '', goal: '', plan: '', eval: '' }); }}>지우기</button>
+        <button type="button" className="sv" disabled={empty} onClick={add}>저장</button>
       </div>
     </div>
   );
@@ -645,6 +699,13 @@ export default function EhrEditor({
               </div>
             )}
 
+            {tab === 'care' && (
+              <>
+                <CareComposer onAdd={r => setData(d => ({ ...d, care: [r, ...d.care] }))} />
+                {tbl('care')}
+              </>
+            )}
+
             {tab === 'notes' && (
               <>
                 <NoteComposer onAdd={n => setData(d => ({ ...d, notes: [n, ...d.notes] }))} />
@@ -691,7 +752,7 @@ export default function EhrEditor({
               </>
             )}
 
-            {tab !== 'notes' && tab !== 'orders' && tab !== 'admission' && tab !== 'discharge' && tab !== 'nurseinfo' && tab !== 'vitals' && tbl(tab)}
+            {tab !== 'notes' && tab !== 'care' && tab !== 'orders' && tab !== 'admission' && tab !== 'discharge' && tab !== 'nurseinfo' && tab !== 'vitals' && tbl(tab)}
           </section>
         </div>
       </div>
@@ -793,6 +854,7 @@ export default function EhrEditor({
         .ehr .ncHead label { display: flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; color: #475569; }
         .ehr .ncHead input { border: 1px solid var(--ln); padding: 4px 8px; font-size: 12.5px; font-family: inherit; }
         .ehr .ncHead label:last-child input { width: 220px; }
+        .ehr .ncGrid.four { grid-template-columns: repeat(4, minmax(0, 1fr)); }
         .ehr .chips { display: flex; flex-wrap: wrap; gap: 4px; margin-bottom: 10px; }
         .ehr .chips button { border: 1px solid #c5d3e3; background: #f4f8fc; color: #1d4e89; border-radius: 999px; padding: 4px 11px; font-size: 12px; font-weight: 600; font-family: inherit; cursor: pointer; }
         .ehr .chips button.on { background: #1d4e89; color: #fff; border-color: #1d4e89; }
@@ -808,7 +870,8 @@ export default function EhrEditor({
         .ehr .ncFoot button { border: 1px solid var(--ln); background: #f8fafc; padding: 6px 16px; font-size: 12.5px; font-weight: 700; font-family: inherit; cursor: pointer; border-radius: 4px; }
         .ehr .ncFoot .sv { background: #1d4e89; border-color: #1d4e89; color: #fff; }
         .ehr .ncFoot .sv:disabled { opacity: 0.4; cursor: default; }
-        @media (max-width: 860px) { .ehr .ncGrid { grid-template-columns: 1fr; } }
+        @media (max-width: 1100px) { .ehr .ncGrid.four { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+        @media (max-width: 860px) { .ehr .ncGrid, .ehr .ncGrid.four { grid-template-columns: 1fr; } }
         @media (max-width: 860px) {
           .ehr .body { grid-template-columns: 1fr; }
           .ehr .side { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 12px; }
