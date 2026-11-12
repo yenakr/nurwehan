@@ -12,8 +12,8 @@ export default async function EhrPage() {
   const cases = await listCases(user.id);
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '28px 0' }}>
-      <div className="container" style={{ maxWidth: '760px' }}>
-        <EhrHome cases={cases.map(c => ({ id: c.id, title: c.title, subject: c.subject, updatedAt: new Date(c.updatedAt).toISOString() }))} />
+      <div className="container" style={{ maxWidth: '1100px' }}>
+        <EhrHome cases={cases.map(c => ({ id: c.id, ward: c.ward, bed: c.bed, sampleKey: c.sampleKey, ptNo: c.ptNo, name: c.name, ageSex: c.ageSex, dx: c.dx, doctor: c.doctor, admit: c.admit }))} />
       </div>
     </main>
   );

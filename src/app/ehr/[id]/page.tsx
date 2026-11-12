@@ -2,7 +2,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { getCase } from '@/lib/ehr';
 import { notFound, redirect } from 'next/navigation';
 import EhrEditor from './EhrEditor';
-import { emptyChart, type ChartData } from '../types';
+import { migrate } from '../types';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'EHR 연습' };
@@ -13,10 +13,10 @@ export default async function EhrCasePage({ params }: { params: Promise<{ id: st
   if (!user) redirect(`/login?redirect=/ehr/${id}`);
   const row = await getCase(user.id, id);
   if (!row) notFound();
-  const data = { ...emptyChart(), ...((row.data as Partial<ChartData>) || {}) } as ChartData;
+  const data = migrate(row.data);
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '20px 0' }}>
-      <div className="container" style={{ maxWidth: '1100px' }}>
+      <div className="container" style={{ maxWidth: '1240px' }}>
         <EhrEditor id={row.id} initialTitle={row.title} subject={row.subject} initial={data} />
       </div>
     </main>

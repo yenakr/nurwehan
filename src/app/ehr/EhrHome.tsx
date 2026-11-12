@@ -2,107 +2,133 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import Link from 'next/link';
-import { SAMPLES } from './samples';
+import { SAMPLES, WARDS, bedLabel } from './samples';
 import { emptyChart } from './types';
 
-type Item = { id: string; title: string; subject: string | null; updatedAt: string };
+type Item = {
+  id: string; ward: string | null; bed: string | null; sampleKey: string | null;
+  ptNo: string | null; name: string | null; ageSex: string | null; dx: string | null; doctor: string | null; admit: string | null;
+};
 
-const fmt = (iso: string) => {
-  const d = new Date(iso);
-  const p = (n: number) => String(n).padStart(2, '0');
-  return `${p(d.getMonth() + 1)}/${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
+const stay = (admit: string | null) => {
+  if (!admit) return '';
+  const d = new Date(admit);
+  if (isNaN(d.getTime())) return '';
+  const n = Math.floor((Date.now() - d.getTime()) / 86400000) + 1;
+  return n > 0 ? `${n}일째` : '';
 };
 
 export default function EhrHome({ cases }: { cases: Item[] }) {
   const router = useRouter();
-  const [busy, setBusy] = useState(false);
+  const [wardIdx, setWardIdx] = useState(0);
+  const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState('');
-  const [list, setList] = useState(cases);
+  const ward = WARDS[wardIdx];
 
-  const create = async (title: string, subject: string | null, data: unknown) => {
+  const open = async (key: string, existing: Item | undefined, make: () => { title: string; subject: string | null; data: unknown }) => {
     if (busy) return;
-    setBusy(true);
+    if (existing) {
+      router.push(`/ehr/${existing.id}`);
+      return;
+    }
+    setBusy(key);
     setErr('');
     try {
-      const res = await fetch('/api/ehr', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title, subject, data }),
-      });
+      const body = make();
+      const res = await fetch('/api/ehr', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
       const j = await res.json().catch(() => ({}));
       if (!res.ok || !j.id) throw new Error();
       router.push(`/ehr/${j.id}`);
     } catch {
-      setErr('만들지 못했어요. 저장 테이블이 준비됐는지 확인해 주세요.');
-      setBusy(false);
+      setErr('불러오지 못했어요. 저장 테이블이 준비됐는지 확인해 주세요.');
+      setBusy(null);
     }
   };
 
-  const remove = async (id: string) => {
-    if (!confirm('이 차트를 삭제할까요? 되돌릴 수 없어요.')) return;
-    const res = await fetch(`/api/ehr/${id}`, { method: 'DELETE' });
-    if (res.ok) setList(prev => prev.filter(x => x.id !== id));
-  };
+  const rows = Array.from({ length: ward.beds }, (_, k) => {
+    const bed = bedLabel(ward, k + 1);
+    const sample = SAMPLES.find(s => s.data.info.ward === ward.name && s.data.info.bed === bed);
+    const saved = cases.find(c => c.ward === ward.name && c.bed === bed);
+    return { bed, sample, saved };
+  });
 
   return (
-    <div className="ehrHome">
-      <h1>EHR 연습</h1>
-
-      <section>
-        <h2>새 차트</h2>
-        <div className="grid">
-          <button type="button" className="tile blank" disabled={busy} onClick={() => create('새 차트', null, emptyChart())}>
-            <b>빈 차트</b>
-            <span>직접 입력</span>
-          </button>
-          {SAMPLES.map(s => (
-            <button key={s.key} type="button" className="tile" disabled={busy} onClick={() => create(s.title, s.subject, s.data)}>
-              <b>{s.subject}</b>
-              <span>{s.title.split(' · ')[1]}</span>
-            </button>
-          ))}
-        </div>
-        {err && <p className="err">{err}</p>}
-      </section>
-
-      <section>
-        <h2>내 차트</h2>
-        {list.length === 0 ? (
-          <p className="empty">아직 없어요.</p>
-        ) : (
-          <ul className="list">
-            {list.map(c => (
-              <li key={c.id}>
-                <Link href={`/ehr/${c.id}`}>
-                  <span className="t">{c.title}</span>
-                  <span className="m">{c.subject ? `${c.subject} · ` : ''}{fmt(c.updatedAt)}</span>
-                </Link>
-                <button type="button" aria-label="삭제" onClick={() => remove(c.id)}>삭제</button>
-              </li>
+    <div className="ehrWard">
+      <div className="shell">
+        <div className="top">
+          <span className="logo">병동부</span>
+          <nav role="tablist">
+            {WARDS.map((w, i) => (
+              <button key={w.name} type="button" role="tab" aria-selected={i === wardIdx} className={i === wardIdx ? 'on' : ''} onClick={() => setWardIdx(i)}>
+                {w.name}
+              </button>
             ))}
-          </ul>
-        )}
-      </section>
+          </nav>
+        </div>
+        <div className="tw">
+          <table>
+            <thead>
+              <tr>
+                <th>병상</th><th>환자번호</th><th>이름</th><th>나이/성별</th><th className="dx">진단명</th><th>주치의</th><th>입원일</th><th>재원</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map(({ bed, sample, saved }) => {
+                const p = saved
+                  ? { ptNo: saved.ptNo, name: saved.name, ageSex: saved.ageSex, dx: saved.dx, doctor: saved.doctor, admit: saved.admit }
+                  : sample
+                    ? sample.data.info
+                    : null;
+                const key = `${ward.name}:${bed}`;
+                if (!p) {
+                  return (
+                    <tr key={bed} className="empty" onClick={() => open(key, undefined, () => ({
+                      title: '새 환자', subject: ward.name,
+                      data: { ...emptyChart(), info: { ward: ward.name, bed, admit: new Date().toISOString().slice(0, 10) } },
+                    }))}>
+                      <td className="bed">{bed}</td>
+                      <td colSpan={7}>{busy === key ? '여는 중…' : '빈 병상 · 눌러서 새 환자 차트 만들기'}</td>
+                    </tr>
+                  );
+                }
+                return (
+                  <tr key={bed} onClick={() => open(key, saved, () => ({ title: sample!.title, subject: sample!.subject, data: sample!.data }))}>
+                    <td className="bed">{bed}</td>
+                    <td>{p.ptNo}</td>
+                    <td className="nm">{busy === key ? '여는 중…' : p.name}</td>
+                    <td>{p.ageSex}</td>
+                    <td className="dx">{p.dx}</td>
+                    <td>{p.doctor}</td>
+                    <td>{p.admit}</td>
+                    <td>{stay(p.admit || null)}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </div>
+      {err && <p className="err">{err}</p>}
 
       <style jsx global>{`
-        .ehrHome h1 { font-size: 1.375rem; font-weight: 800; color: var(--text); margin: 0 0 18px; }
-        .ehrHome h2 { font-size: 0.8125rem; font-weight: 700; color: var(--sub-text); margin: 0 0 8px; }
-        .ehrHome section { margin-bottom: 26px; }
-        .ehrHome .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); gap: 8px; }
-        .ehrHome .tile { display: flex; flex-direction: column; gap: 4px; align-items: flex-start; text-align: left; padding: 14px; background: #fff; border: 1px solid var(--border); border-radius: 12px; font-family: inherit; cursor: pointer; }
-        .ehrHome .tile b { font-size: 0.9375rem; color: var(--primary); }
-        .ehrHome .tile span { font-size: 0.8125rem; color: var(--sub-text); }
-        .ehrHome .tile.blank { border-style: dashed; }
-        .ehrHome .tile:disabled { opacity: 0.6; }
-        .ehrHome .err { color: #b91c1c; font-size: 0.8125rem; margin-top: 8px; }
-        .ehrHome .empty { color: var(--sub-text); font-size: 0.875rem; }
-        .ehrHome .list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-        .ehrHome .list li { display: flex; align-items: center; background: #fff; border: 1px solid var(--border); border-radius: 10px; }
-        .ehrHome .list a { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; text-decoration: none; }
-        .ehrHome .list .t { font-weight: 700; color: var(--text); font-size: 0.9375rem; }
-        .ehrHome .list .m { font-size: 0.75rem; color: var(--sub-text); }
-        .ehrHome .list button { border: 0; background: transparent; color: var(--sub-text); font-size: 0.8125rem; padding: 12px 14px; font-family: inherit; cursor: pointer; }
+        .ehrWard .shell { border: 1px solid #94a3b8; background: #fff; border-radius: 4px; overflow: hidden; font-size: 13px; color: #1f2937; }
+        .ehrWard .top { display: flex; align-items: stretch; background: linear-gradient(#233a5c, #17283f); }
+        .ehrWard .logo { flex: 0 0 auto; display: flex; align-items: center; padding: 0 18px; color: #e8c97a; font-weight: 800; letter-spacing: 1px; border-right: 1px solid rgba(255,255,255,0.15); }
+        .ehrWard .top nav { display: flex; overflow-x: auto; }
+        .ehrWard .top nav button { flex: 0 0 auto; border: 0; background: transparent; color: #e5ebf3; padding: 12px 16px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; border-right: 1px solid rgba(255,255,255,0.08); }
+        .ehrWard .top nav button.on { color: #38d6ff; box-shadow: inset 0 -3px 0 #38d6ff; }
+        .ehrWard .tw { overflow-x: auto; }
+        .ehrWard table { width: 100%; border-collapse: collapse; }
+        .ehrWard th { background: #e9edf1; border: 1px solid #cfd5dc; padding: 7px 8px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+        .ehrWard td { border: 1px solid #e1e5ea; padding: 9px 8px; white-space: nowrap; }
+        .ehrWard td.dx { white-space: normal; min-width: 200px; }
+        .ehrWard tbody tr { cursor: pointer; }
+        .ehrWard tbody tr:hover { background: #eef6ff; }
+        .ehrWard td.bed { background: #f6f7f9; font-weight: 700; color: #334155; width: 86px; }
+        .ehrWard td.nm { font-weight: 800; color: #0e4a84; }
+        .ehrWard tr.empty td { color: #94a3b8; }
+        .ehrWard tr.empty td.bed { color: #94a3b8; }
+        .ehrWard .err { color: #b91c1c; font-size: 0.8125rem; margin-top: 10px; }
       `}</style>
     </div>
   );
