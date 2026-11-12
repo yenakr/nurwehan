@@ -310,6 +310,7 @@ export default function EhrEditor({
   const navRef = useRef<HTMLDivElement>(null);
   const wardRef = useRef<HTMLDivElement>(null);
   const [wardOpen, setWardOpen] = useState(false);
+  const [editInfo, setEditInfo] = useState(false); // 기본정보는 수정 버튼을 눌러야 편집
   const [status, setStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const first = useRef(true);
 
@@ -370,7 +371,12 @@ export default function EhrEditor({
   const hasAllergy = !!info.allergy && !/^(없음|무|none|-)$/i.test(info.allergy.trim());
 
   // 값이 비어 있어도 EMR처럼 보이도록 공통 입력 컴포넌트
-  const side = (k: string, label: string, big?: boolean) => (
+  const side = (k: string, label: string, big?: boolean) => !editInfo ? (
+    <div className="sd" key={k}>
+      <em>{label}</em>
+      <span className={`v ${big ? 'big' : ''}`}>{info[k] || '-'}</span>
+    </div>
+  ) : (
     <label className="sd" key={k}>
       <em>{label}</em>
       <input className={big ? 'big' : ''} value={info[k] || ''} onChange={e => setInfo(k, e.target.value)} />
@@ -380,6 +386,14 @@ export default function EhrEditor({
   const sel = (k: string, label: string, opts: { v: string; l: string }[]) => {
     const cur = info[k] || '';
     const all = cur && !opts.some(o => o.v === cur) ? [...opts, { v: cur, l: cur }] : opts;
+    if (!editInfo) {
+      return (
+        <div className="sd" key={k}>
+          <em>{label}</em>
+          <span className="v">{all.find(o => o.v === cur)?.l || '-'}</span>
+        </div>
+      );
+    }
     return (
       <label className="sd" key={k}>
         <em>{label}</em>
@@ -528,14 +542,22 @@ export default function EhrEditor({
               : bedOptions(info.ward || '').length > 0 && sel('bed', '병상', bedOptions(info.ward || '').map(b => ({ v: b, l: b })))}
             {sel('dept', '진료과', DEPTS.map(d => ({ v: d.code, l: `${d.name}` })))}
             {sel('doctor', '주치의', docs.map(d => ({ v: d.name, l: d.name })))}
-            <label className="sd">
-              <em>입원일</em>
-              <input type="date" value={info.admit || ''} onChange={e => setInfo('admit', e.target.value)} />
-            </label>
+            {editInfo ? (
+              <label className="sd">
+                <em>입원일</em>
+                <input type="date" value={info.admit || ''} onChange={e => setInfo('admit', e.target.value)} />
+              </label>
+            ) : (
+              <div className="sd">
+                <em>입원일</em>
+                <span className="v">{info.admit || '-'}</span>
+              </div>
+            )}
             {side('dx', '진단명')}
             {sel('allergy', '알레르기', ALLERGIES.map(a => ({ v: a, l: a })))}
             {hasAllergy && <div className="alg">알레르기 있음</div>}
             {info.discharged && <div className="dcb">퇴원 {info.discharged}</div>}
+            <button type="button" className="ed" onClick={() => setEditInfo(v => !v)}>{editInfo ? '완료' : '수정'}</button>
           </aside>
 
           <section className="main">
@@ -707,6 +729,10 @@ export default function EhrEditor({
         .ehr .sd select option { color: #111827; background: #fff; }
         .ehr .sd input[type='date'] { color-scheme: dark; }
         .ehr .sd select:focus { outline: none; background: rgba(255,255,255,0.1); }
+        .ehr .sd .v { display: block; padding: 3px 4px; font-size: 12.5px; min-height: 22px; border-bottom: 1px solid transparent; word-break: break-all; }
+        .ehr .sd .v.big { font-size: 20px; font-weight: 800; }
+        .ehr .ed { margin-top: 6px; border: 1px solid rgba(255,255,255,0.35); background: transparent; color: #fff; border-radius: 4px; padding: 6px; font-size: 12.5px; font-weight: 700; font-family: inherit; cursor: pointer; }
+        .ehr .ed:hover { background: rgba(255,255,255,0.12); }
         .ehr .sd input:focus { outline: none; background: rgba(255,255,255,0.1); }
         .ehr .dcb { background: #475569; color: #e2e8f0; font-weight: 700; font-size: 11.5px; padding: 4px 8px; border-radius: 4px; text-align: center; }
         .ehr .dis.del { color: #b91c1c; }
@@ -787,7 +813,7 @@ export default function EhrEditor({
           .ehr .body { grid-template-columns: 1fr; }
           .ehr .side { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 12px; }
           .ehr .brand { grid-column: 1 / -1; padding-bottom: 6px; }
-          .ehr .alg, .ehr .dcb { grid-column: 1 / -1; }
+          .ehr .alg, .ehr .dcb, .ehr .ed { grid-column: 1 / -1; }
           .ehr .nl { grid-template-columns: 1fr; }
           .ehr .doc { padding: 12px; }
         }
