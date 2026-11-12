@@ -73,6 +73,7 @@ export default function Header() {
       items: [
         // 취업 준비(/career)는 일단 숨김 — 페이지는 유지
         { label: '계산기', href: '/tools', desc: '수액 속도, 약물 용량, BMI' },
+        { label: 'EHR 연습', href: '/ehr', desc: '차트 작성 연습' },
       ],
     },
   ];
