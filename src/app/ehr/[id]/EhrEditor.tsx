@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import type { ChartData, Row } from '../types';
 import { PHRASES } from '../phrases';
 import { VIEW_LIST } from '../samples';
+import { ALLERGIES, DEPTS, DOCTORS, WARD_OPTIONS, bedOptions } from '../directory';
 
 type ListKey =
   | 'progress' | 'vitals' | 'io' | 'labs' | 'notes' | 'care'
@@ -376,6 +377,21 @@ export default function EhrEditor({
     </label>
   );
 
+  const sel = (k: string, label: string, opts: { v: string; l: string }[]) => {
+    const cur = info[k] || '';
+    const all = cur && !opts.some(o => o.v === cur) ? [...opts, { v: cur, l: cur }] : opts;
+    return (
+      <label className="sd" key={k}>
+        <em>{label}</em>
+        <select value={cur} onChange={e => setInfo(k, e.target.value)}>
+          <option value="">-</option>
+          {all.map(o => <option key={o.v} value={o.v}>{o.l}</option>)}
+        </select>
+      </label>
+    );
+  };
+  const docs = DOCTORS.filter(d => !info.dept || d.dept === info.dept);
+
   const tbl = (lk: ListKey) => {
     const cols = COLS[lk];
     const rows = data[lk];
@@ -506,13 +522,18 @@ export default function EhrEditor({
             {side('ptNo', '환자번호')}
             {side('name', '이름', true)}
             {side('ageSex', '나이/성별')}
-            {side('ward', '병동')}
-            {info.ward === '응급실' ? side('ktas', 'KTAS (1~5)') : side('bed', '병상')}
-            {side('dept', '진료과')}
-            {side('doctor', '주치의')}
-            {side('admit', '입원일')}
+            {sel('ward', '병동', WARD_OPTIONS.map(w => ({ v: w, l: w })))}
+            {info.ward === '응급실'
+              ? sel('ktas', 'KTAS', ['1', '2', '3', '4', '5'].map(v => ({ v, l: v })))
+              : bedOptions(info.ward || '').length > 0 && sel('bed', '병상', bedOptions(info.ward || '').map(b => ({ v: b, l: b })))}
+            {sel('dept', '진료과', DEPTS.map(d => ({ v: d.code, l: `${d.name}` })))}
+            {sel('doctor', '주치의', docs.map(d => ({ v: d.name, l: d.name })))}
+            <label className="sd">
+              <em>입원일</em>
+              <input type="date" value={info.admit || ''} onChange={e => setInfo('admit', e.target.value)} />
+            </label>
             {side('dx', '진단명')}
-            {side('allergy', '알레르기')}
+            {sel('allergy', '알레르기', ALLERGIES.map(a => ({ v: a, l: a })))}
             {hasAllergy && <div className="alg">알레르기 있음</div>}
             {info.discharged && <div className="dcb">퇴원 {info.discharged}</div>}
           </aside>
@@ -682,6 +703,10 @@ export default function EhrEditor({
         .ehr .sd em { display: block; font-size: 10.5px; font-style: normal; color: #8fb0d2; margin-bottom: 1px; }
         .ehr .sd input { box-sizing: border-box; width: 100%; padding: 3px 4px; border: 0; border-bottom: 1px solid rgba(255,255,255,0.18); background: transparent; color: #fff; font-size: 12.5px; font-family: inherit; }
         .ehr .sd input.big { font-size: 20px; font-weight: 800; padding: 2px 4px; }
+        .ehr .sd select { box-sizing: border-box; width: 100%; padding: 3px 2px; border: 0; border-bottom: 1px solid rgba(255,255,255,0.18); background: transparent; color: #fff; font-size: 12.5px; font-family: inherit; cursor: pointer; }
+        .ehr .sd select option { color: #111827; background: #fff; }
+        .ehr .sd input[type='date'] { color-scheme: dark; }
+        .ehr .sd select:focus { outline: none; background: rgba(255,255,255,0.1); }
         .ehr .sd input:focus { outline: none; background: rgba(255,255,255,0.1); }
         .ehr .dcb { background: #475569; color: #e2e8f0; font-weight: 700; font-size: 11.5px; padding: 4px 8px; border-radius: 4px; text-align: center; }
         .ehr .dis.del { color: #b91c1c; }

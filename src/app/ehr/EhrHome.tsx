@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { SAMPLES, WARDS, bedLabel, roomNo } from './samples';
 import { emptyChart, migrate } from './types';
+import { newPtNo } from './directory';
 
 type Item = {
   id: string; ward: string | null; bed: string | null; sampleKey: string | null;
@@ -93,7 +94,7 @@ export default function EhrHome({ cases, initialView }: { cases: Item[]; initial
           p: saved ?? (sample && !dcSample ? sample.data.info : null),
           make: () => sample && !dcSample
             ? { title: sample.title, subject: sample.subject, data: migrate(sample.data) }
-            : { title: '새 환자', subject: w.name, data: { ...emptyChart(), info: { ward: w.name, bed, admit: today() } } },
+            : { title: '새 환자', subject: w.name, data: { ...emptyChart(), info: { ward: w.name, bed, ptNo: newPtNo(), admit: today() } } },
         });
       }
     });
@@ -117,7 +118,7 @@ export default function EhrHome({ cases, initialView }: { cases: Item[]; initial
   const newPatient = () => open(`new:${wardName}`, undefined, () => ({
     title: '새 환자',
     subject: view.name,
-    data: { ...emptyChart(), info: { ward: wardName, admit: today(), visitTime: nowHM(), vstatus: view.kind === 'er' ? '대기' : '접수', ...(view.kind === 'er' ? { ktas: '3', zone: '응급', dept: 'ER' } : {}) } },
+    data: { ...emptyChart(), info: { ward: wardName, ptNo: newPtNo(), admit: today(), visitTime: nowHM(), vstatus: view.kind === 'er' ? '대기' : '접수', ...(view.kind === 'er' ? { ktas: '3', zone: '응급', dept: 'ER' } : {}) } },
   }));
 
   return (
