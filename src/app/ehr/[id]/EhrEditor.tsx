@@ -5,18 +5,24 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { ChartData, Row } from '../types';
 
-type ListKey = 'progress' | 'vitals' | 'io' | 'labs' | 'notes' | 'care';
-type TabId = 'progress' | 'orders' | 'admission' | 'nurseinfo' | 'vitals' | 'labs' | 'notes' | 'care';
+type ListKey =
+  | 'progress' | 'vitals' | 'io' | 'labs' | 'notes' | 'care'
+  | 'transfusion' | 'nutrition' | 'consult' | 'consent' | 'surgery' | 'appts' | 'handover' | 'risk' | 'history' | 'imaging';
+type TabId = ListKey | 'orders' | 'admission' | 'nurseinfo' | 'discharge';
 
-const TABS: { id: TabId; label: string }[] = [
-  { id: 'progress', label: '경과기록' },
-  { id: 'orders', label: '의사처방' },
-  { id: 'admission', label: '입원기록' },
-  { id: 'nurseinfo', label: '간호정보' },
-  { id: 'vitals', label: '임상관찰' },
-  { id: 'labs', label: '검사결과' },
-  { id: 'notes', label: '간호기록' },
-  { id: 'care', label: '간호과정' },
+type MenuItem = { id: TabId; label: string };
+type MenuNode = { label: string; items: MenuItem[] };
+const MENU: MenuNode[] = [
+  { label: '경과기록', items: [{ id: 'progress', label: '경과기록' }, { id: 'consult', label: '협진기록' }, { id: 'surgery', label: '수술기록' }] },
+  { label: '의사처방', items: [{ id: 'orders', label: '의사처방' }] },
+  { label: '입원기록', items: [{ id: 'admission', label: '입원기록' }, { id: 'nurseinfo', label: '간호정보조사지' }, { id: 'history', label: '상병이력' }] },
+  { label: '임상관찰', items: [{ id: 'vitals', label: '임상관찰' }] },
+  { label: '치료/검사', items: [{ id: 'labs', label: '검사결과' }, { id: 'imaging', label: '영상검사' }, { id: 'transfusion', label: '수혈기록' }] },
+  { label: '영양기록', items: [{ id: 'nutrition', label: '영양기록' }] },
+  { label: '간호기록', items: [{ id: 'notes', label: '간호기록' }, { id: 'care', label: '간호과정' }, { id: 'risk', label: '위험도평가' }, { id: 'handover', label: '인계(SBAR)' }] },
+  { label: '동의서', items: [{ id: 'consent', label: '동의서' }] },
+  { label: '외래예약', items: [{ id: 'appts', label: '외래예약' }] },
+  { label: '퇴원', items: [{ id: 'discharge', label: '퇴원계획' }] },
 ];
 
 type Col = { key: string; label: string; w: number; type?: 'area' | 'select'; opts?: string[]; ph?: string };
@@ -57,6 +63,81 @@ const COLS: Record<ListKey, Col[]> = {
     { key: 'focus', label: 'Focus', w: 110 },
     { key: 'text', label: '간호기록', w: 560, type: 'area' },
     { key: 'author', label: '작성자', w: 80 },
+  ],
+  transfusion: [
+    { key: 'time', label: '일시', w: 130 },
+    { key: 'step', label: '단계', w: 90, type: 'select', opts: ['', '확인', '시작', '수혈중', '종료', '특이사항'] },
+    { key: 'blood', label: '혈액명', w: 130, ph: 'F-RBC(400cc)' },
+    { key: 'bno', label: '혈액번호', w: 110 },
+    { key: 'bp', label: 'BP', w: 80 },
+    { key: 'pr', label: 'PR', w: 60 },
+    { key: 'rr', label: 'RR', w: 60 },
+    { key: 'bt', label: 'BT', w: 60 },
+    { key: 'note', label: '이상반응 / 비고', w: 220 },
+  ],
+  nutrition: [
+    { key: 'time', label: '기록일시', w: 130 },
+    { key: 'text', label: '영양기록', w: 560, type: 'area' },
+    { key: 'author', label: '작성자', w: 80 },
+  ],
+  consult: [
+    { key: 'date', label: '의뢰일', w: 96 },
+    { key: 'dept', label: '의뢰과', w: 64 },
+    { key: 'doc', label: '의뢰의', w: 70 },
+    { key: 'req', label: '의뢰내용', w: 260, type: 'area' },
+    { key: 'rdept', label: '회신과', w: 64 },
+    { key: 'reply', label: '회신내용', w: 260, type: 'area' },
+    { key: 'st', label: '상태', w: 84, type: 'select', opts: ['', '미회신', '회신완료'] },
+  ],
+  consent: [
+    { key: 'name', label: '동의서명', w: 240 },
+    { key: 'date', label: '일자', w: 100 },
+    { key: 'st', label: '상태', w: 100, type: 'select', opts: ['', '미작성', '작성', '서명완료', '거부'] },
+    { key: 'note', label: '비고', w: 240 },
+  ],
+  surgery: [
+    { key: 'date', label: '수술일자', w: 100 },
+    { key: 'dept', label: '진료과', w: 70 },
+    { key: 'name', label: '수술명', w: 260 },
+    { key: 'anes', label: '마취', w: 90 },
+    { key: 'note', label: '비고', w: 240 },
+  ],
+  appts: [
+    { key: 'date', label: '예약일', w: 100, ph: '2026-11-20' },
+    { key: 'time', label: '시간', w: 70 },
+    { key: 'dept', label: '진료과', w: 90 },
+    { key: 'doc', label: '의사', w: 80 },
+    { key: 'purpose', label: '목적', w: 260 },
+    { key: 'st', label: '상태', w: 90, type: 'select', opts: ['', '예약', '접수', '진료완료', '취소', '부도'] },
+  ],
+  handover: [
+    { key: 'time', label: '일시', w: 110 },
+    { key: 's', label: 'S (상황)', w: 200, type: 'area' },
+    { key: 'b', label: 'B (배경)', w: 200, type: 'area' },
+    { key: 'a', label: 'A (사정)', w: 200, type: 'area' },
+    { key: 'r', label: 'R (요청)', w: 200, type: 'area' },
+    { key: 'author', label: '작성자', w: 80 },
+  ],
+  risk: [
+    { key: 'time', label: '평가일시', w: 110 },
+    { key: 'kind', label: '평가', w: 110, type: 'select', opts: ['', '낙상(Morse)', '욕창(Braden)', '통증(NRS)', '기타'] },
+    { key: 'score', label: '점수', w: 64 },
+    { key: 'level', label: '위험도', w: 90, type: 'select', opts: ['', '저위험', '중위험', '고위험'] },
+    { key: 'plan', label: '중재', w: 300, type: 'area' },
+    { key: 'author', label: '작성자', w: 80 },
+  ],
+  history: [
+    { key: 'dept', label: '진료과', w: 80 },
+    { key: 'date', label: '진료일자', w: 100 },
+    { key: 'dx', label: '임상진단명', w: 320 },
+    { key: 'code', label: '상병코드', w: 90 },
+    { key: 'kind', label: '구분', w: 80, type: 'select', opts: ['', '외래', '입원', '응급'] },
+  ],
+  imaging: [
+    { key: 'time', label: '일시', w: 110 },
+    { key: 'name', label: '검사명', w: 220 },
+    { key: 'result', label: '소견 / 판독', w: 400, type: 'area' },
+    { key: 'st', label: '상태', w: 90, type: 'select', opts: ['', '접수', '촬영완료', '판독완료'] },
   ],
   care: [
     { key: 'dx', label: '간호진단', w: 200, type: 'area' },
@@ -104,6 +185,16 @@ const ADM: { key: string; label: string; rows?: number }[] = [
   { key: 'plan', label: '진료계획', rows: 4 },
 ];
 
+const DIS: { key: string; label: string; rows?: number }[] = [
+  { key: 'disDate', label: '퇴원 예정일', rows: 1 },
+  { key: 'disMethod', label: '퇴원 방법', rows: 1 },
+  { key: 'disPlace', label: '퇴원 후 갈 곳', rows: 1 },
+  { key: 'disGuardian', label: '퇴원 후 주 보호자', rows: 1 },
+  { key: 'disTarget', label: '교육 대상', rows: 1 },
+  { key: 'disEdu', label: '퇴원 교육 내용', rows: 5 },
+  { key: 'disFu', label: '외래 추적관찰', rows: 3 },
+];
+
 // 입원 시 간호정보조사지
 const NURSE: { key: string; label: string }[] = [
   { key: 'route', label: '입 원 경 로' },
@@ -143,6 +234,8 @@ export default function EhrEditor({
   const [title, setTitle] = useState(initialTitle);
   const [data, setData] = useState<ChartData>(initial);
   const [tab, setTab] = useState<TabId>('orders');
+  const [menuOpen, setMenuOpen] = useState<string | null>(null);
+  const navRef = useRef<HTMLDivElement>(null);
   const [status, setStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const first = useRef(true);
 
@@ -166,6 +259,14 @@ export default function EhrEditor({
     }, 900);
     return () => clearTimeout(t);
   }, [title, data, id, subject]);
+
+  useEffect(() => {
+    const h = (e: MouseEvent) => {
+      if (navRef.current && !navRef.current.contains(e.target as Node)) setMenuOpen(null);
+    };
+    document.addEventListener('mousedown', h);
+    return () => document.removeEventListener('mousedown', h);
+  }, []);
 
   const info = data.info;
   const setInfo = (k: string, v: string) => setData(d => ({ ...d, info: { ...d.info, [k]: v } }));
@@ -213,7 +314,11 @@ export default function EhrEditor({
                       <td key={c.key}>
                         {lk === 'labs' && c.key === 'value' && flag && <span className={`mk ${cls}`}>{flag === 'H' ? '▲' : '▼'}</span>}
                         {c.type === 'area' ? (
-                          <textarea rows={lk === 'notes' || lk === 'progress' ? 5 : 3} value={v} onChange={e => setCell(lk, i, c.key, e.target.value)} />
+                          <textarea rows={['notes', 'progress', 'nutrition', 'imaging'].includes(lk) ? 5 : 3} value={v} onChange={e => setCell(lk, i, c.key, e.target.value)} />
+                        ) : c.type === 'select' ? (
+                          <select value={v} onChange={e => setCell(lk, i, c.key, e.target.value)}>
+                            {(c.opts!.includes(v) ? c.opts! : [...c.opts!, v]).map(o => <option key={o} value={o}>{o}</option>)}
+                          </select>
                         ) : (
                           <input className={cls} value={v} placeholder={c.ph} onChange={e => setCell(lk, i, c.key, e.target.value)} />
                         )}
@@ -256,23 +361,45 @@ export default function EhrEditor({
       <div className="shell">
         <div className="top">
           <span className="ward">{info.ward || '병동'} ▾</span>
-          <nav role="tablist">
-            {TABS.map(t => (
-              <button key={t.id} type="button" role="tab" aria-selected={tab === t.id} className={tab === t.id ? 'on' : ''} onClick={() => setTab(t.id)}>
-                {t.label}
-              </button>
-            ))}
-          </nav>
+          <div className="nav" ref={navRef} role="tablist">
+            {MENU.map(g => {
+              const active = g.items.some(i => i.id === tab);
+              const multi = g.items.length > 1;
+              return (
+                <div key={g.label} className="mi">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    className={active ? 'on' : ''}
+                    onClick={() => {
+                      if (multi) setMenuOpen(menuOpen === g.label ? null : g.label);
+                      else { setTab(g.items[0].id); setMenuOpen(null); }
+                    }}
+                  >
+                    {g.label}{multi ? ' ▾' : ''}
+                  </button>
+                  {multi && menuOpen === g.label && (
+                    <div className="dd">
+                      {g.items.map(it => (
+                        <button key={it.id} type="button" className={tab === it.id ? 'on' : ''} onClick={() => { setTab(it.id); setMenuOpen(null); }}>{it.label}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
         <div className="body">
           <aside className="side">
-            <div className="brand">병동부</div>
+            <div className="brand">병동뷰</div>
             <Side k="ptNo" label="환자번호" />
             <Side k="name" label="이름" big />
             <Side k="ageSex" label="나이/성별" />
             <Side k="ward" label="병동" />
-            <Side k="bed" label="병상" />
+            {info.ward === '응급실' ? <Side k="ktas" label="KTAS (1~5)" /> : <Side k="bed" label="병상" />}
             <Side k="dept" label="진료과" />
             <Side k="doctor" label="주치의" />
             <Side k="admit" label="입원일" />
@@ -366,10 +493,10 @@ export default function EhrEditor({
               </div>
             )}
 
-            {tab === 'admission' && (
+            {(tab === 'admission' || tab === 'discharge') && (
               <div className="doc">
-                <div className="dh">{info.admit || '입원일'}<span>입원기록</span></div>
-                {ADM.map(f => (
+                <div className="dh">{info.admit || '입원일'}<span>{tab === 'admission' ? '입원기록' : '퇴원계획'}</span></div>
+                {(tab === 'admission' ? ADM : DIS).map(f => (
                   <div key={f.key} className="ds">
                     <h4>■ {f.label}</h4>
                     {f.rows === 1 ? (
@@ -405,7 +532,7 @@ export default function EhrEditor({
               </>
             )}
 
-            {(tab === 'progress' || tab === 'labs' || tab === 'notes' || tab === 'care') && <Tbl lk={tab} />}
+            {tab !== 'orders' && tab !== 'admission' && tab !== 'discharge' && tab !== 'nurseinfo' && tab !== 'vitals' && <Tbl lk={tab} />}
           </section>
         </div>
       </div>
@@ -423,9 +550,14 @@ export default function EhrEditor({
         .ehr .shell { border: 1px solid #94a3b8; background: #fff; border-radius: 4px; overflow: hidden; font-size: 12.5px; color: #1f2937; }
         .ehr .top { display: flex; align-items: stretch; background: linear-gradient(#233a5c, #17283f); }
         .ehr .ward { flex: 0 0 auto; display: flex; align-items: center; padding: 0 16px; color: #e2e8f0; font-weight: 700; font-size: 13px; border-right: 1px solid rgba(255,255,255,0.15); }
-        .ehr .top nav { display: flex; overflow-x: auto; }
-        .ehr .top nav button { flex: 0 0 auto; border: 0; background: transparent; color: #e5ebf3; padding: 11px 14px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; border-right: 1px solid rgba(255,255,255,0.08); }
-        .ehr .top nav button.on { color: #38d6ff; box-shadow: inset 0 -3px 0 #38d6ff; }
+        .ehr .nav { display: flex; flex-wrap: wrap; }
+        .ehr .mi { position: relative; flex: 0 0 auto; }
+        .ehr .nav .mi > button { flex: 0 0 auto; border: 0; background: transparent; color: #e5ebf3; padding: 11px 14px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; border-right: 1px solid rgba(255,255,255,0.08); }
+        .ehr .nav .mi > button.on { color: #38d6ff; box-shadow: inset 0 -3px 0 #38d6ff; }
+        .ehr .dd { position: absolute; top: 100%; left: 0; z-index: 20; min-width: 130px; background: #fff; border: 1px solid #94a3b8; box-shadow: 0 6px 16px rgba(15,23,42,0.18); display: flex; flex-direction: column; }
+        .ehr .dd button { border: 0; background: #fff; text-align: left; padding: 9px 14px; font-size: 12.5px; font-family: inherit; color: #1f2937; cursor: pointer; white-space: nowrap; }
+        .ehr .dd button:hover { background: #eef6ff; }
+        .ehr .dd button.on { color: #0e4a84; font-weight: 800; }
 
         .ehr .body { display: grid; grid-template-columns: 188px minmax(0, 1fr); min-height: 560px; }
         .ehr .side { background: var(--nv1); color: #fff; padding: 12px 12px 18px; display: flex; flex-direction: column; gap: 8px; }
