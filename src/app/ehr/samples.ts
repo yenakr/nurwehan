@@ -22,7 +22,7 @@ export const SAMPLES: Sample[] = [
     title: '성인 · 심부전 악화',
     data: {
       info: {
-        sampleKey: 'adult', bed: '604-2', ptNo: '00000001', name: '김OO', ageSex: '72/F', ward: '61병동', dept: 'CV', doctor: '홍OO', admit: '2026-11-10', allergy: '페니실린 (발진)',
+        sampleKey: 'adult', bed: '604-2', ptNo: '00000001', name: '김심장', ageSex: '72/F', ward: '61병동', dept: 'CV', doctor: '이순환', admit: '2026-11-10', allergy: '페니실린 (발진)',
         dx: 'Acute decompensated heart failure',
         cc: '호흡곤란, 하지 부종', onset: '2026-11-07',
         hpi: '3일 전부터 계단 오를 때 숨이 차고 밤에 기침 및 누우면 숨이 찬 증상 있어 외래 경유하여 입원함.\n체중 3일간 2.5kg 증가.',
@@ -33,7 +33,7 @@ export const SAMPLES: Sample[] = [
         bedsore: '22', fall: '35', pain: '무',
       },
       progress: [
-        { time: '2026-11-10 10:20', dept: 'CV', text: 'S) 숨찬 것 조금 나아짐\nO) BP 140/88, HR 96, SpO2 93% (2L NC), Lung crackles(+)\nA) ADHF\nP) IV furosemide 유지, I/O 모니터, K f/u', author: '홍OO' },
+        { time: '2026-11-10 10:20', dept: 'CV', text: 'S) 숨찬 것 조금 나아짐\nO) BP 140/88, HR 96, SpO2 93% (2L NC), Lung crackles(+)\nA) ADHF\nP) IV furosemide 유지, I/O 모니터, K f/u', author: '이순환' },
       ],
       orders: [
         ...basic([
@@ -77,7 +77,7 @@ export const SAMPLES: Sample[] = [
         { dx: '심박출량 감소', goal: '48시간 내 SpO2 94% 이상, 하지 부종 감소', plan: '활력징후·I&O 모니터, 체중 측정, 이뇨제 투여 및 반응 확인, 염분·수분 제한 교육', eval: '' },
       ],
       appts: [
-        { date: '2026-11-20', time: '10:00', dept: 'CV', doc: '홍OO', purpose: '퇴원 후 1주 외래 (경과 관찰, 심초음파 결과 확인)', st: '예약' },
+        { date: '2026-11-20', time: '10:00', dept: 'CV', doc: '이순환', purpose: '퇴원 후 1주 외래 (경과 관찰, 심초음파 결과 확인)', st: '예약' },
         { date: '2026-11-20', time: '09:30', dept: '검사', doc: '', purpose: '채혈 (BNP, 전해질)', st: '예약' },
       ],
       nutrition: [{ time: '2026-11-10 08:30', text: '입원 시 영양 선별: 식욕 보통, 체중 3일간 2.5kg 증가(부종). 2g Na 저염식, 수분 1,000mL 제한 교육 시행.', author: '영양사' }],
@@ -98,7 +98,7 @@ export const SAMPLES: Sample[] = [
     title: '아동 · RSV 세기관지염',
     data: {
       info: {
-        sampleKey: 'child', bed: '503-2', ptNo: '00000002', name: '이OO', ageSex: '8M/M', ward: '51병동', dept: 'PD', doctor: '박OO', admit: '2026-11-11', allergy: '무',
+        sampleKey: 'child', bed: '503-2', ptNo: '00000002', name: '이쌕쌕', ageSex: '8M/M', ward: '51병동', dept: 'PD', doctor: '박소아', admit: '2026-11-11', allergy: '무',
         dx: 'RSV bronchiolitis', cc: '기침, 쌕쌕거림, 수유 거부', onset: '2026-11-09',
         hpi: '2일 전부터 콧물, 기침 시작. 어제부터 쌕쌕거리고 수유량 절반으로 감소하여 내원함.', pmh: '만삭 출생, 특이사항 없음', fh: '형 감기 증상', social: '무', drink: '-', smoke: '-',
         pe: '체온 38.2 (C)  맥박 168  호흡 58  SpO2 91%\nGeneral: Irritable  Chest: wheezing(+), retraction(+)', plan: '- O2, 흡인, 수액 유지\n- 접촉·비말 격리',
@@ -129,7 +129,7 @@ export const SAMPLES: Sample[] = [
     title: '모성 · 제왕절개 산후 1일',
     data: {
       info: {
-        sampleKey: 'women', bed: '402-1', ptNo: '00000003', name: '박OO', ageSex: '33/F', ward: '41병동', dept: 'OB', doctor: '최OO', admit: '2026-11-10', allergy: '무',
+        sampleKey: 'women', bed: '402-1', ptNo: '00000003', name: '박제왕', ageSex: '33/F', ward: '41병동', dept: 'OB', doctor: '최산부', admit: '2026-11-10', allergy: '무',
         dx: 'Cesarean section POD#1 (G1P1)', cc: '수술 부위 통증', onset: '2026-11-11',
         hpi: '38주 3일, 아두골반불균형으로 2026-11-11 제왕절개 분만함.', pmh: '특이사항 무', fh: '무', social: '무', drink: '무', smoke: '무',
         pe: '혈압 112/70  맥박 82  호흡 18  체온 37.4\nFundus: 제하 1횡지, firm  Lochia: rubra, 소량', plan: '- 조기 이상\n- 자궁저부 마사지, 오로 관찰\n- 모유수유 교육',
@@ -155,7 +155,7 @@ export const SAMPLES: Sample[] = [
     title: '정신 · 조현병 급성기',
     data: {
       info: {
-        sampleKey: 'psych', bed: '1004-2', ptNo: '00000004', name: '최OO', ageSex: '27/M', ward: '101병동', dept: 'PSY', doctor: '윤OO', admit: '2026-11-09', allergy: '무',
+        sampleKey: 'psych', bed: '1004-2', ptNo: '00000004', name: '최환청', ageSex: '27/M', ward: '101병동', dept: 'PSY', doctor: '박정신', admit: '2026-11-09', allergy: '무',
         dx: 'Schizophrenia, acute exacerbation', cc: '환청, 피해망상', onset: '2026-10-25',
         hpi: '2주 전 약물 임의 중단 후 "나를 감시한다", "목소리가 들린다"며 불면 및 불안정, 가족과 내원함.', pmh: '조현병(유) 5년', fh: '무', social: '무', drink: '가끔', smoke: '유 (10개비/일)',
         pe: '혈압 124/80  맥박 88\nMental status: Alert, auditory hallucination(+), persecutory delusion(+)', plan: '- 약물 순응도 확인(입안 확인)\n- 자극 최소화\n- 낮병동 프로그램',
@@ -181,13 +181,13 @@ export const SAMPLES: Sample[] = [
     title: '소화기 · 위장관 출혈',
     data: {
       info: {
-        sampleKey: 'gi', bed: '704-3', ptNo: '00000005', name: '윤OO', ageSex: '47/M', ward: '71병동', dept: 'GE', doctor: '오OO', admit: '2026-11-11', allergy: '무',
+        sampleKey: 'gi', bed: '704-3', ptNo: '00000005', name: '오빨강', ageSex: '47/M', ward: '71병동', dept: 'GE', doctor: '오소화', admit: '2026-11-11', allergy: '무',
         dx: 'GI bleeding, r/o colon cancer', cc: '혈변', onset: '2026-11-08',
         hpi: '3일 전부터 붉은색 혈변(총 3회, 회당 소량) 및 우하복부 통증, 오심 있어 응급실 통해 입원함.', pmh: '고혈압(무), 당뇨(무), 기타(Trigger finger 수술력)', fh: '부) 위암, 모) 대장암', social: '무', drink: '무', smoke: '무',
         pe: '혈압 100/67 (mmHg)  맥박 102 (/min)  호흡 18 (/min)  체온 36.8 (C)\nGeneral: Not so ill looking  Mental status: Alert\nAbd: RLQ tenderness(+)', plan: '- NPO, 수액 유지\n- 대장내시경 및 조직검사, Tumor marker, Abd CT\n- 수혈 필요 시 시행',
         route: '응급실', method: '걸어서', informant: '환자', job: '건설업', religion: '무교', marital: '미혼', lang: '한국어', purpose: 'supportive care', insight: '유', bedsore: '22', fall: '35', pain: 'NRS 3',
       },
-      progress: [{ time: '2026-11-11 08:40', dept: 'GE', text: 'S) 혈변 소량 지속, 우하복부 통증 NRS 3\nO) BP 111/69, HR 113, Hb 6.7\nA) GI bleeding, anemia\nP) NPO, F-RBC 2pint 수혈, 대장내시경 예정', author: '오OO' }],
+      progress: [{ time: '2026-11-11 08:40', dept: 'GE', text: 'S) 혈변 소량 지속, 우하복부 통증 NRS 3\nO) BP 111/69, HR 113, Hb 6.7\nA) GI bleeding, anemia\nP) NPO, F-RBC 2pint 수혈, 대장내시경 예정', author: '오소화' }],
       orders: [
         sec('▶ 기본처방 ◀'),
         od('Check V/S q [4] hrs', '', '', '', '', '', [], '1'),
@@ -233,7 +233,7 @@ export const SAMPLES: Sample[] = [
     title: '호흡기 · 폐렴',
     data: {
       info: {
-        sampleKey: 'pul', bed: '605-1', ptNo: '00000006', name: '조OO', ageSex: '81/M', ward: '61병동', dept: 'PUL', doctor: '민OO', admit: '2026-11-10', allergy: '무',
+        sampleKey: 'pul', bed: '605-1', ptNo: '00000006', name: '최기침', ageSex: '81/M', ward: '61병동', dept: 'PUL', doctor: '최호흡', admit: '2026-11-10', allergy: '무',
         dx: 'Community-acquired pneumonia', cc: '기침, 가래, 발열', onset: '2026-11-07',
         hpi: '4일 전부터 기침과 황색 가래, 38도 발열 있어 내원. 식사량 감소.', pmh: '고혈압(유), 만성폐쇄성폐질환(유)', fh: '무', social: '무', drink: '무', smoke: '유 (과거 40갑년)',
         pe: '혈압 128/76  맥박 98  호흡 24  체온 38.1  SpO2 92%\nChest: rhonchi RLL(+)', plan: '- 항생제 정주, O2 적용\n- 객담 배양, 흉부 X-ray f/u\n- 호흡 운동 교육',
@@ -268,7 +268,7 @@ export const SAMPLES: Sample[] = [
     title: '일반외과 · 충수절제술 후 1일',
     data: {
       info: {
-        sampleKey: 'gs', bed: '804-1', ptNo: '00000007', name: '임OO', ageSex: '29/M', ward: '81병동', dept: 'GS', doctor: '장OO', admit: '2026-11-11', allergy: '무',
+        sampleKey: 'gs', bed: '804-1', ptNo: '00000007', name: '임맹장', ageSex: '29/M', ward: '81병동', dept: 'GS', doctor: '장일반', admit: '2026-11-11', allergy: '무',
         dx: 'Acute appendicitis, POD#1 Lap. appendectomy', cc: '우하복부 통증', onset: '2026-11-10',
         hpi: '어제 아침부터 상복부 통증이 우하복부로 이동하고 발열 있어 응급실 경유, 복강경 충수절제술 시행함.', pmh: '특이사항 무', fh: '무', social: '무', drink: '가끔', smoke: '무',
         pe: '혈압 122/74  맥박 88  호흡 18  체온 37.4\nAbd: 상처 부위 dressing clean, bowel sound(+)', plan: '- 조기 이상, 장운동 회복 시 식이 진행\n- 상처 관찰\n- PCA 유지',
@@ -298,7 +298,7 @@ export const SAMPLES: Sample[] = [
     title: '정형외과 · 슬관절 전치환술 후 1일',
     data: {
       info: {
-        sampleKey: 'os', bed: '905-2', ptNo: '00000008', name: '신OO', ageSex: '69/F', ward: '91병동', dept: 'OS', doctor: '하OO', admit: '2026-11-10', allergy: '무',
+        sampleKey: 'os', bed: '905-2', ptNo: '00000008', name: '신무릎', ageSex: '69/F', ward: '91병동', dept: 'OS', doctor: '하정형', admit: '2026-11-10', allergy: '무',
         dx: 'Osteoarthritis, rt knee, POD#1 TKA', cc: '우측 무릎 통증', onset: '2020',
         hpi: '수년 전부터 우측 무릎 통증, 보행 장애 진행. 보존치료 실패하여 전치환술 시행함.', pmh: '고혈압(유)', fh: '무', social: '무', drink: '무', smoke: '무',
         pe: '혈압 130/80  맥박 80  체온 37.2\nRt knee: dressing clean, JP drain 유지, 하지 말초순환 양호', plan: '- CPM, 조기 재활\n- 항응고제(DVT 예방)\n- JP drain 관찰',
@@ -326,12 +326,12 @@ export const SAMPLES: Sample[] = [
     title: '외래 · 당뇨 추적관찰',
     data: {
       info: {
-        sampleKey: 'op1', ptNo: '00000011', name: '강OO', ageSex: '58/M', ward: '외래', dept: 'EN', doctor: '서OO', admit: '2026-11-12', visitTime: '09:30', vstatus: '진료중',
+        sampleKey: 'op1', ptNo: '00000011', name: '강당뇨', ageSex: '58/M', ward: '외래', dept: 'EN', doctor: '서내분', admit: '2026-11-12', visitTime: '09:30', vstatus: '진료중',
         allergy: '무', dx: 'Type 2 diabetes mellitus', cc: '정기 추적, 식후 어지러움', onset: '',
         hpi: '당뇨 8년. 3개월마다 외래 방문. 최근 식후 어지러움과 손발 저림 호소.', pmh: '당뇨(유) 8년, 고혈압(유), 이상지질혈증(유)', fh: '모) 당뇨', social: '무', drink: '가끔', smoke: '무',
         pe: '혈압 134/84  맥박 76  체온 36.5  체중 74kg', plan: '- HbA1c, 공복혈당, 신기능 검사\n- 식이·운동 교육 재강화\n- 3개월 후 외래',
       },
-      progress: [{ time: '2026-11-12 09:40', dept: 'EN', text: 'S) 식후 어지러움, 손발 저림\nO) BP 134/84, 공복 혈당 152\nA) T2DM, 말초신경병증 의심\nP) HbA1c 확인, 약 조정, f/u 3개월', author: '서OO' }],
+      progress: [{ time: '2026-11-12 09:40', dept: 'EN', text: 'S) 식후 어지러움, 손발 저림\nO) BP 134/84, 공복 혈당 152\nA) T2DM, 말초신경병증 의심\nP) HbA1c 확인, 약 조정, f/u 3개월', author: '서내분' }],
       orders: [
         sec('▶ 검 사 ◀'),
         od('HbA1c', '', '', '', '', '접수'),
@@ -345,7 +345,7 @@ export const SAMPLES: Sample[] = [
       labs: [{ name: 'Glucose (Fasting)', value: '152', unit: 'mg/dL', min: '70', max: '100', sample: 'Blood', time: '11-12 08:50' }],
       notes: [{ time: '11-12 09:25', focus: '교육', text: 'D)\n\nA)\n\nR)\n', author: '' }],
       care: [],
-      appts: [{ date: '2026-12-10', time: '09:30', dept: 'EN', doc: '서OO', purpose: '추적 진료, HbA1c 결과 확인', st: '예약' }],
+      appts: [{ date: '2026-12-10', time: '09:30', dept: 'EN', doc: '서내분', purpose: '추적 진료, HbA1c 결과 확인', st: '예약' }],
       history: [{ dept: 'EN', date: '2026-08-14', dx: 'Type 2 diabetes mellitus', code: 'E11.9', kind: '외래' }],
     },
   },
@@ -355,7 +355,7 @@ export const SAMPLES: Sample[] = [
     title: '외래 · 퇴원 후 경과 관찰',
     data: {
       info: {
-        sampleKey: 'op2', ptNo: '00000012', name: '문OO', ageSex: '45/F', ward: '외래', dept: 'GS', doctor: '장OO', admit: '2026-11-12', visitTime: '10:20', vstatus: '접수',
+        sampleKey: 'op2', ptNo: '00000012', name: '문담낭', ageSex: '45/F', ward: '외래', dept: 'GS', doctor: '장일반', admit: '2026-11-12', visitTime: '10:20', vstatus: '접수',
         allergy: '무', dx: 'POD#7 Lap. cholecystectomy', cc: '수술 후 경과 관찰', onset: '',
         hpi: '7일 전 담낭절제술 시행 후 퇴원. 상처 통증 경미, 발열 없음.', pmh: '특이사항 무', fh: '무', social: '무', drink: '무', smoke: '무',
         pe: '혈압 118/72  맥박 74  체온 36.6', plan: '- 상처 소독, 실밥(staple) 제거 여부 판단\n- 병리 결과 설명',
@@ -378,13 +378,13 @@ export const SAMPLES: Sample[] = [
     title: '응급 · 흉통 (KTAS 2)',
     data: {
       info: {
-        sampleKey: 'er1', ptNo: '00000021', name: '오OO', ageSex: '63/M', ward: '응급실', dept: 'ER', doctor: '배OO', admit: '2026-11-12', visitTime: '14:05', vstatus: '검사중', ktas: '2', zone: '응급',
+        sampleKey: 'er1', ptNo: '00000021', name: '오심근', ageSex: '63/M', ward: '응급실', dept: 'ER', doctor: '배응급', admit: '2026-11-12', visitTime: '14:05', vstatus: '검사중', ktas: '2', zone: '응급',
         allergy: '무', dx: 'Chest pain, r/o ACS', cc: '가슴 답답함, 왼팔 방사통', onset: '2026-11-12 13:20',
         hpi: '1시간 전 안정 시 가슴을 쥐어짜는 통증 시작, 식은땀과 왼팔 저림 동반하여 119로 내원.', pmh: '고혈압(유), 흡연력 30갑년', fh: '부) 심근경색', social: '무', drink: '가끔', smoke: '유',
         pe: '혈압 168/98  맥박 108  호흡 22  SpO2 95%  체온 36.7\nGeneral: diaphoretic  Mental status: Alert', plan: '- 12-lead ECG, Troponin, CK-MB\n- Aspirin 300mg, NTG SL\n- 심장내과 협진',
         route: '응급 구급차', method: '들것', informant: '보호자(아내)', pain: 'NRS 7',
       },
-      progress: [{ time: '2026-11-12 14:10', dept: 'ER', text: 'S) 가슴 통증 NRS 7, 식은땀\nO) BP 168/98, HR 108, ECG ST depression V4-6\nA) r/o NSTEMI\nP) Troponin, 심장내과 협진, 약물 투여', author: '배OO' }],
+      progress: [{ time: '2026-11-12 14:10', dept: 'ER', text: 'S) 가슴 통증 NRS 7, 식은땀\nO) BP 168/98, HR 108, ECG ST depression V4-6\nA) r/o NSTEMI\nP) Troponin, 심장내과 협진, 약물 투여', author: '배응급' }],
       orders: [
         sec('▶ 기본처방 ◀'),
         od('Check V/S q 15min', '', '', '', '', '', [], '1'),
@@ -408,7 +408,7 @@ export const SAMPLES: Sample[] = [
       notes: [{ time: '11-12 14:08', focus: '흉통', text: 'D)\n가슴을 쥐어짜는 통증 NRS 7 호소, 식은땀 있음. BP 168/98, HR 108\n\nA)\nECG 시행, Aspirin 투여, 침상 안정 및 심리적 안정 도모\n\nR)\n14:20 통증 NRS 4로 감소', author: '' }],
       care: [],
       imaging: [{ time: '11-12 14:25', name: 'Chest X-ray portable', result: '', st: '촬영완료' }],
-      consult: [{ date: '2026-11-12', dept: 'ER', doc: '배OO', req: 'r/o NSTEMI, 심장내과 협진 요청', rdept: 'CV', reply: '', st: '미회신' }],
+      consult: [{ date: '2026-11-12', dept: 'ER', doc: '배응급', req: 'r/o NSTEMI, 심장내과 협진 요청', rdept: 'CV', reply: '', st: '미회신' }],
     },
   },
   {
@@ -417,7 +417,7 @@ export const SAMPLES: Sample[] = [
     title: '응급 · 발목 염좌 (KTAS 4)',
     data: {
       info: {
-        sampleKey: 'er2', ptNo: '00000022', name: '한OO', ageSex: '21/F', ward: '응급실', dept: 'ER', doctor: '배OO', admit: '2026-11-12', visitTime: '15:10', vstatus: '대기', ktas: '4', zone: '비응급',
+        sampleKey: 'er2', ptNo: '00000022', name: '한발목', ageSex: '21/F', ward: '응급실', dept: 'ER', doctor: '배응급', admit: '2026-11-12', visitTime: '15:10', vstatus: '대기', ktas: '4', zone: '비응급',
         allergy: '무', dx: 'Ankle sprain, rt', cc: '오른쪽 발목 통증, 부종', onset: '2026-11-12 14:40',
         hpi: '농구 중 착지하다가 오른쪽 발목을 접질림. 체중 부하 시 통증.', pmh: '특이사항 무', fh: '무', social: '무', drink: '무', smoke: '무',
         pe: '혈압 116/72  맥박 84  체온 36.5\nRt ankle: swelling(+), tenderness(+), ROM 제한', plan: '- Ankle X-ray\n- RICE, 부목',
@@ -448,3 +448,9 @@ export const WARDS: Ward[] = [
 ];
 export const roomNo = (w: Ward, r: number) => w.floor * 100 + r; // r: 1부터
 export const bedLabel = (w: Ward, r: number, b: number) => `${roomNo(w, r)}-${b}`;
+
+export const VIEW_LIST: { name: string; label: string; group: string | null }[] = [
+  ...WARDS.map(w => ({ name: w.name, label: `${w.name} ${w.dept}`, group: w.group })),
+  { name: '외래', label: '외래', group: null },
+  { name: '응급', label: '응급', group: null },
+];

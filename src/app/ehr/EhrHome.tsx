@@ -43,9 +43,9 @@ const TOP: { label: string; idx: number[] }[] = (() => {
   return out;
 })();
 
-export default function EhrHome({ cases }: { cases: Item[] }) {
+export default function EhrHome({ cases, initialView }: { cases: Item[]; initialView?: string }) {
   const router = useRouter();
-  const [vi, setVi] = useState(0);
+  const [vi, setVi] = useState(() => Math.max(0, VIEWS.findIndex(v => v.name === initialView)));
   const [openG, setOpenG] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState('');
