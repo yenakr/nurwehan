@@ -1,10 +1,10 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import type { ChartData, Row } from '../types';
 import { PHRASES } from '../phrases';
+import { VIEW_LIST } from '../samples';
 
 type ListKey =
   | 'progress' | 'vitals' | 'io' | 'labs' | 'notes' | 'care'
@@ -307,6 +307,8 @@ export default function EhrEditor({
   const [tab, setTab] = useState<TabId>('notes');
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
+  const wardRef = useRef<HTMLDivElement>(null);
+  const [wardOpen, setWardOpen] = useState(false);
   const [status, setStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const first = useRef(true);
 
@@ -334,6 +336,7 @@ export default function EhrEditor({
   useEffect(() => {
     const h = (e: MouseEvent) => {
       if (navRef.current && !navRef.current.contains(e.target as Node)) setMenuOpen(null);
+      if (wardRef.current && !wardRef.current.contains(e.target as Node)) setWardOpen(false);
     };
     document.addEventListener('mousedown', h);
     return () => document.removeEventListener('mousedown', h);
@@ -413,7 +416,6 @@ export default function EhrEditor({
   return (
     <div className="ehr">
       <div className="bar">
-        <Link href="/ehr" className="back">← 병동</Link>
         <input className="ttl" value={title} onChange={e => setTitle(e.target.value)} aria-label="제목" />
         <span className={`st ${status}`}>{status === 'saved' ? '저장됨' : status === 'saving' ? '저장 중…' : '저장 실패'}</span>
         <button
@@ -431,7 +433,23 @@ export default function EhrEditor({
 
       <div className="shell">
         <div className="top">
-          <span className="ward">{info.ward || '병동'} ▾</span>
+          <div className="wardSel" ref={wardRef}>
+            <button type="button" className="ward" onClick={() => setWardOpen(o => !o)}>{info.ward || '병동'} ▾</button>
+            {wardOpen && (
+              <div className="dd wd">
+                {VIEW_LIST.map(v => (
+                  <button
+                    key={v.name}
+                    type="button"
+                    className={(info.ward === '응급실' ? '응급' : info.ward) === v.name ? 'on' : ''}
+                    onClick={() => router.push(`/ehr?view=${encodeURIComponent(v.name)}`)}
+                  >
+                    {v.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <div className="nav" ref={navRef} role="tablist">
             {MENU.map(g => {
               const active = g.items.some(i => i.id === tab);
@@ -627,7 +645,8 @@ export default function EhrEditor({
 
         .ehr .shell { border: 1px solid #94a3b8; background: #fff; border-radius: 4px; overflow: hidden; font-size: 12.5px; color: #1f2937; }
         .ehr .top { display: flex; align-items: stretch; background: linear-gradient(#233a5c, #17283f); }
-        .ehr .ward { flex: 0 0 auto; display: flex; align-items: center; padding: 0 16px; color: #e2e8f0; font-weight: 700; font-size: 13px; border-right: 1px solid rgba(255,255,255,0.15); }
+        .ehr .wardSel { position: relative; flex: 0 0 auto; display: flex; }
+        .ehr .ward { border: 0; background: transparent; cursor: pointer; font-family: inherit; flex: 0 0 auto; display: flex; align-items: center; padding: 0 16px; color: #e2e8f0; font-weight: 700; font-size: 13px; border-right: 1px solid rgba(255,255,255,0.15); }
         .ehr .nav { display: flex; flex-wrap: wrap; }
         .ehr .mi { position: relative; flex: 0 0 auto; }
         .ehr .nav .mi > button { flex: 0 0 auto; border: 0; background: transparent; color: #e5ebf3; padding: 11px 14px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; border-right: 1px solid rgba(255,255,255,0.08); }
