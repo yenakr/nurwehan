@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { SAMPLES, WARDS, bedLabel } from './samples';
+import { SAMPLES, WARDS, bedLabel, roomNo } from './samples';
 import { emptyChart, migrate } from './types';
 
 type Item = {
@@ -66,29 +66,32 @@ export default function EhrHome({ cases }: { cases: Item[] }) {
       if (!res.ok || !j.id) throw new Error();
       router.push(`/ehr/${j.id}`);
     } catch {
-      setErr('불러오지 못했어요. 저장 테이블이 준비됐는지 확인해 주세요.');
+      setErr('열 수 없어요');
       setBusy(null);
     }
   };
 
   // 병동: 병상 단위 / 외래·응급: 샘플 + 직접 추가한 환자
-  type Entry = { key: string; label: string; p: P | null; saved?: Item; make: () => { title: string; subject: string | null; data: unknown } };
+  type Entry = { key: string; label: string; room?: { no: number; size: number; first: boolean }; p: P | null; saved?: Item; make: () => { title: string; subject: string | null; data: unknown } };
   let entries: Entry[] = [];
   if (view.kind === 'ward') {
     const w = WARDS.find(x => x.name === view.name)!;
-    entries = Array.from({ length: w.beds }, (_, k) => {
-      const bed = bedLabel(w, k + 1);
-      const sample = SAMPLES.find(s => s.data.info.ward === w.name && s.data.info.bed === bed);
-      const saved = sample ? cases.find(c => c.sampleKey === sample.key) : cases.find(c => c.ward === w.name && c.bed === bed);
-      return {
-        key: `${w.name}:${bed}`,
-        label: bed,
-        saved,
-        p: saved ?? (sample ? sample.data.info : null),
-        make: () => sample
-          ? { title: sample.title, subject: sample.subject, data: migrate(sample.data) }
-          : { title: '새 환자', subject: w.name, data: { ...emptyChart(), info: { ward: w.name, bed, admit: today() } } },
-      };
+    w.rooms.forEach((size, ri) => {
+      for (let b = 1; b <= size; b++) {
+        const bed = bedLabel(w, ri + 1, b);
+        const sample = SAMPLES.find(sp => sp.data.info.ward === w.name && sp.data.info.bed === bed);
+        const saved = sample ? cases.find(c => c.sampleKey === sample.key) : cases.find(c => c.ward === w.name && c.bed === bed);
+        entries.push({
+          key: `${w.name}:${bed}`,
+          label: bed,
+          room: { no: roomNo(w, ri + 1), size, first: b === 1 },
+          saved,
+          p: saved ?? (sample ? sample.data.info : null),
+          make: () => sample
+            ? { title: sample.title, subject: sample.subject, data: migrate(sample.data) }
+            : { title: '새 환자', subject: w.name, data: { ...emptyChart(), info: { ward: w.name, bed, admit: today() } } },
+        });
+      }
     });
   } else {
     const samples = SAMPLES.filter(s => s.data.info.ward === wardName);
@@ -131,12 +134,12 @@ export default function EhrHome({ cases }: { cases: Item[] }) {
                       else { setVi(t.idx[0]); setOpenG(null); }
                     }}
                   >
-                    {multi && active ? `${t.label} · ${view.name}` : t.label}{multi ? ' ▾' : ''}
+                    {multi && active ? `${view.name} ${WARDS.find(w => w.name === view.name)?.dept}` : t.label}{multi ? ' ▾' : ''}
                   </button>
                   {multi && openG === t.label && (
                     <div className="dd">
                       {t.idx.map(i => (
-                        <button key={i} type="button" className={vi === i ? 'on' : ''} onClick={() => { setVi(i); setOpenG(null); }}>{VIEWS[i].name}</button>
+                        <button key={i} type="button" className={vi === i ? 'on' : ''} onClick={() => { setVi(i); setOpenG(null); }}>{VIEWS[i].name} {WARDS.find(w => w.name === VIEWS[i].name)?.dept}</button>
                       ))}
                     </div>
                   )}
@@ -148,27 +151,35 @@ export default function EhrHome({ cases }: { cases: Item[] }) {
         <div className="tw">
           <table>
             <thead>
-              {view.kind === 'ward' && <tr><th>병상</th><th>환자번호</th><th>이름</th><th>나이/성별</th><th className="dx">진단명</th><th>주치의</th><th>입원일</th><th>재원</th></tr>}
+              {view.kind === 'ward' && <tr><th>병실</th><th>병상</th><th>환자번호</th><th>이름</th><th>나이/성별</th><th>진료과</th><th className="dx">진단명</th><th>주치의</th><th>입원일</th><th>재원</th></tr>}
               {view.kind === 'op' && <tr><th>예약시간</th><th>환자번호</th><th>이름</th><th>나이/성별</th><th>진료과</th><th>주치의</th><th className="dx">내원사유</th><th>상태</th></tr>}
               {view.kind === 'er' && <tr><th>도착</th><th>KTAS</th><th>이름</th><th>나이/성별</th><th className="dx">주호소</th><th>구역</th><th>담당의</th><th>상태</th></tr>}
             </thead>
             <tbody>
               {entries.map(e => {
                 const p = e.p;
+                const roomCell = e.room?.first ? (
+                  <td className="room" rowSpan={e.room.size}>
+                    <b>{e.room.no}</b>
+                    <span>{e.room.size}인실</span>
+                  </td>
+                ) : null;
                 if (!p) {
                   return (
                     <tr key={e.key} className="empty" onClick={() => open(e.key, undefined, e.make)}>
+                      {roomCell}
                       <td className="bed">{e.label}</td>
-                      <td colSpan={7}>{busy === e.key ? '여는 중…' : '빈 병상 · 눌러서 새 환자 차트 만들기'}</td>
+                      <td colSpan={8} className="plus">{busy === e.key ? '…' : '+'}</td>
                     </tr>
                   );
                 }
-                const nm = busy === e.key ? '여는 중…' : p.name;
+                const nm = busy === e.key ? '…' : p.name;
                 return (
                   <tr key={e.key} onClick={() => open(e.key, e.saved, e.make)}>
                     {view.kind === 'ward' && (
                       <>
-                        <td className="bed">{e.label}</td><td>{p.ptNo}</td><td className="nm">{nm}</td><td>{p.ageSex}</td>
+                        {roomCell}
+                        <td className="bed">{e.label}</td><td>{p.ptNo}</td><td className="nm">{nm}</td><td>{p.ageSex}</td><td>{p.dept}</td>
                         <td className="dx">{p.dx}</td><td>{p.doctor}</td><td>{p.admit}</td><td>{stay(p.admit)}</td>
                       </>
                     )}
@@ -189,7 +200,7 @@ export default function EhrHome({ cases }: { cases: Item[] }) {
               })}
               {view.kind !== 'ward' && (
                 <tr className="empty" onClick={newPatient}>
-                  <td colSpan={8}>{busy === `new:${wardName}` ? '여는 중…' : `+ ${view.kind === 'op' ? '외래' : '응급'} 환자 추가`}</td>
+                  <td colSpan={8} className="plus">{busy === `new:${wardName}` ? '…' : '+'}</td>
                 </tr>
               )}
             </tbody>
@@ -214,11 +225,16 @@ export default function EhrHome({ cases }: { cases: Item[] }) {
         .ehrWard .tw { overflow-x: auto; }
         .ehrWard table { width: 100%; border-collapse: collapse; }
         .ehrWard th { background: #e9edf1; border: 1px solid #cfd5dc; padding: 7px 8px; font-size: 12px; font-weight: 700; white-space: nowrap; }
-        .ehrWard td { border: 1px solid #e1e5ea; padding: 9px 8px; white-space: nowrap; }
+        .ehrWard td { border: 1px solid #e1e5ea; padding: 8px; white-space: nowrap; }
         .ehrWard td.dx { white-space: normal; min-width: 200px; }
         .ehrWard tbody tr { cursor: pointer; }
         .ehrWard tbody tr:hover { background: #eef6ff; }
-        .ehrWard td.bed { background: #f6f7f9; font-weight: 700; color: #334155; width: 86px; }
+        .ehrWard td.room { text-align: center; vertical-align: middle; background: #eef1f5; width: 84px; border-right: 2px solid #cfd5dc; }
+        .ehrWard td.room b { display: block; font-size: 15px; color: #1e293b; }
+        .ehrWard td.room span { font-size: 11.5px; color: #64748b; }
+        .ehrWard td.plus { color: #cbd5e1; font-size: 16px; padding: 6px 8px; }
+        .ehrWard tr.empty:hover td.plus { color: #1d4e89; }
+        .ehrWard td.bed { background: #f6f7f9; font-weight: 700; color: #334155; width: 70px; }
         .ehrWard td.nm { font-weight: 800; color: #0e4a84; }
         .ehrWard tr.empty td { color: #94a3b8; }
         .ehrWard .stt { background: #e8f0fb; color: #1d4e89; border-radius: 4px; padding: 2px 8px; font-size: 12px; font-weight: 700; }
