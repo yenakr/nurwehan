@@ -453,4 +453,5 @@ export const VIEW_LIST: { name: string; label: string; group: string | null }[] 
   ...WARDS.map(w => ({ name: w.name, label: `${w.name} ${w.dept}`, group: w.group })),
   { name: '외래', label: '외래', group: null },
   { name: '응급', label: '응급', group: null },
+  { name: '퇴원', label: '퇴원 환자', group: null },
 ];

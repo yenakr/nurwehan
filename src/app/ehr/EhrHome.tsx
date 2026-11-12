@@ -8,7 +8,7 @@ import { emptyChart, migrate } from './types';
 type Item = {
   id: string; ward: string | null; bed: string | null; sampleKey: string | null;
   ptNo: string | null; name: string | null; ageSex: string | null; dx: string | null; doctor: string | null; admit: string | null;
-  dept: string | null; visitTime: string | null; vstatus: string | null; ktas: string | null; zone: string | null; cc: string | null;
+  dept: string | null; visitTime: string | null; vstatus: string | null; ktas: string | null; zone: string | null; cc: string | null; discharged: string | null;
 };
 type P = Partial<Omit<Item, 'id'>>;
 
@@ -25,11 +25,12 @@ const nowHM = () => {
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 };
 
-type View = { kind: 'ward' | 'op' | 'er'; name: string; group: string | null };
+type View = { kind: 'ward' | 'op' | 'er' | 'dc'; name: string; group: string | null };
 const VIEWS: View[] = [
   ...WARDS.map(w => ({ kind: 'ward' as const, name: w.name, group: w.group })),
   { kind: 'op', name: '외래', group: null },
   { kind: 'er', name: '응급', group: null },
+  { kind: 'dc', name: '퇴원', group: null },
 ];
 // 상단 탭: 내과 ▾ / 외과 ▾ 는 묶음, 나머지는 단독
 const TOP: { label: string; idx: number[] }[] = (() => {
@@ -51,6 +52,7 @@ export default function EhrHome({ cases, initialView }: { cases: Item[]; initial
   const [err, setErr] = useState('');
   const view = VIEWS[vi];
   const wardName = view.kind === 'op' ? '외래' : view.kind === 'er' ? '응급실' : view.name;
+  const active = cases.filter(c => !c.discharged);
 
   const open = async (key: string, existing: Item | undefined, make: () => { title: string; subject: string | null; data: unknown }) => {
     if (busy) return;
@@ -80,24 +82,30 @@ export default function EhrHome({ cases, initialView }: { cases: Item[]; initial
       for (let b = 1; b <= size; b++) {
         const bed = bedLabel(w, ri + 1, b);
         const sample = SAMPLES.find(sp => sp.data.info.ward === w.name && sp.data.info.bed === bed);
-        const saved = sample ? cases.find(c => c.sampleKey === sample.key) : cases.find(c => c.ward === w.name && c.bed === bed);
+        const savedAny = sample ? cases.find(c => c.sampleKey === sample.key) : undefined;
+        const dcSample = !!savedAny?.discharged; // 퇴원한 샘플 환자의 병상은 비워둔다
+        const saved = dcSample ? undefined : sample ? savedAny : active.find(c => c.ward === w.name && c.bed === bed);
         entries.push({
           key: `${w.name}:${bed}`,
           label: bed,
           room: { no: roomNo(w, ri + 1), size, first: b === 1 },
           saved,
-          p: saved ?? (sample ? sample.data.info : null),
-          make: () => sample
+          p: saved ?? (sample && !dcSample ? sample.data.info : null),
+          make: () => sample && !dcSample
             ? { title: sample.title, subject: sample.subject, data: migrate(sample.data) }
             : { title: '새 환자', subject: w.name, data: { ...emptyChart(), info: { ward: w.name, bed, admit: today() } } },
         });
       }
     });
+  } else if (view.kind === 'dc') {
+    cases.filter(c => c.discharged).sort((a, b) => (b.discharged || '').localeCompare(a.discharged || '')).forEach(c => entries.push({ key: c.id, label: '', saved: c, p: c, make: () => ({ title: '', subject: null, data: {} }) }));
   } else {
     const samples = SAMPLES.filter(s => s.data.info.ward === wardName);
-    const savedHere = cases.filter(c => c.ward === wardName);
+    const savedHere = active.filter(c => c.ward === wardName);
+    const savedAll = cases.filter(c => c.ward === wardName);
     const used = new Set<string>();
     samples.forEach(s => {
+      if (savedAll.some(c => c.sampleKey === s.key && c.discharged)) return; // 퇴원한 샘플은 목록에서 제외
       const saved = savedHere.find(c => c.sampleKey === s.key);
       if (saved) used.add(saved.id);
       entries.push({ key: s.key, label: '', saved, p: saved ?? s.data.info, make: () => ({ title: s.title, subject: s.subject, data: migrate(s.data) }) });
@@ -153,6 +161,7 @@ export default function EhrHome({ cases, initialView }: { cases: Item[]; initial
             <thead>
               {view.kind === 'ward' && <tr><th>병실</th><th>병상</th><th>환자번호</th><th>이름</th><th>나이/성별</th><th>진료과</th><th className="dx">진단명</th><th>주치의</th><th>입원일</th><th>재원</th></tr>}
               {view.kind === 'op' && <tr><th>예약시간</th><th>환자번호</th><th>이름</th><th>나이/성별</th><th>진료과</th><th>주치의</th><th className="dx">내원사유</th><th>상태</th></tr>}
+              {view.kind === 'dc' && <tr><th>퇴원일</th><th>환자번호</th><th>이름</th><th>나이/성별</th><th>병동/병상</th><th>진료과</th><th className="dx">진단명</th><th>주치의</th></tr>}
               {view.kind === 'er' && <tr><th>도착</th><th>KTAS</th><th>이름</th><th>나이/성별</th><th className="dx">주호소</th><th>구역</th><th>담당의</th><th>상태</th></tr>}
             </thead>
             <tbody>
@@ -183,6 +192,12 @@ export default function EhrHome({ cases, initialView }: { cases: Item[]; initial
                         <td className="dx">{p.dx}</td><td>{p.doctor}</td><td>{p.admit}</td><td>{stay(p.admit)}</td>
                       </>
                     )}
+                    {view.kind === 'dc' && (
+                      <>
+                        <td className="bed">{p.discharged}</td><td>{p.ptNo}</td><td className="nm">{nm}</td><td>{p.ageSex}</td>
+                        <td>{p.ward} {p.bed}</td><td>{p.dept}</td><td className="dx">{p.dx}</td><td>{p.doctor}</td>
+                      </>
+                    )}
                     {view.kind === 'op' && (
                       <>
                         <td className="bed">{p.visitTime}</td><td>{p.ptNo}</td><td className="nm">{nm}</td><td>{p.ageSex}</td>
@@ -198,7 +213,7 @@ export default function EhrHome({ cases, initialView }: { cases: Item[]; initial
                   </tr>
                 );
               })}
-              {view.kind !== 'ward' && (
+              {view.kind !== 'ward' && view.kind !== 'dc' && (
                 <tr className="empty" onClick={newPatient}>
                   <td colSpan={8} className="plus">{busy === `new:${wardName}` ? '…' : '+'}</td>
                 </tr>

@@ -5,7 +5,7 @@ export type EhrRow = { id: string; title: string; subject: string | null; update
 export type EhrListRow = EhrRow & {
   ward: string | null; bed: string | null; sampleKey: string | null;
   ptNo: string | null; name: string | null; ageSex: string | null; dx: string | null; doctor: string | null; admit: string | null;
-  dept: string | null; visitTime: string | null; vstatus: string | null; ktas: string | null; zone: string | null; cc: string | null;
+  dept: string | null; visitTime: string | null; vstatus: string | null; ktas: string | null; zone: string | null; cc: string | null; discharged: string | null;
 };
 
 export async function listCases(userId: string): Promise<EhrListRow[]> {
@@ -16,7 +16,8 @@ export async function listCases(userId: string): Promise<EhrListRow[]> {
         "data"->'info'->>'ptNo' AS "ptNo", "data"->'info'->>'name' AS "name", "data"->'info'->>'ageSex' AS "ageSex",
         "data"->'info'->>'dx' AS "dx", "data"->'info'->>'doctor' AS "doctor", "data"->'info'->>'admit' AS "admit",
         "data"->'info'->>'dept' AS "dept", "data"->'info'->>'visitTime' AS "visitTime", "data"->'info'->>'vstatus' AS "vstatus",
-        "data"->'info'->>'ktas' AS "ktas", "data"->'info'->>'zone' AS "zone", "data"->'info'->>'cc' AS "cc"
+        "data"->'info'->>'ktas' AS "ktas", "data"->'info'->>'zone' AS "zone", "data"->'info'->>'cc' AS "cc",
+        "data"->'info'->>'discharged' AS "discharged"
       FROM "EhrCase"
       WHERE "userId" = ${userId} ORDER BY "updatedAt" DESC LIMIT 100`;
   } catch {

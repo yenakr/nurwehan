@@ -350,6 +350,22 @@ export default function EhrEditor({
   const addRow = (lk: AnyList, init: Row = {}) => setData(d => ({ ...d, [lk]: [...d[lk], { ...init }] }));
   const delRow = (lk: AnyList, i: number) => setData(d => ({ ...d, [lk]: d[lk].filter((_, j) => j !== i) }));
 
+  const toggleDischarge = async () => {
+    const wasDischarged = !!data.info.discharged;
+    if (!wasDischarged && !confirm('퇴원 처리할까요? 기록은 그대로 남아요.')) return;
+    const d = new Date();
+    const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    const next = { ...data, info: { ...data.info, discharged: wasDischarged ? '' : today } };
+    setData(next);
+    try {
+      const res = await fetch(`/api/ehr/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, subject, data: next }) });
+      if (!res.ok) throw new Error();
+      if (!wasDischarged) router.push(`/ehr?view=${encodeURIComponent(info.ward === '응급실' ? '응급' : info.ward || '')}`);
+    } catch {
+      setStatus('error');
+    }
+  };
+
   const hasAllergy = !!info.allergy && !/^(없음|무|none|-)$/i.test(info.allergy.trim());
 
   // 값이 비어 있어도 EMR처럼 보이도록 공통 입력 컴포넌트
@@ -418,16 +434,19 @@ export default function EhrEditor({
       <div className="bar">
         <input className="ttl" value={title} onChange={e => setTitle(e.target.value)} aria-label="제목" />
         <span className={`st ${status}`}>{status === 'saved' ? '저장됨' : status === 'saving' ? '저장 중…' : '저장 실패'}</span>
+        <button type="button" className="dis" onClick={toggleDischarge}>
+          {info.discharged ? '퇴원 취소' : '퇴원'}
+        </button>
         <button
           type="button"
-          className="dis"
+          className="dis del"
           onClick={async () => {
-            if (!confirm('이 환자 차트를 삭제할까요? 입력한 내용이 모두 사라지고 되돌릴 수 없어요.')) return;
+            if (!confirm('이 차트를 삭제할까요? 모든 기록이 사라지고 되돌릴 수 없어요.')) return;
             const res = await fetch(`/api/ehr/${id}`, { method: 'DELETE' });
             if (res.ok) router.push('/ehr');
           }}
         >
-          퇴원(삭제)
+          삭제
         </button>
       </div>
 
@@ -495,6 +514,7 @@ export default function EhrEditor({
             {side('dx', '진단명')}
             {side('allergy', '알레르기')}
             {hasAllergy && <div className="alg">알레르기 있음</div>}
+            {info.discharged && <div className="dcb">퇴원 {info.discharged}</div>}
           </aside>
 
           <section className="main">
@@ -663,6 +683,8 @@ export default function EhrEditor({
         .ehr .sd input { box-sizing: border-box; width: 100%; padding: 3px 4px; border: 0; border-bottom: 1px solid rgba(255,255,255,0.18); background: transparent; color: #fff; font-size: 12.5px; font-family: inherit; }
         .ehr .sd input.big { font-size: 20px; font-weight: 800; padding: 2px 4px; }
         .ehr .sd input:focus { outline: none; background: rgba(255,255,255,0.1); }
+        .ehr .dcb { background: #475569; color: #e2e8f0; font-weight: 700; font-size: 11.5px; padding: 4px 8px; border-radius: 4px; text-align: center; }
+        .ehr .dis.del { color: #b91c1c; }
         .ehr .alg { background: #7f1d1d; color: #fee2e2; font-weight: 700; font-size: 11.5px; padding: 4px 8px; border-radius: 4px; text-align: center; }
 
         .ehr .main { background: #f1f3f5; padding: 10px; min-width: 0; }
@@ -740,7 +762,7 @@ export default function EhrEditor({
           .ehr .body { grid-template-columns: 1fr; }
           .ehr .side { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 12px; }
           .ehr .brand { grid-column: 1 / -1; padding-bottom: 6px; }
-          .ehr .alg { grid-column: 1 / -1; }
+          .ehr .alg, .ehr .dcb { grid-column: 1 / -1; }
           .ehr .nl { grid-template-columns: 1fr; }
           .ehr .doc { padding: 12px; }
         }
