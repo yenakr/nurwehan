@@ -146,18 +146,6 @@ export default function ClinicalNotes({
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-      <div
-        style={{
-          padding: '2px 0 2px 12px',
-          borderLeft: '3px solid #f59e0b',
-          color: 'var(--sub-text)',
-          fontSize: '0.8125rem',
-          lineHeight: 1.6,
-        }}
-      >
-        환자 식별 정보(이름·등록번호·병실·생년월일)는 적지 마세요. 메모는 나만 볼 수 있어요.
-      </div>
-
       {unavailable && (
         <div className="card" style={{ color: 'var(--sub-text)', fontSize: '0.875rem' }}>
           메모 저장소가 아직 준비되지 않았어요. 잠시 후 다시 시도해 주세요.
@@ -182,9 +170,7 @@ export default function ClinicalNotes({
               placeholder="병동 (예: 서울 7층)"
               style={{ padding: '6px 8px', flex: '1 1 160px' }}
             />
-          ) : (
-            <span style={{ color: 'var(--sub-text)', fontSize: '0.875rem' }}>실습이 없는 날이에요</span>
-          )}
+          ) : null}
         </div>
         {checked.length > 0 && (
           <div style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px', marginBottom: 10, fontSize: '0.8125rem' }}>
@@ -206,8 +192,7 @@ export default function ClinicalNotes({
             setStatus('idle');
           }}
           rows={9}
-          placeholder="오늘의 실습 목표, 관찰한 간호, 모르는 용어, 복습할 질문…"
-          style={{ width: '100%', padding: '10px', fontSize: '0.9375rem', lineHeight: 1.5 }}
+                    style={{ width: '100%', padding: '10px', fontSize: '0.9375rem', lineHeight: 1.5 }}
         />
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '8px', gap: '8px' }}>
           <span style={{ fontSize: '0.75rem', color: 'var(--sub-text)' }}>
