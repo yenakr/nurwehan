@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { LEVELS, SUBJECTS, type Level, type Progress, type PSubject } from './practicum-data';
 
@@ -122,6 +123,9 @@ export default function Checklist({
                   {isOpen && (
                     <div className="body">
                       <p className="desc">{it.d}</p>
+                      {it.q && (
+                        <Link className="rel" href={`/quiz?subject=${encodeURIComponent('여성간호실습')}&q=${encodeURIComponent(it.q)}`}>관련 용어 보기</Link>
+                      )}
                       <div className="rec">
                         <div className="seg">
                           {LEVELS.map(l => (
@@ -196,6 +200,7 @@ export default function Checklist({
         .pc .it.open { background: rgba(127,127,127,.05); }
         .pc .body { padding: 0 16px 14px; }
         .pc .desc { margin: 0 0 12px; font-size: 13px; line-height: 1.65; color: var(--text); }
+        .pc .rel { display: inline-block; margin: -4px 0 12px; font-size: 13px; font-weight: 600; color: var(--primary); text-decoration: none; }
         .pc .rec { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
         .pc .seg { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
         .pc .seg button { border: 0; background: var(--white); padding: 7px 12px; font-size: 13px; cursor: pointer; color: var(--sub-text); }
