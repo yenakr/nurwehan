@@ -46,9 +46,11 @@ export default function Checklist({
   const [find, setFind] = useState(false);
   const [sheet, setSheet] = useState<PItem | null>(null);
   // 시트 입력 상태
-  const [lv, setLv] = useState<Level>('O');
+  const [dayMode, setDayMode] = useState<'today' | 'yest' | 'pick'>('today');
   const [date, setDate] = useState(today());
   const [memo, setMemo] = useState('');
+  const [showMemo, setShowMemo] = useState(false);
+  const [undo, setUndo] = useState<{ id: string; text: string } | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const [ed, setEd] = useState<{ l: Level; d: string; m: string }>({ l: 'O', d: today(), m: '' });
   const [delId, setDelId] = useState<string | null>(null);
@@ -113,19 +115,34 @@ export default function Checklist({
 
   const openSheet = (it: PItem) => {
     setSheet(it);
-    setLv('O');
+    setDayMode('today');
     setDate(today());
     setMemo('');
+    setShowMemo(false);
+    setUndo(null);
     setEditId(null);
     setDelId(null);
   };
 
-  const add = () => {
-    if (!sheet || !date) return;
-    const rec: Rec = { id: newId(), d: date, l: lv, ...(memo.trim() ? { m: memo.trim().slice(0, 200) } : {}) };
+  const yesterday = () => {
+    const d = new Date();
+    d.setDate(d.getDate() - 1);
+    const p = (n: number) => String(n).padStart(2, '0');
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
+  };
+  const useDate = dayMode === 'today' ? today() : dayMode === 'yest' ? yesterday() : date;
+  const add = (l: Level) => {
+    if (!sheet || !useDate) return;
+    const rec: Rec = { id: newId(), d: useDate, l, ...(memo.trim() ? { m: memo.trim().slice(0, 200) } : {}) };
     mutate(r => ({ ...r, [sheet.id]: [...(r[sheet.id] || []), rec] }));
     setMemo('');
+    setUndo({ id: rec.id, text: `${lbl(l)} ${md(rec.d)} 기록됨` });
   };
+  useEffect(() => {
+    if (!undo) return;
+    const t = setTimeout(() => setUndo(null), 4000);
+    return () => clearTimeout(t);
+  }, [undo]);
   const startEdit = (r: Rec) => {
     setEditId(r.id);
     setEd({ l: r.l, d: r.d, m: r.m || '' });
@@ -229,68 +246,68 @@ export default function Checklist({
         <div className="ov" onClick={() => setSheet(null)}>
           <div className="sheet" role="dialog" aria-label={sheet.t} onClick={e => e.stopPropagation()}>
             <div className="sh">
-              <div>
-                <h3>{sheet.t}</h3>
-                <span className="cnt">총 {sheetRecs.length}회</span>
-              </div>
+              <h3>{sheet.t}</h3>
               <button type="button" className="x" aria-label="닫기" onClick={() => setSheet(null)}>×</button>
             </div>
             <p className="desc">{sheet.d}</p>
 
-            <div className="blk">
-              <div className="bt">새 기록 추가</div>
-              {seg(lv, setLv)}
-              <div className="frow">
-                <input type="date" value={date} onChange={e => setDate(e.target.value)} />
-                <input className="grow" value={memo} onChange={e => setMemo(e.target.value)} placeholder="메모" maxLength={200} />
+            <div className="quick">
+              {LEVELS.map(l => (
+                <button key={l.k} type="button" className={`q ${l.k}`} onClick={() => add(l.k)}>{l.label}</button>
+              ))}
+            </div>
+            <div className="when">
+              <div className="chips">
+                <button type="button" className={dayMode === 'today' ? 'on' : ''} onClick={() => setDayMode('today')}>오늘</button>
+                <button type="button" className={dayMode === 'yest' ? 'on' : ''} onClick={() => setDayMode('yest')}>어제</button>
+                <label className={`pick ${dayMode === 'pick' ? 'on' : ''}`}>
+                  {dayMode === 'pick' ? md(date) : '날짜'}
+                  <input type="date" value={date} onChange={e => { if (e.target.value) { setDate(e.target.value); setDayMode('pick'); } }} />
+                </label>
               </div>
-              <button type="button" className="add" onClick={add}>추가</button>
+              <button type="button" className={`lnk ${showMemo || memo ? 'on' : ''}`} onClick={() => setShowMemo(m => !m)}>메모</button>
             </div>
+            {showMemo && <input className="memo" autoFocus value={memo} onChange={e => setMemo(e.target.value)} maxLength={200} />}
+            {undo && (
+              <div className="undo">
+                <span>{undo.text}</span>
+                <button type="button" onClick={() => { del(undo.id); setUndo(null); }}>실행취소</button>
+              </div>
+            )}
 
-            <div className="blk">
-              <div className="bt">기록 내역</div>
-              {history.map(r =>
-                editId === r.id ? (
-                  <div key={r.id} className="hr edit">
-                    {seg(ed.l, l => setEd(e => ({ ...e, l })))}
-                    <div className="frow">
-                      <input type="date" value={ed.d} onChange={e => setEd(x => ({ ...x, d: e.target.value }))} />
-                      <input className="grow" value={ed.m} onChange={e => setEd(x => ({ ...x, m: e.target.value }))} placeholder="메모" maxLength={200} />
+            {history.length > 0 && (
+              <div className="hist">
+                {history.map(r =>
+                  editId === r.id ? (
+                    <div key={r.id} className="hr edit">
+                      {seg(ed.l, l => setEd(e => ({ ...e, l })))}
+                      <div className="frow">
+                        <input type="date" value={ed.d} onChange={e => setEd(x => ({ ...x, d: e.target.value }))} />
+                        <input className="grow" value={ed.m} onChange={e => setEd(x => ({ ...x, m: e.target.value }))} placeholder="메모" maxLength={200} />
+                      </div>
+                      <div className="acts">
+                        {delId === r.id ? (
+                          <button type="button" className="dng" onClick={() => { del(r.id); setEditId(null); }}>삭제 확인</button>
+                        ) : (
+                          <button type="button" className="dng" onClick={() => setDelId(r.id)}>삭제</button>
+                        )}
+                        <span className="sp" />
+                        <button type="button" onClick={() => setEditId(null)}>취소</button>
+                        <button type="button" className="pri" onClick={saveEdit}>저장</button>
+                      </div>
                     </div>
-                    <div className="acts">
-                      <button type="button" onClick={() => setEditId(null)}>취소</button>
-                      <button type="button" className="pri" onClick={saveEdit}>저장</button>
-                    </div>
-                  </div>
-                ) : (
-                  <div key={r.id} className="hr">
-                    <button type="button" className="hd" title="그날 실습메모 보기" onClick={() => { setSheet(null); onPickDay(r.d); }}>
-                      {md(r.d)}{noteDates.has(r.d) ? <i> · 메모</i> : null}
+                  ) : (
+                    <button key={r.id} type="button" className="hr" onClick={() => startEdit(r)}>
+                      <span className="hd">{md(r.d)}{noteDates.has(r.d) ? <i> · 메모</i> : null}</span>
+                      <b className={`lb ${r.l}`}>{lbl(r.l)}</b>
+                      {r.m && <span className="hm">{r.m}</span>}
                     </button>
-                    <b className={`lb ${r.l}`}>{lbl(r.l)}</b>
-                    {r.m && <span className="hm">{r.m}</span>}
-                    <span className="acts">
-                      {delId === r.id ? (
-                        <>
-                          <button type="button" className="dng" onClick={() => del(r.id)}>삭제 확인</button>
-                          <button type="button" onClick={() => setDelId(null)}>취소</button>
-                        </>
-                      ) : (
-                        <>
-                          <button type="button" onClick={() => startEdit(r)}>수정</button>
-                          <button type="button" onClick={() => setDelId(r.id)}>삭제</button>
-                        </>
-                      )}
-                    </span>
-                  </div>
-                )
-              )}
-            </div>
+                  )
+                )}
+              </div>
+            )}
 
-            <div className="blk">
-              <div className="bt">비고</div>
-              <input className="rmi" value={remarks[sheet.id] || ''} onChange={e => setRemark(sheet.id, e.target.value)} maxLength={200} />
-            </div>
+            <input className="rmi" value={remarks[sheet.id] || ''} onChange={e => setRemark(sheet.id, e.target.value)} placeholder="비고" maxLength={200} />
           </div>
         </div>
       )}
@@ -330,37 +347,49 @@ export default function Checklist({
         .pc .none { font-size: 12px; color: var(--sub-text); white-space: nowrap; flex-shrink: 0; }
         .pc .sm { font-size: 12px; color: var(--sub-text); text-align: right; flex-shrink: 0; max-width: 55%; line-height: 1.4; }
         .pc .lb { font-weight: 700; }
-        .pc .ov { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,.5); display: flex; align-items: flex-end; justify-content: center; }
-        .pc .sheet { width: 100%; max-height: 88vh; overflow-y: auto; background: var(--white); border-radius: 16px 16px 0 0; padding: 16px 16px 24px; -webkit-overflow-scrolling: touch; }
-        @media (min-width: 768px) { .pc .ov { align-items: center; } .pc .sheet { width: 520px; border-radius: 16px; } }
+        .pc .ov { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,.55); display: flex; align-items: flex-end; justify-content: center; }
+        .pc .sheet { width: 100%; max-height: 86vh; overflow-y: auto; background: var(--white); border-radius: 18px 18px 0 0; padding: 18px 18px 26px; -webkit-overflow-scrolling: touch; }
+        @media (min-width: 768px) { .pc .ov { align-items: center; } .pc .sheet { width: 480px; border-radius: 18px; } }
         .pc .sh { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
-        .pc .sh h3 { margin: 0; font-size: 17px; font-weight: 800; line-height: 1.35; }
-        .pc .cnt { font-size: 13px; color: var(--sub-text); }
-        .pc .x { border: 0; background: none; font-size: 26px; line-height: 1; color: var(--sub-text); cursor: pointer; padding: 0 4px; }
-        .pc .desc { margin: 10px 0 4px; font-size: 13px; line-height: 1.65; color: var(--sub-text); }
-        .pc .blk { margin-top: 16px; }
-        .pc .bt { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
-        .pc .seg { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
-        .pc .seg button { flex: 1; border: 0; background: transparent; padding: 9px 0; font-size: 14px; cursor: pointer; color: var(--sub-text); }
-        .pc .seg button + button { border-left: 1px solid var(--line); }
+        .pc .sh h3 { margin: 0; font-size: 18px; font-weight: 800; line-height: 1.35; }
+        .pc .x { border: 0; background: none; font-size: 28px; line-height: 1; color: var(--sub-text); cursor: pointer; padding: 0 2px; margin-top: -4px; }
+        .pc .desc { margin: 8px 0 16px; font-size: 13px; line-height: 1.65; color: var(--sub-text); }
+        .pc .quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+        .pc .q { border: 0; border-radius: 12px; padding: 16px 0; font: inherit; font-size: 16px; font-weight: 800; cursor: pointer; }
+        .pc .q:active { transform: scale(.97); }
+        .pc .q.O { background: color-mix(in srgb, var(--o) 18%, transparent); color: var(--o); }
+        .pc .q.P { background: color-mix(in srgb, var(--p) 20%, transparent); color: var(--p); }
+        .pc .q.D { background: color-mix(in srgb, var(--d) 20%, transparent); color: var(--d); }
+        .pc .when { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+        .pc .chips { display: flex; gap: 6px; }
+        .pc .chips button, .pc .pick { border: 0; background: var(--tint); border-radius: 999px; padding: 5px 13px; font: inherit; font-size: 13px; font-weight: 600; color: var(--sub-text); cursor: pointer; position: relative; overflow: hidden; }
+        .pc .chips .on { background: var(--primary); color: #fff; }
+        .pc .pick input { position: absolute; inset: 0; opacity: 0; width: 100%; cursor: pointer; }
+        .pc .lnk { border: 0; background: none; font: inherit; font-size: 13px; font-weight: 600; color: var(--sub-text); cursor: pointer; padding: 5px 4px; }
+        .pc .lnk.on { color: var(--primary); }
+        .pc .memo, .pc .rmi, .pc .frow input { border: 0; border-bottom: 1px solid var(--line); background: transparent; color: inherit; font: inherit; font-size: 14px; padding: 8px 2px; width: 100%; border-radius: 0; min-width: 0; }
+        .pc .memo { margin-top: 8px; }
+        .pc .rmi { margin-top: 18px; }
+        .pc .undo { margin-top: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--tint); border-radius: 8px; padding: 8px 12px; font-size: 13px; }
+        .pc .undo button { border: 0; background: none; color: var(--primary); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .pc .hist { margin-top: 14px; }
+        .pc .hr { width: 100%; display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 12px; padding: 11px 2px; border: 0; border-top: 1px solid var(--line); background: none; font: inherit; font-size: 14px; color: inherit; text-align: left; cursor: pointer; }
+        .pc .hr.edit { display: block; cursor: default; }
+        .pc .hd { font-weight: 700; min-width: 52px; }
+        .pc .hd i { font-style: normal; font-size: 12px; font-weight: 500; color: var(--sub-text); }
+        .pc .hm { flex-basis: 100%; font-size: 13px; color: var(--sub-text); }
+        .pc .seg { display: flex; gap: 6px; }
+        .pc .seg button { flex: 1; border: 0; border-radius: 8px; background: var(--tint); padding: 8px 0; font: inherit; font-size: 14px; font-weight: 600; color: var(--sub-text); cursor: pointer; }
         .pc .seg button.on.O { background: var(--o); color: #fff; }
         .pc .seg button.on.P { background: var(--p); color: #fff; }
         .pc .seg button.on.D { background: var(--d); color: #fff; }
-        .pc .frow { display: flex; gap: 6px; margin-top: 8px; }
-        .pc .frow input, .pc .rmi { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font: inherit; font-size: 14px; background: transparent; color: inherit; min-width: 0; }
-        .pc .grow { flex: 1; }
-        .pc .rmi { width: 100%; }
-        .pc .add { width: 100%; margin-top: 8px; border: 0; background: var(--primary); color: #fff; border-radius: 8px; padding: 10px; font-size: 14px; font-weight: 700; cursor: pointer; }
-        .pc .hr { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 14px; }
-        .pc .hr.edit { display: block; }
-        .pc .hd { border: 0; background: none; padding: 0; font: inherit; font-weight: 700; color: var(--text); cursor: pointer; min-width: 48px; text-align: left; }
-        .pc .hd i { font-style: normal; font-size: 12px; font-weight: 500; color: var(--sub-text); }
-        .pc .hm { flex-basis: 100%; order: 3; font-size: 13px; color: var(--sub-text); }
-        .pc .acts { margin-left: auto; display: flex; gap: 4px; }
-        .pc .hr.edit .acts { margin-top: 8px; justify-content: flex-end; }
-        .pc .acts button { border: 1px solid var(--line); background: transparent; border-radius: 6px; padding: 4px 10px; font-size: 12.5px; color: var(--sub-text); cursor: pointer; }
-        .pc .acts button.pri { background: var(--primary); border-color: var(--primary); color: #fff; }
-        .pc .acts button.dng { border-color: #DC2626; color: #DC2626; }
+        .pc .frow { display: flex; gap: 10px; margin-top: 6px; }
+        .pc .frow .grow { flex: 1; }
+        .pc .acts { display: flex; align-items: center; gap: 6px; margin-top: 10px; }
+        .pc .acts .sp { flex: 1; }
+        .pc .acts button { border: 0; background: var(--tint); border-radius: 8px; padding: 7px 14px; font: inherit; font-size: 13px; font-weight: 600; color: var(--sub-text); cursor: pointer; }
+        .pc .acts button.pri { background: var(--primary); color: #fff; }
+        .pc .acts button.dng { background: none; color: #DC2626; padding-left: 0; }
       `}</style>
     </div>
   );
