@@ -89,7 +89,7 @@ export default function ClinicalClient({ schedule, user, progress }: ClinicalCli
 
       {user && (
         <div style={{ display: tab === 'check' ? 'block' : 'none' }}>
-          <Checklist userName={user?.name} defaultCourse={['여성', '성인2', '간호과정'].find(c => schedule.some(x => x.subject.split('_')[0] === c))} all={prog} setAll={setProg} noteDates={noteDates} onPickDay={pickDay} />
+          <Checklist schedule={schedule} studentId={user?.studentId} userName={user?.name} defaultCourse={['여성', '성인2', '간호과정'].find(c => schedule.some(x => x.subject.split('_')[0] === c))} all={prog} setAll={setProg} noteDates={noteDates} onPickDay={pickDay} />
         </div>
       )}
       {tab === 'check' && !user && (
