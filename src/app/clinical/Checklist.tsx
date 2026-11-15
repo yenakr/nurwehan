@@ -31,6 +31,7 @@ export default function Checklist({
   };
   const [dirty, setDirty] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
+  const [gOpen, setGOpen] = useState<Record<string, boolean>>({});
   const [lv, setLv] = useState<Level>('O');
   const [date, setDate] = useState(today());
   const [onlyTodo, setOnlyTodo] = useState(false);
@@ -89,16 +90,27 @@ export default function Checklist({
       <div className="flt">
         <button type="button" className={!onlyTodo ? 'on' : ''} onClick={() => setOnlyTodo(false)}>전체</button>
         <button type="button" className={onlyTodo ? 'on' : ''} onClick={() => setOnlyTodo(true)}>미기록</button>
+        {!onlyTodo && (
+          <button type="button" className="all" onClick={() => {
+            const allOpen = subject.groups.every(g => gOpen[`${subject.key}:${g.name}`]);
+            setGOpen(o => ({ ...o, ...Object.fromEntries(subject.groups.map(g => [`${subject.key}:${g.name}`, !allOpen])) }));
+          }}>{subject.groups.every(g => gOpen[`${subject.key}:${g.name}`]) ? '모두 접기' : '모두 펼치기'}</button>
+        )}
       </div>
 
       {subject.groups.map(g => {
         const items = onlyTodo ? g.items.filter(i => !(prog[i.id] || []).length) : g.items;
         if (!items.length) return null;
+        const gk = `${subject.key}:${g.name}`;
+        const showG = !!gOpen[gk] || onlyTodo;
         const gd = g.items.filter(i => (prog[i.id] || []).length > 0).length;
         return (
           <section key={g.name} className="grp">
-            <div className="gh"><b>{g.name}</b><span>{gd} / {g.items.length}</span></div>
-            {items.map(it => {
+            <button type="button" className="gh" onClick={() => setGOpen(o => ({ ...o, [gk]: !o[gk] }))}>
+              <b>{g.name}</b>
+              <span>{gd} / {g.items.length}<i className={`cv ${showG ? 'up' : ''}`} /></span>
+            </button>
+            {showG && items.map(it => {
               const recs = prog[it.id] || [];
               const isOpen = open === it.id;
               return (
@@ -186,12 +198,16 @@ export default function Checklist({
         .pc .flt { display: flex; gap: 6px; margin: 14px 0 6px; }
         .pc .flt button { border: 1px solid var(--border); background: var(--white); border-radius: 999px; padding: 5px 14px; font-size: 13px; color: var(--sub-text); cursor: pointer; }
         .pc .flt button.on { background: var(--primary); border-color: var(--primary); color: #fff; }
-        .pc .grp { margin-top: 14px; background: var(--white); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-        .pc .gh { display: flex; justify-content: space-between; padding: 10px 16px; background: rgba(127,127,127,.16); font-size: 13px; }
+        .pc .flt .all { margin-left: auto; border: 0; background: none; }
+        .pc .grp { margin-top: 10px; background: var(--white); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
+        .pc .gh { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: rgba(127,127,127,.12); font: inherit; font-size: 14px; color: inherit; border: 0; cursor: pointer; text-align: left; }
+        .pc .gh span { display: flex; align-items: center; gap: 8px; }
+        .pc .cv { width: 7px; height: 7px; border-right: 2px solid var(--sub-text); border-bottom: 2px solid var(--sub-text); transform: rotate(45deg); margin-top: -3px; }
+        .pc .cv.up { transform: rotate(-135deg); margin-top: 3px; }
         .pc .gh span { color: var(--sub-text); }
         .pc .it { border-top: 1px solid var(--border); }
-        .pc .row { width: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 12px 16px; background: none; border: 0; text-align: left; cursor: pointer; font: inherit; color: inherit; }
-        .pc .t { font-size: 14px; line-height: 1.4; }
+        .pc .row { width: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 10px 16px; background: none; border: 0; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+        .pc .t { font-size: 14px; line-height: 1.35; }
         .pc .pills { display: flex; gap: 4px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
         .pc .pill { font-style: normal; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: rgba(127,127,127,.16); white-space: nowrap; }
         .pc .it.open { background: rgba(127,127,127,.05); }
