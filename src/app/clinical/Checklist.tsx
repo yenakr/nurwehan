@@ -1,8 +1,7 @@
 'use client';
 
-import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
-import { LEVELS, type Level, type Progress, type PSubject } from '../data';
+import { LEVELS, SUBJECTS, type Level, type Progress, type PSubject } from './practicum-data';
 
 const today = () => {
   const d = new Date();
@@ -11,24 +10,40 @@ const today = () => {
 };
 const md = (d: string) => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`;
 
-export default function ChecklistClient({ subject, initial }: { subject: PSubject; initial: Progress }) {
-  const [prog, setProg] = useState<Progress>(initial || {});
+export default function Checklist({
+  progress,
+  noteDates,
+  onPickDay,
+}: {
+  progress: Record<string, Record<string, unknown>>;
+  noteDates: Set<string>;
+  onPickDay: (d: string) => void;
+}) {
+  const subjects = SUBJECTS.filter(s => s.course === '여성');
+  const [key, setKey] = useState(subjects[0].key);
+  const subject = subjects.find(s => s.key === key) as PSubject;
+  const [all, setAll] = useState<Record<string, Progress>>(progress as Record<string, Progress>);
+  const prog = all[key] || {};
+  const setProg = (fn: (p: Progress) => Progress) => {
+    setAll(a => ({ ...a, [key]: fn(a[key] || {}) }));
+    setDirty(key);
+  };
+  const [dirty, setDirty] = useState<string | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const [lv, setLv] = useState<Level>('O');
   const [date, setDate] = useState(today());
   const [onlyTodo, setOnlyTodo] = useState(false);
   const [status, setStatus] = useState<'' | 'saving' | 'saved' | 'error'>('');
-  const first = useRef(true);
 
   useEffect(() => {
-    if (first.current) { first.current = false; return; }
+    if (!dirty) return;
     setStatus('saving');
     const t = setTimeout(async () => {
       try {
-        const r = await fetch(`/api/practicum/${subject.key}`, {
+        const r = await fetch(`/api/practicum/${dirty}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data: prog }),
+          body: JSON.stringify({ data: all[dirty] || {} }),
         });
         setStatus(r.ok ? 'saved' : 'error');
       } catch {
@@ -36,7 +51,7 @@ export default function ChecklistClient({ subject, initial }: { subject: PSubjec
       }
     }, 500);
     return () => clearTimeout(t);
-  }, [prog, subject.key]);
+  }, [all, dirty]);
 
   const total = subject.groups.reduce((n, g) => n + g.items.length, 0);
   const done = subject.groups.reduce((n, g) => n + g.items.filter(i => (prog[i.id] || []).length > 0).length, 0);
@@ -56,10 +71,13 @@ export default function ChecklistClient({ subject, initial }: { subject: PSubjec
   return (
     <div className="pc">
       <div className="top">
-        <Link href="/practicum" className="back">실습 체크리스트</Link>
+        <div className="subj">
+          {subjects.map(x => (
+            <button key={x.key} type="button" className={x.key === key ? 'on' : ''} onClick={() => { setKey(x.key); setOpen(null); }}>{x.sub}</button>
+          ))}
+        </div>
         <span className={`st ${status}`}>{status === 'saving' ? '저장 중' : status === 'saved' ? '저장됨' : status === 'error' ? '저장 실패' : ''}</span>
       </div>
-      <h1>{subject.title}</h1>
       <div className="sum">
         <div className="bar"><i style={{ width: `${total ? (done / total) * 100 : 0}%` }} /></div>
         <div className="nums">
@@ -86,13 +104,20 @@ export default function ChecklistClient({ subject, initial }: { subject: PSubjec
                 <div key={it.id} className={`it ${isOpen ? 'open' : ''}`}>
                   <button type="button" className="row" onClick={() => setOpen(isOpen ? null : it.id)}>
                     <span className="t">{it.t}</span>
-                    <span className="pills">
-                      {LEVELS.map(l => {
-                        const rs = recs.filter(r => r.l === l.k);
-                        if (!rs.length) return null;
-                        return <em key={l.k} className={`pill ${l.k}`}>{l.label.slice(0, l.k === 'P' ? 2 : 2)} {md(rs[rs.length - 1].d)}{rs.length > 1 ? ` +${rs.length - 1}` : ''}</em>;
-                      })}
-                    </span>
+                    {recs.length > 0 && (
+                      <span className="dl">
+                        {LEVELS.map(l => {
+                          const rs = recs.filter(r => r.l === l.k);
+                          if (!rs.length) return null;
+                          return (
+                            <span key={l.k} className="dr">
+                              <b className={`lb ${l.k}`}>{l.label}</b>
+                              {rs.map(r => <i key={r.d}>{md(r.d)}</i>)}
+                            </span>
+                          );
+                        })}
+                      </span>
+                    )}
                   </button>
                   {isOpen && (
                     <div className="body">
@@ -116,7 +141,10 @@ export default function ChecklistClient({ subject, initial }: { subject: PSubjec
                                 <span className={`lb ${l.k}`}>{l.label}</span>
                                 <span className="chs">
                                   {rs.map(r => (
-                                    <span key={r.d} className="ch">{md(r.d)}<button type="button" aria-label="삭제" onClick={() => del(it.id, r.d, l.k)}>×</button></span>
+                                    <span key={r.d} className="ch">
+                                      <button type="button" className="dt" title="그날 메모 보기" onClick={() => onPickDay(r.d)}>{md(r.d)}{noteDates.has(r.d) ? ' · 메모' : ''}</button>
+                                      <button type="button" aria-label="삭제" onClick={() => del(it.id, r.d, l.k)}>×</button>
+                                    </span>
                                   ))}
                                 </span>
                               </div>
@@ -135,13 +163,20 @@ export default function ChecklistClient({ subject, initial }: { subject: PSubjec
 
       <style jsx global>{`
         .pc { --o: #0E7490; --p: #B45309; --d: #15803D; }
-        .pc .top { display: flex; justify-content: space-between; align-items: center; font-size: 13px; }
-        .pc .back { color: var(--sub-text); text-decoration: none; }
+        .pc .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 14px; }
+        .pc .subj { display: flex; gap: 6px; flex-wrap: wrap; }
+        .pc .subj button { border: 1px solid var(--border); background: var(--white); border-radius: 999px; padding: 6px 14px; font-size: 14px; font-weight: 600; color: var(--sub-text); cursor: pointer; }
+        .pc .subj button.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+        .pc .dl { display: flex; flex-direction: column; gap: 3px; }
+        .pc .dr { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: baseline; }
+        .pc .dr .lb { width: 52px; font-size: 12px; padding: 0; }
+        .pc .dr i { font-style: normal; font-size: 12.5px; font-weight: 600; background: rgba(127,127,127,.16); border-radius: 6px; padding: 1px 7px; color: var(--text); }
+        .pc .ch .dt { font-size: 13px; color: var(--text); padding: 0; }
         .pc .st { color: var(--sub-text); }
         .pc .st.error { color: #DC2626; }
         .pc h1 { font-size: 22px; font-weight: 800; margin: 6px 0 14px; }
         .pc .sum { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
-        .pc .bar { height: 6px; background: #EEF2F7; border-radius: 3px; overflow: hidden; }
+        .pc .bar { height: 6px; background: rgba(127,127,127,.2); border-radius: 3px; overflow: hidden; }
         .pc .bar i { display: block; height: 100%; background: var(--primary); }
         .pc .nums { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 10px; font-size: 13px; }
         .pc .lv.O, .pc .pill.O, .pc .lb.O { color: var(--o); }
@@ -151,16 +186,16 @@ export default function ChecklistClient({ subject, initial }: { subject: PSubjec
         .pc .flt button { border: 1px solid var(--border); background: var(--white); border-radius: 999px; padding: 5px 14px; font-size: 13px; color: var(--sub-text); cursor: pointer; }
         .pc .flt button.on { background: var(--primary); border-color: var(--primary); color: #fff; }
         .pc .grp { margin-top: 14px; background: var(--white); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-        .pc .gh { display: flex; justify-content: space-between; padding: 10px 16px; background: #F1F5F9; font-size: 13px; }
+        .pc .gh { display: flex; justify-content: space-between; padding: 10px 16px; background: rgba(127,127,127,.16); font-size: 13px; }
         .pc .gh span { color: var(--sub-text); }
         .pc .it { border-top: 1px solid var(--border); }
-        .pc .row { width: 100%; display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 12px 16px; background: none; border: 0; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+        .pc .row { width: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 12px 16px; background: none; border: 0; text-align: left; cursor: pointer; font: inherit; color: inherit; }
         .pc .t { font-size: 14px; line-height: 1.4; }
         .pc .pills { display: flex; gap: 4px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
-        .pc .pill { font-style: normal; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: #F1F5F9; white-space: nowrap; }
-        .pc .it.open { background: #FAFCFF; }
+        .pc .pill { font-style: normal; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: rgba(127,127,127,.16); white-space: nowrap; }
+        .pc .it.open { background: rgba(127,127,127,.05); }
         .pc .body { padding: 0 16px 14px; }
-        .pc .desc { margin: 0 0 12px; font-size: 13px; line-height: 1.65; color: #334155; }
+        .pc .desc { margin: 0 0 12px; font-size: 13px; line-height: 1.65; color: var(--text); }
         .pc .rec { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
         .pc .seg { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
         .pc .seg button { border: 0; background: var(--white); padding: 7px 12px; font-size: 13px; cursor: pointer; color: var(--sub-text); }
@@ -174,7 +209,7 @@ export default function ChecklistClient({ subject, initial }: { subject: PSubjec
         .pc .lr { display: flex; gap: 10px; align-items: flex-start; }
         .pc .lb { font-size: 12px; font-weight: 700; width: 52px; flex-shrink: 0; padding-top: 4px; }
         .pc .chs { display: flex; flex-wrap: wrap; gap: 5px; }
-        .pc .ch { display: inline-flex; align-items: center; gap: 4px; background: #F1F5F9; border-radius: 999px; padding: 3px 4px 3px 10px; font-size: 13px; }
+        .pc .ch { display: inline-flex; align-items: center; gap: 4px; background: rgba(127,127,127,.16); border-radius: 999px; padding: 3px 4px 3px 10px; font-size: 13px; }
         .pc .ch button { border: 0; background: none; color: var(--sub-text); cursor: pointer; font-size: 14px; line-height: 1; padding: 0 4px; }
       `}</style>
     </div>
