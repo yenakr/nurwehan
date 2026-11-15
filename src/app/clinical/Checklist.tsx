@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
-import { LEVELS, SUBJECTS, type Level, type Progress, type PSubject } from './practicum-data';
+import { COURSES, LEVELS, SUBJECTS, type Level, type Progress, type PSubject } from './practicum-data';
 
 const today = () => {
   const d = new Date();
@@ -15,14 +15,18 @@ export default function Checklist({
   setAll,
   noteDates,
   onPickDay,
+  defaultCourse,
 }: {
+  defaultCourse?: string;
   all: Record<string, Progress>;
   setAll: Dispatch<SetStateAction<Record<string, Progress>>>;
   noteDates: Set<string>;
   onPickDay: (d: string) => void;
 }) {
-  const subjects = SUBJECTS.filter(s => s.course === '여성');
-  const [key, setKey] = useState(subjects[0].key);
+  const [course, setCourse] = useState(COURSES.some(c => c.key === defaultCourse) ? (defaultCourse as string) : COURSES[0].key);
+  const subjects = SUBJECTS.filter(s => s.course === course);
+  const [keys, setKeys] = useState<Record<string, string>>({});
+  const key = subjects.find(s => s.key === keys[course])?.key ?? subjects[0].key;
   const subject = subjects.find(s => s.key === key) as PSubject;
   const prog = all[key] || {};
   const setProg = (fn: (p: Progress) => Progress) => {
@@ -74,12 +78,19 @@ export default function Checklist({
     <div className="pc">
       <div className="top">
         <div className="subj">
-          {subjects.map(x => (
-            <button key={x.key} type="button" className={x.key === key ? 'on' : ''} onClick={() => { setKey(x.key); setOpen(null); }}>{x.sub}</button>
+          {COURSES.map(c => (
+            <button key={c.key} type="button" className={c.key === course ? 'on' : ''} onClick={() => { setCourse(c.key); setOpen(null); }}>{c.label}</button>
           ))}
         </div>
         <span className={`st ${status}`}>{status === 'saving' ? '저장 중' : status === 'saved' ? '저장됨' : status === 'error' ? '저장 실패' : ''}</span>
       </div>
+      {subjects.length > 1 && (
+        <div className="subj sub2">
+          {subjects.map(x => (
+            <button key={x.key} type="button" className={x.key === key ? 'on' : ''} onClick={() => { setKeys(k => ({ ...k, [course]: x.key })); setOpen(null); }}>{x.sub}</button>
+          ))}
+        </div>
+      )}
       <div className="sum">
         <div className="bar"><i style={{ width: `${total ? (done / total) * 100 : 0}%` }} /></div>
         <div className="nums">
@@ -177,6 +188,8 @@ export default function Checklist({
       <style jsx global>{`
         .pc { --o: #0E7490; --p: #B45309; --d: #15803D; }
         .pc .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 14px; }
+        .pc .sub2 { margin-bottom: 12px; }
+        .pc .sub2 button { font-size: 13px; padding: 5px 12px; }
         .pc .subj { display: flex; gap: 6px; flex-wrap: wrap; }
         .pc .subj button { border: 1px solid var(--border); background: var(--white); border-radius: 999px; padding: 6px 14px; font-size: 14px; font-weight: 600; color: var(--sub-text); cursor: pointer; }
         .pc .subj button.on { background: var(--primary); border-color: var(--primary); color: #fff; }
