@@ -43,6 +43,7 @@ export default function Checklist({
   const [status, setStatus] = useState<'' | 'saving' | 'saved' | 'error'>('');
   const [filter, setFilter] = useState<Filter>('all');
   const [q, setQ] = useState('');
+  const [find, setFind] = useState(false);
   const [sheet, setSheet] = useState<PItem | null>(null);
   // 시트 입력 상태
   const [lv, setLv] = useState<Level>('O');
@@ -163,40 +164,36 @@ export default function Checklist({
 
   return (
     <div className="pc">
-      <div className="hs">
-        {COURSES.map(c => (
-          <button key={c.key} type="button" className={c.key === course ? 'on' : ''} onClick={() => { setCourse(c.key); setFilter('all'); setQ(''); }}>{c.label}</button>
-        ))}
+      <div className="top">
+        <div className="ct">
+          {COURSES.map(c => (
+            <button key={c.key} type="button" className={c.key === course ? 'on' : ''} onClick={() => { setCourse(c.key); setFilter('all'); setQ(''); }}>{c.label}</button>
+          ))}
+        </div>
+        {status === 'saving' && <span className="st">저장 중</span>}
+        {status === 'error' && <span className="st error">저장 실패</span>}
+        <button type="button" className={`ic ${find || q || filter !== 'all' ? 'on' : ''}`} aria-label="검색" onClick={() => setFind(f => !f)}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
+        </button>
       </div>
+      {find && (
+        <div className="tools">
+          <input type="search" autoFocus value={q} onChange={e => setQ(e.target.value)} />
+          <div className="flt">
+            {([['all', '전체'], ['todo', '미기록'], ['done', '기록완료']] as [Filter, string][]).map(([k, t]) => (
+              <button key={k} type="button" className={filter === k ? 'on' : ''} onClick={() => setFilter(k)}>{t}</button>
+            ))}
+          </div>
+        </div>
+      )}
       {subjects.length > 1 && (
-        <div className="hs sub">
+        <div className="hs">
           {subjects.map(x => (
             <button key={x.key} type="button" className={x.key === key ? 'on' : ''} onClick={() => { setKeys(k => ({ ...k, [course]: x.key })); setFilter('all'); setQ(''); }}>{x.sub}</button>
           ))}
         </div>
       )}
 
-      <div className="sum">
-        <div className="sl">
-          <b>기록된 항목 {done}/{total}</b>
-          <span className={`st ${status}`}>{status === 'saving' ? '저장 중' : status === 'saved' ? '저장됨' : status === 'error' ? '저장 실패' : ''}</span>
-        </div>
-        <div className="bar"><i style={{ width: `${total ? (done / total) * 100 : 0}%` }} /></div>
-        <div className="nums">
-          {LEVELS.map(l => <span key={l.k} className={`lv ${l.k}`}>{l.label} {cnt(l.k)}</span>)}
-        </div>
-      </div>
-
-      <div className="tools">
-        <input type="search" value={q} onChange={e => setQ(e.target.value)} placeholder="항목 검색" />
-        <div className="flt">
-          {([['all', '전체'], ['todo', '미기록'], ['done', '기록완료']] as [Filter, string][]).map(([k, t]) => (
-            <button key={k} type="button" className={filter === k ? 'on' : ''} onClick={() => setFilter(k)}>{t}</button>
-          ))}
-        </div>
-      </div>
-
-      {visible.length === 0 && <div className="empty">해당하는 항목이 없어요</div>}
       {visible.map(({ g, items }) => {
         const gd = g.items.filter(i => (prog[i.id] || []).length > 0).length;
         return (
@@ -208,9 +205,7 @@ export default function Checklist({
               return (
                 <button key={it.id} type="button" className="row" onClick={() => openSheet(it)}>
                   <span className="t">{it.t}</span>
-                  {recs.length === 0 ? (
-                    <span className="none">미기록</span>
-                  ) : (
+                  {recs.length > 0 && (
                     <span className="sm">
                       {last.map((r, i) => (
                         <span key={r.id}>{i > 0 && ' · '}<b className={`lb ${r.l}`}>{lbl(r.l)}</b> {md(r.d)}</span>
@@ -224,6 +219,11 @@ export default function Checklist({
           </section>
         );
       })}
+
+      <div className="foot">
+        <b>{done}/{total}</b>
+        {LEVELS.map(l => <span key={l.k} className={`lv ${l.k}`}>{l.label} {cnt(l.k)}</span>)}
+      </div>
 
       {sheet && (
         <div className="ov" onClick={() => setSheet(null)}>
@@ -242,21 +242,20 @@ export default function Checklist({
               {seg(lv, setLv)}
               <div className="frow">
                 <input type="date" value={date} onChange={e => setDate(e.target.value)} />
-                <input className="grow" value={memo} onChange={e => setMemo(e.target.value)} placeholder="메모 (선택)" maxLength={200} />
+                <input className="grow" value={memo} onChange={e => setMemo(e.target.value)} placeholder="메모" maxLength={200} />
               </div>
               <button type="button" className="add" onClick={add}>추가</button>
             </div>
 
             <div className="blk">
               <div className="bt">기록 내역</div>
-              {history.length === 0 && <div className="none">아직 기록이 없어요</div>}
               {history.map(r =>
                 editId === r.id ? (
                   <div key={r.id} className="hr edit">
                     {seg(ed.l, l => setEd(e => ({ ...e, l })))}
                     <div className="frow">
                       <input type="date" value={ed.d} onChange={e => setEd(x => ({ ...x, d: e.target.value }))} />
-                      <input className="grow" value={ed.m} onChange={e => setEd(x => ({ ...x, m: e.target.value }))} placeholder="메모 (선택)" maxLength={200} />
+                      <input className="grow" value={ed.m} onChange={e => setEd(x => ({ ...x, m: e.target.value }))} placeholder="메모" maxLength={200} />
                     </div>
                     <div className="acts">
                       <button type="button" onClick={() => setEditId(null)}>취소</button>
@@ -290,7 +289,7 @@ export default function Checklist({
 
             <div className="blk">
               <div className="bt">비고</div>
-              <input className="rmi" value={remarks[sheet.id] || ''} onChange={e => setRemark(sheet.id, e.target.value)} placeholder="항목 전체에 대한 비고" maxLength={200} />
+              <input className="rmi" value={remarks[sheet.id] || ''} onChange={e => setRemark(sheet.id, e.target.value)} maxLength={200} />
             </div>
           </div>
         </div>
@@ -298,21 +297,24 @@ export default function Checklist({
 
       <style jsx global>{`
         .pc { --o: #0E7490; --p: #B45309; --d: #15803D; --line: var(--border); --tint: rgba(127,127,127,.14); }
-        .pc .hs { display: flex; gap: 6px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; margin-bottom: 8px; }
-        .pc .hs::-webkit-scrollbar { display: none; }
-        .pc .hs button { flex-shrink: 0; border: 1px solid var(--line); background: var(--white); border-radius: 999px; padding: 6px 14px; font-size: 14px; font-weight: 600; color: var(--sub-text); cursor: pointer; }
-        .pc .hs.sub button { font-size: 13px; padding: 5px 12px; }
-        .pc .hs button.on { background: var(--primary); border-color: var(--primary); color: #fff; }
-        .pc .sum { margin: 6px 0 10px; }
-        .pc .sl { display: flex; justify-content: space-between; align-items: baseline; font-size: 15px; }
-        .pc .st { font-size: 12px; color: var(--sub-text); }
-        .pc .st.error { color: #DC2626; }
-        .pc .bar { height: 5px; background: var(--tint); border-radius: 3px; overflow: hidden; margin: 6px 0; }
-        .pc .bar i { display: block; height: 100%; background: var(--primary); }
-        .pc .nums { display: flex; gap: 12px; font-size: 12.5px; font-weight: 600; }
+        .pc .top { display: flex; align-items: center; gap: 8px; border-bottom: 1px solid var(--line); margin-bottom: 10px; }
+        .pc .ct { flex: 1; min-width: 0; display: flex; gap: 18px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+        .pc .ct::-webkit-scrollbar, .pc .hs::-webkit-scrollbar { display: none; }
+        .pc .ct button { flex-shrink: 0; border: 0; border-bottom: 2px solid transparent; background: none; padding: 8px 0; font: inherit; font-size: 15px; font-weight: 700; color: var(--sub-text); cursor: pointer; margin-bottom: -1px; }
+        .pc .ct button.on { color: var(--primary); border-bottom-color: var(--primary); }
+        .pc .ic { flex-shrink: 0; border: 0; background: none; color: var(--sub-text); padding: 6px; cursor: pointer; display: flex; }
+        .pc .ic.on { color: var(--primary); }
+        .pc .hs { display: flex; gap: 6px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; margin-bottom: 6px; }
+        .pc .hs button { flex-shrink: 0; border: 0; background: var(--tint); border-radius: 999px; padding: 5px 12px; font-size: 13px; font-weight: 600; color: var(--sub-text); cursor: pointer; }
+        .pc .hs button.on { background: var(--primary); color: #fff; }
+        .pc .foot { display: flex; gap: 12px; align-items: baseline; justify-content: center; margin-top: 18px; font-size: 12.5px; color: var(--sub-text); }
+        .pc .foot b { color: var(--text); }
+        .pc .lv { font-weight: 600; }
         .pc .lv.O, .pc .lb.O { color: var(--o); }
         .pc .lv.P, .pc .lb.P { color: var(--p); }
         .pc .lv.D, .pc .lb.D { color: var(--d); }
+        .pc .st { font-size: 12px; color: var(--sub-text); white-space: nowrap; }
+        .pc .st.error { color: #DC2626; }
         .pc .tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 4px; }
         .pc .tools input { flex: 1 1 160px; min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; font: inherit; font-size: 14px; background: transparent; color: inherit; }
         .pc .flt { display: flex; gap: 4px; }
