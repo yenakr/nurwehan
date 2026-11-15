@@ -5,6 +5,7 @@ import Link from 'next/link';
 import MySchedule, { type ScheduleItem } from './MySchedule';
 import ClinicalNotes, { type Note } from './ClinicalNotes';
 import Checklist from './Checklist';
+import type { Progress } from './practicum-data';
 
 interface ClinicalClientProps {
   schedule: ScheduleItem[];
@@ -32,6 +33,7 @@ const quizSubjectOf = (subject: string) => QUIZ_SUBJECT[subject.split('_')[0]];
 
 export default function ClinicalClient({ schedule, user, progress }: ClinicalClientProps) {
   const [tab, setTab] = useState<Tab>('mine');
+  const [prog, setProg] = useState<Record<string, Progress>>(progress as Record<string, Progress>);
   const [notes, setNotes] = useState<Note[]>([]);
   const [unavailable, setUnavailable] = useState(false);
   const [targetDate, setTargetDate] = useState<string | undefined>(undefined);
@@ -84,17 +86,22 @@ export default function ClinicalClient({ schedule, user, progress }: ClinicalCli
         </div>
       ))}
 
-      {tab === 'notes' && (user ? <ClinicalNotes schedule={schedule} notes={notes} setNotes={setNotes} unavailable={unavailable} targetDate={targetDate} /> : (
+      {tab === 'notes' && (user ? <ClinicalNotes progress={prog} schedule={schedule} notes={notes} setNotes={setNotes} unavailable={unavailable} targetDate={targetDate} /> : (
         <div className="card" style={{ textAlign: 'center', color: 'var(--sub-text)' }}>
           로그인하면 실습메모를 쓸 수 있어요.
         </div>
       ))}
 
-      {tab === 'check' && (user ? <Checklist progress={progress} noteDates={noteDates} onPickDay={pickDay} /> : (
+      {user && (
+        <div style={{ display: tab === 'check' ? 'block' : 'none' }}>
+          <Checklist all={prog} setAll={setProg} noteDates={noteDates} onPickDay={pickDay} />
+        </div>
+      )}
+      {tab === 'check' && !user && (
         <div className="card" style={{ textAlign: 'center', color: 'var(--sub-text)' }}>
           로그인하면 체크리스트를 기록할 수 있어요.
         </div>
-      ))}
+      )}
 
       {tab === 'terms' && (
         <div className="card">
