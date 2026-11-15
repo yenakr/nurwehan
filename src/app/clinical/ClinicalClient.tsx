@@ -17,9 +17,9 @@ type Tab = 'mine' | 'notes' | 'check' | 'terms';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'mine', label: '내 실습' },
-  { id: 'notes', label: '실습메모' },
+  { id: 'notes', label: '메모' },
   { id: 'check', label: '체크리스트' },
-  { id: 'terms', label: '실습 의학용어' },
+  { id: 'terms', label: '의학용어' },
 ];
 
 // 실습 과목 → 퀴즈 과목명
@@ -83,7 +83,7 @@ export default function ClinicalClient({ schedule, user, progress }: ClinicalCli
 
       {tab === 'notes' && (user ? <ClinicalNotes progress={prog} schedule={schedule} notes={notes} setNotes={setNotes} unavailable={unavailable} targetDate={targetDate} /> : (
         <div className="card" style={{ textAlign: 'center', color: 'var(--sub-text)' }}>
-          로그인하면 실습메모를 쓸 수 있어요.
+          로그인하면 메모를 쓸 수 있어요.
         </div>
       ))}
 
@@ -100,7 +100,7 @@ export default function ClinicalClient({ schedule, user, progress }: ClinicalCli
 
       {tab === 'terms' && (
         <div className="card">
-          <h3 style={{ fontSize: '1.0625rem', fontWeight: 800, marginBottom: '12px' }}>실습 의학용어</h3>
+          <h3 style={{ fontSize: '1.0625rem', fontWeight: 800, marginBottom: '12px' }}>의학용어</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
             {(subjects.length ? subjects.map(s => s.quiz) : allQuiz).map(name => {
               const mine = subjects.find(s => s.quiz === name);
