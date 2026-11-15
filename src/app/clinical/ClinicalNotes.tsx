@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import type { ScheduleItem } from './MySchedule';
-import { LEVELS, SUBJECTS, type Progress } from './practicum-data';
+import { LEVELS, SUBJECTS, type Store } from './practicum-data';
 
 export interface Note {
   id: string;
@@ -37,7 +37,7 @@ export default function ClinicalNotes({
   unavailable,
   targetDate,
 }: {
-  progress: Record<string, Progress>;
+  progress: Record<string, Store>;
   schedule: ScheduleItem[];
   notes: Note[];
   setNotes: Dispatch<SetStateAction<Note[]>>;
@@ -88,7 +88,7 @@ export default function ClinicalNotes({
     SUBJECTS.forEach(sub =>
       sub.groups.forEach(g =>
         g.items.forEach(it => {
-          (progress[sub.key]?.[it.id] || []).forEach(r => {
+          (progress[sub.key]?.r?.[it.id] || []).forEach(r => {
             if (r.d === date) out.push({ l: LEVELS.find(x => x.k === r.l)?.label ?? '', t: it.t });
           });
         })

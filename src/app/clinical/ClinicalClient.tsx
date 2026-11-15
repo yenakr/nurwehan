@@ -5,7 +5,7 @@ import Link from 'next/link';
 import MySchedule, { type ScheduleItem } from './MySchedule';
 import ClinicalNotes, { type Note } from './ClinicalNotes';
 import Checklist from './Checklist';
-import type { Progress } from './practicum-data';
+import { normalizeStore, type Store } from './practicum-data';
 
 interface ClinicalClientProps {
   schedule: ScheduleItem[];
@@ -33,7 +33,7 @@ const quizSubjectOf = (subject: string) => QUIZ_SUBJECT[subject.split('_')[0]];
 
 export default function ClinicalClient({ schedule, user, progress }: ClinicalClientProps) {
   const [tab, setTab] = useState<Tab>('mine');
-  const [prog, setProg] = useState<Record<string, Progress>>(progress as Record<string, Progress>);
+  const [prog, setProg] = useState<Record<string, Store>>(() => Object.fromEntries(Object.entries(progress).map(([k, v]) => [k, normalizeStore(v)])));
   const [notes, setNotes] = useState<Note[]>([]);
   const [unavailable, setUnavailable] = useState(false);
   const [targetDate, setTargetDate] = useState<string | undefined>(undefined);

@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
-import { COURSES, LEVELS, SUBJECTS, type Level, type Progress, type PSubject } from './practicum-data';
+import { COURSES, LEVELS, SUBJECTS, type Level, type Progress, type PSubject, type Store } from './practicum-data';
 
 const today = () => {
   const d = new Date();
@@ -18,8 +18,8 @@ export default function Checklist({
   defaultCourse,
 }: {
   defaultCourse?: string;
-  all: Record<string, Progress>;
-  setAll: Dispatch<SetStateAction<Record<string, Progress>>>;
+  all: Record<string, Store>;
+  setAll: Dispatch<SetStateAction<Record<string, Store>>>;
   noteDates: Set<string>;
   onPickDay: (d: string) => void;
 }) {
@@ -28,9 +28,14 @@ export default function Checklist({
   const [keys, setKeys] = useState<Record<string, string>>({});
   const key = subjects.find(s => s.key === keys[course])?.key ?? subjects[0].key;
   const subject = subjects.find(s => s.key === key) as PSubject;
-  const prog = all[key] || {};
+  const prog = all[key]?.r || {};
+  const remarks = all[key]?.n || {};
   const setProg = (fn: (p: Progress) => Progress) => {
-    setAll(a => ({ ...a, [key]: fn(a[key] || {}) }));
+    setAll(a => ({ ...a, [key]: { r: fn(a[key]?.r || {}), n: a[key]?.n || {} } }));
+    setDirty(key);
+  };
+  const setRemark = (id: string, v: string) => {
+    setAll(a => ({ ...a, [key]: { r: a[key]?.r || {}, n: { ...(a[key]?.n || {}), [id]: v.slice(0, 200) } } }));
     setDirty(key);
   };
   const [dirty, setDirty] = useState<string | null>(null);
@@ -49,7 +54,7 @@ export default function Checklist({
         const r = await fetch(`/api/practicum/${dirty}`, {
           method: 'PUT',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data: all[dirty] || {} }),
+          body: JSON.stringify({ data: all[dirty] || { r: {}, n: {} } }),
         });
         setStatus(r.ok ? 'saved' : 'error');
       } catch {
@@ -128,6 +133,7 @@ export default function Checklist({
                 <div key={it.id} className={`it ${isOpen ? 'open' : ''}`}>
                   <button type="button" className="row" onClick={() => setOpen(isOpen ? null : it.id)}>
                     <span className="t">{it.t}</span>
+                    {remarks[it.id] && <span className="rm">{remarks[it.id]}</span>}
                     {recs.length > 0 && (
                       <span className="dl">
                         {LEVELS.map(l => {
@@ -155,6 +161,7 @@ export default function Checklist({
                         <input type="date" value={date} onChange={e => setDate(e.target.value)} />
                         <button type="button" className="add" onClick={() => add(it.id)}>추가</button>
                       </div>
+                      <input className="rmi" value={remarks[it.id] || ''} onChange={e => setRemark(it.id, e.target.value)} placeholder="비고" maxLength={200} />
                       {recs.length > 0 && (
                         <div className="log">
                           {LEVELS.map(l => {
@@ -226,6 +233,8 @@ export default function Checklist({
         .pc .it.open { background: rgba(127,127,127,.05); }
         .pc .body { padding: 0 16px 14px; }
         .pc .desc { margin: 0 0 12px; font-size: 13px; line-height: 1.65; color: var(--text); }
+        .pc .rm { font-size: 12.5px; color: var(--sub-text); }
+        .pc .rmi { width: 100%; margin-top: 10px; border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; font: inherit; font-size: 13px; background: transparent; color: inherit; }
         .pc .rec { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
         .pc .seg { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
         .pc .seg button { border: 0; background: var(--white); padding: 7px 12px; font-size: 13px; cursor: pointer; color: var(--sub-text); }

@@ -516,3 +516,11 @@ export const LEVELS = [
 export type Level = (typeof LEVELS)[number]['k'];
 export type Rec = { d: string; l: Level };
 export type Progress = Record<string, Rec[]>;
+
+// 과목별 저장 형태: r = 날짜 기록, n = 항목별 비고. 예전 형태(기록만 평평하게 저장)도 읽는다.
+export type Store = { r: Progress; n: Record<string, string> };
+export function normalizeStore(raw: unknown): Store {
+  const o = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
+  if (o.r && typeof o.r === 'object') return { r: o.r as Progress, n: (o.n && typeof o.n === 'object' ? o.n : {}) as Record<string, string> };
+  return { r: o as Progress, n: {} };
+}
