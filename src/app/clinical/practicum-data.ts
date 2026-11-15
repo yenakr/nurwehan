@@ -1,9 +1,15 @@
 // 실습 체크리스트 항목. 과목을 추가하려면 SUBJECTS에 항목만 늘리면 된다.
-export type PItem = { id: string; t: string; d: string };
+export type PItem = { id: string; t: string; d: string; q?: string };
 export type PGroup = { name: string; items: PItem[] };
 export type PSubject = { key: string; course: string; title: string; sub: string; groups: PGroup[] };
 
-const I = (id: string, t: string, d: string): PItem => ({ id, t, d });
+const I = (id: string, t: string, d: string): PItem => ({ id, t, d, q: Q[id] });
+
+// 관련 용어 검색어 (학습 화면에서 이 키워드로 검색)
+const Q: Record<string, string> = {
+  l4: 'fundal', l6: 'FHR', l7: 'fetal', l9: 'Freedman', l10: 'epidural', l15: 'Apgar', l20: '태반', l24: 'fundus', l25: '오로', l26: 'preeclampsia', l27: 'oxytocin',
+  o2: 'fundus', o3: '오로', o13: 'LATCH', o17: '조기', o18: '파막', o20: 'previa', o23: '오조', g17: 'spirometer', g27: 'Pap', g30: 'CA',
+};
 
 export const SUBJECTS: PSubject[] = [
   {
