@@ -88,7 +88,6 @@ interface QuizClientProps {
   initialTerms: NursingTerm[];
   user?: any;
   initialSubject?: string;
-  initialQuery?: string;
   subjectLevels?: Record<string, string>;
   guest?: boolean;
   superAdmin?: boolean;
@@ -207,7 +206,7 @@ function ElapsedClock({ startRef }: { startRef: { current: number } }) {
   return <span style={{ fontSize: '0.8125rem', color: 'var(--sub-text)', fontVariantNumeric: 'tabular-nums' }}>{fmtSec(sec)}</span>;
 }
 
-export default function QuizClient({ initialTerms, user, initialSubject, initialQuery, subjectLevels, guest, superAdmin }: QuizClientProps) {
+export default function QuizClient({ initialTerms, user, initialSubject, subjectLevels, guest, superAdmin }: QuizClientProps) {
   const isAdmin = isAdminRole(user?.role);
   const router = useRouter();
   const [termsList, setTermsList] = useState<NursingTerm[]>(initialTerms);
@@ -607,7 +606,6 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
   useEffect(() => {
     if (initialSubject && termsList.some(t => t.subject === initialSubject)) {
       openSubject(initialSubject);
-      if (initialQuery) setSearchTerm(initialQuery.slice(0, 50));
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialSubject]);
