@@ -288,9 +288,7 @@ tr { break-inside: avoid; }
         </div>
         {status === 'saving' && <span className="st">저장 중</span>}
         {status === 'error' && <span className="st error">저장 실패</span>}
-        <button type="button" className={`ic ${selMode ? 'on' : ''}`} aria-label="여러 항목 선택" onClick={() => (selMode ? exitSel() : setSelMode(true))}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7l2 2 3-3.5M4 17l2 2 3-3.5M13 8h7M13 18h7" /></svg>
-        </button>
+        <button type="button" className={`selbtn ${selMode ? 'on' : ''}`} onClick={() => (selMode ? exitSel() : setSelMode(true))}>{selMode ? '완료' : '선택'}</button>
         <button type="button" className={`ic ${find || q || filter !== 'all' ? 'on' : ''}`} aria-label="검색" onClick={() => setFind(f => !f)}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
         </button>
@@ -468,6 +466,8 @@ tr { break-inside: avoid; }
         .pc .ct button.on { color: var(--primary); border-bottom-color: var(--primary); }
         .pc .ic { flex-shrink: 0; border: 0; background: none; color: var(--sub-text); padding: 6px; cursor: pointer; display: flex; }
         .pc .ic.on { color: var(--primary); }
+        .pc .selbtn { flex-shrink: 0; border: 0; background: none; font: inherit; font-size: 14px; font-weight: 700; color: var(--sub-text); cursor: pointer; padding: 6px 4px; }
+        .pc .selbtn.on { color: var(--primary); }
         .pc .hs { display: flex; gap: 6px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; margin-bottom: 6px; }
         .pc .hs button { flex-shrink: 0; border: 0; background: var(--tint); border-radius: 999px; padding: 5px 12px; font-size: 13px; font-weight: 600; color: var(--sub-text); cursor: pointer; }
         .pc .hs button.on { background: var(--primary); color: #fff; }
