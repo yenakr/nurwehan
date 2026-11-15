@@ -66,10 +66,10 @@ export default function ClinicalClient({ schedule, user, progress }: ClinicalCli
   const allQuiz = Object.values(QUIZ_SUBJECT);
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      <div className="hscroll">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div className="mtabs">
         {TABS.map(t => (
-          <button key={t.id} type="button" onClick={() => setTab(t.id)} className={tab === t.id ? 'btn-primary' : 'btn-outline'} style={{ fontSize: '0.875rem', flexShrink: 0, whiteSpace: 'nowrap' }}>
+          <button key={t.id} type="button" onClick={() => setTab(t.id)} className={tab === t.id ? 'on' : ''}>
             {t.label}
           </button>
         ))}
@@ -89,7 +89,7 @@ export default function ClinicalClient({ schedule, user, progress }: ClinicalCli
 
       {user && (
         <div style={{ display: tab === 'check' ? 'block' : 'none' }}>
-          <Checklist defaultCourse={['여성', '성인2', '간호과정'].find(c => schedule.some(x => x.subject.split('_')[0] === c))} all={prog} setAll={setProg} noteDates={noteDates} onPickDay={pickDay} />
+          <Checklist userName={user?.name} defaultCourse={['여성', '성인2', '간호과정'].find(c => schedule.some(x => x.subject.split('_')[0] === c))} all={prog} setAll={setProg} noteDates={noteDates} onPickDay={pickDay} />
         </div>
       )}
       {tab === 'check' && !user && (
@@ -135,8 +135,9 @@ export default function ClinicalClient({ schedule, user, progress }: ClinicalCli
         </div>
       )}
       <style jsx global>{`
-        .hscroll { display: flex; gap: 8px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; -webkit-overflow-scrolling: touch; margin: 0 -2px; padding: 2px; }
-        .hscroll::-webkit-scrollbar { display: none; }
+        .mtabs { display: flex; background: rgba(127,127,127,.14); border-radius: 10px; padding: 3px; gap: 2px; }
+        .mtabs button { flex: 1; border: 0; background: none; border-radius: 8px; padding: 7px 0; font: inherit; font-size: 14px; font-weight: 600; color: var(--sub-text); cursor: pointer; white-space: nowrap; }
+        .mtabs button.on { background: var(--primary); color: #fff; }
       `}</style>
     </div>
   );

@@ -31,7 +31,7 @@ export default async function ClinicalPage() {
   const progress = user ? await getAllProgress(user.id) : {};
 
   return (
-    <main style={{ flex: 1, backgroundColor: 'var(--white)', padding: '32px 0' }}>
+    <main style={{ flex: 1, backgroundColor: 'var(--white)', padding: '14px 0 32px' }}>
       <div className="container">
         <ClinicalClient schedule={schedule} user={user} progress={progress} />
       </div>
