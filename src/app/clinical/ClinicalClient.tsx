@@ -4,17 +4,20 @@ import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import MySchedule, { type ScheduleItem } from './MySchedule';
 import ClinicalNotes, { type Note } from './ClinicalNotes';
+import Checklist from './Checklist';
 
 interface ClinicalClientProps {
   schedule: ScheduleItem[];
   user: any;
+  progress: Record<string, Record<string, unknown>>;
 }
 
-type Tab = 'mine' | 'notes' | 'terms';
+type Tab = 'mine' | 'notes' | 'check' | 'terms';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'mine', label: '내 실습' },
   { id: 'notes', label: '실습메모' },
+  { id: 'check', label: '체크리스트' },
   { id: 'terms', label: '실습 의학용어' },
 ];
 
@@ -27,7 +30,7 @@ const QUIZ_SUBJECT: Record<string, string> = {
 };
 const quizSubjectOf = (subject: string) => QUIZ_SUBJECT[subject.split('_')[0]];
 
-export default function ClinicalClient({ schedule, user }: ClinicalClientProps) {
+export default function ClinicalClient({ schedule, user, progress }: ClinicalClientProps) {
   const [tab, setTab] = useState<Tab>('mine');
   const [notes, setNotes] = useState<Note[]>([]);
   const [unavailable, setUnavailable] = useState(false);
@@ -84,6 +87,12 @@ export default function ClinicalClient({ schedule, user }: ClinicalClientProps) 
       {tab === 'notes' && (user ? <ClinicalNotes schedule={schedule} notes={notes} setNotes={setNotes} unavailable={unavailable} targetDate={targetDate} /> : (
         <div className="card" style={{ textAlign: 'center', color: 'var(--sub-text)' }}>
           로그인하면 실습메모를 쓸 수 있어요.
+        </div>
+      ))}
+
+      {tab === 'check' && (user ? <Checklist progress={progress} noteDates={noteDates} onPickDay={pickDay} /> : (
+        <div className="card" style={{ textAlign: 'center', color: 'var(--sub-text)' }}>
+          로그인하면 체크리스트를 기록할 수 있어요.
         </div>
       ))}
 

@@ -1,6 +1,7 @@
 import { getCurrentUser } from '@/lib/auth';
 import ClinicalClient from './ClinicalClient';
 import type { ScheduleItem } from './MySchedule';
+import { getAllProgress } from '@/lib/practicum';
 import { purgeExpiredAssignments, findMyAssignments, findMates } from '@/lib/clinical';
 
 async function loadSchedule(user: any): Promise<ScheduleItem[]> {
@@ -27,11 +28,12 @@ export default async function ClinicalPage() {
   const user = await getCurrentUser();
   await purgeExpiredAssignments();
   const schedule = await loadSchedule(user);
+  const progress = user ? await getAllProgress(user.id) : {};
 
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--white)', padding: '32px 0' }}>
       <div className="container">
-        <ClinicalClient schedule={schedule} user={user} />
+        <ClinicalClient schedule={schedule} user={user} progress={progress} />
       </div>
     </main>
   );

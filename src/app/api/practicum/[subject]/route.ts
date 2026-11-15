@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { isAdminRole } from '@/lib/auth-core';
 import { saveProgress } from '@/lib/practicum';
-import { SUBJECTS } from '@/app/practicum/data';
+import { SUBJECTS } from '@/app/clinical/practicum-data';
 
 export async function PUT(req: Request, { params }: { params: Promise<{ subject: string }> }) {
   const user = await getCurrentUser();
