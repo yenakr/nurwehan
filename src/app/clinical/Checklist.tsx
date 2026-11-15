@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
+import type { ScheduleItem } from './MySchedule';
 import { COURSES, LEVELS, SUBJECTS, normalizeStore, type Level, type Progress, type PSubject, type PItem, type Rec, type Store } from './practicum-data';
 
 const today = () => {
@@ -48,9 +49,13 @@ export default function Checklist({
   onPickDay,
   defaultCourse,
   userName,
+  studentId,
+  schedule,
 }: {
   defaultCourse?: string;
   userName?: string;
+  studentId?: string;
+  schedule: ScheduleItem[];
   all: Record<string, Store>;
   setAll: Dispatch<SetStateAction<Record<string, Store>>>;
   noteDates: Set<string>;
@@ -61,6 +66,21 @@ export default function Checklist({
   const [keys, setKeys] = useState<Record<string, string>>({});
   const key = subjects.find(s => s.key === keys[course])?.key ?? subjects[0].key;
   const subject = subjects.find(s => s.key === key) as PSubject;
+  const courseSch = schedule.filter(x => x.subject.split('_')[0] === course);
+  const addDays = (d: string, n: number) => {
+    const [y, m, dd] = d.split('-').map(Number);
+    const t = new Date(y, m - 1, dd + n);
+    const p = (v: number) => String(v).padStart(2, '0');
+    return `${t.getFullYear()}-${p(t.getMonth() + 1)}-${p(t.getDate())}`;
+  };
+  const practiceDays = useMemo(() => {
+    const set = new Set<string>();
+    courseSch.forEach(x => { for (let i = 0; i < 5; i++) set.add(addDays(x.startDate, i)); });
+    return set;
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [schedule, course]);
+  const minD = courseSch.length ? courseSch.map(x => x.startDate).sort()[0] : undefined;
+  const maxD = courseSch.length ? courseSch.map(x => x.endDate).sort().slice(-1)[0] : undefined;
   const prog: Progress = all[key]?.r || {};
   const remarks = all[key]?.n || {};
 
@@ -168,6 +188,7 @@ export default function Checklist({
     return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
   };
   const useDate = dayMode === 'today' ? today() : dayMode === 'yest' ? yesterday() : date;
+  const outside = practiceDays.size > 0 && !practiceDays.has(useDate);
   const add = (l: Level) => {
     if (!sheet || !useDate) return;
     const rec: Rec = { id: newId(), d: useDate, l, ...(memo.trim() ? { m: memo.trim().slice(0, 200) } : {}) };
@@ -254,7 +275,7 @@ export default function Checklist({
   );
 
   const [popup, setPopup] = useState(false);
-  const printPdf = () => {
+  const printPdf = (list: PSubject[]) => {
     const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     const courseLabel = COURSES.find(c => c.key === course)?.label ?? '';
     const datesOf = (recs: Rec[], l: Level) => {
@@ -262,41 +283,51 @@ export default function Checklist({
       chrono(recs).filter(r => r.l === l).forEach(r => m.set(r.d, (m.get(r.d) || 0) + 1));
       return Array.from(m.entries()).map(([d, n]) => `${md(d)}${n > 1 ? `(${n})` : ''}`).join(', ');
     };
-    let body = '';
-    subject.groups.forEach(g => {
-      g.items.forEach((it, idx) => {
-        const recs = prog[it.id] || [];
-        const notes = [remarks[it.id], ...chrono(recs).filter(r => r.m).map(r => `${md(r.d)} ${r.m}`)].filter(Boolean) as string[];
-        body += '<tr>' +
-          (idx === 0 ? `<td class="g" rowspan="${g.items.length}">${esc(g.name)}</td>` : '') +
-          `<td class="t">${esc(it.t)}</td>` +
-          `<td class="d">${esc(datesOf(recs, 'O'))}</td><td class="d">${esc(datesOf(recs, 'P'))}</td><td class="d">${esc(datesOf(recs, 'D'))}</td>` +
-          `<td class="n">${notes.map(esc).join('<br>')}</td></tr>`;
+    const period = minD && maxD ? `${minD.replace(/-/g, '.')} ~ ${maxD.replace(/-/g, '.')}` : '';
+    const depts = Array.from(new Set(courseSch.map(x => `${x.hospital} ${x.ward}`.trim()))).join(', ');
+    const page = (sub: PSubject, last: boolean) => {
+      const st = all[sub.key];
+      let body = '';
+      sub.groups.forEach(g => {
+        g.items.forEach((it, idx) => {
+          const recs = st?.r?.[it.id] || [];
+          const notes = [st?.n?.[it.id], ...chrono(recs).filter(r => r.m).map(r => `${md(r.d)} ${r.m}`)].filter(Boolean) as string[];
+          body += '<tr>' +
+            (idx === 0 ? `<td class="g" rowspan="${g.items.length}">${esc(g.name)}</td>` : '') +
+            `<td class="t">${esc(it.t)}</td>` +
+            `<td class="d">${esc(datesOf(recs, 'O'))}</td><td class="d">${esc(datesOf(recs, 'P'))}</td><td class="d">${esc(datesOf(recs, 'D'))}</td>` +
+            `<td class="n">${notes.map(esc).join('<br>')}</td></tr>`;
+        });
       });
-    });
-    const title = `체크리스트_${subject.sub}${userName ? '_' + userName : ''}`;
+      return `<section${last ? '' : ' class="brk"'}>
+<h1>${esc(courseLabel)} 실습내용 체크리스트 (${esc(sub.sub)})</h1>
+<table class="info"><tr><th>학번</th><td>${esc(studentId || '')}</td><th>실습기간</th><td>${esc(period)}</td></tr><tr><th>이름</th><td>${esc(userName || '')}</td><th>실습부서</th><td>${esc(depts)}</td></tr></table>
+<div class="meta">관찰 및 수행한 날짜를 기록 (예: 12/3)</div>
+<table><thead><tr><th>분류</th><th>실습 내용</th><th>관찰</th><th>부분수행</th><th>수행</th><th>비고</th></tr></thead><tbody>${body}</tbody></table>
+<div class="sign"><div>임상현장지도자 확인 (서명)<span></span></div><div>실습담당교수 확인 (서명)<span></span></div></div>
+</section>`;
+    };
+    const title = `체크리스트_${list.length > 1 ? courseLabel : list[0].sub}${userName ? '_' + userName : ''}`;
     const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><style>
 @page { size: A4; margin: 12mm; }
 * { box-sizing: border-box; }
 body { margin: 0; padding: 16px; font-family: 'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',sans-serif; color: #000; background: #fff; font-size: 10.5px; }
-h1 { font-size: 16px; margin: 0 0 4px; }
-.meta { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 11px; }
+h1 { font-size: 16px; margin: 0 0 6px; }
+.meta { margin: 6px 0; font-size: 10.5px; text-align: right; }
 table { width: 100%; border-collapse: collapse; table-layout: fixed; }
 th, td { border: 1px solid #555; padding: 3px 5px; vertical-align: middle; }
 th { background: #e5e5e5; font-size: 10.5px; }
-td.g { width: 15%; text-align: center; font-weight: 700; background: #f5f5f5; }
-td.t { width: 33%; }
+table.info th { width: 12%; }
+table.info td { width: 38%; }
+td.g { width: 11%; text-align: center; font-weight: 700; background: #f5f5f5; }
+td.t { width: 40%; }
 td.d { width: 11%; text-align: center; font-size: 10px; word-break: keep-all; }
-td.n { width: 19%; font-size: 9.5px; }
+td.n { width: 16%; font-size: 9.5px; }
 tr { break-inside: avoid; }
+.brk { break-after: page; }
 .sign { display: flex; justify-content: flex-end; gap: 28px; margin-top: 14px; font-size: 11px; }
 .sign span { display: inline-block; min-width: 150px; border-bottom: 1px solid #000; margin-left: 6px; }
-</style></head><body>
-<h1>${esc(courseLabel)} 실습내용 체크리스트 (${esc(subject.sub)})</h1>
-<div class="meta"><span>이름: ${esc(userName || '')}</span><span>관찰 및 수행한 날짜를 기록 (예: 12/3)</span></div>
-<table><thead><tr><th>분류</th><th>실습 내용</th><th>관찰</th><th>부분수행</th><th>수행</th><th>비고</th></tr></thead><tbody>${body}</tbody></table>
-<div class="sign"><div>임상현장지도자 확인 (서명)<span></span></div><div>실습담당교수 확인 (서명)<span></span></div></div>
-</body></html>`;
+</style></head><body>${list.map((x, i) => page(x, i === list.length - 1)).join('')}</body></html>`;
     const w = window.open('', '_blank');
     if (!w) { setPopup(true); setTimeout(() => setPopup(false), 3000); return; }
     w.document.open();
@@ -305,6 +336,7 @@ tr { break-inside: avoid; }
     w.focus();
     setTimeout(() => w.print(), 500);
   };
+  const recorded = (x: PSubject) => Object.keys(all[x.key]?.r || {}).length > 0;
 
   const sheetRecs = sheet ? prog[sheet.id] || [] : [];
   const history = sheetRecs.map((r, i) => ({ r, i })).sort((a, b) => b.r.d.localeCompare(a.r.d) || b.i - a.i).map(x => x.r);
@@ -388,19 +420,20 @@ tr { break-inside: avoid; }
       <div className="foot">
         <b>{done}/{total}</b>
         {LEVELS.map(l => <span key={l.k} className={`lv ${l.k}`}>{l.label} {cnt(l.k)}</span>)}
-        <button type="button" className="pdf" onClick={printPdf}>{popup ? '팝업을 허용해주세요' : 'PDF 저장'}</button>
+        <button type="button" className="pdf" onClick={() => printPdf([subject])}>{popup ? '팝업을 허용해주세요' : 'PDF 저장'}</button>
+        {subjects.filter(recorded).length > 1 && <button type="button" className="pdf" onClick={() => printPdf(subjects.filter(recorded))}>전체 PDF</button>}
       </div>
 
       {selMode && (
         <div className="bar2">
           <div className="bt2">
-            <span>{sel.size ? `${sel.size}개 선택` : '항목을 선택하세요'}</span>
+            <span>{sel.size ? `${sel.size}개 선택` : '항목을 선택하세요'}{outside && <em className="warn">실습일 아님</em>}</span>
             <div className="chips">
               <button type="button" className={dayMode === 'today' ? 'on' : ''} onClick={() => setDayMode('today')}>오늘</button>
               <button type="button" className={dayMode === 'yest' ? 'on' : ''} onClick={() => setDayMode('yest')}>어제</button>
               <label className={`pick ${dayMode === 'pick' ? 'on' : ''}`}>
                 {dayMode === 'pick' ? md(date) : '날짜'}
-                <input type="date" value={date} onChange={e => { if (e.target.value) { setDate(e.target.value); setDayMode('pick'); } }} />
+                <input type="date" min={minD} max={maxD} value={date} onChange={e => { if (e.target.value) { setDate(e.target.value); setDayMode('pick'); } }} />
               </label>
             </div>
           </div>
@@ -438,9 +471,10 @@ tr { break-inside: avoid; }
                 <button type="button" className={dayMode === 'yest' ? 'on' : ''} onClick={() => setDayMode('yest')}>어제</button>
                 <label className={`pick ${dayMode === 'pick' ? 'on' : ''}`}>
                   {dayMode === 'pick' ? md(date) : '날짜'}
-                  <input type="date" value={date} onChange={e => { if (e.target.value) { setDate(e.target.value); setDayMode('pick'); } }} />
+                  <input type="date" min={minD} max={maxD} value={date} onChange={e => { if (e.target.value) { setDate(e.target.value); setDayMode('pick'); } }} />
                 </label>
               </div>
+              {outside && <span className="warn">실습일 아님</span>}
               <button type="button" className={`lnk ${showMemo || memo ? 'on' : ''}`} onClick={() => setShowMemo(m => !m)}>메모</button>
             </div>
             {showMemo && <input className="memo" autoFocus value={memo} onChange={e => setMemo(e.target.value)} maxLength={200} />}
@@ -572,6 +606,7 @@ tr { break-inside: avoid; }
         .pc .acts button { border: 0; background: var(--tint); border-radius: 8px; padding: 7px 14px; font: inherit; font-size: 13px; font-weight: 600; color: var(--sub-text); cursor: pointer; }
         .pc .acts button.pri { background: var(--primary); color: #fff; }
         .pc .acts button.dng { background: none; color: #DC2626; padding-left: 0; }
+        .pc .warn { font-size: 12px; font-style: normal; font-weight: 600; color: #D97706; margin-left: 8px; }
         .pc.selecting { padding-bottom: 150px; }
         .pc .ck { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--sub-text); flex-shrink: 0; align-self: center; position: relative; }
         .pc .ck.on { background: var(--primary); border-color: var(--primary); }
