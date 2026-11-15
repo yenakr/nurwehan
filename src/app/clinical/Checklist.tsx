@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
 import { LEVELS, SUBJECTS, type Level, type Progress, type PSubject } from './practicum-data';
 
 const today = () => {
@@ -11,18 +11,19 @@ const today = () => {
 const md = (d: string) => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`;
 
 export default function Checklist({
-  progress,
+  all,
+  setAll,
   noteDates,
   onPickDay,
 }: {
-  progress: Record<string, Record<string, unknown>>;
+  all: Record<string, Progress>;
+  setAll: Dispatch<SetStateAction<Record<string, Progress>>>;
   noteDates: Set<string>;
   onPickDay: (d: string) => void;
 }) {
   const subjects = SUBJECTS.filter(s => s.course === '여성');
   const [key, setKey] = useState(subjects[0].key);
   const subject = subjects.find(s => s.key === key) as PSubject;
-  const [all, setAll] = useState<Record<string, Progress>>(progress as Record<string, Progress>);
   const prog = all[key] || {};
   const setProg = (fn: (p: Progress) => Progress) => {
     setAll(a => ({ ...a, [key]: fn(a[key] || {}) }));

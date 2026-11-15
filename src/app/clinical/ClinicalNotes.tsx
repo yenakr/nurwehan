@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import type { ScheduleItem } from './MySchedule';
+import { LEVELS, SUBJECTS, type Progress } from './practicum-data';
 
 export interface Note {
   id: string;
@@ -29,12 +30,14 @@ const addDay = (s: string, n: number) => {
 };
 
 export default function ClinicalNotes({
+  progress,
   schedule,
   notes,
   setNotes,
   unavailable,
   targetDate,
 }: {
+  progress: Record<string, Progress>;
   schedule: ScheduleItem[];
   notes: Note[];
   setNotes: Dispatch<SetStateAction<Note[]>>;
@@ -78,6 +81,25 @@ export default function ClinicalNotes({
     setContent(found?.content ?? '');
     setStatus('idle');
   }, [date, ward, notes]);
+
+  // 이날 체크리스트에 기록한 항목
+  const checked = useMemo(() => {
+    const out: { l: string; t: string }[] = [];
+    SUBJECTS.forEach(sub =>
+      sub.groups.forEach(g =>
+        g.items.forEach(it => {
+          (progress[sub.key]?.[it.id] || []).forEach(r => {
+            if (r.d === date) out.push({ l: LEVELS.find(x => x.k === r.l)?.label ?? '', t: it.t });
+          });
+        })
+      )
+    );
+    return out;
+  }, [progress, date]);
+  const lines = checked.map(c => `[${c.l}] ${c.t}`);
+  const missing = lines.filter(l => !content.includes(l));
+  const insert = () =>
+    setContent(c => `${c}${c && !c.endsWith('\n') ? '\n' : ''}${missing.join('\n')}\n`.slice(0, MAX));
 
   const save = async () => {
     if (!ward) return;
@@ -163,6 +185,19 @@ export default function ClinicalNotes({
             <span style={{ color: 'var(--sub-text)', fontSize: '0.875rem' }}>실습이 없는 날이에요</span>
           )}
         </div>
+        {checked.length > 0 && (
+          <div style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px', marginBottom: 10, fontSize: '0.8125rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+              <b>이날 체크리스트</b>
+              <button className="btn-outline" onClick={insert} disabled={!missing.length} style={{ padding: '3px 10px', fontSize: '0.75rem' }}>메모에 넣기</button>
+            </div>
+            {checked.map((c, i) => (
+              <div key={i} style={{ lineHeight: 1.7 }}>
+                <span style={{ color: 'var(--sub-text)', marginRight: 8 }}>{c.l}</span>{c.t}
+              </div>
+            ))}
+          </div>
+        )}
         <textarea
           value={content}
           onChange={e => {
