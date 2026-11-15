@@ -2,6 +2,7 @@
 
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import type { ScheduleItem } from './MySchedule';
+import { DETAIL } from './practicum-detail';
 import { COURSES, LEVELS, SUBJECTS, normalizeStore, type Level, type Progress, type PSubject, type PItem, type Rec, type Store } from './practicum-data';
 
 const today = () => {
@@ -458,7 +459,14 @@ tr { break-inside: avoid; }
               <h3>{sheet.t}</h3>
               <button type="button" className="x" aria-label="닫기" onClick={() => setSheet(null)}>×</button>
             </div>
-            <p className="desc">{sheet.d}</p>
+            <p className="desc">{DETAIL[sheet.id]?.s ?? sheet.d}</p>
+            {DETAIL[sheet.id] && (
+              <ul className="kp">
+                {DETAIL[sheet.id].k.map(([a, b]) => (
+                  <li key={a}><b>{a}</b><span>{b}</span></li>
+                ))}
+              </ul>
+            )}
 
             <div className="quick">
               {LEVELS.map(l => (
@@ -569,6 +577,10 @@ tr { break-inside: avoid; }
         .pc .sh { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
         .pc .sh h3 { margin: 0; font-size: 18px; font-weight: 800; line-height: 1.35; }
         .pc .x { border: 0; background: none; font-size: 28px; line-height: 1; color: var(--sub-text); cursor: pointer; padding: 0 2px; margin-top: -4px; }
+        .pc .kp { list-style: none; margin: -6px 0 16px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+        .pc .kp li { display: flex; gap: 10px; font-size: 13px; line-height: 1.55; color: var(--text); }
+        .pc .kp b { flex: 0 0 64px; font-weight: 600; color: var(--primary); }
+        .pc .kp span { flex: 1; min-width: 0; }
         .pc .desc { margin: 8px 0 16px; font-size: 13px; line-height: 1.65; color: var(--sub-text); }
         .pc .quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         .pc .q { border: 0; border-radius: 12px; padding: 16px 0; font: inherit; font-size: 16px; font-weight: 800; cursor: pointer; }
