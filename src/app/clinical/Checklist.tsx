@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, type Dispatch, type SetStateAction } from 'react';
-import { COURSES, LEVELS, SUBJECTS, type Level, type Progress, type PSubject, type Store } from './practicum-data';
+import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
+import { COURSES, LEVELS, SUBJECTS, type Level, type Progress, type PSubject, type PItem, type Rec, type Store } from './practicum-data';
 
 const today = () => {
   const d = new Date();
@@ -9,6 +9,14 @@ const today = () => {
   return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 };
 const md = (d: string) => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`;
+const lbl = (l: Level) => LEVELS.find(x => x.k === l)?.label ?? '';
+const rank: Record<Level, number> = { O: 1, P: 2, D: 3 };
+const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+// 날짜 오름차순 (같은 날은 입력 순서 유지)
+const chrono = (recs: Rec[]) => recs.map((r, i) => ({ r, i })).sort((a, b) => a.r.d.localeCompare(b.r.d) || a.i - b.i).map(x => x.r);
+const top = (recs: Rec[]): Level | null => (recs.length ? recs.reduce((m, r) => (rank[r.l] > rank[m] ? r.l : m), recs[0].l) : null);
+
+type Filter = 'all' | 'todo' | 'done';
 
 export default function Checklist({
   all,
@@ -28,9 +36,23 @@ export default function Checklist({
   const [keys, setKeys] = useState<Record<string, string>>({});
   const key = subjects.find(s => s.key === keys[course])?.key ?? subjects[0].key;
   const subject = subjects.find(s => s.key === key) as PSubject;
-  const prog = all[key]?.r || {};
+  const prog: Progress = all[key]?.r || {};
   const remarks = all[key]?.n || {};
-  const setProg = (fn: (p: Progress) => Progress) => {
+
+  const [dirty, setDirty] = useState<string | null>(null);
+  const [status, setStatus] = useState<'' | 'saving' | 'saved' | 'error'>('');
+  const [filter, setFilter] = useState<Filter>('all');
+  const [q, setQ] = useState('');
+  const [sheet, setSheet] = useState<PItem | null>(null);
+  // 시트 입력 상태
+  const [lv, setLv] = useState<Level>('O');
+  const [date, setDate] = useState(today());
+  const [memo, setMemo] = useState('');
+  const [editId, setEditId] = useState<string | null>(null);
+  const [ed, setEd] = useState<{ l: Level; d: string; m: string }>({ l: 'O', d: today(), m: '' });
+  const [delId, setDelId] = useState<string | null>(null);
+
+  const mutate = (fn: (r: Progress) => Progress) => {
     setAll(a => ({ ...a, [key]: { r: fn(a[key]?.r || {}), n: a[key]?.n || {} } }));
     setDirty(key);
   };
@@ -38,13 +60,6 @@ export default function Checklist({
     setAll(a => ({ ...a, [key]: { r: a[key]?.r || {}, n: { ...(a[key]?.n || {}), [id]: v.slice(0, 200) } } }));
     setDirty(key);
   };
-  const [dirty, setDirty] = useState<string | null>(null);
-  const [open, setOpen] = useState<string | null>(null);
-  const [gOpen, setGOpen] = useState<Record<string, boolean>>({});
-  const [lv, setLv] = useState<Level>('O');
-  const [date, setDate] = useState(today());
-  const [onlyTodo, setOnlyTodo] = useState(false);
-  const [status, setStatus] = useState<'' | 'saving' | 'saved' | 'error'>('');
 
   useEffect(() => {
     if (!dirty) return;
@@ -64,192 +79,286 @@ export default function Checklist({
     return () => clearTimeout(t);
   }, [all, dirty]);
 
-  const total = subject.groups.reduce((n, g) => n + g.items.length, 0);
-  const done = subject.groups.reduce((n, g) => n + g.items.filter(i => (prog[i.id] || []).length > 0).length, 0);
-  const cnt = (l: Level) => subject.groups.reduce((n, g) => n + g.items.filter(i => (prog[i.id] || []).some(r => r.l === l)).length, 0);
+  // 시트가 열려 있는 동안 뒤 화면 스크롤 잠금
+  useEffect(() => {
+    if (!sheet) return;
+    const prev = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = prev; };
+  }, [sheet]);
 
-  const add = (id: string) => {
-    if (!date) return;
-    setProg(p => {
-      const list = p[id] || [];
-      if (list.some(r => r.d === date && r.l === lv)) return p;
-      return { ...p, [id]: [...list, { d: date, l: lv }].sort((a, b) => a.d.localeCompare(b.d)) };
-    });
+  const total = subject.groups.reduce((n, g) => n + g.items.length, 0);
+  const itemsAll = subject.groups.flatMap(g => g.items);
+  const done = itemsAll.filter(i => (prog[i.id] || []).length > 0).length;
+  const cnt = (l: Level) => itemsAll.filter(i => top(prog[i.id] || []) === l).length;
+
+  const query = q.trim().toLowerCase();
+  const visible = useMemo(
+    () =>
+      subject.groups
+        .map(g => ({
+          g,
+          items: g.items.filter(i => {
+            const has = (prog[i.id] || []).length > 0;
+            if (filter === 'todo' && has) return false;
+            if (filter === 'done' && !has) return false;
+            if (query && !i.t.toLowerCase().includes(query)) return false;
+            return true;
+          }),
+        }))
+        .filter(x => x.items.length > 0),
+    [subject, prog, filter, query]
+  );
+
+  const openSheet = (it: PItem) => {
+    setSheet(it);
+    setLv('O');
+    setDate(today());
+    setMemo('');
+    setEditId(null);
+    setDelId(null);
   };
-  const del = (id: string, d: string, l: Level) =>
-    setProg(p => ({ ...p, [id]: (p[id] || []).filter(r => !(r.d === d && r.l === l)) }));
+
+  const add = () => {
+    if (!sheet || !date) return;
+    const rec: Rec = { id: newId(), d: date, l: lv, ...(memo.trim() ? { m: memo.trim().slice(0, 200) } : {}) };
+    mutate(r => ({ ...r, [sheet.id]: [...(r[sheet.id] || []), rec] }));
+    setMemo('');
+  };
+  const startEdit = (r: Rec) => {
+    setEditId(r.id);
+    setEd({ l: r.l, d: r.d, m: r.m || '' });
+    setDelId(null);
+  };
+  const saveEdit = () => {
+    if (!sheet || !editId || !ed.d) return;
+    mutate(r => ({
+      ...r,
+      [sheet.id]: (r[sheet.id] || []).map(x => (x.id === editId ? { id: x.id, d: ed.d, l: ed.l, ...(ed.m.trim() ? { m: ed.m.trim().slice(0, 200) } : {}) } : x)),
+    }));
+    setEditId(null);
+  };
+  const del = (id: string) => {
+    if (!sheet) return;
+    mutate(r => {
+      const rest = (r[sheet.id] || []).filter(x => x.id !== id);
+      const next = { ...r };
+      if (rest.length) next[sheet.id] = rest;
+      else delete next[sheet.id];
+      return next;
+    });
+    setDelId(null);
+  };
+
+  const seg = (v: Level, on: (l: Level) => void) => (
+    <div className="seg">
+      {LEVELS.map(l => (
+        <button key={l.k} type="button" className={`${v === l.k ? 'on' : ''} ${l.k}`} onClick={() => on(l.k)}>{l.label}</button>
+      ))}
+    </div>
+  );
+
+  const sheetRecs = sheet ? prog[sheet.id] || [] : [];
+  const history = sheetRecs.map((r, i) => ({ r, i })).sort((a, b) => b.r.d.localeCompare(a.r.d) || b.i - a.i).map(x => x.r);
 
   return (
     <div className="pc">
-      <div className="top">
-        <div className="subj">
-          {COURSES.map(c => (
-            <button key={c.key} type="button" className={c.key === course ? 'on' : ''} onClick={() => { setCourse(c.key); setOpen(null); }}>{c.label}</button>
-          ))}
-        </div>
-        <span className={`st ${status}`}>{status === 'saving' ? '저장 중' : status === 'saved' ? '저장됨' : status === 'error' ? '저장 실패' : ''}</span>
+      <div className="hs">
+        {COURSES.map(c => (
+          <button key={c.key} type="button" className={c.key === course ? 'on' : ''} onClick={() => { setCourse(c.key); setFilter('all'); setQ(''); }}>{c.label}</button>
+        ))}
       </div>
       {subjects.length > 1 && (
-        <div className="subj sub2">
+        <div className="hs sub">
           {subjects.map(x => (
-            <button key={x.key} type="button" className={x.key === key ? 'on' : ''} onClick={() => { setKeys(k => ({ ...k, [course]: x.key })); setOpen(null); }}>{x.sub}</button>
+            <button key={x.key} type="button" className={x.key === key ? 'on' : ''} onClick={() => { setKeys(k => ({ ...k, [course]: x.key })); setFilter('all'); setQ(''); }}>{x.sub}</button>
           ))}
         </div>
       )}
+
       <div className="sum">
+        <div className="sl">
+          <b>기록된 항목 {done}/{total}</b>
+          <span className={`st ${status}`}>{status === 'saving' ? '저장 중' : status === 'saved' ? '저장됨' : status === 'error' ? '저장 실패' : ''}</span>
+        </div>
         <div className="bar"><i style={{ width: `${total ? (done / total) * 100 : 0}%` }} /></div>
         <div className="nums">
-          <b>{done} / {total}</b>
           {LEVELS.map(l => <span key={l.k} className={`lv ${l.k}`}>{l.label} {cnt(l.k)}</span>)}
         </div>
       </div>
-      <div className="flt">
-        <button type="button" className={!onlyTodo ? 'on' : ''} onClick={() => setOnlyTodo(false)}>전체</button>
-        <button type="button" className={onlyTodo ? 'on' : ''} onClick={() => setOnlyTodo(true)}>미기록</button>
-        {!onlyTodo && (
-          <button type="button" className="all" onClick={() => {
-            const allOpen = subject.groups.every(g => gOpen[`${subject.key}:${g.name}`]);
-            setGOpen(o => ({ ...o, ...Object.fromEntries(subject.groups.map(g => [`${subject.key}:${g.name}`, !allOpen])) }));
-          }}>{subject.groups.every(g => gOpen[`${subject.key}:${g.name}`]) ? '모두 접기' : '모두 펼치기'}</button>
-        )}
+
+      <div className="tools">
+        <input type="search" value={q} onChange={e => setQ(e.target.value)} placeholder="항목 검색" />
+        <div className="flt">
+          {([['all', '전체'], ['todo', '미기록'], ['done', '기록완료']] as [Filter, string][]).map(([k, t]) => (
+            <button key={k} type="button" className={filter === k ? 'on' : ''} onClick={() => setFilter(k)}>{t}</button>
+          ))}
+        </div>
       </div>
 
-      {subject.groups.map(g => {
-        const items = onlyTodo ? g.items.filter(i => !(prog[i.id] || []).length) : g.items;
-        if (!items.length) return null;
-        const gk = `${subject.key}:${g.name}`;
-        const showG = !!gOpen[gk] || onlyTodo;
+      {visible.length === 0 && <div className="empty">해당하는 항목이 없어요</div>}
+      {visible.map(({ g, items }) => {
         const gd = g.items.filter(i => (prog[i.id] || []).length > 0).length;
         return (
           <section key={g.name} className="grp">
-            <button type="button" className="gh" onClick={() => setGOpen(o => ({ ...o, [gk]: !o[gk] }))}>
-              <b>{g.name}</b>
-              <span>{gd} / {g.items.length}<i className={`cv ${showG ? 'up' : ''}`} /></span>
-            </button>
-            {showG && items.map(it => {
-              const recs = prog[it.id] || [];
-              const isOpen = open === it.id;
+            <div className="gh"><b>{g.name}</b><span>{gd}/{g.items.length}</span></div>
+            {items.map(it => {
+              const recs = chrono(prog[it.id] || []);
+              const last = recs.slice(-2);
               return (
-                <div key={it.id} className={`it ${isOpen ? 'open' : ''}`}>
-                  <button type="button" className="row" onClick={() => setOpen(isOpen ? null : it.id)}>
-                    <span className="t">{it.t}</span>
-                    {remarks[it.id] && <span className="rm">{remarks[it.id]}</span>}
-                    {recs.length > 0 && (
-                      <span className="dl">
-                        {LEVELS.map(l => {
-                          const rs = recs.filter(r => r.l === l.k);
-                          if (!rs.length) return null;
-                          return (
-                            <span key={l.k} className="dr">
-                              <b className={`lb ${l.k}`}>{l.label}</b>
-                              {rs.map(r => <i key={r.d}>{md(r.d)}</i>)}
-                            </span>
-                          );
-                        })}
-                      </span>
-                    )}
-                  </button>
-                  {isOpen && (
-                    <div className="body">
-                      <p className="desc">{it.d}</p>
-                      <div className="rec">
-                        <div className="seg">
-                          {LEVELS.map(l => (
-                            <button key={l.k} type="button" className={`${lv === l.k ? 'on' : ''} ${l.k}`} onClick={() => setLv(l.k)}>{l.label}</button>
-                          ))}
-                        </div>
-                        <input type="date" value={date} onChange={e => setDate(e.target.value)} />
-                        <button type="button" className="add" onClick={() => add(it.id)}>추가</button>
-                      </div>
-                      <input className="rmi" value={remarks[it.id] || ''} onChange={e => setRemark(it.id, e.target.value)} placeholder="비고" maxLength={200} />
-                      {recs.length > 0 && (
-                        <div className="log">
-                          {LEVELS.map(l => {
-                            const rs = recs.filter(r => r.l === l.k);
-                            if (!rs.length) return null;
-                            return (
-                              <div key={l.k} className="lr">
-                                <span className={`lb ${l.k}`}>{l.label}</span>
-                                <span className="chs">
-                                  {rs.map(r => (
-                                    <span key={r.d} className="ch">
-                                      <button type="button" className="dt" title="그날 메모 보기" onClick={() => onPickDay(r.d)}>{md(r.d)}{noteDates.has(r.d) ? ' · 메모' : ''}</button>
-                                      <button type="button" aria-label="삭제" onClick={() => del(it.id, r.d, l.k)}>×</button>
-                                    </span>
-                                  ))}
-                                </span>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
+                <button key={it.id} type="button" className="row" onClick={() => openSheet(it)}>
+                  <span className="t">{it.t}</span>
+                  {recs.length === 0 ? (
+                    <span className="none">미기록</span>
+                  ) : (
+                    <span className="sm">
+                      {last.map((r, i) => (
+                        <span key={r.id}>{i > 0 && ' · '}<b className={`lb ${r.l}`}>{lbl(r.l)}</b> {md(r.d)}</span>
+                      ))}
+                      {' · '}총 {recs.length}회
+                    </span>
                   )}
-                </div>
+                </button>
               );
             })}
           </section>
         );
       })}
 
+      {sheet && (
+        <div className="ov" onClick={() => setSheet(null)}>
+          <div className="sheet" role="dialog" aria-label={sheet.t} onClick={e => e.stopPropagation()}>
+            <div className="sh">
+              <div>
+                <h3>{sheet.t}</h3>
+                <span className="cnt">총 {sheetRecs.length}회</span>
+              </div>
+              <button type="button" className="x" aria-label="닫기" onClick={() => setSheet(null)}>×</button>
+            </div>
+            <p className="desc">{sheet.d}</p>
+
+            <div className="blk">
+              <div className="bt">새 기록 추가</div>
+              {seg(lv, setLv)}
+              <div className="frow">
+                <input type="date" value={date} onChange={e => setDate(e.target.value)} />
+                <input className="grow" value={memo} onChange={e => setMemo(e.target.value)} placeholder="메모 (선택)" maxLength={200} />
+              </div>
+              <button type="button" className="add" onClick={add}>추가</button>
+            </div>
+
+            <div className="blk">
+              <div className="bt">기록 내역</div>
+              {history.length === 0 && <div className="none">아직 기록이 없어요</div>}
+              {history.map(r =>
+                editId === r.id ? (
+                  <div key={r.id} className="hr edit">
+                    {seg(ed.l, l => setEd(e => ({ ...e, l })))}
+                    <div className="frow">
+                      <input type="date" value={ed.d} onChange={e => setEd(x => ({ ...x, d: e.target.value }))} />
+                      <input className="grow" value={ed.m} onChange={e => setEd(x => ({ ...x, m: e.target.value }))} placeholder="메모 (선택)" maxLength={200} />
+                    </div>
+                    <div className="acts">
+                      <button type="button" onClick={() => setEditId(null)}>취소</button>
+                      <button type="button" className="pri" onClick={saveEdit}>저장</button>
+                    </div>
+                  </div>
+                ) : (
+                  <div key={r.id} className="hr">
+                    <button type="button" className="hd" title="그날 실습메모 보기" onClick={() => { setSheet(null); onPickDay(r.d); }}>
+                      {md(r.d)}{noteDates.has(r.d) ? <i> · 메모</i> : null}
+                    </button>
+                    <b className={`lb ${r.l}`}>{lbl(r.l)}</b>
+                    {r.m && <span className="hm">{r.m}</span>}
+                    <span className="acts">
+                      {delId === r.id ? (
+                        <>
+                          <button type="button" className="dng" onClick={() => del(r.id)}>삭제 확인</button>
+                          <button type="button" onClick={() => setDelId(null)}>취소</button>
+                        </>
+                      ) : (
+                        <>
+                          <button type="button" onClick={() => startEdit(r)}>수정</button>
+                          <button type="button" onClick={() => setDelId(r.id)}>삭제</button>
+                        </>
+                      )}
+                    </span>
+                  </div>
+                )
+              )}
+            </div>
+
+            <div className="blk">
+              <div className="bt">비고</div>
+              <input className="rmi" value={remarks[sheet.id] || ''} onChange={e => setRemark(sheet.id, e.target.value)} placeholder="항목 전체에 대한 비고" maxLength={200} />
+            </div>
+          </div>
+        </div>
+      )}
+
       <style jsx global>{`
-        .pc { --o: #0E7490; --p: #B45309; --d: #15803D; }
-        .pc .top { display: flex; justify-content: space-between; align-items: center; gap: 8px; font-size: 13px; margin-bottom: 14px; }
-        .pc .sub2 { margin-bottom: 12px; }
-        .pc .sub2 button { font-size: 13px; padding: 5px 12px; }
-        .pc .subj { display: flex; gap: 6px; flex-wrap: wrap; }
-        .pc .subj button { border: 1px solid var(--border); background: var(--white); border-radius: 999px; padding: 6px 14px; font-size: 14px; font-weight: 600; color: var(--sub-text); cursor: pointer; }
-        .pc .subj button.on { background: var(--primary); border-color: var(--primary); color: #fff; }
-        .pc .dl { display: flex; flex-direction: column; gap: 3px; }
-        .pc .dr { display: flex; flex-wrap: wrap; gap: 4px 6px; align-items: baseline; }
-        .pc .dr .lb { width: 52px; font-size: 12px; padding: 0; }
-        .pc .dr i { font-style: normal; font-size: 12.5px; font-weight: 600; background: rgba(127,127,127,.16); border-radius: 6px; padding: 1px 7px; color: var(--text); }
-        .pc .ch .dt { font-size: 13px; color: var(--text); padding: 0; }
-        .pc .st { color: var(--sub-text); }
+        .pc { --o: #0E7490; --p: #B45309; --d: #15803D; --line: var(--border); --tint: rgba(127,127,127,.14); }
+        .pc .hs { display: flex; gap: 6px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; margin-bottom: 8px; }
+        .pc .hs::-webkit-scrollbar { display: none; }
+        .pc .hs button { flex-shrink: 0; border: 1px solid var(--line); background: var(--white); border-radius: 999px; padding: 6px 14px; font-size: 14px; font-weight: 600; color: var(--sub-text); cursor: pointer; }
+        .pc .hs.sub button { font-size: 13px; padding: 5px 12px; }
+        .pc .hs button.on { background: var(--primary); border-color: var(--primary); color: #fff; }
+        .pc .sum { margin: 6px 0 10px; }
+        .pc .sl { display: flex; justify-content: space-between; align-items: baseline; font-size: 15px; }
+        .pc .st { font-size: 12px; color: var(--sub-text); }
         .pc .st.error { color: #DC2626; }
-        .pc h1 { font-size: 22px; font-weight: 800; margin: 6px 0 14px; }
-        .pc .sum { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 14px 16px; }
-        .pc .bar { height: 6px; background: rgba(127,127,127,.2); border-radius: 3px; overflow: hidden; }
+        .pc .bar { height: 5px; background: var(--tint); border-radius: 3px; overflow: hidden; margin: 6px 0; }
         .pc .bar i { display: block; height: 100%; background: var(--primary); }
-        .pc .nums { display: flex; gap: 12px; flex-wrap: wrap; align-items: center; margin-top: 10px; font-size: 13px; }
-        .pc .lv.O, .pc .pill.O, .pc .lb.O { color: var(--o); }
-        .pc .lv.P, .pc .pill.P, .pc .lb.P { color: var(--p); }
-        .pc .lv.D, .pc .pill.D, .pc .lb.D { color: var(--d); }
-        .pc .flt { display: flex; gap: 6px; margin: 14px 0 6px; }
-        .pc .flt button { border: 1px solid var(--border); background: var(--white); border-radius: 999px; padding: 5px 14px; font-size: 13px; color: var(--sub-text); cursor: pointer; }
+        .pc .nums { display: flex; gap: 12px; font-size: 12.5px; font-weight: 600; }
+        .pc .lv.O, .pc .lb.O { color: var(--o); }
+        .pc .lv.P, .pc .lb.P { color: var(--p); }
+        .pc .lv.D, .pc .lb.D { color: var(--d); }
+        .pc .tools { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin-bottom: 4px; }
+        .pc .tools input { flex: 1 1 160px; min-width: 0; border: 1px solid var(--line); border-radius: 8px; padding: 7px 10px; font: inherit; font-size: 14px; background: transparent; color: inherit; }
+        .pc .flt { display: flex; gap: 4px; }
+        .pc .flt button { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 5px 11px; font-size: 13px; color: var(--sub-text); cursor: pointer; white-space: nowrap; }
         .pc .flt button.on { background: var(--primary); border-color: var(--primary); color: #fff; }
-        .pc .flt .all { margin-left: auto; border: 0; background: none; }
-        .pc .grp { margin-top: 10px; background: var(--white); border: 1px solid var(--border); border-radius: 12px; overflow: hidden; }
-        .pc .gh { width: 100%; display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; background: rgba(127,127,127,.12); font: inherit; font-size: 14px; color: inherit; border: 0; cursor: pointer; text-align: left; }
-        .pc .gh span { display: flex; align-items: center; gap: 8px; }
-        .pc .cv { width: 7px; height: 7px; border-right: 2px solid var(--sub-text); border-bottom: 2px solid var(--sub-text); transform: rotate(45deg); margin-top: -3px; }
-        .pc .cv.up { transform: rotate(-135deg); margin-top: 3px; }
-        .pc .gh span { color: var(--sub-text); }
-        .pc .it { border-top: 1px solid var(--border); }
-        .pc .row { width: 100%; display: flex; flex-direction: column; align-items: flex-start; gap: 6px; padding: 10px 16px; background: none; border: 0; text-align: left; cursor: pointer; font: inherit; color: inherit; }
+        .pc .empty { padding: 30px 0; text-align: center; color: var(--sub-text); font-size: 14px; }
+        .pc .grp { margin-top: 12px; }
+        .pc .gh { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 2px 5px; border-bottom: 2px solid var(--primary); font-size: 14px; }
+        .pc .gh span { font-size: 12.5px; color: var(--sub-text); }
+        .pc .row { width: 100%; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 8px 2px; background: none; border: 0; border-bottom: 1px solid var(--line); text-align: left; cursor: pointer; font: inherit; color: inherit; }
+        .pc .row:active { background: var(--tint); }
         .pc .t { font-size: 14px; line-height: 1.35; }
-        .pc .pills { display: flex; gap: 4px; flex-shrink: 0; flex-wrap: wrap; justify-content: flex-end; }
-        .pc .pill { font-style: normal; font-size: 11px; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: rgba(127,127,127,.16); white-space: nowrap; }
-        .pc .it.open { background: rgba(127,127,127,.05); }
-        .pc .body { padding: 0 16px 14px; }
-        .pc .desc { margin: 0 0 12px; font-size: 13px; line-height: 1.65; color: var(--text); }
-        .pc .rm { font-size: 12.5px; color: var(--sub-text); }
-        .pc .rmi { width: 100%; margin-top: 10px; border: 1px solid var(--border); border-radius: 8px; padding: 7px 10px; font: inherit; font-size: 13px; background: transparent; color: inherit; }
-        .pc .rec { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
-        .pc .seg { display: flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
-        .pc .seg button { border: 0; background: var(--white); padding: 7px 12px; font-size: 13px; cursor: pointer; color: var(--sub-text); }
-        .pc .seg button + button { border-left: 1px solid var(--border); }
+        .pc .none { font-size: 12px; color: var(--sub-text); white-space: nowrap; flex-shrink: 0; }
+        .pc .sm { font-size: 12px; color: var(--sub-text); text-align: right; flex-shrink: 0; max-width: 55%; line-height: 1.4; }
+        .pc .lb { font-weight: 700; }
+        .pc .ov { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,.5); display: flex; align-items: flex-end; justify-content: center; }
+        .pc .sheet { width: 100%; max-height: 88vh; overflow-y: auto; background: var(--white); border-radius: 16px 16px 0 0; padding: 16px 16px 24px; -webkit-overflow-scrolling: touch; }
+        @media (min-width: 768px) { .pc .ov { align-items: center; } .pc .sheet { width: 520px; border-radius: 16px; } }
+        .pc .sh { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+        .pc .sh h3 { margin: 0; font-size: 17px; font-weight: 800; line-height: 1.35; }
+        .pc .cnt { font-size: 13px; color: var(--sub-text); }
+        .pc .x { border: 0; background: none; font-size: 26px; line-height: 1; color: var(--sub-text); cursor: pointer; padding: 0 4px; }
+        .pc .desc { margin: 10px 0 4px; font-size: 13px; line-height: 1.65; color: var(--sub-text); }
+        .pc .blk { margin-top: 16px; }
+        .pc .bt { font-size: 13px; font-weight: 700; margin-bottom: 8px; }
+        .pc .seg { display: flex; border: 1px solid var(--line); border-radius: 8px; overflow: hidden; }
+        .pc .seg button { flex: 1; border: 0; background: transparent; padding: 9px 0; font-size: 14px; cursor: pointer; color: var(--sub-text); }
+        .pc .seg button + button { border-left: 1px solid var(--line); }
         .pc .seg button.on.O { background: var(--o); color: #fff; }
         .pc .seg button.on.P { background: var(--p); color: #fff; }
         .pc .seg button.on.D { background: var(--d); color: #fff; }
-        .pc .rec input { border: 1px solid var(--border); border-radius: 8px; padding: 6px 8px; font: inherit; font-size: 13px; }
-        .pc .add { border: 0; background: var(--primary); color: #fff; border-radius: 8px; padding: 7px 14px; font-size: 13px; cursor: pointer; }
-        .pc .log { margin-top: 12px; display: grid; gap: 6px; }
-        .pc .lr { display: flex; gap: 10px; align-items: flex-start; }
-        .pc .lb { font-size: 12px; font-weight: 700; width: 52px; flex-shrink: 0; padding-top: 4px; }
-        .pc .chs { display: flex; flex-wrap: wrap; gap: 5px; }
-        .pc .ch { display: inline-flex; align-items: center; gap: 4px; background: rgba(127,127,127,.16); border-radius: 999px; padding: 3px 4px 3px 10px; font-size: 13px; }
-        .pc .ch button { border: 0; background: none; color: var(--sub-text); cursor: pointer; font-size: 14px; line-height: 1; padding: 0 4px; }
+        .pc .frow { display: flex; gap: 6px; margin-top: 8px; }
+        .pc .frow input, .pc .rmi { border: 1px solid var(--line); border-radius: 8px; padding: 8px 10px; font: inherit; font-size: 14px; background: transparent; color: inherit; min-width: 0; }
+        .pc .grow { flex: 1; }
+        .pc .rmi { width: 100%; }
+        .pc .add { width: 100%; margin-top: 8px; border: 0; background: var(--primary); color: #fff; border-radius: 8px; padding: 10px; font-size: 14px; font-weight: 700; cursor: pointer; }
+        .pc .hr { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 10px; padding: 9px 0; border-top: 1px solid var(--line); font-size: 14px; }
+        .pc .hr.edit { display: block; }
+        .pc .hd { border: 0; background: none; padding: 0; font: inherit; font-weight: 700; color: var(--text); cursor: pointer; min-width: 48px; text-align: left; }
+        .pc .hd i { font-style: normal; font-size: 12px; font-weight: 500; color: var(--sub-text); }
+        .pc .hm { flex-basis: 100%; order: 3; font-size: 13px; color: var(--sub-text); }
+        .pc .acts { margin-left: auto; display: flex; gap: 4px; }
+        .pc .hr.edit .acts { margin-top: 8px; justify-content: flex-end; }
+        .pc .acts button { border: 1px solid var(--line); background: transparent; border-radius: 6px; padding: 4px 10px; font-size: 12.5px; color: var(--sub-text); cursor: pointer; }
+        .pc .acts button.pri { background: var(--primary); border-color: var(--primary); color: #fff; }
+        .pc .acts button.dng { border-color: #DC2626; color: #DC2626; }
       `}</style>
     </div>
   );

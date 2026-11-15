@@ -514,13 +514,31 @@ export const LEVELS = [
   { k: 'D', label: '수행' },
 ] as const;
 export type Level = (typeof LEVELS)[number]['k'];
-export type Rec = { d: string; l: Level };
+export type Rec = { id: string; d: string; l: Level; m?: string };
 export type Progress = Record<string, Rec[]>;
 
-// 과목별 저장 형태: r = 날짜 기록, n = 항목별 비고. 예전 형태(기록만 평평하게 저장)도 읽는다.
+// 과목별 저장 형태: r = 항목별 기록 목록, n = 항목별 비고. 예전 형태(id 없는 기록, 평평한 저장)도 읽어서 id를 붙인다.
 export type Store = { r: Progress; n: Record<string, string> };
+const okDate = (d: unknown): d is string => typeof d === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(d);
+const okLv = (l: unknown): l is Level => l === 'O' || l === 'P' || l === 'D';
+
 export function normalizeStore(raw: unknown): Store {
   const o = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
-  if (o.r && typeof o.r === 'object') return { r: o.r as Progress, n: (o.n && typeof o.n === 'object' ? o.n : {}) as Record<string, string> };
-  return { r: o as Progress, n: {} };
+  const src = (o.r && typeof o.r === 'object' ? o.r : o) as Record<string, unknown>;
+  const r: Progress = {};
+  for (const [k, v] of Object.entries(src)) {
+    if (!Array.isArray(v)) continue;
+    const seen = new Set<string>();
+    const list: Rec[] = [];
+    for (const x of v as Array<Record<string, unknown>>) {
+      if (!okDate(x?.d) || !okLv(x?.l)) continue;
+      let id = typeof x.id === 'string' && x.id ? x.id : `${x.d}-${x.l}`;
+      while (seen.has(id)) id += '_';
+      seen.add(id);
+      list.push({ id, d: x.d, l: x.l, ...(typeof x.m === 'string' && x.m ? { m: x.m } : {}) });
+    }
+    if (list.length) r[k] = list;
+  }
+  const n = (o.n && typeof o.n === 'object' ? o.n : {}) as Record<string, string>;
+  return { r, n };
 }

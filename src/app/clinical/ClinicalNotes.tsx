@@ -89,7 +89,8 @@ export default function ClinicalNotes({
       sub.groups.forEach(g =>
         g.items.forEach(it => {
           (progress[sub.key]?.r?.[it.id] || []).forEach(r => {
-            if (r.d === date) out.push({ l: LEVELS.find(x => x.k === r.l)?.label ?? '', t: it.t });
+            const l = LEVELS.find(x => x.k === r.l)?.label ?? '';
+            if (r.d === date && !out.some(o => o.l === l && o.t === it.t)) out.push({ l, t: it.t });
           });
         })
       )

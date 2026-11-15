@@ -67,14 +67,9 @@ export default function ClinicalClient({ schedule, user, progress }: ClinicalCli
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+      <div className="hscroll">
         {TABS.map(t => (
-          <button
-            key={t.id}
-            onClick={() => setTab(t.id)}
-            className={tab === t.id ? 'btn-primary' : 'btn-outline'}
-            style={{ fontSize: '0.875rem' }}
-          >
+          <button key={t.id} type="button" onClick={() => setTab(t.id)} className={tab === t.id ? 'btn-primary' : 'btn-outline'} style={{ fontSize: '0.875rem', flexShrink: 0, whiteSpace: 'nowrap' }}>
             {t.label}
           </button>
         ))}
@@ -139,6 +134,10 @@ export default function ClinicalClient({ schedule, user, progress }: ClinicalCli
           </div>
         </div>
       )}
+      <style jsx global>{`
+        .hscroll { display: flex; gap: 8px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; -webkit-overflow-scrolling: touch; margin: 0 -2px; padding: 2px; }
+        .hscroll::-webkit-scrollbar { display: none; }
+      `}</style>
     </div>
   );
 }
