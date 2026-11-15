@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
-import { COURSES, LEVELS, SUBJECTS, type Level, type Progress, type PSubject, type PItem, type Rec, type Store } from './practicum-data';
+import { COURSES, LEVELS, SUBJECTS, normalizeStore, type Level, type Progress, type PSubject, type PItem, type Rec, type Store } from './practicum-data';
 
 const today = () => {
   const d = new Date();
@@ -17,6 +17,29 @@ const chrono = (recs: Rec[]) => recs.map((r, i) => ({ r, i })).sort((a, b) => a.
 const top = (recs: Rec[]): Level | null => (recs.length ? recs.reduce((m, r) => (rank[r.l] > rank[m] ? r.l : m), recs[0].l) : null);
 
 type Filter = 'all' | 'todo' | 'done';
+
+// 저장에 실패했거나 끝나기 전에 닫힌 기록은 기기에 남겨두고, 연결되면 다시 올린다
+const LS = (k: string) => `pc:${k}`;
+const lsGet = (k: string) => { try { return localStorage.getItem(LS(k)); } catch { return null; } };
+const lsSet = (k: string, v: string) => { try { localStorage.setItem(LS(k), v); } catch { /* 저장소 사용 불가 */ } };
+const lsDel = (k: string) => { try { localStorage.removeItem(LS(k)); } catch { /* 무시 */ } };
+async function flushPending(report: (s: 'saved' | 'error') => void) {
+  let failed = false;
+  let any = false;
+  for (const sub of SUBJECTS) {
+    const raw = lsGet(sub.key);
+    if (!raw) continue;
+    any = true;
+    try {
+      const r = await fetch(`/api/practicum/${sub.key}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ data: JSON.parse(raw) }) });
+      if (r.ok) { if (lsGet(sub.key) === raw) lsDel(sub.key); } else failed = true;
+    } catch {
+      failed = true;
+    }
+  }
+  if (any) report(failed ? 'error' : 'saved');
+  return failed;
+}
 
 export default function Checklist({
   all,
@@ -70,20 +93,28 @@ export default function Checklist({
     setDirty(key);
   };
 
+  // 접속 시: 예전에 못 올린 기록이 있으면 화면에 되살리고 다시 올린다. 연결이 돌아오면 재시도
+  useEffect(() => {
+    const restored: Record<string, Store> = {};
+    SUBJECTS.forEach(sub => {
+      const raw = lsGet(sub.key);
+      if (!raw) return;
+      try { restored[sub.key] = normalizeStore(JSON.parse(raw)); } catch { /* 깨진 항목은 무시 */ }
+    });
+    if (Object.keys(restored).length) setAll(a => ({ ...a, ...restored }));
+    const go = () => { flushPending(setStatus); };
+    go();
+    window.addEventListener('online', go);
+    return () => window.removeEventListener('online', go);
+  }, [setAll]);
+
   useEffect(() => {
     if (!dirty) return;
     setStatus('saving');
+    lsSet(dirty, JSON.stringify(all[dirty] || { r: {}, n: {} }));
     const t = setTimeout(async () => {
-      try {
-        const r = await fetch(`/api/practicum/${dirty}`, {
-          method: 'PUT',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data: all[dirty] || { r: {}, n: {} } }),
-        });
-        setStatus(r.ok ? 'saved' : 'error');
-      } catch {
-        setStatus('error');
-      }
+      const failed = await flushPending(setStatus);
+      if (failed) setTimeout(() => { flushPending(setStatus); }, 15000);
     }, 500);
     return () => clearTimeout(t);
   }, [all, dirty]);
@@ -287,7 +318,7 @@ tr { break-inside: avoid; }
           ))}
         </div>
         {status === 'saving' && <span className="st">저장 중</span>}
-        {status === 'error' && <span className="st error">저장 실패</span>}
+        {status === 'error' && <span className="st error">저장 대기</span>}
         <button type="button" className={`selbtn ${selMode ? 'on' : ''}`} onClick={() => (selMode ? exitSel() : setSelMode(true))}>{selMode ? '완료' : '선택'}</button>
         <button type="button" className={`ic ${find || q || filter !== 'all' ? 'on' : ''}`} aria-label="검색" onClick={() => setFind(f => !f)}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
