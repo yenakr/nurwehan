@@ -24,8 +24,10 @@ export default function Checklist({
   noteDates,
   onPickDay,
   defaultCourse,
+  userName,
 }: {
   defaultCourse?: string;
+  userName?: string;
   all: Record<string, Store>;
   setAll: Dispatch<SetStateAction<Record<string, Store>>>;
   noteDates: Set<string>;
@@ -220,6 +222,59 @@ export default function Checklist({
     </div>
   );
 
+  const [popup, setPopup] = useState(false);
+  const printPdf = () => {
+    const esc = (t: string) => t.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+    const courseLabel = COURSES.find(c => c.key === course)?.label ?? '';
+    const datesOf = (recs: Rec[], l: Level) => {
+      const m = new Map<string, number>();
+      chrono(recs).filter(r => r.l === l).forEach(r => m.set(r.d, (m.get(r.d) || 0) + 1));
+      return Array.from(m.entries()).map(([d, n]) => `${md(d)}${n > 1 ? `(${n})` : ''}`).join(', ');
+    };
+    let body = '';
+    subject.groups.forEach(g => {
+      g.items.forEach((it, idx) => {
+        const recs = prog[it.id] || [];
+        const notes = [remarks[it.id], ...chrono(recs).filter(r => r.m).map(r => `${md(r.d)} ${r.m}`)].filter(Boolean) as string[];
+        body += '<tr>' +
+          (idx === 0 ? `<td class="g" rowspan="${g.items.length}">${esc(g.name)}</td>` : '') +
+          `<td class="t">${esc(it.t)}</td>` +
+          `<td class="d">${esc(datesOf(recs, 'O'))}</td><td class="d">${esc(datesOf(recs, 'P'))}</td><td class="d">${esc(datesOf(recs, 'D'))}</td>` +
+          `<td class="n">${notes.map(esc).join('<br>')}</td></tr>`;
+      });
+    });
+    const title = `체크리스트_${subject.sub}${userName ? '_' + userName : ''}`;
+    const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><style>
+@page { size: A4; margin: 12mm; }
+* { box-sizing: border-box; }
+body { margin: 0; padding: 16px; font-family: 'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',sans-serif; color: #000; background: #fff; font-size: 10.5px; }
+h1 { font-size: 16px; margin: 0 0 4px; }
+.meta { display: flex; justify-content: space-between; margin-bottom: 8px; font-size: 11px; }
+table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+th, td { border: 1px solid #555; padding: 3px 5px; vertical-align: middle; }
+th { background: #e5e5e5; font-size: 10.5px; }
+td.g { width: 15%; text-align: center; font-weight: 700; background: #f5f5f5; }
+td.t { width: 33%; }
+td.d { width: 11%; text-align: center; font-size: 10px; word-break: keep-all; }
+td.n { width: 19%; font-size: 9.5px; }
+tr { break-inside: avoid; }
+.sign { display: flex; justify-content: flex-end; gap: 28px; margin-top: 14px; font-size: 11px; }
+.sign span { display: inline-block; min-width: 150px; border-bottom: 1px solid #000; margin-left: 6px; }
+</style></head><body>
+<h1>${esc(courseLabel)} 실습내용 체크리스트 (${esc(subject.sub)})</h1>
+<div class="meta"><span>이름: ${esc(userName || '')}</span><span>관찰 및 수행한 날짜를 기록 (예: 12/3)</span></div>
+<table><thead><tr><th>분류</th><th>실습 내용</th><th>관찰</th><th>부분수행</th><th>수행</th><th>비고</th></tr></thead><tbody>${body}</tbody></table>
+<div class="sign"><div>임상현장지도자 확인 (서명)<span></span></div><div>실습담당교수 확인 (서명)<span></span></div></div>
+</body></html>`;
+    const w = window.open('', '_blank');
+    if (!w) { setPopup(true); setTimeout(() => setPopup(false), 3000); return; }
+    w.document.open();
+    w.document.write(html);
+    w.document.close();
+    w.focus();
+    setTimeout(() => w.print(), 500);
+  };
+
   const sheetRecs = sheet ? prog[sheet.id] || [] : [];
   const history = sheetRecs.map((r, i) => ({ r, i })).sort((a, b) => b.r.d.localeCompare(a.r.d) || b.i - a.i).map(x => x.r);
 
@@ -288,10 +343,10 @@ export default function Checklist({
                   <span className="t">{it.t}</span>
                   {recs.length > 0 && (
                     <span className="sm">
-                      {last.map((r, i) => (
-                        <span key={r.id}>{i > 0 && ' · '}<b className={`lb ${r.l}`}>{lbl(r.l)}</b> {md(r.d)}</span>
-                      ))}
-                      {' · '}총 {recs.length}회
+                      {LEVELS.map(l => {
+                        const n = recs.filter(r => r.l === l.k).length;
+                        return n ? <span key={l.k} className={`cn ${l.k}`}>{l.label} {n}</span> : null;
+                      })}
                     </span>
                   )}
                 </button>
@@ -304,6 +359,7 @@ export default function Checklist({
       <div className="foot">
         <b>{done}/{total}</b>
         {LEVELS.map(l => <span key={l.k} className={`lv ${l.k}`}>{l.label} {cnt(l.k)}</span>)}
+        <button type="button" className="pdf" onClick={printPdf}>{popup ? '팝업을 허용해주세요' : 'PDF 저장'}</button>
       </div>
 
       {selMode && (
@@ -417,6 +473,7 @@ export default function Checklist({
         .pc .hs button.on { background: var(--primary); color: #fff; }
         .pc .foot { display: flex; gap: 12px; align-items: baseline; justify-content: center; margin-top: 18px; font-size: 12.5px; color: var(--sub-text); }
         .pc .foot b { color: var(--text); }
+        .pc .pdf { border: 0; background: none; color: var(--primary); font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; padding: 0; margin-left: 6px; }
         .pc .lv { font-weight: 600; }
         .pc .lv.O, .pc .lb.O { color: var(--o); }
         .pc .lv.P, .pc .lb.P { color: var(--p); }
@@ -436,7 +493,10 @@ export default function Checklist({
         .pc .row:active { background: var(--tint); }
         .pc .t { font-size: 14px; line-height: 1.35; }
         .pc .none { font-size: 12px; color: var(--sub-text); white-space: nowrap; flex-shrink: 0; }
-        .pc .sm { font-size: 12px; color: var(--sub-text); text-align: right; flex-shrink: 0; max-width: 55%; line-height: 1.4; }
+        .pc .sm { display: flex; gap: 10px; flex-shrink: 0; font-size: 12.5px; font-weight: 700; white-space: nowrap; }
+        .pc .cn.O { color: var(--o); }
+        .pc .cn.P { color: var(--p); }
+        .pc .cn.D { color: var(--d); }
         .pc .lb { font-weight: 700; }
         .pc .ov { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,.55); display: flex; align-items: flex-end; justify-content: center; }
         .pc .sheet { width: 100%; max-height: 86vh; overflow-y: auto; background: var(--white); border-radius: 18px 18px 0 0; padding: 18px 18px 26px; -webkit-overflow-scrolling: touch; }
