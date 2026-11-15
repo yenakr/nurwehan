@@ -51,6 +51,10 @@ export default function Checklist({
   const [memo, setMemo] = useState('');
   const [showMemo, setShowMemo] = useState(false);
   const [undo, setUndo] = useState<{ id: string; text: string } | null>(null);
+  // 여러 항목 한 번에 기록
+  const [selMode, setSelMode] = useState(false);
+  const [sel, setSel] = useState<Set<string>>(new Set());
+  const [bundo, setBundo] = useState<{ text: string; recs: { item: string; id: string }[] } | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
   const [ed, setEd] = useState<{ l: Level; d: string; m: string }>({ l: 'O', d: today(), m: '' });
   const [delId, setDelId] = useState<string | null>(null);
@@ -143,6 +147,46 @@ export default function Checklist({
     const t = setTimeout(() => setUndo(null), 4000);
     return () => clearTimeout(t);
   }, [undo]);
+  const toggleSel = (id: string) =>
+    setSel(p => {
+      const n = new Set(p);
+      if (n.has(id)) n.delete(id);
+      else n.add(id);
+      return n;
+    });
+  const exitSel = () => {
+    setSelMode(false);
+    setSel(new Set());
+  };
+  const addBatch = (l: Level) => {
+    if (!sel.size || !useDate) return;
+    const made = Array.from(sel).map(item => ({ item, rec: { id: newId(), d: useDate, l } as Rec }));
+    mutate(r => {
+      const next = { ...r };
+      made.forEach(x => { next[x.item] = [...(next[x.item] || []), x.rec]; });
+      return next;
+    });
+    setBundo({ text: `${made.length}개 ${lbl(l)} ${md(useDate)} 기록됨`, recs: made.map(x => ({ item: x.item, id: x.rec.id })) });
+    exitSel();
+  };
+  const undoBatch = () => {
+    if (!bundo) return;
+    const ids = new Set(bundo.recs.map(x => x.id));
+    mutate(r => {
+      const next: Progress = {};
+      for (const [k, v] of Object.entries(r)) {
+        const rest = v.filter(x => !ids.has(x.id));
+        if (rest.length) next[k] = rest;
+      }
+      return next;
+    });
+    setBundo(null);
+  };
+  useEffect(() => {
+    if (!bundo) return;
+    const t = setTimeout(() => setBundo(null), 5000);
+    return () => clearTimeout(t);
+  }, [bundo]);
   const startEdit = (r: Rec) => {
     setEditId(r.id);
     setEd({ l: r.l, d: r.d, m: r.m || '' });
@@ -180,15 +224,18 @@ export default function Checklist({
   const history = sheetRecs.map((r, i) => ({ r, i })).sort((a, b) => b.r.d.localeCompare(a.r.d) || b.i - a.i).map(x => x.r);
 
   return (
-    <div className="pc">
+    <div className={`pc ${selMode ? 'selecting' : ''}`}>
       <div className="top">
         <div className="ct">
           {COURSES.map(c => (
-            <button key={c.key} type="button" className={c.key === course ? 'on' : ''} onClick={() => { setCourse(c.key); setFilter('all'); setQ(''); }}>{c.label}</button>
+            <button key={c.key} type="button" className={c.key === course ? 'on' : ''} onClick={() => { setCourse(c.key); setFilter('all'); setQ(''); setSel(new Set()); }}>{c.label}</button>
           ))}
         </div>
         {status === 'saving' && <span className="st">저장 중</span>}
         {status === 'error' && <span className="st error">저장 실패</span>}
+        <button type="button" className={`ic ${selMode ? 'on' : ''}`} aria-label="여러 항목 선택" onClick={() => (selMode ? exitSel() : setSelMode(true))}>
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M4 7l2 2 3-3.5M4 17l2 2 3-3.5M13 8h7M13 18h7" /></svg>
+        </button>
         <button type="button" className={`ic ${find || q || filter !== 'all' ? 'on' : ''}`} aria-label="검색" onClick={() => setFind(f => !f)}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
         </button>
@@ -206,7 +253,7 @@ export default function Checklist({
       {subjects.length > 1 && (
         <div className="hs">
           {subjects.map(x => (
-            <button key={x.key} type="button" className={x.key === key ? 'on' : ''} onClick={() => { setKeys(k => ({ ...k, [course]: x.key })); setFilter('all'); setQ(''); }}>{x.sub}</button>
+            <button key={x.key} type="button" className={x.key === key ? 'on' : ''} onClick={() => { setKeys(k => ({ ...k, [course]: x.key })); setFilter('all'); setQ(''); setSel(new Set()); }}>{x.sub}</button>
           ))}
         </div>
       )}
@@ -215,12 +262,29 @@ export default function Checklist({
         const gd = g.items.filter(i => (prog[i.id] || []).length > 0).length;
         return (
           <section key={g.name} className="grp">
-            <div className="gh"><b>{g.name}</b><span>{gd}/{g.items.length}</span></div>
+            <div className="gh">
+              <b>{g.name}</b>
+              <span>
+                {selMode && (
+                  <button type="button" className="ga" onClick={() => {
+                    const ids = items.map(i => i.id);
+                    const allOn = ids.every(id => sel.has(id));
+                    setSel(p => {
+                      const n = new Set(p);
+                      ids.forEach(id => (allOn ? n.delete(id) : n.add(id)));
+                      return n;
+                    });
+                  }}>{items.every(i => sel.has(i.id)) ? '해제' : '전체'}</button>
+                )}
+                {gd}/{g.items.length}
+              </span>
+            </div>
             {items.map(it => {
               const recs = chrono(prog[it.id] || []);
               const last = recs.slice(-2);
               return (
-                <button key={it.id} type="button" className="row" onClick={() => openSheet(it)}>
+                <button key={it.id} type="button" className={`row ${selMode && sel.has(it.id) ? 'sel' : ''}`} onClick={() => (selMode ? toggleSel(it.id) : openSheet(it))}>
+                  {selMode && <span className={`ck ${sel.has(it.id) ? 'on' : ''}`} />}
                   <span className="t">{it.t}</span>
                   {recs.length > 0 && (
                     <span className="sm">
@@ -241,6 +305,33 @@ export default function Checklist({
         <b>{done}/{total}</b>
         {LEVELS.map(l => <span key={l.k} className={`lv ${l.k}`}>{l.label} {cnt(l.k)}</span>)}
       </div>
+
+      {selMode && (
+        <div className="bar2">
+          <div className="bt2">
+            <span>{sel.size ? `${sel.size}개 선택` : '항목을 선택하세요'}</span>
+            <div className="chips">
+              <button type="button" className={dayMode === 'today' ? 'on' : ''} onClick={() => setDayMode('today')}>오늘</button>
+              <button type="button" className={dayMode === 'yest' ? 'on' : ''} onClick={() => setDayMode('yest')}>어제</button>
+              <label className={`pick ${dayMode === 'pick' ? 'on' : ''}`}>
+                {dayMode === 'pick' ? md(date) : '날짜'}
+                <input type="date" value={date} onChange={e => { if (e.target.value) { setDate(e.target.value); setDayMode('pick'); } }} />
+              </label>
+            </div>
+          </div>
+          <div className="quick">
+            {LEVELS.map(l => (
+              <button key={l.k} type="button" className={`q ${l.k}`} disabled={!sel.size} onClick={() => addBatch(l.k)}>{l.label}</button>
+            ))}
+          </div>
+        </div>
+      )}
+      {bundo && !selMode && (
+        <div className="toast">
+          <span>{bundo.text}</span>
+          <button type="button" onClick={undoBatch}>실행취소</button>
+        </div>
+      )}
 
       {sheet && (
         <div className="ov" onClick={() => setSheet(null)}>
@@ -390,6 +481,20 @@ export default function Checklist({
         .pc .acts button { border: 0; background: var(--tint); border-radius: 8px; padding: 7px 14px; font: inherit; font-size: 13px; font-weight: 600; color: var(--sub-text); cursor: pointer; }
         .pc .acts button.pri { background: var(--primary); color: #fff; }
         .pc .acts button.dng { background: none; color: #DC2626; padding-left: 0; }
+        .pc.selecting { padding-bottom: 150px; }
+        .pc .ck { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--sub-text); flex-shrink: 0; align-self: center; position: relative; }
+        .pc .ck.on { background: var(--primary); border-color: var(--primary); }
+        .pc .ck.on::after { content: ''; position: absolute; left: 5px; top: 2px; width: 5px; height: 9px; border: solid #fff; border-width: 0 2px 2px 0; transform: rotate(45deg); }
+        .pc .row.sel { background: color-mix(in srgb, var(--primary) 12%, transparent); }
+        .pc .row .t { flex: 1; }
+        .pc .ga { border: 0; background: none; color: var(--primary); font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; margin-right: 10px; padding: 0; }
+        .pc .gh span { display: flex; align-items: baseline; }
+        .pc .bar2 { position: fixed; left: 0; right: 0; bottom: 0; z-index: 1500; background: var(--white); border-top: 1px solid var(--line); padding: 10px 16px 16px; box-shadow: 0 -4px 16px rgba(0,0,0,.25); }
+        .pc .bt2 { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 14px; font-weight: 700; }
+        .pc .bar2 .q { padding: 13px 0; }
+        .pc .bar2 .q:disabled { opacity: .35; }
+        .pc .toast { position: fixed; left: 16px; right: 16px; bottom: 20px; z-index: 1500; max-width: 480px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; background: var(--text); color: var(--background); border-radius: 10px; padding: 12px 16px; font-size: 14px; }
+        .pc .toast button { border: 0; background: none; color: #7DB7F5; font: inherit; font-weight: 700; cursor: pointer; }
       `}</style>
     </div>
   );
