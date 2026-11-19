@@ -1,6 +1,6 @@
 import { prisma } from './prisma';
 
-export const AI_DAILY_LIMIT = 20;
+export const AI_DAILY_LIMIT = 8;
 
 // 오늘 사용 횟수를 1 올리고, 한도를 넘었으면 false. 표가 없거나 오류면 막는다.
 export async function takeAiQuota(userId: string): Promise<boolean> {

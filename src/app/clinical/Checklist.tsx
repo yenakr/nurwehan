@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import type { ScheduleItem } from './MySchedule';
 import { DETAIL } from './practicum-detail';
+import { AI_Q, AI_ANSWER_MAX } from './practicum-ai-q';
 import { COURSES, LEVELS, SUBJECTS, normalizeStore, type Level, type Progress, type PSubject, type PItem, type Rec, type Store } from './practicum-data';
 
 const today = () => {
@@ -94,7 +95,7 @@ export default function Checklist({
   const [find, setFind] = useState(false);
   const [sum, setSum] = useState(false);
   // AI 꼬리질문: 기록 하나에 대해 질문 → 학생 답 → 피드백(최대 2번). 대화는 저장하지 않는다.
-  const [ai, setAi] = useState<{ rid: string; asked: string[]; answers: string[]; text: string; busy: boolean; err: string } | null>(null);
+  const [ai, setAi] = useState<{ rid: string; level: Level; a: string; reply: string; busy: boolean; err: string } | null>(null);
   const [sumOpen, setSumOpen] = useState<Set<string>>(new Set());
   const [sheet, setSheet] = useState<PItem | null>(null);
   // 시트 입력 상태
@@ -113,22 +114,25 @@ export default function Checklist({
 
   useEffect(() => { setAi(null); }, [sheet?.id]);
 
-  const askAi = async (rid: string, level: Level, answers: string[], asked: string[]) => {
-    setAi({ rid, asked, answers, text: '', busy: true, err: '' });
+  const openAi = (rid: string, level: Level) => setAi({ rid, level, a: '', reply: '', busy: false, err: '' });
+  const sendAi = async () => {
+    if (!ai || !ai.a.trim() || ai.busy) return;
+    const cur = ai;
+    setAi({ ...cur, busy: true, err: '' });
     try {
       const res = await fetch('/api/practicum/ai', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ subject: key, item: sheet?.id, level, answers, asked }),
+        body: JSON.stringify({ subject: key, item: sheet?.id, level: cur.level, answer: cur.a.trim() }),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok || !j.text) {
-        setAi({ rid, asked, answers: [], text: '', busy: false, err: res.status === 429 ? '오늘 횟수를 다 썼어요' : '지금은 사용할 수 없어요' });
+        setAi({ ...cur, busy: false, err: res.status === 429 ? '오늘 횟수를 다 썼어요' : '지금은 사용할 수 없어요' });
         return;
       }
-      setAi({ rid, asked: [...asked, j.text], answers: [...answers, ''], text: j.text, busy: false, err: '' });
+      setAi({ ...cur, busy: false, reply: j.text });
     } catch {
-      setAi({ rid, asked, answers: [], text: '', busy: false, err: '지금은 사용할 수 없어요' });
+      setAi({ ...cur, busy: false, err: '지금은 사용할 수 없어요' });
     }
   };
 
@@ -552,7 +556,7 @@ tr { break-inside: avoid; }
               <div className="undo">
                 <span>{undo.text}</span>
                 <span className="uacts">
-                  {aiOn && (() => { const u = (prog[sheet.id] || []).find(x => x.id === undo.id); return u ? <button type="button" onClick={() => askAi(u.id, u.l, [], [])}>질문</button> : null; })()}
+                  {aiOn && (() => { const u = (prog[sheet.id] || []).find(x => x.id === undo.id); return u ? <button type="button" onClick={() => openAi(u.id, u.l)}>질문</button> : null; })()}
                   <button type="button" onClick={() => { del(undo.id); setUndo(null); }}>실행취소</button>
                 </span>
               </div>
@@ -560,15 +564,15 @@ tr { break-inside: avoid; }
 
             {ai && (
               <div className="aiq">
-                  {ai.busy && <p className="aitx">...</p>}
-                  {ai.err && <p className="aitx">{ai.err}</p>}
-                  {!ai.busy && ai.text && <p className="aitx">{ai.text}</p>}
-                  {!ai.busy && ai.text && ai.asked.length < 2 && (
-                    <div className="frow">
-                      <input className="grow" maxLength={300} value={ai.answers[ai.answers.length - 1] || ''} onChange={e => { const v = e.target.value; setAi(a => (a ? { ...a, answers: [...a.answers.slice(0, -1), v] } : a)); }} />
-                      <button type="button" className="pri" disabled={!(ai.answers[ai.answers.length - 1] || '').trim()} onClick={() => { const rc = (prog[sheet.id] || []).find(x => x.id === ai.rid); if (rc) askAi(ai.rid, rc.l, ai.answers.map(x => x.trim()).filter(Boolean), ai.asked); }}>답하기</button>
-                    </div>
-                  )}
+                <p className="aitx">{AI_Q[ai.level]}</p>
+                {!ai.reply && (
+                  <div className="frow">
+                    <input className="grow" maxLength={AI_ANSWER_MAX} value={ai.a} onChange={e => { const v = e.target.value; setAi(x => (x ? { ...x, a: v } : x)); }} />
+                    <button type="button" className="pri" disabled={!ai.a.trim() || ai.busy} onClick={sendAi}>{ai.busy ? '...' : '답하기'}</button>
+                  </div>
+                )}
+                {ai.err && <p className="aitx">{ai.err}</p>}
+                {ai.reply && <p className="aitx">{ai.reply}</p>}
               </div>
             )}
 
@@ -600,7 +604,7 @@ tr { break-inside: avoid; }
                         <b className={`lb ${r.l}`}>{lbl(r.l)}</b>
                         {r.m && <span className="hm">{r.m}</span>}
                       </button>
-                      {aiOn && <button type="button" className="aq" onClick={() => askAi(r.id, r.l, [], [])}>질문</button>}
+                      {aiOn && <button type="button" className="aq" onClick={() => openAi(r.id, r.l)}>질문</button>}
                     </div>
                   )
                 )}

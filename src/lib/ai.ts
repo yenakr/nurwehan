@@ -34,7 +34,7 @@ export async function askModel(system: string, messages: ChatMsg[]): Promise<str
           systemInstruction: { parts: [{ text: system }] },
           contents: messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
           generationConfig: {
-            maxOutputTokens: 1200,
+            maxOutputTokens: 400,
           },
         }),
       }));
@@ -49,7 +49,7 @@ export async function askModel(system: string, messages: ChatMsg[]): Promise<str
         headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` },
         body: JSON.stringify({
           model: process.env.AI_MODEL || 'gpt-4o-mini',
-          max_completion_tokens: 1200,
+          max_completion_tokens: 300,
           messages: [{ role: 'system', content: system }, ...messages],
         }),
       }));
@@ -62,7 +62,7 @@ export async function askModel(system: string, messages: ChatMsg[]): Promise<str
       headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({
         model: process.env.AI_MODEL || 'claude-haiku-5-5',
-        max_tokens: 400,
+        max_tokens: 300,
         system,
         messages,
       }),
