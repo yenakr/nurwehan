@@ -855,16 +855,16 @@ tr { break-inside: avoid; }
         .pc .undo button { border: 0; background: none; color: var(--primary); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
         .pc .hist { margin-top: 14px; }
         .pc .hr { width: 100%; display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 12px; padding: 11px 2px; border: 0; border-top: 1px solid var(--line); background: none; font: inherit; font-size: 14px; color: inherit; text-align: left; cursor: pointer; }
-        .pc .hr:not(.edit) { display: flex; align-items: baseline; padding: 0; gap: 8px; cursor: default; }
-        .pc .hmain { flex: 1; min-width: 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 12px; padding: 11px 2px; border: 0; background: none; font: inherit; font-size: 14px; color: inherit; text-align: left; cursor: pointer; }
+        .pc .hr:not(.edit) { display: flex; align-items: flex-start; padding: 10px 10px 10px 12px; gap: 6px; margin-top: 8px; border: 0; border-radius: 12px; background: var(--tint); cursor: default; }
+        .pc .hmain { flex: 1; min-width: 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; padding: 0; border: 0; background: none; font: inherit; font-size: 14px; color: inherit; text-align: left; cursor: pointer; }
         .pc .aq, .pc .uacts button { border: 0; background: none; color: var(--primary); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; padding: 6px 4px; }
-        .pc .aq { display: flex; align-items: center; justify-content: center; align-self: center; flex-shrink: 0; width: 30px; height: 30px; padding: 0; border-radius: 50%; background: color-mix(in srgb, var(--primary) 14%, transparent); }
+        .pc .aq { display: flex; align-items: center; justify-content: center; align-self: flex-start; flex-shrink: 0; width: 28px; height: 28px; margin-top: -3px; padding: 0; border-radius: 50%; background: color-mix(in srgb, var(--primary) 14%, transparent); }
         .pc .uacts { display: flex; gap: 8px; }
         .pc .hr.edit { display: block; cursor: default; }
-        .pc .hd { font-weight: 700; min-width: 52px; }
+        .pc .hd { font-weight: 700; font-size: 13px; color: var(--sub-text); }
         .pc .hd i { font-style: normal; font-size: 12px; font-weight: 500; color: var(--sub-text); }
-        .pc .hm.ha { border-left: 2px solid var(--primary); padding-left: 8px; color: var(--text); }
-        .pc .hm { flex-basis: 100%; font-size: 13px; color: var(--sub-text); }
+        .pc .hm.ha { color: var(--text); line-height: 1.5; }
+        .pc .hm { flex-basis: 100%; font-size: 14px; line-height: 1.5; color: var(--text); }
         .pc .seg { display: flex; gap: 6px; }
         .pc .seg button { flex: 1; border: 0; border-radius: 8px; background: var(--tint); padding: 8px 0; font: inherit; font-size: 14px; font-weight: 600; color: var(--sub-text); cursor: pointer; }
         .pc .seg button.on.O { background: var(--o); color: #fff; }
