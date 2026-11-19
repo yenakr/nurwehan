@@ -828,16 +828,15 @@ tr { break-inside: avoid; }
         .pc .cn.P { color: var(--p); }
         .pc .cn.D { color: var(--d); }
         .pc .lb { font-weight: 700; }
-        .pc .ov { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,.55); display: flex; align-items: flex-end; justify-content: center; }
-        .pc .sheet { width: 100%; max-height: 86vh; overflow-y: auto; background: var(--white); border-radius: 18px 18px 0 0; padding: 18px 18px 26px; -webkit-overflow-scrolling: touch; }
-        @media (min-width: 768px) { .pc .ov { align-items: center; } .pc .sheet { width: 480px; border-radius: 18px; } }
-        .pc .sh { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+        .pc .ov { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; padding: 16px; }
+        .pc .sheet { width: 100%; max-width: 480px; max-height: 84vh; overflow-y: auto; background: var(--white); border-radius: 18px; padding: 18px; -webkit-overflow-scrolling: touch; }
+                .pc .sh { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
         .pc .sh h3 { margin: 0; font-size: 18px; font-weight: 800; line-height: 1.35; }
         .pc .x { border: 0; background: none; font-size: 28px; line-height: 1; color: var(--sub-text); cursor: pointer; padding: 0 2px; margin-top: -4px; }
-        .pc .kp { list-style: none; margin: -6px 0 16px; padding: 0; display: flex; flex-direction: column; gap: 6px; }
-        .pc .kp li { display: flex; gap: 10px; font-size: 13px; line-height: 1.55; color: var(--text); }
-        .pc .kp b { flex: 0 0 64px; font-weight: 600; color: var(--primary); }
-        .pc .kp span { flex: 1; min-width: 0; }
+        .pc .kp { list-style: none; margin: -6px 0 16px; padding: 0; display: grid; grid-template-columns: max-content 1fr; gap: 6px 12px; }
+        .pc .kp li { display: contents; font-size: 13px; line-height: 1.55; color: var(--text); }
+        .pc .kp b { font-size: 13px; line-height: 1.55; font-weight: 600; color: var(--primary); }
+        .pc .kp span { min-width: 0; font-size: 13px; line-height: 1.55; color: var(--text); }
         .pc .desc { margin: 8px 0 16px; font-size: 13px; line-height: 1.65; color: var(--sub-text); }
         .pc .quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         .pc .q { border: 0; border-radius: 10px; padding: 10px 0; font: inherit; font-size: 14.5px; font-weight: 700; cursor: pointer; }
