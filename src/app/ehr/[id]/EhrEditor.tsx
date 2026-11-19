@@ -6,6 +6,7 @@ import type { ChartData, Row } from '../types';
 import { PHRASES, CARE_DX } from '../phrases';
 import { VIEW_LIST } from '../samples';
 import { ALLERGIES, DEPTS, DOCTORS, WARD_OPTIONS, bedOptions } from '../directory';
+import { confirmDialog } from '@/components/Dialog';
 
 type ListKey =
   | 'progress' | 'vitals' | 'io' | 'labs' | 'notes' | 'care'
@@ -408,7 +409,7 @@ export default function EhrEditor({
 
   const toggleDischarge = async () => {
     const wasDischarged = !!data.info.discharged;
-    if (!wasDischarged && !confirm('퇴원 처리할까요? 기록은 그대로 남아요.')) return;
+    if (!wasDischarged && !(await confirmDialog('퇴원 처리할까요? 기록은 그대로 남아요.'))) return;
     const d = new Date();
     const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const next = { ...data, info: { ...data.info, discharged: wasDischarged ? '' : today } };
@@ -525,7 +526,7 @@ export default function EhrEditor({
           type="button"
           className="dis del"
           onClick={async () => {
-            if (!confirm('이 차트를 삭제할까요? 모든 기록이 사라지고 되돌릴 수 없어요.')) return;
+            if (!(await confirmDialog('이 차트를 삭제할까요? 모든 기록이 사라지고 되돌릴 수 없어요.'))) return;
             const res = await fetch(`/api/ehr/${id}`, { method: 'DELETE' });
             if (res.ok) router.push('/ehr');
           }}

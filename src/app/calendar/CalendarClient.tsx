@@ -5,6 +5,7 @@ import PreparingBadge from '@/components/PreparingBadge';
 import EmptyState from '@/components/EmptyState';
 import { isAdminRole } from '@/lib/auth-core';
 import styles from './calendar.module.css';
+import { confirmDialog } from '@/components/Dialog';
 
 interface CalendarClientProps {
   initialOfficialEvents: any[];
@@ -231,7 +232,7 @@ export default function CalendarClient({
   };
 
   const handleDeletePersonalEvent = async (id: string) => {
-    if (!confirm('이 개인 일정을 삭제하시겠습니까?')) return;
+    if (!(await confirmDialog('이 개인 일정을 삭제하시겠습니까?'))) return;
     try {
       await fetch(`/api/calendar/personal?id=${id}`, { method: 'DELETE' });
       setPersonalEvents(prev => prev.filter(e => e.id !== id));
@@ -242,7 +243,7 @@ export default function CalendarClient({
   };
 
   const handleDeleteOfficialEvent = async (id: string) => {
-    if (!confirm('이 공식 일정을 삭제하시겠습니까?')) return;
+    if (!(await confirmDialog('이 공식 일정을 삭제하시겠습니까?'))) return;
     try {
       await fetch(`/api/admin/calendar?id=${id}`, { method: 'DELETE' });
       setOfficialEvents(prev => prev.filter(e => e.id !== id));

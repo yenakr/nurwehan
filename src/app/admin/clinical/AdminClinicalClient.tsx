@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { confirmDialog } from '@/components/Dialog';
 
 interface AdminClinicalClientProps {
   initialRequirements: any[];
@@ -57,7 +58,7 @@ export default function AdminClinicalClient({ initialRequirements }: AdminClinic
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('정말 이 건강요건 항목을 삭제하시겠습니까?')) return;
+    if (!(await confirmDialog('정말 이 건강요건 항목을 삭제하시겠습니까?'))) return;
     await fetch(`/api/admin/clinical?id=${id}`, { method: 'DELETE' });
     refreshRequirements();
   };

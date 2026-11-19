@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { confirmDialog } from '@/components/Dialog';
 
 interface HistoryApplication {
   id: string;
@@ -43,7 +44,7 @@ export default function HistoryClient({ initialApplications, currentUser }: Hist
 
 
   const handleCancel = async (appId: string) => {
-    if (!confirm('정말로 신청을 취소하시겠습니까?')) return;
+    if (!(await confirmDialog('정말로 신청을 취소하시겠습니까?'))) return;
     
     setLoading(appId);
     try {
