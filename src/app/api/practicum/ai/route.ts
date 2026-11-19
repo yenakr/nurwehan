@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { isAdminRole } from '@/lib/auth-core';
 import { aiConfigured, askModel, type ChatMsg } from '@/lib/ai';
+import { hasChecklistAccess } from '@/lib/checklist-access';
 import { takeAiQuota, refundAiQuota } from '@/lib/practicum-ai';
 import { SUBJECTS } from '@/app/clinical/practicum-data';
 import { AI_Q, AI_ANSWER_MAX } from '@/app/clinical/practicum-ai-q';
@@ -20,6 +21,7 @@ export async function POST(req: Request) {
   if (!user || !(user.approvalStatus === 'APPROVED' || isAdminRole(user.role))) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
+  if (!(await hasChecklistAccess(user))) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   if (!aiConfigured()) return NextResponse.json({ error: 'off' }, { status: 503 });
   const body = await req.json().catch(() => ({}));
   const sub = SUBJECTS.find(s => s.key === body?.subject);
