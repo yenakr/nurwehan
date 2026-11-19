@@ -796,19 +796,19 @@ tr { break-inside: avoid; }
             )}
 
             <input className="rmi" value={remarks[sheet.id] || ''} onChange={e => setRemark(sheet.id, e.target.value)} placeholder="비고" maxLength={200} />
-            <button type="button" className="dtog" aria-expanded={descOpen} onClick={() => setDescOpen(v => !v)}>설명<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ transform: descOpen ? 'rotate(180deg)' : 'none' }}><path d="M6 9l6 6 6-6" /></svg></button>
-            {descOpen && (
-              <div className="dbody">
-            <p className="desc">{DETAIL[sheet.id]?.s ?? sheet.d}</p>
-            {DETAIL[sheet.id] && (
-              <ul className="kp">
-                {DETAIL[sheet.id].k.map(([a, b]) => (
-                  <li key={a}><b>{a}</b><span>{b}</span></li>
-                ))}
-              </ul>
-            )}
-              </div>
-            )}
+            <div className="dsc">
+              <p className={`desc ${descOpen ? '' : 'clamp'}`}>{DETAIL[sheet.id]?.s ?? sheet.d}</p>
+              {descOpen && DETAIL[sheet.id] && (
+                <ul className="kp">
+                  {DETAIL[sheet.id].k.map(([a, b]) => (
+                    <li key={a}><b>{a}</b><span>{b}</span></li>
+                  ))}
+                </ul>
+              )}
+              {(DETAIL[sheet.id] || (DETAIL[sheet.id]?.s ?? sheet.d).length > 60) && (
+                <button type="button" className="dtog" aria-expanded={descOpen} onClick={() => setDescOpen(v => !v)}>{descOpen ? '접기' : '더보기'}</button>
+              )}
+            </div>
           </div>
         </div>
       )}
@@ -905,17 +905,17 @@ tr { break-inside: avoid; }
         .pc .lb { font-weight: 700; }
         .pc .ov { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; padding: 16px; }
         .pc .sheet { width: 100%; max-width: 480px; max-height: 84vh; overflow-y: auto; background: var(--white); border-radius: 18px; padding: 18px; -webkit-overflow-scrolling: touch; }
-                .pc .sh { margin-bottom: 10px; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+                .pc .sh { margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
         .pc .sh h3 { margin: 0; font-size: 18px; font-weight: 800; line-height: 1.35; }
         .pc .x { border: 0; background: none; font-size: 28px; line-height: 1; color: var(--sub-text); cursor: pointer; padding: 0 2px; margin-top: -4px; }
         .pc .kp { list-style: none; margin: -6px 0 16px; padding: 0; display: grid; grid-template-columns: max-content 1fr; gap: 6px 12px; }
         .pc .kp li { display: contents; font-size: 13px; line-height: 1.55; color: var(--text); }
         .pc .kp b { font-size: 13px; line-height: 1.55; font-weight: 600; color: var(--primary); }
         .pc .kp span { min-width: 0; font-size: 13px; line-height: 1.55; color: var(--text); }
-        .pc .dtog { display: flex; align-items: center; gap: 4px; margin-top: 16px; border: 0; background: none; padding: 4px 0; font: inherit; font-size: 13px; font-weight: 700; color: var(--sub-text); cursor: pointer; }
-        .pc .dbody { margin-top: 4px; }
-        .pc .dbody .kp { margin-top: 0; }
-        .pc .desc { margin: 4px 0 12px; font-size: 13px; line-height: 1.65; color: var(--sub-text); }
+        .pc .dsc { margin-top: 14px; }
+        .pc .dtog { display: flex; align-items: center; gap: 4px; margin-top: 0; border: 0; background: none; padding: 4px 0; font: inherit; font-size: 13px; font-weight: 700; color: var(--sub-text); cursor: pointer; }
+        .pc .desc.clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        .pc .desc { margin: 4px 0 6px; font-size: 13px; line-height: 1.65; color: var(--sub-text); }
         .pc .quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         .pc .q { border: 0; border-radius: 10px; padding: 10px 0; font: inherit; font-size: 14.5px; font-weight: 700; cursor: pointer; }
         .pc .q:active { transform: scale(.97); }
