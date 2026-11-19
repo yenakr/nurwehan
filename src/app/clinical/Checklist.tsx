@@ -515,7 +515,10 @@ tr { break-inside: avoid; }
   const recorded = (x: PSubject) => Object.keys(all[x.key]?.r || {}).length > 0;
 
   const sheetRecs = sheet ? prog[sheet.id] || [] : [];
+  const [histAll, setHistAll] = useState(false);
+  useEffect(() => { setHistAll(false); }, [sheet?.id]);
   const history = sheetRecs.map((r, i) => ({ r, i })).sort((a, b) => b.r.d.localeCompare(a.r.d) || b.i - a.i).map(x => x.r);
+  const shown = histAll ? history : history.filter((r, i) => i < 3 || r.id === ai?.rid || r.id === editId);
 
   return (
     <div className={`pc ${selMode ? 'selecting' : ''}`}>
@@ -712,7 +715,7 @@ tr { break-inside: avoid; }
 
             {history.length > 0 && (
               <div className="hist">
-                {history.map(r =>
+                {shown.map(r =>
                   editId === r.id ? (
                     <div key={r.id} className="hr edit">
                       {seg(ed.l, l => setEd(e => ({ ...e, l })))}
@@ -775,6 +778,9 @@ tr { break-inside: avoid; }
                     )}
                     </div>
                   )
+                )}
+                {history.length > 3 && (
+                  <button type="button" className="hmore" onClick={() => setHistAll(v => !v)}>{histAll ? '접기' : `이전 기록 ${history.length - 3}개`}</button>
                 )}
               </div>
             )}
@@ -889,7 +895,7 @@ tr { break-inside: avoid; }
         .pc .lb { font-weight: 700; }
         .pc .ov { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; padding: 16px; }
         .pc .sheet { width: 100%; max-width: 480px; max-height: 84vh; overflow-y: auto; background: var(--white); border-radius: 18px; padding: 18px; -webkit-overflow-scrolling: touch; }
-                .pc .sh { display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+                .pc .sh { margin-bottom: 10px; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
         .pc .sh h3 { margin: 0; font-size: 18px; font-weight: 800; line-height: 1.35; }
         .pc .x { border: 0; background: none; font-size: 28px; line-height: 1; color: var(--sub-text); cursor: pointer; padding: 0 2px; margin-top: -4px; }
         .pc .kp { list-style: none; margin: -6px 0 16px; padding: 0; display: grid; grid-template-columns: max-content 1fr; gap: 6px 12px; }
@@ -926,17 +932,19 @@ tr { break-inside: avoid; }
         .pc .undo { margin-top: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--tint); border-radius: 8px; padding: 8px 12px; font-size: 13px; }
         .pc .undo button { border: 0; background: none; color: var(--primary); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
         .pc .hist { margin-top: 14px; }
+        .pc .hist .aiq { margin: 2px 0 8px; }
         .pc .hr { width: 100%; display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 12px; padding: 11px 2px; border: 0; border-top: 1px solid var(--line); background: none; font: inherit; font-size: 14px; color: inherit; text-align: left; cursor: pointer; }
-        .pc .hr:not(.edit) { display: flex; align-items: flex-start; padding: 10px 10px 10px 12px; gap: 6px; margin-top: 8px; border: 0; border-radius: 12px; background: var(--tint); cursor: default; }
+        .pc .hr:not(.edit) { display: flex; align-items: flex-start; padding: 9px 2px; gap: 6px; margin: 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: none; cursor: default; }
+        .pc .hmore { display: block; margin: 4px auto 0; border: 0; background: none; padding: 8px 12px; font: inherit; font-size: 13px; font-weight: 600; color: var(--sub-text); cursor: pointer; }
         .pc .hmain { flex: 1; min-width: 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; padding: 0; border: 0; background: none; font: inherit; font-size: 14px; color: inherit; text-align: left; cursor: pointer; }
         .pc .aq, .pc .uacts button { border: 0; background: none; color: var(--primary); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; padding: 6px 4px; }
-        .pc .aq { display: flex; align-items: center; justify-content: center; align-self: flex-start; flex-shrink: 0; width: 28px; height: 28px; margin-top: -3px; padding: 0; border-radius: 50%; background: color-mix(in srgb, var(--primary) 14%, transparent); }
+        .pc .aq { display: flex; align-items: center; justify-content: center; align-self: flex-start; flex-shrink: 0; width: 26px; height: 26px; margin-top: -2px; padding: 0; border-radius: 50%; background: color-mix(in srgb, var(--primary) 14%, transparent); }
         .pc .uacts { display: flex; gap: 8px; }
         .pc .hr.edit { display: block; cursor: default; }
         .pc .hd { font-weight: 700; font-size: 13px; color: var(--sub-text); }
         .pc .hd i { font-style: normal; font-size: 12px; font-weight: 500; color: var(--sub-text); }
         .pc .hm.ha { color: var(--text); line-height: 1.5; }
-        .pc .hm { flex-basis: 100%; font-size: 14px; line-height: 1.5; color: var(--text); }
+        .pc .hm { flex-basis: 100%; font-size: 14px; line-height: 1.5; color: var(--text); display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
         .pc .seg { display: flex; gap: 6px; }
         .pc .seg button { flex: 1; border: 0; border-radius: 8px; background: var(--tint); padding: 8px 0; font: inherit; font-size: 14px; font-weight: 600; color: var(--sub-text); cursor: pointer; }
         .pc .seg button.on.O { background: var(--o); color: #fff; }
