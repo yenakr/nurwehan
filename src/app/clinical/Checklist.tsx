@@ -349,12 +349,19 @@ export default function Checklist({
     </div>
   );
   const outside = practiceDays.size > 0 && !practiceDays.has(useDate);
+  const [flash, setFlash] = useState<Level | null>(null);
+  useEffect(() => {
+    if (!flash) return;
+    const t = setTimeout(() => setFlash(null), 900);
+    return () => clearTimeout(t);
+  }, [flash]);
   const add = (l: Level) => {
     if (!sheet || !useDate) return;
     const rec: Rec = { id: newId(), d: useDate, l, ...(memo.trim() ? { m: memo.trim().slice(0, 200) } : {}) };
     mutate(r => ({ ...r, [sheet.id]: [...(r[sheet.id] || []), rec] }));
     setMemo('');
     setUndo({ id: rec.id, text: `${lbl(l)} ${md(rec.d)} 기록됨` });
+    setFlash(l);
     if (aiOn) openAi(rec.id, l);
   };
   useEffect(() => {
@@ -618,6 +625,7 @@ tr { break-inside: avoid; }
                 )}
                 {gd}/{g.items.length}
               </span>
+              <i className="pgb" style={{ width: `${g.items.length ? (gd / g.items.length) * 100 : 0}%` }} />
             </div>
             {items.map(it => {
               const recs = chrono(prog[it.id] || []);
@@ -689,7 +697,7 @@ tr { break-inside: avoid; }
             )}
             <div className="quick">
               {LEVELS.map(l => (
-                <button key={l.k} type="button" className={`q ${l.k}`} onClick={() => add(l.k)}>{l.label}</button>
+                <button key={l.k} type="button" className={`q ${l.k} ${flash === l.k ? 'flash' : ''}`} onClick={() => add(l.k)}>{flash === l.k ? <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.6" strokeLinecap="round" strokeLinejoin="round" aria-label="기록됨"><path d="M5 12.5l4.5 4.5L19 7.5" /></svg> : l.label}</button>
               ))}
             </div>
             {undo && (
@@ -746,7 +754,7 @@ tr { break-inside: avoid; }
                 {!ai.f && <p className="pnote">{PNOTE}</p>}
                 {!ai.f && (
                   <div className="frow">
-                    <input className="grow" maxLength={AI_ANSWER_MAX} value={ai.a} onChange={e => { const v = e.target.value; setAi(x => (x ? { ...x, a: v } : x)); }} />
+                    <textarea className="grow" rows={2} maxLength={AI_ANSWER_MAX} value={ai.a} onChange={e => { const v = e.target.value; setAi(x => (x ? { ...x, a: v } : x)); }} />
                     <button type="button" className="send" aria-label="전송" disabled={!ai.a.trim() || ai.busy} onClick={sendAi}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4 20-7z" /></svg></button>
                   </div>
                 )}
@@ -755,7 +763,7 @@ tr { break-inside: avoid; }
                 {ai.f && !ai.g && <p className="pnote">{PNOTE}</p>}
                 {ai.f && !ai.g && (
                   <div className="frow">
-                    <input className="grow" maxLength={AI_ANSWER_MAX} value={ai.b} onChange={e => { const v = e.target.value; setAi(x => (x ? { ...x, b: v } : x)); }} />
+                    <textarea className="grow" rows={2} maxLength={AI_ANSWER_MAX} value={ai.b} onChange={e => { const v = e.target.value; setAi(x => (x ? { ...x, b: v } : x)); }} />
                     <button type="button" className="send" aria-label="전송" disabled={!ai.b.trim() || ai.busy} onClick={sendAi}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4 20-7z" /></svg></button>
                   </div>
                 )}
@@ -795,6 +803,16 @@ tr { break-inside: avoid; }
         .pc .ct { flex: 1; min-width: 0; display: flex; gap: 18px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
         .pc .ct::-webkit-scrollbar, .pc .hs::-webkit-scrollbar { display: none; }
         .pc .ct button { flex-shrink: 0; border: 0; border-bottom: 2px solid transparent; background: none; padding: 8px 0; font: inherit; font-size: 15px; font-weight: 700; color: var(--sub-text); cursor: pointer; margin-bottom: -1px; }
+        .pc .pgb { position: absolute; left: 0; bottom: -2px; height: 2px; background: var(--primary); transition: width .3s; }
+        .pc .q.flash { filter: brightness(.95); }
+        .pc .q { display: flex; align-items: center; justify-content: center; min-height: 44px; }
+        .pc .aiq textarea { flex: 1; min-width: 0; border: 0; border-bottom: 1px solid var(--line); background: transparent; color: inherit; font: inherit; font-size: 14px; line-height: 1.5; padding: 8px 2px; resize: none; border-radius: 0; field-sizing: content; min-height: 3.2em; max-height: 9em; }
+        .pc .aiq .frow { align-items: flex-end; }
+        .pc .pinb { min-width: 44px; min-height: 44px; justify-content: center; }
+        .pc .hs .pinb, .pc .hs .pinb.on { min-width: 36px; min-height: 36px; }
+        .pc .send { min-width: 44px; min-height: 44px; justify-content: center; }
+        .pc .aq, .pc .x, .pc .warnb, .pc .aix { position: relative; }
+        .pc .aq::after, .pc .x::after, .pc .warnb::after, .pc .aix::after { content: ''; position: absolute; inset: -8px; }
         .pc .pinb { flex-shrink: 0; border: 0; background: none; padding: 6px; color: var(--sub-text); cursor: pointer; display: inline-flex; align-items: center; }
         .pc .pinb.on { color: var(--primary); }
         .pc .hs .pinb, .pc .hs .pinb.on { padding: 4px 2px; background: none; border-radius: 0; }
@@ -858,7 +876,7 @@ tr { break-inside: avoid; }
         .pc .aitx { margin: 0; font-size: 14px; line-height: 1.7; color: var(--text); white-space: pre-wrap; }
         .pc .aiq .frow { margin: 0; }
         .pc .grp { margin-top: 12px; }
-        .pc .gh { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 2px 5px; border-bottom: 2px solid var(--primary); font-size: 14px; }
+        .pc .gh { position: relative; display: flex; justify-content: space-between; align-items: baseline; padding: 4px 2px 5px; border-bottom: 2px solid color-mix(in srgb, var(--primary) 22%, transparent); font-size: 14px; }
         .pc .gh span { font-size: 12.5px; color: var(--sub-text); }
         .pc .row { width: 100%; display: flex; justify-content: space-between; align-items: baseline; gap: 10px; padding: 8px 2px; background: none; border: 0; border-bottom: 1px solid var(--line); text-align: left; cursor: pointer; font: inherit; color: inherit; }
         .pc .row:active { background: var(--tint); }
