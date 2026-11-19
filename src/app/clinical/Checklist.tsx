@@ -227,6 +227,7 @@ export default function Checklist({
     mutate(r => ({ ...r, [sheet.id]: [...(r[sheet.id] || []), rec] }));
     setMemo('');
     setUndo({ id: rec.id, text: `${lbl(l)} ${md(rec.d)} 기록됨` });
+    if (aiOn) openAi(rec.id, l);
   };
   useEffect(() => {
     if (!undo) return;
@@ -556,7 +557,6 @@ tr { break-inside: avoid; }
               <div className="undo">
                 <span>{undo.text}</span>
                 <span className="uacts">
-                  {aiOn && (() => { const u = (prog[sheet.id] || []).find(x => x.id === undo.id); return u ? <button type="button" onClick={() => openAi(u.id, u.l)}>질문</button> : null; })()}
                   <button type="button" onClick={() => { del(undo.id); setUndo(null); }}>실행취소</button>
                 </span>
               </div>
@@ -564,7 +564,10 @@ tr { break-inside: avoid; }
 
             {ai && (
               <div className="aiq">
-                <p className="aitx">{AI_Q[ai.level]}</p>
+                <div className="aih">
+                  <p className="aitx">{AI_Q[ai.level]}</p>
+                  <button type="button" className="aix" onClick={() => setAi(null)}>닫기</button>
+                </div>
                 {!ai.reply && (
                   <div className="frow">
                     <input className="grow" maxLength={AI_ANSWER_MAX} value={ai.a} onChange={e => { const v = e.target.value; setAi(x => (x ? { ...x, a: v } : x)); }} />
@@ -657,6 +660,9 @@ tr { break-inside: avoid; }
         .pc .sumr .t.mute { color: var(--sub-text); }
         .pc .sumr .dd { flex: 0 1 45%; text-align: right; font-size: 12px; color: var(--sub-text); }
         .pc .aiq { margin-top: 8px; padding: 10px 12px; border-radius: 10px; background: var(--tint); }
+        .pc .aih { display: flex; align-items: flex-start; gap: 8px; }
+        .pc .aih .aitx { flex: 1; }
+        .pc .aix { flex-shrink: 0; border: 0; background: none; font: inherit; font-size: 12.5px; color: var(--sub-text); cursor: pointer; padding: 0; }
         .pc .aitx { margin: 0 0 8px; font-size: 13px; line-height: 1.6; color: var(--text); white-space: pre-wrap; }
         .pc .aiq .frow { margin: 0; }
         .pc .grp { margin-top: 12px; }
