@@ -2,6 +2,12 @@
 // AI_API_KEY 필수, AI_PROVIDER = 'gemini'(기본) | 'openai' | 'anthropic', AI_MODEL 선택
 export type ChatMsg = { role: 'user' | 'assistant'; content: string };
 
+// 실패 원인은 서버 로그에만 남긴다(키는 응답에 없다)
+async function fail(res: Response): Promise<null> {
+  console.error('[ai] http', res.status, (await res.text().catch(() => '')).slice(0, 300));
+  return null;
+}
+
 export const aiConfigured = () => !!process.env.AI_API_KEY;
 
 export async function askModel(system: string, messages: ChatMsg[]): Promise<string | null> {
@@ -23,7 +29,7 @@ export async function askModel(system: string, messages: ChatMsg[]): Promise<str
           },
         }),
       });
-      if (!res.ok) return null;
+      if (!res.ok) return fail(res);
       const j = await res.json();
       const t = (j?.candidates?.[0]?.content?.parts || []).map((x: { text?: string }) => x.text || '').join('').trim();
       return t || null;
@@ -38,7 +44,7 @@ export async function askModel(system: string, messages: ChatMsg[]): Promise<str
           messages: [{ role: 'system', content: system }, ...messages],
         }),
       });
-      if (!res.ok) return null;
+      if (!res.ok) return fail(res);
       const j = await res.json();
       return j?.choices?.[0]?.message?.content?.trim() || null;
     }
@@ -52,10 +58,11 @@ export async function askModel(system: string, messages: ChatMsg[]): Promise<str
         messages,
       }),
     });
-    if (!res.ok) return null;
+    if (!res.ok) return fail(res);
     const j = await res.json();
     return j?.content?.[0]?.text?.trim() || null;
-  } catch {
+  } catch (e) {
+    console.error('[ai] fetch error', e instanceof Error ? e.message : e);
     return null;
   }
 }
