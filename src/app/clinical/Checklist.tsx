@@ -1061,11 +1061,11 @@ tr { break-inside: avoid; }
         .pc .row .t { flex: 1; }
         .pc .ga { border: 0; background: none; color: var(--primary); font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; margin-right: 10px; padding: 0; }
         .pc .gh span { display: flex; align-items: baseline; }
-        .pc .bar2 { position: fixed; left: 0; right: 0; bottom: 0; z-index: 1500; background: var(--white); border-top: 1px solid var(--line); padding: 10px 16px 16px; box-shadow: 0 -4px 16px rgba(0,0,0,.25); }
+        .pc .bar2 { position: fixed; left: 0; right: 0; bottom: var(--bnav-h, 0px); z-index: 1500; background: var(--white); border-top: 1px solid var(--line); padding: 10px 16px 16px; box-shadow: 0 -4px 16px rgba(0,0,0,.25); }
         .pc .bt2 { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 14px; font-weight: 700; }
         .pc .bar2 .q { padding: 10px 0; }
         .pc .bar2 .q:disabled { opacity: .35; }
-        .pc .toast { position: fixed; left: 16px; right: 16px; bottom: 20px; z-index: 1500; max-width: 480px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; background: var(--text); color: var(--background); border-radius: 10px; padding: 12px 16px; font-size: 14px; }
+        .pc .toast { position: fixed; left: 16px; right: 16px; bottom: calc(var(--bnav-h, 0px) + 20px); z-index: 1500; max-width: 480px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; background: var(--text); color: var(--background); border-radius: 10px; padding: 12px 16px; font-size: 14px; }
         .pc .toast button { border: 0; background: none; color: #7DB7F5; font: inherit; font-weight: 700; cursor: pointer; }
       `}</style>
     </div>

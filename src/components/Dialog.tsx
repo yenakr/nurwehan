@@ -70,7 +70,7 @@ export default function DialogHost() {
         </div>
       )}
       <style jsx global>{`
-        .dlg-toast { position: fixed; left: 16px; right: 16px; bottom: 24px; z-index: 5000; max-width: 480px; margin: 0 auto; padding: 12px 16px; border-radius: 12px; background: #1F2937; color: #fff; font-size: 14px; line-height: 1.5; white-space: pre-wrap; box-shadow: 0 6px 20px rgba(0,0,0,.25); animation: dlgin .18s ease-out; }
+        .dlg-toast { position: fixed; left: 16px; right: 16px; bottom: calc(var(--bnav-h, 0px) + 24px); z-index: 5000; max-width: 480px; margin: 0 auto; padding: 12px 16px; border-radius: 12px; background: #1F2937; color: #fff; font-size: 14px; line-height: 1.5; white-space: pre-wrap; box-shadow: 0 6px 20px rgba(0,0,0,.25); animation: dlgin .18s ease-out; }
         .dlg-ov { position: fixed; inset: 0; z-index: 5001; background: rgba(0,0,0,.5); display: flex; align-items: center; justify-content: center; padding: 16px; }
         .dlg-box { width: 100%; max-width: 340px; background: var(--white); color: var(--text); border-radius: 16px; padding: 20px 18px 14px; }
         .dlg-box p { margin: 0 0 16px; font-size: 15px; line-height: 1.6; white-space: pre-wrap; }
