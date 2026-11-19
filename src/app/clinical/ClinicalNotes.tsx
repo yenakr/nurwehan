@@ -84,23 +84,34 @@ export default function ClinicalNotes({
 
   // 이날 체크리스트에 기록한 항목
   const checked = useMemo(() => {
-    const out: { l: string; t: string }[] = [];
+    const out: { l: string; t: string; a: string[] }[] = [];
     SUBJECTS.forEach(sub =>
       sub.groups.forEach(g =>
         g.items.forEach(it => {
           (progress[sub.key]?.r?.[it.id] || []).forEach(r => {
             const l = LEVELS.find(x => x.k === r.l)?.label ?? '';
-            if (r.d === date && !out.some(o => o.l === l && o.t === it.t)) out.push({ l, t: it.t });
+            if (r.d !== date) return;
+            const ans = [r.a, r.b].filter((x): x is string => !!x);
+            const hit = out.find(o => o.l === l && o.t === it.t);
+            if (hit) ans.forEach(x => { if (!hit.a.includes(x)) hit.a.push(x); });
+            else out.push({ l, t: it.t, a: ans });
           });
         })
       )
     );
     return out;
   }, [progress, date]);
-  const lines = checked.map(c => `[${c.l}] ${c.t}`);
-  const missing = lines.filter(l => !content.includes(l));
-  const insert = () =>
-    setContent(c => `${c}${c && !c.endsWith('\n') ? '\n' : ''}${missing.join('\n')}\n`.slice(0, MAX));
+  // 이날 기록으로 메모 초안을 만든다: 한 것 / 배운 점(내가 쓴 답) / 궁금한 점. 이미 메모에 있는 항목은 제외
+  const missing = checked.filter(c => !content.includes(c.t));
+  const insert = () => {
+    const doing = LEVELS.map(l => {
+      const names = missing.filter(c => c.l === l.label).map(c => c.t);
+      return names.length ? `${l.label}: ${names.join(', ')}` : '';
+    }).filter(Boolean);
+    const learned = missing.filter(c => c.a.length).map(c => `${c.t} - ${c.a.join(' / ')}`);
+    const draft = ['[한 것]', ...doing, ...(learned.length ? ['', '[배운 점]', ...learned] : []), '', '[궁금한 점]', ''].join('\n');
+    setContent(c => `${c}${c && !c.endsWith('\n') ? '\n\n' : ''}${draft}`.slice(0, MAX));
+  };
 
   const save = async () => {
     if (!ward) return;

@@ -16,6 +16,10 @@ const lbl = (l: Level) => LEVELS.find(x => x.k === l)?.label ?? '';
 const rank: Record<Level, number> = { O: 1, P: 2, D: 3 };
 const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 // 날짜 오름차순 (같은 날은 입력 순서 유지)
+const Spark = () => (
+  <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.9 5.6L19.5 9.5l-5.6 1.9L12 17l-1.9-5.6L4.5 9.5l5.6-1.9L12 2zM19 14l.9 2.6L22.5 17.5l-2.6.9L19 21l-.9-2.6-2.6-.9 2.6-.9L19 14z" /></svg>
+);
+
 const chrono = (recs: Rec[]) => recs.map((r, i) => ({ r, i })).sort((a, b) => a.r.d.localeCompare(b.r.d) || a.i - b.i).map(x => x.r);
 const top = (recs: Rec[]): Level | null => (recs.length ? recs.reduce((m, r) => (rank[r.l] > rank[m] ? r.l : m), recs[0].l) : null);
 
@@ -97,6 +101,40 @@ export default function Checklist({
   // AI 꼬리질문: 기록 하나에 대해 질문 → 학생 답 → 피드백(최대 2번). 대화는 저장하지 않는다.
   const [ai, setAi] = useState<{ rid: string; level: Level; a: string; f: string; b: string; g: string; busy: boolean; err: string } | null>(null);
   const [sumOpen, setSumOpen] = useState<Set<string>>(new Set());
+  // 요약 AI 총평: 하루 2번까지. 오늘 받은 총평은 이 기기에 남겨 다시 볼 수 있다
+  const [sumAi, setSumAi] = useState<Record<string, { text: string; busy: boolean; err: string }>>({});
+  useEffect(() => {
+    const out: Record<string, { text: string; busy: boolean; err: string }> = {};
+    try {
+      SUBJECTS.forEach(sub => {
+        const raw = localStorage.getItem(`pc-sumai:${sub.key}`);
+        if (!raw) return;
+        const j = JSON.parse(raw);
+        if (j?.day === today() && typeof j.text === 'string') out[sub.key] = { text: j.text, busy: false, err: '' };
+      });
+    } catch { /* 무시 */ }
+    setSumAi(out);
+  }, []);
+  const askSum = async (subKey: string) => {
+    setSumAi(m => ({ ...m, [subKey]: { text: m[subKey]?.text || '', busy: true, err: '' } }));
+    try {
+      const res = await fetch('/api/practicum/ai/summary', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ subject: subKey }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok || !j.text) {
+        const err = res.status === 429 ? '오늘 총평을 2번 다 받았어요' : res.status === 400 ? '' : '지금은 사용할 수 없어요';
+        setSumAi(m => ({ ...m, [subKey]: { text: m[subKey]?.text || '', busy: false, err } }));
+        return;
+      }
+      try { localStorage.setItem(`pc-sumai:${subKey}`, JSON.stringify({ day: today(), text: j.text })); } catch { /* 무시 */ }
+      setSumAi(m => ({ ...m, [subKey]: { text: j.text, busy: false, err: '' } }));
+    } catch {
+      setSumAi(m => ({ ...m, [subKey]: { text: m[subKey]?.text || '', busy: false, err: '지금은 사용할 수 없어요' } }));
+    }
+  };
   const [sheet, setSheet] = useState<PItem | null>(null);
   // 시트 입력 상태
   const [date, setDate] = useState(today());
@@ -459,6 +497,13 @@ tr { break-inside: avoid; }
             </button>
             {open && (
               <div className="sumb">
+                {aiOn && seen.length > 0 && (
+                  <div className="sumai">
+                    {sumAi[x.key]?.text && <p className="aitx">{sumAi[x.key].text}</p>}
+                    {sumAi[x.key]?.err && <p className="aitx">{sumAi[x.key].err}</p>}
+                    <button type="button" className="sumask" disabled={sumAi[x.key]?.busy} onClick={() => askSum(x.key)}><Spark />{sumAi[x.key]?.busy ? '...' : 'AI 총평'}</button>
+                  </div>
+                )}
                 {seen.length > 0 && <div className="sumt">기록 {seen.length}</div>}
                 {seen.map(i => {
                   const rc = chrono(r[i.id] || []);
@@ -690,6 +735,9 @@ tr { break-inside: avoid; }
         .pc .sumh span { font-size: 12.5px; color: var(--sub-text); }
         .pc .sumh .bar { width: 64px; height: 6px; border-radius: 3px; background: var(--tint); overflow: hidden; display: block; }
         .pc .sumh .bar i { display: block; height: 100%; background: var(--primary); }
+        .pc .sumai { margin: 10px 0 4px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
+        .pc .sumask { display: flex; align-items: center; gap: 6px; border: 0; background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .pc .sumask:disabled { opacity: .5; cursor: default; }
         .pc .sumt { margin: 10px 2px 2px; font-size: 12px; font-weight: 700; color: var(--sub-text); }
         .pc .sumr { display: flex; justify-content: space-between; gap: 10px; padding: 7px 2px; border-bottom: 1px solid var(--line); font-size: 13.5px; }
         .pc .sumr .t { flex: 1; min-width: 0; }
