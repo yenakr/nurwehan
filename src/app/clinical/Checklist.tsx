@@ -410,11 +410,26 @@ tr { break-inside: avoid; }
         </div>
         {status === 'saving' && <span className="st">저장 중</span>}
         {status === 'error' && <span className="st error">저장 대기</span>}
+      </div>
+      <div className="tbar">
+        {!sum && subjects.length > 1 ? (
+        <div className="hs">
+          {subjects.map(x => (
+            <button key={x.key} type="button" className={x.key === key ? 'on' : ''} onClick={() => { setKeys(k => ({ ...k, [course]: x.key })); setFilter('all'); setQ(''); setSel(new Set()); }}>{x.sub}</button>
+          ))}
+        </div>
+        ) : <span className="hs" />}
         <button type="button" className={`selbtn ${sum ? 'on' : ''}`} onClick={() => { exitSel(); setFind(false); setSum(v => !v); }}>요약</button>
-        {!sum && <button type="button" className={`selbtn ${selMode ? 'on' : ''}`} onClick={() => (selMode ? exitSel() : setSelMode(true))}>{selMode ? '완료' : '선택'}</button>}
-        <button type="button" className={`ic ${find || q || filter !== 'all' ? 'on' : ''}`} aria-label="검색" onClick={() => setFind(f => !f)}>
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
-        </button>
+        {!sum && (selMode ? (
+          <button type="button" className="selbtn on" onClick={() => exitSel()}>완료</button>
+        ) : (
+          <button type="button" className="ic" aria-label="선택" onClick={() => setSelMode(true)}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3" /><path d="M8.5 12.5l2.5 2.5 4.5-5" /></svg></button>
+        ))}
+        {!sum && (
+          <button type="button" className={`ic ${find || q || filter !== 'all' ? 'on' : ''}`} aria-label="검색" onClick={() => setFind(f => !f)}>
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
+          </button>
+        )}
       </div>
       {find && !sum && (
         <div className="tools">
@@ -460,13 +475,6 @@ tr { break-inside: avoid; }
         );
       })}
 
-      {!sum && subjects.length > 1 && (
-        <div className="hs">
-          {subjects.map(x => (
-            <button key={x.key} type="button" className={x.key === key ? 'on' : ''} onClick={() => { setKeys(k => ({ ...k, [course]: x.key })); setFilter('all'); setQ(''); setSel(new Set()); }}>{x.sub}</button>
-          ))}
-        </div>
-      )}
 
       {!sum && visible.map(({ g, items }) => {
         const gd = g.items.filter(i => (prog[i.id] || []).length > 0).length;
@@ -654,6 +662,8 @@ tr { break-inside: avoid; }
         .pc .ic.on { color: var(--primary); }
         .pc .selbtn { flex-shrink: 0; border: 0; background: none; font: inherit; font-size: 14px; font-weight: 700; color: var(--sub-text); cursor: pointer; padding: 6px 4px; }
         .pc .selbtn.on { color: var(--primary); }
+        .pc .tbar { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
+        .pc .tbar .hs { flex: 1; min-width: 0; margin-bottom: 0; }
         .pc .hs { display: flex; gap: 6px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; margin-bottom: 6px; }
         .pc .hs button { flex-shrink: 0; border: 0; background: var(--tint); border-radius: 999px; padding: 5px 12px; font-size: 13px; font-weight: 600; color: var(--sub-text); cursor: pointer; }
         .pc .hs button.on { background: var(--primary); color: #fff; }
