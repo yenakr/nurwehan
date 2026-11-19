@@ -95,11 +95,10 @@ export default function Checklist({
   const [find, setFind] = useState(false);
   const [sum, setSum] = useState(false);
   // AI 꼬리질문: 기록 하나에 대해 질문 → 학생 답 → 피드백(최대 2번). 대화는 저장하지 않는다.
-  const [ai, setAi] = useState<{ rid: string; level: Level; a: string; reply: string; busy: boolean; err: string } | null>(null);
+  const [ai, setAi] = useState<{ rid: string; level: Level; a: string; f: string; b: string; g: string; busy: boolean; err: string } | null>(null);
   const [sumOpen, setSumOpen] = useState<Set<string>>(new Set());
   const [sheet, setSheet] = useState<PItem | null>(null);
   // 시트 입력 상태
-  const [dayMode, setDayMode] = useState<'today' | 'yest' | 'pick'>('today');
   const [date, setDate] = useState(today());
   const [memo, setMemo] = useState('');
   const [showMemo, setShowMemo] = useState(false);
@@ -116,7 +115,7 @@ export default function Checklist({
 
   const openAi = (rid: string, level: Level) => {
     const rc = sheet ? (prog[sheet.id] || []).find(x => x.id === rid) : undefined;
-    setAi({ rid, level, a: rc?.a || '', reply: rc?.f || '', busy: false, err: '' });
+    setAi({ rid, level, a: rc?.a || '', f: rc?.f || '', b: rc?.b || '', g: rc?.g || '', busy: false, err: '' });
   };
   const patchRec = (rid: string, patch: Partial<Rec>) => {
     if (!sheet) return;
@@ -124,23 +123,27 @@ export default function Checklist({
     mutate(r => ({ ...r, [sid]: (r[sid] || []).map(x => (x.id === rid ? { ...x, ...patch } : x)) }));
   };
   const sendAi = async () => {
-    if (!ai || !ai.a.trim() || ai.busy) return;
+    if (!ai || ai.busy) return;
+    const second = !!ai.f;
+    const text = (second ? ai.b : ai.a).trim();
+    if (!text) return;
     const cur = ai;
     setAi({ ...cur, busy: true, err: '' });
-    patchRec(cur.rid, { a: cur.a.trim().slice(0, 200) });
+    patchRec(cur.rid, second ? { b: text.slice(0, 200) } : { a: text.slice(0, 200) });
     try {
       const res = await fetch('/api/practicum/ai', {
         method: 'POST',
         headers: { 'content-type': 'application/json' },
-        body: JSON.stringify({ subject: key, item: sheet?.id, level: cur.level, answer: cur.a.trim() }),
+        body: JSON.stringify({ subject: key, item: sheet?.id, level: cur.level, answer: text, ...(second ? { prevA: cur.a.trim(), prevF: cur.f } : {}) }),
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok || !j.text) {
         setAi({ ...cur, busy: false, err: res.status === 429 ? '오늘 횟수를 다 썼어요' : '지금은 사용할 수 없어요' });
         return;
       }
-      patchRec(cur.rid, { f: String(j.text).slice(0, 400) });
-      setAi({ ...cur, busy: false, reply: j.text });
+      const out = String(j.text).slice(0, 400);
+      patchRec(cur.rid, second ? { g: out } : { f: out });
+      setAi({ ...cur, busy: false, ...(second ? { g: out } : { f: out }) });
     } catch {
       setAi({ ...cur, busy: false, err: '지금은 사용할 수 없어요' });
     }
@@ -214,7 +217,6 @@ export default function Checklist({
 
   const openSheet = (it: PItem) => {
     setSheet(it);
-    setDayMode('today');
     setDate(today());
     setMemo('');
     setShowMemo(false);
@@ -229,7 +231,21 @@ export default function Checklist({
     const p = (n: number) => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
   };
-  const useDate = dayMode === 'today' ? today() : dayMode === 'yest' ? yesterday() : date;
+  const useDate = date;
+  const dateStep = () => (
+    <div className="dstep">
+      <button type="button" aria-label="이전 날" onClick={() => setDate(addDays(date, -1))}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
+      </button>
+      <label className="dcur">
+        {md(date)}{date === today() ? ' 오늘' : date === yesterday() ? ' 어제' : ''}
+        <input type="date" min={minD} max={maxD} value={date} onChange={e => { if (e.target.value) setDate(e.target.value); }} />
+      </label>
+      <button type="button" aria-label="다음 날" disabled={date >= today()} onClick={() => setDate(addDays(date, 1))}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>
+      </button>
+    </div>
+  );
   const outside = practiceDays.size > 0 && !practiceDays.has(useDate);
   const add = (l: Level) => {
     if (!sheet || !useDate) return;
@@ -293,7 +309,7 @@ export default function Checklist({
     if (!sheet || !editId || !ed.d) return;
     mutate(r => ({
       ...r,
-      [sheet.id]: (r[sheet.id] || []).map(x => (x.id === editId ? { id: x.id, d: ed.d, l: ed.l, ...(ed.m.trim() ? { m: ed.m.trim().slice(0, 200) } : {}), ...(x.a ? { a: x.a } : {}), ...(x.f ? { f: x.f } : {}) } : x)),
+      [sheet.id]: (r[sheet.id] || []).map(x => (x.id === editId ? { id: x.id, d: ed.d, l: ed.l, ...(ed.m.trim() ? { m: ed.m.trim().slice(0, 200) } : {}), ...(x.a ? { a: x.a } : {}), ...(x.f ? { f: x.f } : {}), ...(x.b ? { b: x.b } : {}), ...(x.g ? { g: x.g } : {}) } : x)),
     }));
     setEditId(null);
   };
@@ -506,14 +522,7 @@ tr { break-inside: avoid; }
         <div className="bar2">
           <div className="bt2">
             <span>{sel.size ? `${sel.size}개 선택` : '항목을 선택하세요'}{outside && <em className="warn">실습일 아님</em>}</span>
-            <div className="chips">
-              <button type="button" className={dayMode === 'today' ? 'on' : ''} onClick={() => setDayMode('today')}>오늘</button>
-              <button type="button" className={dayMode === 'yest' ? 'on' : ''} onClick={() => setDayMode('yest')}>어제</button>
-              <label className={`pick ${dayMode === 'pick' ? 'on' : ''}`}>
-                {dayMode === 'pick' ? md(date) : '날짜'}
-                <input type="date" min={minD} max={maxD} value={date} onChange={e => { if (e.target.value) { setDate(e.target.value); setDayMode('pick'); } }} />
-              </label>
-            </div>
+            {dateStep()}
           </div>
           <div className="quick">
             {LEVELS.map(l => (
@@ -551,14 +560,7 @@ tr { break-inside: avoid; }
               ))}
             </div>
             <div className="when">
-              <div className="chips">
-                <button type="button" className={dayMode === 'today' ? 'on' : ''} onClick={() => setDayMode('today')}>오늘</button>
-                <button type="button" className={dayMode === 'yest' ? 'on' : ''} onClick={() => setDayMode('yest')}>어제</button>
-                <label className={`pick ${dayMode === 'pick' ? 'on' : ''}`}>
-                  {dayMode === 'pick' ? md(date) : '날짜'}
-                  <input type="date" min={minD} max={maxD} value={date} onChange={e => { if (e.target.value) { setDate(e.target.value); setDayMode('pick'); } }} />
-                </label>
-              </div>
+              {dateStep()}
               {outside && <span className="warn">실습일 아님</span>}
               <button type="button" className={`lnk ${showMemo || memo ? 'on' : ''}`} onClick={() => setShowMemo(m => !m)}>메모</button>
             </div>
@@ -579,14 +581,23 @@ tr { break-inside: avoid; }
                   <p className="aitx">{AI_Q[ai.level]}</p>
                   <button type="button" className="aix" onClick={() => setAi(null)}>닫기</button>
                 </div>
-                {!ai.reply && (
+                {!ai.f && (
                   <div className="frow">
                     <input className="grow" maxLength={AI_ANSWER_MAX} value={ai.a} onChange={e => { const v = e.target.value; setAi(x => (x ? { ...x, a: v } : x)); }} />
-                    <button type="button" className="pri" disabled={!ai.a.trim() || ai.busy} onClick={sendAi}>{ai.busy ? '...' : '답하기'}</button>
+                    <button type="button" className="send" aria-label="전송" disabled={!ai.a.trim() || ai.busy} onClick={sendAi}>{ai.busy ? '...' : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4 20-7z" /></svg>}</button>
                   </div>
                 )}
+                {ai.f && <p className="aimy">{ai.a}</p>}
+                {ai.f && <p className="aitx">{ai.f}</p>}
+                {ai.f && !ai.g && (
+                  <div className="frow">
+                    <input className="grow" maxLength={AI_ANSWER_MAX} value={ai.b} onChange={e => { const v = e.target.value; setAi(x => (x ? { ...x, b: v } : x)); }} />
+                    <button type="button" className="send" aria-label="전송" disabled={!ai.b.trim() || ai.busy} onClick={sendAi}>{ai.busy ? '...' : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4 20-7z" /></svg>}</button>
+                  </div>
+                )}
+                {ai.g && <p className="aimy">{ai.b}</p>}
+                {ai.g && <p className="aitx">{ai.g}</p>}
                 {ai.err && <p className="aitx">{ai.err}</p>}
-                {ai.reply && <p className="aitx">{ai.reply}</p>}
               </div>
             )}
 
@@ -618,6 +629,7 @@ tr { break-inside: avoid; }
                         <b className={`lb ${r.l}`}>{lbl(r.l)}</b>
                         {r.m && <span className="hm">{r.m}</span>}
                         {r.a && <span className="hm ha">{r.a}</span>}
+                        {r.b && <span className="hm ha">{r.b}</span>}
                       </button>
                       {aiOn && <button type="button" className="aq" aria-label="AI" onClick={() => openAi(r.id, r.l)}><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.9 5.6L19.5 9.5l-5.6 1.9L12 17l-1.9-5.6L4.5 9.5l5.6-1.9L12 2zM19 14l.9 2.6L22.5 17.5l-2.6.9L19 21l-.9-2.6-2.6-.9 2.6-.9L19 14z"/></svg></button>}
                     </div>
@@ -674,6 +686,9 @@ tr { break-inside: avoid; }
         .pc .aiq { margin-top: 8px; padding: 10px 12px; border-radius: 10px; background: var(--tint); }
         .pc .aih { display: flex; align-items: flex-start; gap: 8px; }
         .pc .aih .aitx { flex: 1; }
+        .pc .send { flex-shrink: 0; border: 0; background: none; color: var(--primary); display: flex; align-items: center; padding: 6px; cursor: pointer; }
+        .pc .send:disabled { color: var(--sub-text); opacity: .5; cursor: default; }
+        .pc .aimy { margin: 0 0 6px; font-size: 13px; line-height: 1.55; color: var(--sub-text); border-left: 2px solid var(--primary); padding-left: 8px; }
         .pc .aiic { flex-shrink: 0; color: var(--primary); display: flex; padding-top: 2px; }
         .pc .aix { flex-shrink: 0; border: 0; background: none; font: inherit; font-size: 12.5px; color: var(--sub-text); cursor: pointer; padding: 0; }
         .pc .aitx { margin: 0 0 8px; font-size: 13px; line-height: 1.6; color: var(--text); white-space: pre-wrap; }
@@ -702,12 +717,17 @@ tr { break-inside: avoid; }
         .pc .kp span { flex: 1; min-width: 0; }
         .pc .desc { margin: 8px 0 16px; font-size: 13px; line-height: 1.65; color: var(--sub-text); }
         .pc .quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
-        .pc .q { border: 0; border-radius: 12px; padding: 16px 0; font: inherit; font-size: 16px; font-weight: 800; cursor: pointer; }
+        .pc .q { border: 0; border-radius: 10px; padding: 10px 0; font: inherit; font-size: 14.5px; font-weight: 700; cursor: pointer; }
         .pc .q:active { transform: scale(.97); }
         .pc .q.O { background: color-mix(in srgb, var(--o) 18%, transparent); color: var(--o); }
         .pc .q.P { background: color-mix(in srgb, var(--p) 20%, transparent); color: var(--p); }
         .pc .q.D { background: color-mix(in srgb, var(--d) 20%, transparent); color: var(--d); }
         .pc .when { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+        .pc .dstep { display: flex; align-items: center; background: var(--tint); border-radius: 999px; }
+        .pc .dstep button { border: 0; background: none; color: var(--sub-text); display: flex; padding: 6px 8px; cursor: pointer; }
+        .pc .dstep button:disabled { opacity: .3; cursor: default; }
+        .pc .dcur { position: relative; overflow: hidden; font-size: 13px; font-weight: 700; color: var(--text); padding: 0 4px; min-width: 64px; text-align: center; cursor: pointer; }
+        .pc .dcur input { position: absolute; inset: 0; opacity: 0; width: 100%; cursor: pointer; }
         .pc .chips { display: flex; gap: 6px; }
         .pc .chips button, .pc .pick { border: 0; background: var(--tint); border-radius: 999px; padding: 5px 13px; font: inherit; font-size: 13px; font-weight: 600; color: var(--sub-text); cursor: pointer; position: relative; overflow: hidden; }
         .pc .chips .on { background: var(--primary); color: #fff; }
@@ -754,7 +774,7 @@ tr { break-inside: avoid; }
         .pc .gh span { display: flex; align-items: baseline; }
         .pc .bar2 { position: fixed; left: 0; right: 0; bottom: 0; z-index: 1500; background: var(--white); border-top: 1px solid var(--line); padding: 10px 16px 16px; box-shadow: 0 -4px 16px rgba(0,0,0,.25); }
         .pc .bt2 { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; font-size: 14px; font-weight: 700; }
-        .pc .bar2 .q { padding: 13px 0; }
+        .pc .bar2 .q { padding: 10px 0; }
         .pc .bar2 .q:disabled { opacity: .35; }
         .pc .toast { position: fixed; left: 16px; right: 16px; bottom: 20px; z-index: 1500; max-width: 480px; margin: 0 auto; display: flex; justify-content: space-between; align-items: center; background: var(--text); color: var(--background); border-radius: 10px; padding: 12px 16px; font-size: 14px; }
         .pc .toast button { border: 0; background: none; color: #7DB7F5; font: inherit; font-weight: 700; cursor: pointer; }
