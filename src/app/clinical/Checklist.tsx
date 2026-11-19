@@ -750,7 +750,7 @@ tr { break-inside: avoid; }
         .pc .send { flex-shrink: 0; border: 0; background: none; color: var(--primary); display: flex; align-items: center; padding: 6px; cursor: pointer; }
         .pc .send:disabled { color: var(--sub-text); opacity: .5; cursor: default; }
         .pc .aimy { align-self: flex-end; max-width: 88%; margin: 0; padding: 8px 12px; border-radius: 14px 14px 4px 14px; background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--text); font-size: 13.5px; line-height: 1.55; }
-        .pc .aiic { flex-shrink: 0; color: var(--primary); display: flex; padding-top: 2px; }
+        .pc .aiic { flex-shrink: 0; color: var(--primary); display: flex; align-items: center; justify-content: center; width: 26px; height: 26px; border-radius: 50%; background: color-mix(in srgb, var(--primary) 14%, transparent); }
         .pc .aix { flex-shrink: 0; border: 0; background: none; font: inherit; font-size: 12.5px; color: var(--sub-text); cursor: pointer; padding: 0; }
         .pc .aitx { margin: 0; font-size: 14px; line-height: 1.7; color: var(--text); white-space: pre-wrap; }
         .pc .aiq .frow { margin: 0; }
@@ -805,7 +805,7 @@ tr { break-inside: avoid; }
         .pc .hr:not(.edit) { display: flex; align-items: baseline; padding: 0; gap: 8px; cursor: default; }
         .pc .hmain { flex: 1; min-width: 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 12px; padding: 11px 2px; border: 0; background: none; font: inherit; font-size: 14px; color: inherit; text-align: left; cursor: pointer; }
         .pc .aq, .pc .uacts button { border: 0; background: none; color: var(--primary); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; padding: 6px 4px; }
-        .pc .aq { display: flex; align-items: center; align-self: center; }
+        .pc .aq { display: flex; align-items: center; justify-content: center; align-self: center; flex-shrink: 0; width: 30px; height: 30px; padding: 0; border-radius: 50%; background: color-mix(in srgb, var(--primary) 14%, transparent); }
         .pc .uacts { display: flex; gap: 8px; }
         .pc .hr.edit { display: block; cursor: default; }
         .pc .hd { font-weight: 700; min-width: 52px; }
