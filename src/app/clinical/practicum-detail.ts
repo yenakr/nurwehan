@@ -447,3 +447,7 @@ export const DETAIL: Record<string, Detail> = {
 (['e28'] as const).forEach(id => { DETAIL[id] = DETAIL.n29; });
 (['c3', 'e9'] as const).forEach(id => { DETAIL[id] = FIVE; });
 (['s16', 'c26'] as const).forEach(id => { if (!DETAIL[id]) DETAIL[id] = HEPLOW; });
+(['an9', 'ar9', 'ad9', 'ac9', 'ap9', 'ah9'] as const).forEach(id => { DETAIL[id] = FIVE; });
+(['an18', 'ad19', 'ac21', 'ap19'] as const).forEach(id => { DETAIL[id] = CTC; });
+(['an19', 'ar20', 'ac22', 'ap20'] as const).forEach(id => { DETAIL[id] = MRI; });
+(['ad32', 'ac33', 'ap30', 'ah28'] as const).forEach(id => { DETAIL[id] = BT; });

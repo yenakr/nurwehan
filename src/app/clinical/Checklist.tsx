@@ -72,7 +72,32 @@ export default function Checklist({
   onPickDay: (d: string) => void;
 }) {
   const [course, setCourse] = useState(COURSES.some(c => c.key === defaultCourse) ? (defaultCourse as string) : COURSES[0].key);
-  const subjects = SUBJECTS.filter(s => s.course === course);
+  // 고정(핀): 이 기기에 저장. 고정한 과목·실습지가 항상 앞에 온다
+  const [pins, setPins] = useState<{ c: string[]; s: string[] }>({ c: [], s: [] });
+  useEffect(() => {
+    try {
+      const j = JSON.parse(localStorage.getItem('pc:pins') || 'null');
+      if (!j) return;
+      const c = Array.isArray(j.c) ? j.c.filter((x: unknown) => COURSES.some(k => k.key === x)) : [];
+      const sb = Array.isArray(j.s) ? j.s.filter((x: unknown) => SUBJECTS.some(k => k.key === x)) : [];
+      setPins({ c, s: sb });
+      if (c.length) setCourse(c[0]);
+    } catch { /* 무시 */ }
+  }, []);
+  const togglePin = (kind: 'c' | 's', k: string) => {
+    setPins(p => {
+      const n = { ...p, [kind]: p[kind].includes(k) ? p[kind].filter(x => x !== k) : [...p[kind], k] };
+      try { localStorage.setItem('pc:pins', JSON.stringify(n)); } catch { /* 무시 */ }
+      return n;
+    });
+  };
+  const byPin = <T,>(arr: T[], get: (x: T) => string, list: string[]) =>
+    [...arr].sort((a, b) => {
+      const ia = list.indexOf(get(a)); const ib = list.indexOf(get(b));
+      return (ia < 0 ? 999 : ia) - (ib < 0 ? 999 : ib);
+    });
+  const courses = byPin(COURSES, c => c.key, pins.c);
+  const subjects = byPin(SUBJECTS.filter(s => s.course === course), x => x.key, pins.s);
   const [keys, setKeys] = useState<Record<string, string>>({});
   const key = subjects.find(s => s.key === keys[course])?.key ?? subjects[0].key;
   const subject = subjects.find(s => s.key === key) as PSubject;
@@ -435,6 +460,14 @@ tr { break-inside: avoid; }
     w.focus();
     setTimeout(() => w.print(), 500);
   };
+  const pinBtn = (kind: 'c' | 's', k: string) => {
+    const on = pins[kind].includes(k);
+    return (
+      <button type="button" className={`pinb ${on ? 'on' : ''}`} aria-label={on ? '고정 해제' : '앞에 고정'} aria-pressed={on} onClick={() => togglePin(kind, k)}>
+        <svg width="16" height="16" viewBox="0 0 24 24" fill={on ? 'currentColor' : 'none'} stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M6 3h12v18l-6-4-6 4z" /></svg>
+      </button>
+    );
+  };
   const recorded = (x: PSubject) => Object.keys(all[x.key]?.r || {}).length > 0;
 
   const sheetRecs = sheet ? prog[sheet.id] || [] : [];
@@ -444,17 +477,19 @@ tr { break-inside: avoid; }
     <div className={`pc ${selMode ? 'selecting' : ''}`}>
       <div className="top">
         <div className="ct">
-          {COURSES.map(c => (
-            <button key={c.key} type="button" className={c.key === course ? 'on' : ''} onClick={() => { setCourse(c.key); setFilter('all'); setQ(''); setSel(new Set()); }}>{c.label}</button>
+          {courses.map(c => (
+            <button key={c.key} type="button" className={`${c.key === course ? 'on' : ''} ${pins.c.includes(c.key) ? 'pinned' : ''}`} onClick={() => { setCourse(c.key); setFilter('all'); setQ(''); setSel(new Set()); }}>{c.label}</button>
           ))}
         </div>
+        {pinBtn('c', course)}
         {status === 'saving' && <span className="st">저장 중</span>}
         {status === 'error' && <span className="st error">저장 대기</span>}
       </div>
       {!sum && subjects.length > 1 && (
         <div className="hs">
+          {pinBtn('s', key)}
           {subjects.map(x => (
-            <button key={x.key} type="button" className={x.key === key ? 'on' : ''} onClick={() => { setKeys(k => ({ ...k, [course]: x.key })); setFilter('all'); setQ(''); setSel(new Set()); }}>{x.sub}</button>
+            <button key={x.key} type="button" className={`${x.key === key ? 'on' : ''} ${pins.s.includes(x.key) ? 'pinned' : ''}`} onClick={() => { setKeys(k => ({ ...k, [course]: x.key })); setFilter('all'); setQ(''); setSel(new Set()); }}>{x.sub}</button>
           ))}
         </div>
       )}
@@ -714,6 +749,12 @@ tr { break-inside: avoid; }
         .pc .ct { flex: 1; min-width: 0; display: flex; gap: 18px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
         .pc .ct::-webkit-scrollbar, .pc .hs::-webkit-scrollbar { display: none; }
         .pc .ct button { flex-shrink: 0; border: 0; border-bottom: 2px solid transparent; background: none; padding: 8px 0; font: inherit; font-size: 15px; font-weight: 700; color: var(--sub-text); cursor: pointer; margin-bottom: -1px; }
+        .pc .pinb { flex-shrink: 0; border: 0; background: none; padding: 6px; color: var(--sub-text); cursor: pointer; display: inline-flex; align-items: center; }
+        .pc .pinb.on { color: var(--primary); }
+        .pc .hs .pinb, .pc .hs .pinb.on { padding: 4px 2px; background: none; border-radius: 0; }
+        .pc .hs .pinb { color: var(--sub-text); }
+        .pc .hs .pinb.on { color: var(--primary); }
+        .pc .ct button.pinned::before, .pc .hs button.pinned::before { content: ''; display: inline-block; width: 5px; height: 5px; border-radius: 50%; background: currentColor; margin-right: 5px; vertical-align: middle; opacity: 0.7; }
         .pc .ct button.on { color: var(--primary); border-bottom-color: var(--primary); }
         .pc .ic { flex-shrink: 0; border: 0; background: none; color: var(--sub-text); padding: 6px; cursor: pointer; display: flex; }
         .pc .ic.on { color: var(--primary); }
