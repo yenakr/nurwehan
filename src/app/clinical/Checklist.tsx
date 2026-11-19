@@ -695,15 +695,16 @@ tr { break-inside: avoid; }
         .pc .sumr .t { flex: 1; min-width: 0; }
         .pc .sumr .t.mute { color: var(--sub-text); }
         .pc .sumr .dd { flex: 0 1 45%; text-align: right; font-size: 12px; color: var(--sub-text); }
-        .pc .aiq { margin-top: 8px; padding: 10px 12px; border-radius: 10px; background: var(--tint); }
+        .pc .aiq { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
         .pc .aih { display: flex; align-items: flex-start; gap: 8px; }
+        .pc .aih .aitx { font-weight: 600; color: var(--sub-text); }
         .pc .aih .aitx { flex: 1; }
         .pc .send { flex-shrink: 0; border: 0; background: none; color: var(--primary); display: flex; align-items: center; padding: 6px; cursor: pointer; }
         .pc .send:disabled { color: var(--sub-text); opacity: .5; cursor: default; }
-        .pc .aimy { margin: 0 0 6px; font-size: 13px; line-height: 1.55; color: var(--sub-text); border-left: 2px solid var(--primary); padding-left: 8px; }
+        .pc .aimy { align-self: flex-end; max-width: 88%; margin: 0; padding: 8px 12px; border-radius: 14px 14px 4px 14px; background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--text); font-size: 13.5px; line-height: 1.55; }
         .pc .aiic { flex-shrink: 0; color: var(--primary); display: flex; padding-top: 2px; }
         .pc .aix { flex-shrink: 0; border: 0; background: none; font: inherit; font-size: 12.5px; color: var(--sub-text); cursor: pointer; padding: 0; }
-        .pc .aitx { margin: 0 0 8px; font-size: 13px; line-height: 1.6; color: var(--text); white-space: pre-wrap; }
+        .pc .aitx { margin: 0; font-size: 14px; line-height: 1.7; color: var(--text); white-space: pre-wrap; }
         .pc .aiq .frow { margin: 0; }
         .pc .grp { margin-top: 12px; }
         .pc .gh { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 2px 5px; border-bottom: 2px solid var(--primary); font-size: 14px; }
@@ -761,7 +762,7 @@ tr { break-inside: avoid; }
         .pc .hr.edit { display: block; cursor: default; }
         .pc .hd { font-weight: 700; min-width: 52px; }
         .pc .hd i { font-style: normal; font-size: 12px; font-weight: 500; color: var(--sub-text); }
-        .pc .hm.ha { border-left: 2px solid var(--primary); padding-left: 8px; }
+        .pc .hm.ha { border-left: 2px solid var(--primary); padding-left: 8px; color: var(--text); }
         .pc .hm { flex-basis: 100%; font-size: 13px; color: var(--sub-text); }
         .pc .seg { display: flex; gap: 6px; }
         .pc .seg button { flex: 1; border: 0; border-radius: 8px; background: var(--tint); padding: 8px 0; font: inherit; font-size: 14px; font-weight: 600; color: var(--sub-text); cursor: pointer; }
