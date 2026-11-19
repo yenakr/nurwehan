@@ -3,6 +3,7 @@ import ClinicalClient from './ClinicalClient';
 import type { ScheduleItem } from './MySchedule';
 import { getAllProgress } from '@/lib/practicum';
 import { aiConfigured } from '@/lib/ai';
+import { hasChecklistAccess } from '@/lib/checklist-access';
 import { purgeExpiredAssignments, findMyAssignments, findMates } from '@/lib/clinical';
 
 async function loadSchedule(user: any): Promise<ScheduleItem[]> {
@@ -29,12 +30,13 @@ export default async function ClinicalPage() {
   const user = await getCurrentUser();
   await purgeExpiredAssignments();
   const schedule = await loadSchedule(user);
-  const progress = user ? await getAllProgress(user.id) : {};
+  const canCheck = await hasChecklistAccess(user);
+  const progress = user && canCheck ? await getAllProgress(user.id) : {};
 
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--white)', padding: '14px 0 32px' }}>
       <div className="container">
-        <ClinicalClient schedule={schedule} user={user} progress={progress} aiOn={aiConfigured()} />
+        <ClinicalClient schedule={schedule} user={user} progress={progress} aiOn={canCheck && aiConfigured()} canCheck={canCheck} />
       </div>
     </main>
   );

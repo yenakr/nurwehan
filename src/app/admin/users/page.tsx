@@ -4,6 +4,7 @@ import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import UserList from './UserList';
 import { getTiers } from '@/lib/access';
+import { getChecklistUserIds } from '@/lib/checklist-access';
 
 export const dynamic = 'force-dynamic';
 
@@ -37,7 +38,8 @@ export default async function AdminUsersPage() {
 
   const superAdmin = isSuperAdmin(user.role);
   const tiers = superAdmin ? await getTiers() : {};
-  const withTier = users.map(u => ({ ...u, tier: tiers[u.id] ?? 0 }));
+  const ck = superAdmin ? await getChecklistUserIds() : new Set<string>();
+  const withTier = users.map(u => ({ ...u, tier: tiers[u.id] ?? 0, checklist: ck.has(u.id) }));
 
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '40px 0' }}>

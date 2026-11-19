@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { isAdminRole } from '@/lib/auth-core';
 import { saveProgress } from '@/lib/practicum';
+import { hasChecklistAccess } from '@/lib/checklist-access';
 import { SUBJECTS } from '@/app/clinical/practicum-data';
 
 export async function PUT(req: Request, { params }: { params: Promise<{ subject: string }> }) {
@@ -9,6 +10,7 @@ export async function PUT(req: Request, { params }: { params: Promise<{ subject:
   if (!user || !(user.approvalStatus === 'APPROVED' || isAdminRole(user.role))) {
     return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   }
+  if (!(await hasChecklistAccess(user))) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   const { subject } = await params;
   const sub = SUBJECTS.find(s => s.key === subject);
   if (!sub) return NextResponse.json({ error: 'not found' }, { status: 404 });

@@ -25,6 +25,7 @@ interface User {
   phone: string | null;
   approvalStatus: string;
   tier?: number;
+  checklist?: boolean;
   role?: string;
   createdAt: string;
   restrictions: Restriction[];
@@ -97,6 +98,23 @@ export default function UserList({ initialUsers, superAdmin = false }: { initial
         body: JSON.stringify({ tier }),
       });
       if (res.ok) setUsers(users.map(u => (u.id === id ? { ...u, tier } : u)));
+      else alert('저장하지 못했습니다.');
+    } catch {
+      alert('오류가 발생했습니다.');
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleChecklistUpdate = async (id: string, on: boolean) => {
+    setLoading(id);
+    try {
+      const res = await fetch(`/api/admin/users/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ checklist: on }),
+      });
+      if (res.ok) setUsers(users.map(u => (u.id === id ? { ...u, checklist: on } : u)));
       else alert('저장하지 못했습니다.');
     } catch {
       alert('오류가 발생했습니다.');
@@ -254,6 +272,17 @@ export default function UserList({ initialUsers, superAdmin = false }: { initial
                     >
                       <option value={0}>일반</option>
                       <option value={1}>일부공개</option>
+                    </select>
+                  )}
+                  {superAdmin && user.approvalStatus === 'APPROVED' && (
+                    <select
+                      value={user.checklist ? 1 : 0}
+                      onChange={e => handleChecklistUpdate(user.id, e.target.value === '1')}
+                      disabled={loading === user.id}
+                      aria-label="체크리스트"
+                    >
+                      <option value={0}>체크리스트 끔</option>
+                      <option value={1}>체크리스트 사용</option>
                     </select>
                   )}
                   <select
