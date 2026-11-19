@@ -20,7 +20,7 @@ async function withRetry(call: () => Promise<Response>): Promise<Response> {
 
 export const aiConfigured = () => !!process.env.AI_API_KEY;
 
-export async function askModel(system: string, messages: ChatMsg[]): Promise<string | null> {
+export async function askModel(system: string, messages: ChatMsg[], maxTokens = 450): Promise<string | null> {
   const key = process.env.AI_API_KEY;
   if (!key) return null;
   const provider = process.env.AI_PROVIDER === 'openai' ? 'openai' : process.env.AI_PROVIDER === 'anthropic' ? 'anthropic' : 'gemini';
@@ -34,7 +34,7 @@ export async function askModel(system: string, messages: ChatMsg[]): Promise<str
           systemInstruction: { parts: [{ text: system }] },
           contents: messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
           generationConfig: {
-            maxOutputTokens: 500,
+            maxOutputTokens: maxTokens + 50,
           },
         }),
       }));
@@ -49,7 +49,7 @@ export async function askModel(system: string, messages: ChatMsg[]): Promise<str
         headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` },
         body: JSON.stringify({
           model: process.env.AI_MODEL || 'gpt-4o-mini',
-          max_completion_tokens: 450,
+          max_completion_tokens: maxTokens,
           messages: [{ role: 'system', content: system }, ...messages],
         }),
       }));
@@ -62,7 +62,7 @@ export async function askModel(system: string, messages: ChatMsg[]): Promise<str
       headers: { 'content-type': 'application/json', 'x-api-key': key, 'anthropic-version': '2023-06-01' },
       body: JSON.stringify({
         model: process.env.AI_MODEL || 'claude-haiku-5-5',
-        max_tokens: 450,
+        max_tokens: maxTokens,
         system,
         messages,
       }),
