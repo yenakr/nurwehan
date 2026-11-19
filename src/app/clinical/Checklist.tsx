@@ -198,6 +198,8 @@ export default function Checklist({
     }
   };
   const [sheet, setSheet] = useState<PItem | null>(null);
+  const [descOpen, setDescOpen] = useState(false);
+  useEffect(() => { setDescOpen(false); }, [sheet?.id]);
   // 시트 입력 상태
   const [date, setDate] = useState(today());
   const [memo, setMemo] = useState('');
@@ -673,14 +675,6 @@ tr { break-inside: avoid; }
               <h3>{sheet.t}</h3>
               <button type="button" className="x" aria-label="닫기" onClick={() => setSheet(null)}>×</button>
             </div>
-            <p className="desc">{DETAIL[sheet.id]?.s ?? sheet.d}</p>
-            {DETAIL[sheet.id] && (
-              <ul className="kp">
-                {DETAIL[sheet.id].k.map(([a, b]) => (
-                  <li key={a}><b>{a}</b><span>{b}</span></li>
-                ))}
-              </ul>
-            )}
 
             <div className="when">
               {dateStep()}
@@ -707,7 +701,42 @@ tr { break-inside: avoid; }
               </div>
             )}
 
-            {ai && (
+
+            {history.length > 0 && (
+              <div className="hist">
+                {history.map(r =>
+                  editId === r.id ? (
+                    <div key={r.id} className="hr edit">
+                      {seg(ed.l, l => setEd(e => ({ ...e, l })))}
+                      <p className="pnote">{PNOTE}</p>
+                      <div className="frow">
+                        <input type="date" value={ed.d} onChange={e => setEd(x => ({ ...x, d: e.target.value }))} />
+                        <input className="grow" value={ed.m} onChange={e => setEd(x => ({ ...x, m: e.target.value }))} placeholder="메모" maxLength={200} />
+                      </div>
+                      <div className="acts">
+                        {delId === r.id ? (
+                          <button type="button" className="dng" onClick={() => { del(r.id); setEditId(null); }}>삭제 확인</button>
+                        ) : (
+                          <button type="button" className="dng" onClick={() => setDelId(r.id)}>삭제</button>
+                        )}
+                        <span className="sp" />
+                        <button type="button" onClick={() => setEditId(null)}>취소</button>
+                        <button type="button" className="pri" onClick={saveEdit}>저장</button>
+                      </div>
+                    </div>
+                  ) : (
+                    <div key={r.id}>
+                    <div className="hr">
+                      <button type="button" className="hmain" onClick={() => startEdit(r)}>
+                        <span className="hd">{md(r.d)}{noteDates.has(r.d) ? <i> · 메모</i> : null}</span>
+                        <b className={`lb ${r.l}`}>{lbl(r.l)}</b>
+                        {r.m && <span className="hm">{r.m}</span>}
+                        {r.a && <span className="hm ha">{r.a}</span>}
+                        {r.b && <span className="hm ha">{r.b}</span>}
+                      </button>
+                      {aiOn && <button type="button" className="aq" aria-label="AI" onClick={() => openAi(r.id, r.l)}><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.9 5.6L19.5 9.5l-5.6 1.9L12 17l-1.9-5.6L4.5 9.5l5.6-1.9L12 2zM19 14l.9 2.6L22.5 17.5l-2.6.9L19 21l-.9-2.6-2.6-.9 2.6-.9L19 14z"/></svg></button>}
+                    </div>
+                    {ai && ai.rid === r.id && (
               <div className="aiq">
                 <div className="aih">
                   <span className="aiic"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.9 5.6L19.5 9.5l-5.6 1.9L12 17l-1.9-5.6L4.5 9.5l5.6-1.9L12 2zM19 14l.9 2.6L22.5 17.5l-2.6.9L19 21l-.9-2.6-2.6-.9 2.6-.9L19 14z"/></svg></span>
@@ -735,40 +764,7 @@ tr { break-inside: avoid; }
                 {ai.busy && <p className="aitx"><Dots /></p>}
                 {ai.err && <p className="aitx">{ai.err}</p>}
               </div>
-            )}
-
-            {history.length > 0 && (
-              <div className="hist">
-                {history.map(r =>
-                  editId === r.id ? (
-                    <div key={r.id} className="hr edit">
-                      {seg(ed.l, l => setEd(e => ({ ...e, l })))}
-                      <p className="pnote">{PNOTE}</p>
-                      <div className="frow">
-                        <input type="date" value={ed.d} onChange={e => setEd(x => ({ ...x, d: e.target.value }))} />
-                        <input className="grow" value={ed.m} onChange={e => setEd(x => ({ ...x, m: e.target.value }))} placeholder="메모" maxLength={200} />
-                      </div>
-                      <div className="acts">
-                        {delId === r.id ? (
-                          <button type="button" className="dng" onClick={() => { del(r.id); setEditId(null); }}>삭제 확인</button>
-                        ) : (
-                          <button type="button" className="dng" onClick={() => setDelId(r.id)}>삭제</button>
-                        )}
-                        <span className="sp" />
-                        <button type="button" onClick={() => setEditId(null)}>취소</button>
-                        <button type="button" className="pri" onClick={saveEdit}>저장</button>
-                      </div>
-                    </div>
-                  ) : (
-                    <div key={r.id} className="hr">
-                      <button type="button" className="hmain" onClick={() => startEdit(r)}>
-                        <span className="hd">{md(r.d)}{noteDates.has(r.d) ? <i> · 메모</i> : null}</span>
-                        <b className={`lb ${r.l}`}>{lbl(r.l)}</b>
-                        {r.m && <span className="hm">{r.m}</span>}
-                        {r.a && <span className="hm ha">{r.a}</span>}
-                        {r.b && <span className="hm ha">{r.b}</span>}
-                      </button>
-                      {aiOn && <button type="button" className="aq" aria-label="AI" onClick={() => openAi(r.id, r.l)}><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.9 5.6L19.5 9.5l-5.6 1.9L12 17l-1.9-5.6L4.5 9.5l5.6-1.9L12 2zM19 14l.9 2.6L22.5 17.5l-2.6.9L19 21l-.9-2.6-2.6-.9 2.6-.9L19 14z"/></svg></button>}
+                    )}
                     </div>
                   )
                 )}
@@ -776,6 +772,19 @@ tr { break-inside: avoid; }
             )}
 
             <input className="rmi" value={remarks[sheet.id] || ''} onChange={e => setRemark(sheet.id, e.target.value)} placeholder="비고" maxLength={200} />
+            <button type="button" className="dtog" aria-expanded={descOpen} onClick={() => setDescOpen(v => !v)}>설명<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ transform: descOpen ? 'rotate(180deg)' : 'none' }}><path d="M6 9l6 6 6-6" /></svg></button>
+            {descOpen && (
+              <div className="dbody">
+            <p className="desc">{DETAIL[sheet.id]?.s ?? sheet.d}</p>
+            {DETAIL[sheet.id] && (
+              <ul className="kp">
+                {DETAIL[sheet.id].k.map(([a, b]) => (
+                  <li key={a}><b>{a}</b><span>{b}</span></li>
+                ))}
+              </ul>
+            )}
+              </div>
+            )}
           </div>
         </div>
       )}
@@ -837,7 +846,7 @@ tr { break-inside: avoid; }
         .pc .sumr .t { flex: 1; min-width: 0; }
         .pc .sumr .t.mute { color: var(--sub-text); }
         .pc .sumr .dd { flex: 0 1 45%; text-align: right; font-size: 12px; color: var(--sub-text); }
-        .pc .aiq { margin-top: 14px; display: flex; flex-direction: column; gap: 10px; }
+        .pc .aiq { margin: 6px 0 4px; padding: 12px; border-radius: 12px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; }
         .pc .aih { display: flex; align-items: flex-start; gap: 8px; }
         .pc .aih .aitx { font-weight: 600; color: var(--sub-text); }
         .pc .aih .aitx { flex: 1; }
@@ -869,7 +878,10 @@ tr { break-inside: avoid; }
         .pc .kp li { display: contents; font-size: 13px; line-height: 1.55; color: var(--text); }
         .pc .kp b { font-size: 13px; line-height: 1.55; font-weight: 600; color: var(--primary); }
         .pc .kp span { min-width: 0; font-size: 13px; line-height: 1.55; color: var(--text); }
-        .pc .desc { margin: 8px 0 16px; font-size: 13px; line-height: 1.65; color: var(--sub-text); }
+        .pc .dtog { display: flex; align-items: center; gap: 4px; margin-top: 16px; border: 0; background: none; padding: 4px 0; font: inherit; font-size: 13px; font-weight: 700; color: var(--sub-text); cursor: pointer; }
+        .pc .dbody { margin-top: 4px; }
+        .pc .dbody .kp { margin-top: 0; }
+        .pc .desc { margin: 4px 0 12px; font-size: 13px; line-height: 1.65; color: var(--sub-text); }
         .pc .quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         .pc .q { border: 0; border-radius: 10px; padding: 10px 0; font: inherit; font-size: 14.5px; font-weight: 700; cursor: pointer; }
         .pc .q:active { transform: scale(.97); }
