@@ -90,6 +90,8 @@ export default function Checklist({
   const [filter, setFilter] = useState<Filter>('all');
   const [q, setQ] = useState('');
   const [find, setFind] = useState(false);
+  const [sum, setSum] = useState(false);
+  const [sumOpen, setSumOpen] = useState<Set<string>>(new Set());
   const [sheet, setSheet] = useState<PItem | null>(null);
   // 시트 입력 상태
   const [dayMode, setDayMode] = useState<'today' | 'yest' | 'pick'>('today');
@@ -352,12 +354,13 @@ tr { break-inside: avoid; }
         </div>
         {status === 'saving' && <span className="st">저장 중</span>}
         {status === 'error' && <span className="st error">저장 대기</span>}
-        <button type="button" className={`selbtn ${selMode ? 'on' : ''}`} onClick={() => (selMode ? exitSel() : setSelMode(true))}>{selMode ? '완료' : '선택'}</button>
+        <button type="button" className={`selbtn ${sum ? 'on' : ''}`} onClick={() => { exitSel(); setFind(false); setSum(v => !v); }}>요약</button>
+        {!sum && <button type="button" className={`selbtn ${selMode ? 'on' : ''}`} onClick={() => (selMode ? exitSel() : setSelMode(true))}>{selMode ? '완료' : '선택'}</button>}
         <button type="button" className={`ic ${find || q || filter !== 'all' ? 'on' : ''}`} aria-label="검색" onClick={() => setFind(f => !f)}>
           <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
         </button>
       </div>
-      {find && (
+      {find && !sum && (
         <div className="tools">
           <input type="search" autoFocus value={q} onChange={e => setQ(e.target.value)} />
           <div className="flt">
@@ -367,7 +370,41 @@ tr { break-inside: avoid; }
           </div>
         </div>
       )}
-      {subjects.length > 1 && (
+      {sum && subjects.map(x => {
+        const r = all[x.key]?.r || {};
+        const items = x.groups.flatMap(g => g.items);
+        const seen = items.filter(i => (r[i.id] || []).length > 0);
+        const todo = items.filter(i => !(r[i.id] || []).length);
+        const open = sumOpen.has(x.key);
+        const md = (d: string) => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`;
+        return (
+          <section key={x.key} className="sumc">
+            <button type="button" className="sumh" onClick={() => setSumOpen(p => { const n = new Set(p); if (n.has(x.key)) n.delete(x.key); else n.add(x.key); return n; })}>
+              <b>{x.sub}</b>
+              <span>{seen.length}/{items.length}</span>
+              <i className="bar"><i style={{ width: `${items.length ? (seen.length / items.length) * 100 : 0}%` }} /></i>
+            </button>
+            {open && (
+              <div className="sumb">
+                {seen.length > 0 && <div className="sumt">기록 {seen.length}</div>}
+                {seen.map(i => {
+                  const rc = chrono(r[i.id] || []);
+                  return (
+                    <div key={i.id} className="sumr">
+                      <span className="t">{i.t}</span>
+                      <span className="dd">{rc.map(c => `${md(c.d)} ${LEVELS.find(l => l.k === c.l)?.label}`).join(', ')}</span>
+                    </div>
+                  );
+                })}
+                {todo.length > 0 && <div className="sumt">미기록 {todo.length}</div>}
+                {todo.map(i => <div key={i.id} className="sumr"><span className="t mute">{i.t}</span></div>)}
+              </div>
+            )}
+          </section>
+        );
+      })}
+
+      {!sum && subjects.length > 1 && (
         <div className="hs">
           {subjects.map(x => (
             <button key={x.key} type="button" className={x.key === key ? 'on' : ''} onClick={() => { setKeys(k => ({ ...k, [course]: x.key })); setFilter('all'); setQ(''); setSel(new Set()); }}>{x.sub}</button>
@@ -375,7 +412,7 @@ tr { break-inside: avoid; }
         </div>
       )}
 
-      {visible.map(({ g, items }) => {
+      {!sum && visible.map(({ g, items }) => {
         const gd = g.items.filter(i => (prog[i.id] || []).length > 0).length;
         return (
           <section key={g.name} className="grp">
@@ -418,12 +455,12 @@ tr { break-inside: avoid; }
         );
       })}
 
-      <div className="foot">
+      {!sum && <div className="foot">
         <b>{done}/{total}</b>
         {LEVELS.map(l => <span key={l.k} className={`lv ${l.k}`}>{l.label} {cnt(l.k)}</span>)}
         <button type="button" className="pdf" onClick={() => printPdf([subject])}>{popup ? '팝업을 허용해주세요' : 'PDF 저장'}</button>
         {subjects.filter(recorded).length > 1 && <button type="button" className="pdf" onClick={() => printPdf(subjects.filter(recorded))}>전체 PDF</button>}
-      </div>
+      </div>}
 
       {selMode && (
         <div className="bar2">
@@ -559,6 +596,17 @@ tr { break-inside: avoid; }
         .pc .flt button { border: 1px solid var(--line); background: transparent; border-radius: 999px; padding: 5px 11px; font-size: 13px; color: var(--sub-text); cursor: pointer; white-space: nowrap; }
         .pc .flt button.on { background: var(--primary); border-color: var(--primary); color: #fff; }
         .pc .empty { padding: 30px 0; text-align: center; color: var(--sub-text); font-size: 14px; }
+        .pc .sumc { margin-top: 12px; }
+        .pc .sumh { width: 100%; display: flex; align-items: center; gap: 10px; padding: 8px 2px; background: none; border: 0; border-bottom: 2px solid var(--primary); font: inherit; font-size: 14px; color: var(--text); cursor: pointer; text-align: left; }
+        .pc .sumh b { flex: 1; }
+        .pc .sumh span { font-size: 12.5px; color: var(--sub-text); }
+        .pc .sumh .bar { width: 64px; height: 6px; border-radius: 3px; background: var(--tint); overflow: hidden; display: block; }
+        .pc .sumh .bar i { display: block; height: 100%; background: var(--primary); }
+        .pc .sumt { margin: 10px 2px 2px; font-size: 12px; font-weight: 700; color: var(--sub-text); }
+        .pc .sumr { display: flex; justify-content: space-between; gap: 10px; padding: 7px 2px; border-bottom: 1px solid var(--line); font-size: 13.5px; }
+        .pc .sumr .t { flex: 1; min-width: 0; }
+        .pc .sumr .t.mute { color: var(--sub-text); }
+        .pc .sumr .dd { flex: 0 1 45%; text-align: right; font-size: 12px; color: var(--sub-text); }
         .pc .grp { margin-top: 12px; }
         .pc .gh { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 2px 5px; border-bottom: 2px solid var(--primary); font-size: 14px; }
         .pc .gh span { font-size: 12.5px; color: var(--sub-text); }
