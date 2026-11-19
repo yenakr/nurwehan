@@ -1,3 +1,5 @@
+import { A1 } from './practicum-detail-a1';
+import { SUBJECTS } from './practicum-data';
 // 항목별 보강 설명: s = 한 줄 요약, k = [소제목, 내용] 핵심 포인트. 없는 항목은 practicum-data의 기본 설명을 쓴다.
 export type Detail = { s: string; k: [string, string][] };
 
@@ -451,3 +453,4 @@ export const DETAIL: Record<string, Detail> = {
 (['an18', 'ad19', 'ac21', 'ap19'] as const).forEach(id => { DETAIL[id] = CTC; });
 (['an19', 'ar20', 'ac22', 'ap20'] as const).forEach(id => { DETAIL[id] = MRI; });
 (['ad32', 'ac33', 'ap30', 'ah28'] as const).forEach(id => { DETAIL[id] = BT; });
+SUBJECTS.filter(x => x.course === '성인1').forEach(x => x.groups.forEach(g => g.items.forEach(i => { if (!DETAIL[i.id] && A1[i.t]) DETAIL[i.id] = A1[i.t]; })));
