@@ -101,7 +101,7 @@ export default function Checklist({
   // AI 꼬리질문: 기록 하나에 대해 질문 → 학생 답 → 피드백(최대 2번). 대화는 저장하지 않는다.
   const [ai, setAi] = useState<{ rid: string; level: Level; a: string; f: string; b: string; g: string; busy: boolean; err: string } | null>(null);
   const [sumOpen, setSumOpen] = useState<Set<string>>(new Set());
-  // 요약 AI 총평: 하루 2번까지. 오늘 받은 총평은 이 기기에 남겨 다시 볼 수 있다
+  // 요약 AI 피드백: 하루 2번까지. 오늘 받은 피드백은 이 기기에 남겨 다시 볼 수 있다
   const [sumAi, setSumAi] = useState<Record<string, { text: string; busy: boolean; err: string }>>({});
   useEffect(() => {
     const out: Record<string, { text: string; busy: boolean; err: string }> = {};
@@ -125,7 +125,7 @@ export default function Checklist({
       });
       const j = await res.json().catch(() => ({}));
       if (!res.ok || !j.text) {
-        const err = res.status === 429 ? '오늘 총평을 2번 다 받았어요' : res.status === 400 ? '' : '지금은 사용할 수 없어요';
+        const err = res.status === 429 ? '오늘 피드백을 2번 다 받았어요' : res.status === 400 ? '' : '지금은 사용할 수 없어요';
         setSumAi(m => ({ ...m, [subKey]: { text: m[subKey]?.text || '', busy: false, err } }));
         return;
       }
@@ -501,7 +501,7 @@ tr { break-inside: avoid; }
                   <div className="sumai">
                     {sumAi[x.key]?.text && <p className="aitx">{sumAi[x.key].text}</p>}
                     {sumAi[x.key]?.err && <p className="aitx">{sumAi[x.key].err}</p>}
-                    <button type="button" className="sumask" disabled={sumAi[x.key]?.busy} onClick={() => askSum(x.key)}><Spark />{sumAi[x.key]?.busy ? '...' : 'AI 총평'}</button>
+                    <button type="button" className="sumask" disabled={sumAi[x.key]?.busy} onClick={() => askSum(x.key)}><Spark />{sumAi[x.key]?.busy ? '...' : 'AI 피드백'}</button>
                   </div>
                 )}
                 {seen.length > 0 && <div className="sumt">기록 {seen.length}</div>}

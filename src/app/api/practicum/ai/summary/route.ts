@@ -7,10 +7,10 @@ import { takeAiQuota, refundAiQuota } from '@/lib/practicum-ai';
 import { getProgress } from '@/lib/practicum';
 import { SUBJECTS, LEVELS, normalizeStore } from '@/app/clinical/practicum-data';
 
-// 요약 총평은 하루 2번까지
+// 요약 피드백은 하루 2번까지
 const SUM_LIMIT = 2;
 
-const SYSTEM = `너는 간호학과 학생의 임상실습 체크리스트 기록을 보고 총평해 주는 튜터다. 한국어로, 아래 형식으로 짧게 쓴다.
+const SYSTEM = `너는 간호학과 학생의 임상실습 체크리스트 기록을 보고 피드백해 주는 튜터다. 한국어로, 아래 형식으로 짧게 쓴다.
 1) 지금까지 기록에 대한 평가와 격려 1~2문장.
 2) "다음에 관찰해 볼 것"을 후보 중에서 3개 골라 각각 "- 항목: 이유 한 줄" 형식으로.
 3) 관찰만 한 항목이 있으면 "수행으로 올려 볼 것" 한 가지를 한 문장으로. 없으면 생략한다.
