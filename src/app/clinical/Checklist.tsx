@@ -934,7 +934,7 @@ tr { break-inside: avoid; }
         .pc .lb { font-weight: 700; }
         .pc .ov { position: fixed; inset: 0; z-index: 2000; background: rgba(0,0,0,.55); display: flex; align-items: center; justify-content: center; padding: 16px; }
         .pc .sheet { width: 100%; max-width: 480px; max-height: 84vh; overflow-y: auto; background: var(--white); border-radius: 18px; padding: 18px; -webkit-overflow-scrolling: touch; }
-                .pc .sh { margin-bottom: 16px; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
+                .pc .sh { position: sticky; top: -18px; z-index: 2; margin: -18px -18px 6px; padding: 18px 18px 10px; background: var(--white); border-radius: 18px 18px 0 0; display: flex; justify-content: space-between; align-items: flex-start; gap: 10px; }
         .pc .sh h3 { margin: 0; font-size: 18px; font-weight: 800; line-height: 1.35; }
         .pc .x { border: 0; background: none; font-size: 28px; line-height: 1; color: var(--sub-text); cursor: pointer; padding: 0 2px; margin-top: -4px; }
         .pc .kp { list-style: none; margin: -6px 0 16px; padding: 0; display: grid; grid-template-columns: max-content 1fr; gap: 6px 12px; }
