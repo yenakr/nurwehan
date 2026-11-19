@@ -79,7 +79,7 @@ export default function Header() {
       key: 'clinical',
       items: [
         { label: 'OPEN LAB 신청서', href: '/open-lab', desc: '신청서 생성·출력' },
-        { label: '임상실습 가이드', href: '/clinical', desc: '건강요건 및 실습전후 체크' },
+        { label: '실습 노트', href: '/clinical', desc: '체크리스트·메모·용어' },
         { label: '신청서 작성 내역', href: '/history', desc: '내가 만든 신청서' },
       ],
     },
