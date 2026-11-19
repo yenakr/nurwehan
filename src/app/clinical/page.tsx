@@ -2,6 +2,7 @@ import { getCurrentUser } from '@/lib/auth';
 import ClinicalClient from './ClinicalClient';
 import type { ScheduleItem } from './MySchedule';
 import { getAllProgress } from '@/lib/practicum';
+import { aiConfigured } from '@/lib/ai';
 import { purgeExpiredAssignments, findMyAssignments, findMates } from '@/lib/clinical';
 
 async function loadSchedule(user: any): Promise<ScheduleItem[]> {
@@ -33,7 +34,7 @@ export default async function ClinicalPage() {
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--white)', padding: '14px 0 32px' }}>
       <div className="container">
-        <ClinicalClient schedule={schedule} user={user} progress={progress} />
+        <ClinicalClient schedule={schedule} user={user} progress={progress} aiOn={aiConfigured()} />
       </div>
     </main>
   );

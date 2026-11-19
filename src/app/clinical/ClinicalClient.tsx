@@ -11,6 +11,7 @@ interface ClinicalClientProps {
   schedule: ScheduleItem[];
   user: any;
   progress: Record<string, Record<string, unknown>>;
+  aiOn?: boolean;
 }
 
 type Tab = 'mine' | 'notes' | 'check' | 'terms';
@@ -31,7 +32,7 @@ const QUIZ_SUBJECT: Record<string, string> = {
 };
 const quizSubjectOf = (subject: string) => QUIZ_SUBJECT[subject.split('_')[0]];
 
-export default function ClinicalClient({ schedule, user, progress }: ClinicalClientProps) {
+export default function ClinicalClient({ schedule, user, progress, aiOn }: ClinicalClientProps) {
   const [tab, setTab] = useState<Tab>('mine');
   const [prog, setProg] = useState<Record<string, Store>>(() => Object.fromEntries(Object.entries(progress).map(([k, v]) => [k, normalizeStore(v)])));
   const [notes, setNotes] = useState<Note[]>([]);
@@ -89,7 +90,7 @@ export default function ClinicalClient({ schedule, user, progress }: ClinicalCli
 
       {user && (
         <div style={{ display: tab === 'check' ? 'block' : 'none' }}>
-          <Checklist schedule={schedule} studentId={user?.studentId} userName={user?.name} defaultCourse={['여성', '성인2', '간호과정'].find(c => schedule.some(x => x.subject.split('_')[0] === c))} all={prog} setAll={setProg} noteDates={noteDates} onPickDay={pickDay} />
+          <Checklist aiOn={aiOn} schedule={schedule} studentId={user?.studentId} userName={user?.name} defaultCourse={['여성', '성인2', '간호과정'].find(c => schedule.some(x => x.subject.split('_')[0] === c))} all={prog} setAll={setProg} noteDates={noteDates} onPickDay={pickDay} />
         </div>
       )}
       {tab === 'check' && !user && (
