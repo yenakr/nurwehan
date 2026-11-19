@@ -5,6 +5,7 @@ import { aiConfigured, askModel, type ChatMsg } from '@/lib/ai';
 import { hasChecklistAccess } from '@/lib/checklist-access';
 import { takeAiQuota, refundAiQuota } from '@/lib/practicum-ai';
 import { SUBJECTS } from '@/app/clinical/practicum-data';
+import { DETAIL } from '@/app/clinical/practicum-detail';
 import { AI_Q, AI_ANSWER_MAX } from '@/app/clinical/practicum-ai-q';
 
 const LEVEL: Record<string, string> = { O: '관찰', P: '부분수행', D: '수행' };
@@ -14,14 +15,24 @@ const COMMON = `규칙:
 - 핵심 용어나 수치는 **굵게**(별표 두 개로 감싸기) 표시한다. 한 답변에 1~3곳만, 문장 전체를 굵게 하지 않는다.
 - 머리말이나 "피드백:" 같은 라벨 없이 자연스러운 말투로 쓴다.
 - 환자 이름, 병록번호, 나이 등 환자를 알아볼 수 있는 정보가 있으면 이어가지 말고 일반화해서 다시 쓰라고만 한다. 환자의 진단명을 캐묻지 않는다.
-- 확실하지 않은 내용은 단정하지 말고, 학교 지침서와 현장 지도자 안내를 우선하라고 짧게 덧붙인다.`;
+- 확실하지 않은 내용은 단정하지 말고, 학교 지침서와 현장 지도자 안내를 우선하라고 짧게 덧붙인다.
+- 아래 [참고 자료]가 있으면 그것을 우선 근거로 삼고, 자료와 다르게 단정하지 않는다. 자료에 없는 내용은 일반 지식으로 답하되 확실하지 않으면 그렇게 말한다.
+- 수치, 용량, 기준값을 지어내지 않는다. 진단이나 처방을 하지 않는다.
+- 환자에게 위험한 징후(호흡곤란, 의식 저하, 심한 출혈, 급격한 활력징후 변화 등)가 언급되면 다른 설명보다 먼저 "바로 지도자나 담당 간호사에게 보고"를 말한다.
+- 답변 맨 끝에 줄을 바꿔 "확인해 볼 키워드: **키워드1**, **키워드2**" 형식으로 학생이 교재에서 직접 찾아볼 키워드를 1~2개 쓴다.`;
 
-const SYSTEM = `너는 간호학과 학생의 임상실습을 돕는 튜터다. 학생이 체크리스트에 남긴 기록에 한국어로 답한다. 전체 4문장 이내.
+const SYSTEM = `너는 간호학과 학생의 임상실습을 돕는 튜터다. 학생이 체크리스트에 남긴 기록에 한국어로 답한다. 전체 4문장 이내(키워드 줄 제외).
 1) 학생 답에 대한 짧은 반응이나 질문에 대한 직접 설명. 2) 필요하면 한 단계 더 깊은 질문 한 문장.
 ${COMMON}`;
 
 const SYSTEM_FINAL = `너는 간호학과 학생의 임상실습을 돕는 튜터다. 이번이 마지막 답변이다. 한국어로 3문장 이내. 학생의 질문이 있으면 직접 설명하고 핵심을 정리한다. 새 질문은 하지 않는다.
 ${COMMON}`;
+
+function refText(id: string, fallback: string): string {
+  const d = DETAIL[id];
+  if (!d) return `[참고 자료]\n${fallback}`;
+  return `[참고 자료]\n${d.s}\n${d.k.map(([a, b]) => `- ${a}: ${b}`).join('\n')}`;
+}
 
 export async function POST(req: Request) {
   const user = await getCurrentUser();
@@ -49,7 +60,7 @@ export async function POST(req: Request) {
         { role: 'user', content: `학생 답: ${answer}` },
       ]
     : [{ role: 'user', content: `항목: ${item.t} (${level})\n질문: ${q}\n학생 답: ${answer}` }];
-  const text = await askModel(second ? SYSTEM_FINAL : SYSTEM, msgs);
+  const text = await askModel(`${second ? SYSTEM_FINAL : SYSTEM}\n\n${refText(item.id, item.d)}`, msgs, 550);
   if (!text) {
     await refundAiQuota(user.id);
     return NextResponse.json({ error: 'failed' }, { status: 502 });
