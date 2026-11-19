@@ -18,6 +18,22 @@ const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2
 // 날짜 오름차순 (같은 날은 입력 순서 유지)
 const PNOTE = '환자를 알아볼 수 있는 정보(이름, 등록번호 등)는 쓰지 마세요.';
 
+const Warn = () => {
+  const [open, setOpen] = useState(false);
+  useEffect(() => {
+    if (!open) return;
+    const t = setTimeout(() => setOpen(false), 2500);
+    return () => clearTimeout(t);
+  }, [open]);
+  return (
+    <span className="warn">
+      <button type="button" className="warnb" aria-label="실습일 아님" onClick={() => setOpen(true)}>
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9" /><path d="M12 7.5v5.5" /><path d="M12 16.5v.01" /></svg>
+      </button>
+      {open && <em role="status">오늘 실습한 과목이 아니에요</em>}
+    </span>
+  );
+};
 const Dots = () => (
   <span className="dots" role="status" aria-label="생각 중"><i /><i /><i /></span>
 );
@@ -617,7 +633,7 @@ tr { break-inside: avoid; }
       {selMode && (
         <div className="bar2">
           <div className="bt2">
-            <span>{sel.size ? `${sel.size}개 선택` : '항목을 선택하세요'}{outside && <em className="warn">실습일 아님</em>}</span>
+            <span>{sel.size ? `${sel.size}개 선택` : '항목을 선택하세요'}{outside && <Warn />}</span>
             {dateStep()}
           </div>
           <div className="quick">
@@ -657,7 +673,7 @@ tr { break-inside: avoid; }
             </div>
             <div className="when">
               {dateStep()}
-              {outside && <span className="warn">실습일 아님</span>}
+              {outside && <Warn />}
               <button type="button" className={`lnk ${showMemo || memo ? 'on' : ''}`} onClick={() => setShowMemo(m => !m)}>메모</button>
             </div>
             {showMemo && (
@@ -887,7 +903,9 @@ tr { break-inside: avoid; }
         .pc .acts button { border: 0; background: var(--tint); border-radius: 8px; padding: 7px 14px; font: inherit; font-size: 13px; font-weight: 600; color: var(--sub-text); cursor: pointer; }
         .pc .acts button.pri { background: var(--primary); color: #fff; }
         .pc .acts button.dng { background: none; color: #DC2626; padding-left: 0; }
-        .pc .warn { font-size: 12px; font-style: normal; font-weight: 600; color: #D97706; margin-left: 8px; }
+        .pc .warn { display: inline-flex; align-items: center; gap: 6px; color: #D97706; margin-left: 8px; font-size: 12px; font-weight: 600; }
+        .pc .warn em { font-style: normal; }
+        .pc .warnb { border: 0; background: none; color: inherit; padding: 4px; display: inline-flex; cursor: pointer; }
         .pc.selecting { padding-bottom: 150px; }
         .pc .ck { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--sub-text); flex-shrink: 0; align-self: center; position: relative; }
         .pc .ck.on { background: var(--primary); border-color: var(--primary); }
