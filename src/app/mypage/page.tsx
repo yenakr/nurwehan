@@ -2,6 +2,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { prisma } from '@/lib/prisma';
 import { redirect } from 'next/navigation';
 import ProfileForm from './ProfileForm';
+import PasswordForm from './PasswordForm';
 
 export const dynamic = 'force-dynamic';
 
@@ -66,6 +67,8 @@ export default async function MyPage() {
           approvalStatus: fullUser.approvalStatus,
           rejectedReason: fullUser.rejectedReason
         }} />
+
+        <PasswordForm />
 
         <section className="mp-card" style={{ marginTop: 12 }}>
           <div className="mp-head"><h2>최근 신청서</h2></div>

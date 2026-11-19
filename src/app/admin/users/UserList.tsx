@@ -37,6 +37,8 @@ export default function UserList({ initialUsers, superAdmin = false }: { initial
   const [users, setUsers] = useState<User[]>(initialUsers);
   const [loading, setLoading] = useState<string | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [tmpPw, setTmpPw] = useState<{ id: string; pw: string } | null>(null);
+  const [resetId, setResetId] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState<'PENDING' | 'ALL' | 'RESTRICTED'>(
     initialUsers.some(u => u.approvalStatus === 'PENDING') ? 'PENDING' : 'ALL'
   );
@@ -96,6 +98,21 @@ export default function UserList({ initialUsers, superAdmin = false }: { initial
       });
       if (res.ok) setUsers(users.map(u => (u.id === id ? { ...u, tier } : u)));
       else alert('저장하지 못했습니다.');
+    } catch {
+      alert('오류가 발생했습니다.');
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleResetPw = async (id: string) => {
+    setLoading(id);
+    setResetId(null);
+    try {
+      const res = await fetch(`/api/admin/users/${id}/reset-password`, { method: 'POST' });
+      const j = await res.json().catch(() => ({}));
+      if (res.ok && j.password) setTmpPw({ id, pw: j.password });
+      else alert(j.message || '초기화하지 못했습니다.');
     } catch {
       alert('오류가 발생했습니다.');
     } finally {
@@ -251,7 +268,22 @@ export default function UserList({ initialUsers, superAdmin = false }: { initial
                     <option value="3">3학년</option>
                     <option value="4">4학년</option>
                   </select>
+                  {(superAdmin || user.role === 'STUDENT' || !user.role) && (
+                    resetId === user.id ? (
+                      <button type="button" className="rst on" onClick={() => handleResetPw(user.id)} disabled={loading === user.id}>초기화 확인</button>
+                    ) : (
+                      <button type="button" className="rst" onClick={() => setResetId(user.id)} disabled={loading === user.id}>비번</button>
+                    )
+                  )}
                   </div>
+                  {tmpPw && tmpPw.id === user.id && (
+                    <div className="tmp">
+                      <span>임시 비밀번호</span>
+                      <b>{tmpPw.pw}</b>
+                      <button type="button" onClick={() => { navigator.clipboard?.writeText(tmpPw.pw).catch(() => {}); }}>복사</button>
+                      <button type="button" onClick={() => setTmpPw(null)}>닫기</button>
+                    </div>
+                  )}
                 </div>
               ))}
             </div>
@@ -277,6 +309,15 @@ export default function UserList({ initialUsers, superAdmin = false }: { initial
         .top .st { align-self: center; flex: 0 0 auto; }
         .ctl { display: flex; gap: 6px; flex: 0 0 auto; }
         .ctl select { min-width: 0; }
+        .row:not(.pending) { flex-wrap: wrap; }
+        .rst { padding: 5px 9px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; font-size: 0.8125rem; font-weight: 700; color: #475569; cursor: pointer; white-space: nowrap; }
+        .rst.on { color: #ef4444; border-color: #fecaca; }
+        .tmp { flex: 1 1 100%; display: flex; align-items: center; gap: 10px; padding: 8px 10px; border-radius: 8px; background: #f1f5f9; font-size: 0.8125rem; }
+        .tmp span { color: #64748b; }
+        .tmp b { font-family: ui-monospace, monospace; font-size: 0.9375rem; letter-spacing: 0.04em; user-select: all; }
+        .tmp button { margin-left: auto; border: 0; background: none; color: var(--primary); font: inherit; font-weight: 700; cursor: pointer; }
+        .tmp b + button { margin-left: auto; }
+        .tmp button + button { margin-left: 0; color: #64748b; }
         .row:first-child { border-top: none; }
                 .name { font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 6px; }
         .sub { font-size: 0.8125rem; color: #94a3b8; margin-top: 2px; word-break: break-all; }
