@@ -516,9 +516,11 @@ tr { break-inside: avoid; }
 
   const sheetRecs = sheet ? prog[sheet.id] || [] : [];
   const [histAll, setHistAll] = useState(false);
-  useEffect(() => { setHistAll(false); }, [sheet?.id]);
+  const [histLv, setHistLv] = useState<Level | null>(null);
+  useEffect(() => { setHistAll(false); setHistLv(null); }, [sheet?.id]);
   const history = sheetRecs.map((r, i) => ({ r, i })).sort((a, b) => b.r.d.localeCompare(a.r.d) || b.i - a.i).map(x => x.r);
-  const shown = histAll ? history : history.filter((r, i) => i < 3 || r.id === ai?.rid || r.id === editId);
+  const lvRecs = histLv ? history.filter(r => r.l === histLv) : history;
+  const shown = histAll ? lvRecs : lvRecs.filter((r, i) => i < 3 || r.id === ai?.rid || r.id === editId);
 
   return (
     <div className={`pc ${selMode ? 'selecting' : ''}`}>
@@ -715,6 +717,14 @@ tr { break-inside: avoid; }
 
             {history.length > 0 && (
               <div className="hist">
+                {LEVELS.filter(l => history.some(r => r.l === l.k)).length > 1 && (
+                  <div className="hchips">
+                    <button type="button" className={histLv === null ? 'on' : ''} onClick={() => { setHistLv(null); setHistAll(false); }}>전체 {history.length}</button>
+                    {LEVELS.filter(l => history.some(r => r.l === l.k)).map(l => (
+                      <button key={l.k} type="button" className={`${l.k} ${histLv === l.k ? 'on' : ''}`} onClick={() => { setHistLv(l.k); setHistAll(false); }}>{l.label} {history.filter(r => r.l === l.k).length}</button>
+                    ))}
+                  </div>
+                )}
                 {shown.map(r =>
                   editId === r.id ? (
                     <div key={r.id} className="hr edit">
@@ -779,8 +789,8 @@ tr { break-inside: avoid; }
                     </div>
                   )
                 )}
-                {history.length > 3 && (
-                  <button type="button" className="hmore" onClick={() => setHistAll(v => !v)}>{histAll ? '접기' : `이전 기록 ${history.length - 3}개`}</button>
+                {lvRecs.length > 3 && (
+                  <button type="button" className="hmore" onClick={() => setHistAll(v => !v)}>{histAll ? '접기' : `이전 기록 ${lvRecs.length - 3}개`}</button>
                 )}
               </div>
             )}
@@ -935,6 +945,9 @@ tr { break-inside: avoid; }
         .pc .hist .aiq { margin: 2px 0 8px; }
         .pc .hr { width: 100%; display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 12px; padding: 11px 2px; border: 0; border-top: 1px solid var(--line); background: none; font: inherit; font-size: 14px; color: inherit; text-align: left; cursor: pointer; }
         .pc .hr:not(.edit) { display: flex; align-items: flex-start; padding: 9px 2px; gap: 6px; margin: 0; border: 0; border-top: 1px solid var(--line); border-radius: 0; background: none; cursor: default; }
+        .pc .hchips { display: flex; gap: 6px; margin-bottom: 4px; overflow-x: auto; scrollbar-width: none; }
+        .pc .hchips button { flex-shrink: 0; border: 0; border-radius: 999px; background: var(--tint); padding: 5px 12px; font: inherit; font-size: 12.5px; font-weight: 600; color: var(--sub-text); cursor: pointer; }
+        .pc .hchips button.on { background: var(--primary); color: #fff; }
         .pc .hmore { display: block; margin: 4px auto 0; border: 0; background: none; padding: 8px 12px; font: inherit; font-size: 13px; font-weight: 600; color: var(--sub-text); cursor: pointer; }
         .pc .hmain { flex: 1; min-width: 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; padding: 0; border: 0; background: none; font: inherit; font-size: 14px; color: inherit; text-align: left; cursor: pointer; }
         .pc .aq, .pc .uacts button { border: 0; background: none; color: var(--primary); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; padding: 6px 4px; }
