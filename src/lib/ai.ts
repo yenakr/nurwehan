@@ -25,7 +25,6 @@ export async function askModel(system: string, messages: ChatMsg[]): Promise<str
           contents: messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
           generationConfig: {
             maxOutputTokens: 1200,
-            ...(model.startsWith('gemini-3.8-flash') ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
           },
         }),
       });
