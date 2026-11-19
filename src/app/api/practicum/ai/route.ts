@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
 import { isAdminRole } from '@/lib/auth-core';
 import { aiConfigured, askModel, type ChatMsg } from '@/lib/ai';
-import { takeAiQuota } from '@/lib/practicum-ai';
+import { takeAiQuota, refundAiQuota } from '@/lib/practicum-ai';
 import { SUBJECTS } from '@/app/clinical/practicum-data';
 import { AI_Q, AI_ANSWER_MAX } from '@/app/clinical/practicum-ai-q';
 
@@ -30,5 +30,9 @@ export async function POST(req: Request) {
     { role: 'user', content: `항목: ${item.t} (${level})\n질문: ${AI_Q[body.level as 'O' | 'P' | 'D']}\n학생 답: ${answer}` },
   ];
   const text = await askModel(SYSTEM, msgs);
-  return text ? NextResponse.json({ text }) : NextResponse.json({ error: 'failed' }, { status: 502 });
+  if (!text) {
+    await refundAiQuota(user.id);
+    return NextResponse.json({ error: 'failed' }, { status: 502 });
+  }
+  return NextResponse.json({ text });
 }

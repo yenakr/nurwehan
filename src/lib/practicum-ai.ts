@@ -15,3 +15,14 @@ export async function takeAiQuota(userId: string): Promise<boolean> {
     return false;
   }
 }
+
+// AI 호출이 실패하면 방금 센 횟수를 돌려준다
+export async function refundAiQuota(userId: string): Promise<void> {
+  const day = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10);
+  try {
+    await prisma.$executeRaw`
+      UPDATE "PracticumAiUsage" SET "count" = GREATEST("count" - 1, 0) WHERE "userId" = ${userId} AND "day" = ${day}`;
+  } catch {
+    /* 무시 */
+  }
+}
