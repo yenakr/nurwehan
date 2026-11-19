@@ -281,8 +281,8 @@ export default function UserList({ initialUsers, superAdmin = false }: { initial
                       disabled={loading === user.id}
                       aria-label="체크리스트"
                     >
-                      <option value={0}>체크리스트 끔</option>
-                      <option value={1}>체크리스트 사용</option>
+                      <option value={0}>체크 끔</option>
+                      <option value={1}>체크 사용</option>
                     </select>
                   )}
                   <select
@@ -336,7 +336,7 @@ export default function UserList({ initialUsers, superAdmin = false }: { initial
         .top .name { white-space: nowrap; }
         .top .sid { font-size: 0.8125rem; color: #94a3b8; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
         .top .st { align-self: center; flex: 0 0 auto; }
-        .ctl { display: flex; gap: 6px; flex: 0 0 auto; }
+        .ctl { display: flex; flex-wrap: wrap; gap: 6px; flex: 0 0 auto; }
         .ctl select { min-width: 0; }
         .row:not(.pending) { flex-wrap: wrap; }
         .rst { padding: 5px 9px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; font-size: 0.8125rem; font-weight: 700; color: #475569; cursor: pointer; white-space: nowrap; }
@@ -366,7 +366,7 @@ export default function UserList({ initialUsers, superAdmin = false }: { initial
           .row:not(.pending) { flex-wrap: wrap; gap: 6px; padding: 10px 12px; }
           .row:not(.pending) .top { flex: 1 1 100%; }
           .ctl { flex: 1 1 100%; }
-          .ctl select { flex: 1; }
+          .ctl select { flex: 1 1 40%; }
           .row.pending { flex-direction: column; align-items: stretch; }
           .row.pending .btns button { flex: 1; padding: 11px; }
         }
