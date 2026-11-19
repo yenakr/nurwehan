@@ -411,14 +411,21 @@ tr { break-inside: avoid; }
         {status === 'saving' && <span className="st">저장 중</span>}
         {status === 'error' && <span className="st error">저장 대기</span>}
       </div>
-      <div className="tbar">
-        {!sum && subjects.length > 1 ? (
+      {!sum && subjects.length > 1 && (
         <div className="hs">
           {subjects.map(x => (
             <button key={x.key} type="button" className={x.key === key ? 'on' : ''} onClick={() => { setKeys(k => ({ ...k, [course]: x.key })); setFilter('all'); setQ(''); setSel(new Set()); }}>{x.sub}</button>
           ))}
         </div>
-        ) : <span className="hs" />}
+      )}
+      <div className="tbar">
+        {sum ? <span className="flt" /> : (
+          <div className="flt">
+            {([['all', '전체'], ['todo', '미기록'], ['done', '기록완료']] as [Filter, string][]).map(([k, t]) => (
+              <button key={k} type="button" className={filter === k ? 'on' : ''} onClick={() => setFilter(k)}>{t}</button>
+            ))}
+          </div>
+        )}
         <button type="button" className={`selbtn ${sum ? 'on' : ''}`} onClick={() => { exitSel(); setFind(false); setSum(v => !v); }}>요약</button>
         {!sum && (selMode ? (
           <button type="button" className="selbtn on" onClick={() => exitSel()}>완료</button>
@@ -426,7 +433,7 @@ tr { break-inside: avoid; }
           <button type="button" className="ic" aria-label="선택" onClick={() => setSelMode(true)}><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="4" y="4" width="16" height="16" rx="3" /><path d="M8.5 12.5l2.5 2.5 4.5-5" /></svg></button>
         ))}
         {!sum && (
-          <button type="button" className={`ic ${find || q || filter !== 'all' ? 'on' : ''}`} aria-label="검색" onClick={() => setFind(f => !f)}>
+          <button type="button" className={`ic ${find || q ? 'on' : ''}`} aria-label="검색" onClick={() => setFind(f => !f)}>
             <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><circle cx="11" cy="11" r="7" /><path d="M20 20l-3.5-3.5" /></svg>
           </button>
         )}
@@ -434,11 +441,6 @@ tr { break-inside: avoid; }
       {find && !sum && (
         <div className="tools">
           <input type="search" autoFocus value={q} onChange={e => setQ(e.target.value)} />
-          <div className="flt">
-            {([['all', '전체'], ['todo', '미기록'], ['done', '기록완료']] as [Filter, string][]).map(([k, t]) => (
-              <button key={k} type="button" className={filter === k ? 'on' : ''} onClick={() => setFilter(k)}>{t}</button>
-            ))}
-          </div>
         </div>
       )}
       {sum && subjects.map(x => {
@@ -663,7 +665,7 @@ tr { break-inside: avoid; }
         .pc .selbtn { flex-shrink: 0; border: 0; background: none; font: inherit; font-size: 14px; font-weight: 700; color: var(--sub-text); cursor: pointer; padding: 6px 4px; }
         .pc .selbtn.on { color: var(--primary); }
         .pc .tbar { display: flex; align-items: center; gap: 6px; margin-bottom: 6px; }
-        .pc .tbar .hs { flex: 1; min-width: 0; margin-bottom: 0; }
+        .pc .tbar .flt { flex: 1; min-width: 0; }
         .pc .hs { display: flex; gap: 6px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; margin-bottom: 6px; }
         .pc .hs button { flex-shrink: 0; border: 0; background: var(--tint); border-radius: 999px; padding: 5px 12px; font-size: 13px; font-weight: 600; color: var(--sub-text); cursor: pointer; }
         .pc .hs button.on { background: var(--primary); color: #fff; }
