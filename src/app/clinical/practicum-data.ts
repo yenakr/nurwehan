@@ -514,7 +514,7 @@ export const LEVELS = [
   { k: 'D', label: '수행' },
 ] as const;
 export type Level = (typeof LEVELS)[number]['k'];
-export type Rec = { id: string; d: string; l: Level; m?: string; a?: string; f?: string };
+export type Rec = { id: string; d: string; l: Level; m?: string; a?: string; f?: string; b?: string; g?: string };
 export type Progress = Record<string, Rec[]>;
 
 // 과목별 저장 형태: r = 항목별 기록 목록, n = 항목별 비고. 예전 형태(id 없는 기록, 평평한 저장)도 읽어서 id를 붙인다.
@@ -535,7 +535,7 @@ export function normalizeStore(raw: unknown): Store {
       let id = typeof x.id === 'string' && x.id ? x.id : `${x.d}-${x.l}`;
       while (seen.has(id)) id += '_';
       seen.add(id);
-      list.push({ id, d: x.d, l: x.l, ...(typeof x.m === 'string' && x.m ? { m: x.m } : {}), ...(typeof x.a === 'string' && x.a ? { a: x.a } : {}), ...(typeof x.f === 'string' && x.f ? { f: x.f } : {}) });
+      list.push({ id, d: x.d, l: x.l, ...(typeof x.m === 'string' && x.m ? { m: x.m } : {}), ...(typeof x.a === 'string' && x.a ? { a: x.a } : {}), ...(typeof x.f === 'string' && x.f ? { f: x.f } : {}), ...(typeof x.b === 'string' && x.b ? { b: x.b } : {}), ...(typeof x.g === 'string' && x.g ? { g: x.g } : {}) });
     }
     if (list.length) r[k] = list;
   }
