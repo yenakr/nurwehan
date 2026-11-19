@@ -92,6 +92,8 @@ export default function Checklist({
 }) {
   const [course, setCourse] = useState(COURSES.some(c => c.key === defaultCourse) ? (defaultCourse as string) : COURSES[0].key);
   // 고정(핀): 이 기기에 저장. 고정한 과목·실습지가 항상 앞에 온다
+  const [keys, setKeys] = useState<Record<string, string>>({});
+  const [restored, setRestored] = useState(false);
   const [pins, setPins] = useState<{ c: string[]; s: string[] }>({ c: [], s: [] });
   useEffect(() => {
     try {
@@ -102,7 +104,22 @@ export default function Checklist({
       setPins({ c, s: sb });
       if (c.length) setCourse(c[0]);
     } catch { /* 무시 */ }
+    // 마지막으로 보던 과목·실습지가 있으면 그대로 연다
+    try {
+      const l = JSON.parse(localStorage.getItem('pc:last') || 'null');
+      if (l && COURSES.some(k => k.key === l.course)) setCourse(l.course);
+      if (l && l.keys && typeof l.keys === 'object') {
+        const k2: Record<string, string> = {};
+        Object.entries(l.keys).forEach(([c2, v]) => { if (SUBJECTS.some(x => x.key === v && x.course === c2)) k2[c2] = v as string; });
+        setKeys(k2);
+      }
+    } catch { /* 무시 */ }
+    setRestored(true);
   }, []);
+  useEffect(() => {
+    if (!restored) return;
+    try { localStorage.setItem('pc:last', JSON.stringify({ course, keys })); } catch { /* 무시 */ }
+  }, [restored, course, keys]);
   const togglePin = (kind: 'c' | 's', k: string) => {
     setPins(p => {
       const n = { ...p, [kind]: p[kind].includes(k) ? p[kind].filter(x => x !== k) : [...p[kind], k] };
@@ -117,7 +134,6 @@ export default function Checklist({
     });
   const courses = byPin(COURSES, c => c.key, pins.c);
   const subjects = byPin(SUBJECTS.filter(s => s.course === course), x => x.key, pins.s);
-  const [keys, setKeys] = useState<Record<string, string>>({});
   const key = subjects.find(s => s.key === keys[course])?.key ?? subjects[0].key;
   const subject = subjects.find(s => s.key === key) as PSubject;
   const courseSch = schedule.filter(x => x.subject.split('_')[0] === course);
