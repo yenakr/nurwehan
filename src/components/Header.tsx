@@ -14,6 +14,22 @@ export default function Header() {
 
   const pathname = usePathname();
   const dropdownRef = useRef<HTMLDivElement>(null);
+  // 아래로 스크롤하면 헤더를 숨기고, 위로 스크롤하면 다시 보인다
+  const [hidden, setHidden] = useState(false);
+  const menuOpenRef = useRef(false);
+  useEffect(() => { menuOpenRef.current = mobileMenuOpen || activeDropdown !== null; }, [mobileMenuOpen, activeDropdown]);
+  useEffect(() => {
+    let last = window.scrollY;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (menuOpenRef.current || y < 80) setHidden(false);
+      else if (y > last + 6) setHidden(true);
+      else if (y < last - 6) setHidden(false);
+      last = y;
+    };
+    window.addEventListener('scroll', onScroll, { passive: true });
+    return () => window.removeEventListener('scroll', onScroll);
+  }, []);
 
   useEffect(() => {
     setLoading(true);
@@ -86,6 +102,8 @@ export default function Header() {
         position: 'sticky',
         top: 0,
         zIndex: 1000,
+        transform: hidden ? 'translateY(-100%)' : 'none',
+        transition: 'transform .2s ease',
       }}
     >
       <div
