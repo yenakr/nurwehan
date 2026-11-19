@@ -111,6 +111,8 @@ export default function Checklist({
   const [ed, setEd] = useState<{ l: Level; d: string; m: string }>({ l: 'O', d: today(), m: '' });
   const [delId, setDelId] = useState<string | null>(null);
 
+  useEffect(() => { setAi(null); }, [sheet?.id]);
+
   const askAi = async (rid: string, level: Level, answers: string[], asked: string[]) => {
     setAi({ rid, asked, answers, text: '', busy: true, err: '' });
     try {
@@ -549,7 +551,24 @@ tr { break-inside: avoid; }
             {undo && (
               <div className="undo">
                 <span>{undo.text}</span>
-                <button type="button" onClick={() => { del(undo.id); setUndo(null); }}>실행취소</button>
+                <span className="uacts">
+                  {aiOn && (() => { const u = (prog[sheet.id] || []).find(x => x.id === undo.id); return u ? <button type="button" onClick={() => askAi(u.id, u.l, [], [])}>질문</button> : null; })()}
+                  <button type="button" onClick={() => { del(undo.id); setUndo(null); }}>실행취소</button>
+                </span>
+              </div>
+            )}
+
+            {ai && (
+              <div className="aiq">
+                  {ai.busy && <p className="aitx">...</p>}
+                  {ai.err && <p className="aitx">{ai.err}</p>}
+                  {!ai.busy && ai.text && <p className="aitx">{ai.text}</p>}
+                  {!ai.busy && ai.text && ai.asked.length < 2 && (
+                    <div className="frow">
+                      <input className="grow" maxLength={300} value={ai.answers[ai.answers.length - 1] || ''} onChange={e => { const v = e.target.value; setAi(a => (a ? { ...a, answers: [...a.answers.slice(0, -1), v] } : a)); }} />
+                      <button type="button" className="pri" disabled={!(ai.answers[ai.answers.length - 1] || '').trim()} onClick={() => { const rc = (prog[sheet.id] || []).find(x => x.id === ai.rid); if (rc) askAi(ai.rid, rc.l, ai.answers.map(x => x.trim()).filter(Boolean), ai.asked); }}>답하기</button>
+                    </div>
+                  )}
               </div>
             )}
 
@@ -569,31 +588,20 @@ tr { break-inside: avoid; }
                         ) : (
                           <button type="button" className="dng" onClick={() => setDelId(r.id)}>삭제</button>
                         )}
-                        {aiOn && <button type="button" onClick={() => askAi(r.id, r.l, [], [])}>질문</button>}
                         <span className="sp" />
                         <button type="button" onClick={() => setEditId(null)}>취소</button>
                         <button type="button" className="pri" onClick={saveEdit}>저장</button>
                       </div>
-                      {ai && ai.rid === r.id && (
-                        <div className="aiq">
-                          {ai.busy && <p className="aitx">...</p>}
-                          {ai.err && <p className="aitx">{ai.err}</p>}
-                          {!ai.busy && ai.text && <p className="aitx">{ai.text}</p>}
-                          {!ai.busy && ai.text && ai.asked.length < 2 && (
-                            <div className="frow">
-                              <input className="grow" maxLength={300} value={ai.answers[ai.answers.length - 1] || ''} onChange={e => { const v = e.target.value; setAi(a => (a ? { ...a, answers: [...a.answers.slice(0, -1), v] } : a)); }} />
-                              <button type="button" className="pri" disabled={!(ai.answers[ai.answers.length - 1] || '').trim()} onClick={() => askAi(r.id, r.l, ai.answers.map(x => x.trim()).filter(Boolean), ai.asked)}>답하기</button>
-                            </div>
-                          )}
-                        </div>
-                      )}
                     </div>
                   ) : (
-                    <button key={r.id} type="button" className="hr" onClick={() => startEdit(r)}>
-                      <span className="hd">{md(r.d)}{noteDates.has(r.d) ? <i> · 메모</i> : null}</span>
-                      <b className={`lb ${r.l}`}>{lbl(r.l)}</b>
-                      {r.m && <span className="hm">{r.m}</span>}
-                    </button>
+                    <div key={r.id} className="hr">
+                      <button type="button" className="hmain" onClick={() => startEdit(r)}>
+                        <span className="hd">{md(r.d)}{noteDates.has(r.d) ? <i> · 메모</i> : null}</span>
+                        <b className={`lb ${r.l}`}>{lbl(r.l)}</b>
+                        {r.m && <span className="hm">{r.m}</span>}
+                      </button>
+                      {aiOn && <button type="button" className="aq" onClick={() => askAi(r.id, r.l, [], [])}>질문</button>}
+                    </div>
                   )
                 )}
               </div>
@@ -690,6 +698,10 @@ tr { break-inside: avoid; }
         .pc .undo button { border: 0; background: none; color: var(--primary); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
         .pc .hist { margin-top: 14px; }
         .pc .hr { width: 100%; display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 12px; padding: 11px 2px; border: 0; border-top: 1px solid var(--line); background: none; font: inherit; font-size: 14px; color: inherit; text-align: left; cursor: pointer; }
+        .pc .hr:not(.edit) { display: flex; align-items: baseline; padding: 0; gap: 8px; cursor: default; }
+        .pc .hmain { flex: 1; min-width: 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 12px; padding: 11px 2px; border: 0; background: none; font: inherit; font-size: 14px; color: inherit; text-align: left; cursor: pointer; }
+        .pc .aq, .pc .uacts button { border: 0; background: none; color: var(--primary); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; padding: 6px 4px; }
+        .pc .uacts { display: flex; gap: 8px; }
         .pc .hr.edit { display: block; cursor: default; }
         .pc .hd { font-weight: 700; min-width: 52px; }
         .pc .hd i { font-style: normal; font-size: 12px; font-weight: 500; color: var(--sub-text); }
