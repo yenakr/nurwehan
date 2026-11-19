@@ -44,15 +44,15 @@ export async function askModel(system: string, messages: ChatMsg[]): Promise<str
       return t || null;
     }
     if (provider === 'openai') {
-      const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      const res = await withRetry(() => fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
         headers: { 'content-type': 'application/json', authorization: `Bearer ${key}` },
         body: JSON.stringify({
           model: process.env.AI_MODEL || 'gpt-4o-mini',
-          max_tokens: 400,
+          max_completion_tokens: 1200,
           messages: [{ role: 'system', content: system }, ...messages],
         }),
-      });
+      }));
       if (!res.ok) return fail(res);
       const j = await res.json();
       return j?.choices?.[0]?.message?.content?.trim() || null;
