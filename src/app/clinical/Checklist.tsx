@@ -52,11 +52,13 @@ export default function Checklist({
   userName,
   studentId,
   schedule,
+  aiOn,
 }: {
   defaultCourse?: string;
   userName?: string;
   studentId?: string;
   schedule: ScheduleItem[];
+  aiOn?: boolean;
   all: Record<string, Store>;
   setAll: Dispatch<SetStateAction<Record<string, Store>>>;
   noteDates: Set<string>;
@@ -91,6 +93,8 @@ export default function Checklist({
   const [q, setQ] = useState('');
   const [find, setFind] = useState(false);
   const [sum, setSum] = useState(false);
+  // AI 꼬리질문: 기록 하나에 대해 질문 → 학생 답 → 피드백(최대 2번). 대화는 저장하지 않는다.
+  const [ai, setAi] = useState<{ rid: string; asked: string[]; answers: string[]; text: string; busy: boolean; err: string } | null>(null);
   const [sumOpen, setSumOpen] = useState<Set<string>>(new Set());
   const [sheet, setSheet] = useState<PItem | null>(null);
   // 시트 입력 상태
@@ -106,6 +110,25 @@ export default function Checklist({
   const [editId, setEditId] = useState<string | null>(null);
   const [ed, setEd] = useState<{ l: Level; d: string; m: string }>({ l: 'O', d: today(), m: '' });
   const [delId, setDelId] = useState<string | null>(null);
+
+  const askAi = async (rid: string, level: Level, answers: string[], asked: string[]) => {
+    setAi({ rid, asked, answers, text: '', busy: true, err: '' });
+    try {
+      const res = await fetch('/api/practicum/ai', {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ subject: key, item: sheet?.id, level, answers, asked }),
+      });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok || !j.text) {
+        setAi({ rid, asked, answers: [], text: '', busy: false, err: res.status === 429 ? '오늘 횟수를 다 썼어요' : '지금은 사용할 수 없어요' });
+        return;
+      }
+      setAi({ rid, asked: [...asked, j.text], answers: [...answers, ''], text: j.text, busy: false, err: '' });
+    } catch {
+      setAi({ rid, asked, answers: [], text: '', busy: false, err: '지금은 사용할 수 없어요' });
+    }
+  };
 
   const mutate = (fn: (r: Progress) => Progress) => {
     setAll(a => ({ ...a, [key]: { r: fn(a[key]?.r || {}), n: a[key]?.n || {} } }));
@@ -546,10 +569,24 @@ tr { break-inside: avoid; }
                         ) : (
                           <button type="button" className="dng" onClick={() => setDelId(r.id)}>삭제</button>
                         )}
+                        {aiOn && <button type="button" onClick={() => askAi(r.id, r.l, [], [])}>질문</button>}
                         <span className="sp" />
                         <button type="button" onClick={() => setEditId(null)}>취소</button>
                         <button type="button" className="pri" onClick={saveEdit}>저장</button>
                       </div>
+                      {ai && ai.rid === r.id && (
+                        <div className="aiq">
+                          {ai.busy && <p className="aitx">...</p>}
+                          {ai.err && <p className="aitx">{ai.err}</p>}
+                          {!ai.busy && ai.text && <p className="aitx">{ai.text}</p>}
+                          {!ai.busy && ai.text && ai.asked.length < 2 && (
+                            <div className="frow">
+                              <input className="grow" maxLength={300} value={ai.answers[ai.answers.length - 1] || ''} onChange={e => { const v = e.target.value; setAi(a => (a ? { ...a, answers: [...a.answers.slice(0, -1), v] } : a)); }} />
+                              <button type="button" className="pri" disabled={!(ai.answers[ai.answers.length - 1] || '').trim()} onClick={() => askAi(r.id, r.l, ai.answers.map(x => x.trim()).filter(Boolean), ai.asked)}>답하기</button>
+                            </div>
+                          )}
+                        </div>
+                      )}
                     </div>
                   ) : (
                     <button key={r.id} type="button" className="hr" onClick={() => startEdit(r)}>
@@ -607,6 +644,9 @@ tr { break-inside: avoid; }
         .pc .sumr .t { flex: 1; min-width: 0; }
         .pc .sumr .t.mute { color: var(--sub-text); }
         .pc .sumr .dd { flex: 0 1 45%; text-align: right; font-size: 12px; color: var(--sub-text); }
+        .pc .aiq { margin-top: 8px; padding: 10px 12px; border-radius: 10px; background: var(--tint); }
+        .pc .aitx { margin: 0 0 8px; font-size: 13px; line-height: 1.6; color: var(--text); white-space: pre-wrap; }
+        .pc .aiq .frow { margin: 0; }
         .pc .grp { margin-top: 12px; }
         .pc .gh { display: flex; justify-content: space-between; align-items: baseline; padding: 4px 2px 5px; border-bottom: 2px solid var(--primary); font-size: 14px; }
         .pc .gh span { font-size: 12.5px; color: var(--sub-text); }
