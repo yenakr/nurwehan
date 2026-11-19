@@ -1,6 +1,7 @@
 import { prisma } from './prisma';
 
-export const AI_DAILY_LIMIT = 12;
+// 하루 한도. Vercel 환경변수 AI_DAILY_LIMIT로 조절한다(기본 100)
+export const AI_DAILY_LIMIT = Math.max(1, Number(process.env.AI_DAILY_LIMIT) || 100);
 
 // 오늘 사용 횟수를 1 올리고, 한도를 넘었으면 false. 표가 없거나 오류면 막는다.
 export async function takeAiQuota(userId: string): Promise<boolean> {
