@@ -18,6 +18,9 @@ const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2
 // 날짜 오름차순 (같은 날은 입력 순서 유지)
 const PNOTE = '환자를 알아볼 수 있는 정보(이름, 등록번호 등)는 쓰지 마세요.';
 
+const Dots = () => (
+  <span className="dots" role="status" aria-label="생각 중"><i /><i /><i /></span>
+);
 const Spark = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.9 5.6L19.5 9.5l-5.6 1.9L12 17l-1.9-5.6L4.5 9.5l5.6-1.9L12 2zM19 14l.9 2.6L22.5 17.5l-2.6.9L19 21l-.9-2.6-2.6-.9 2.6-.9L19 14z" /></svg>
 );
@@ -537,8 +540,9 @@ tr { break-inside: avoid; }
                 {aiOn && seen.length > 0 && (
                   <div className="sumai">
                     {sumAi[x.key]?.text && <p className="aitx">{sumAi[x.key].text}</p>}
+                    {sumAi[x.key]?.busy && <p className="aitx"><Dots /></p>}
                     {sumAi[x.key]?.err && <p className="aitx">{sumAi[x.key].err}</p>}
-                    <button type="button" className="sumask" disabled={sumAi[x.key]?.busy} onClick={() => askSum(x.key)}><Spark />{sumAi[x.key]?.busy ? '...' : 'AI 피드백'}</button>
+                    <button type="button" className="sumask" disabled={sumAi[x.key]?.busy} onClick={() => askSum(x.key)}><Spark />AI 피드백</button>
                   </div>
                 )}
                 {seen.length > 0 && <div className="sumt">기록 {seen.length}</div>}
@@ -682,7 +686,7 @@ tr { break-inside: avoid; }
                 {!ai.f && (
                   <div className="frow">
                     <input className="grow" maxLength={AI_ANSWER_MAX} value={ai.a} onChange={e => { const v = e.target.value; setAi(x => (x ? { ...x, a: v } : x)); }} />
-                    <button type="button" className="send" aria-label="전송" disabled={!ai.a.trim() || ai.busy} onClick={sendAi}>{ai.busy ? '...' : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4 20-7z" /></svg>}</button>
+                    <button type="button" className="send" aria-label="전송" disabled={!ai.a.trim() || ai.busy} onClick={sendAi}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4 20-7z" /></svg></button>
                   </div>
                 )}
                 {ai.f && <p className="aimy">{ai.a}</p>}
@@ -691,11 +695,12 @@ tr { break-inside: avoid; }
                 {ai.f && !ai.g && (
                   <div className="frow">
                     <input className="grow" maxLength={AI_ANSWER_MAX} value={ai.b} onChange={e => { const v = e.target.value; setAi(x => (x ? { ...x, b: v } : x)); }} />
-                    <button type="button" className="send" aria-label="전송" disabled={!ai.b.trim() || ai.busy} onClick={sendAi}>{ai.busy ? '...' : <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4 20-7z" /></svg>}</button>
+                    <button type="button" className="send" aria-label="전송" disabled={!ai.b.trim() || ai.busy} onClick={sendAi}><svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M22 2L11 13" /><path d="M22 2l-7 20-4-9-9-4 20-7z" /></svg></button>
                   </div>
                 )}
                 {ai.g && <p className="aimy">{ai.b}</p>}
                 {ai.g && <p className="aitx">{ai.g}</p>}
+                {ai.busy && <p className="aitx"><Dots /></p>}
                 {ai.err && <p className="aitx">{ai.err}</p>}
               </div>
             )}
@@ -788,6 +793,12 @@ tr { break-inside: avoid; }
         .pc .sumh .bar i { display: block; height: 100%; background: var(--primary); }
         .pc .sumai { margin: 10px 0 4px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
         .pc .sumask { display: flex; align-items: center; gap: 6px; border: 0; background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .pc .dots { display: inline-flex; gap: 4px; align-items: center; height: 1em; }
+        .pc .dots i { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: .25; animation: pcdot 1.2s infinite ease-in-out; }
+        .pc .dots i:nth-child(2) { animation-delay: .2s; }
+        .pc .dots i:nth-child(3) { animation-delay: .4s; }
+        @keyframes pcdot { 0%, 80%, 100% { opacity: .25; } 40% { opacity: 1; } }
+        @media (prefers-reduced-motion: reduce) { .pc .dots i { animation: none; opacity: .6; } }
         .pc .sumask:disabled { opacity: .5; cursor: default; }
         .pc .sumt { margin: 10px 2px 2px; font-size: 12px; font-weight: 700; color: var(--sub-text); }
         .pc .sumr { display: flex; justify-content: space-between; gap: 10px; padding: 7px 2px; border-bottom: 1px solid var(--line); font-size: 13.5px; }
