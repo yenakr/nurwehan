@@ -8,6 +8,16 @@ async function fail(res: Response): Promise<null> {
   return null;
 }
 
+// 일시 과부하(503)·한도(429)면 잠깐 기다렸다 최대 2번 더 시도한다
+async function withRetry(call: () => Promise<Response>): Promise<Response> {
+  let res = await call();
+  for (let i = 0; i < 2 && (res.status === 503 || res.status === 429); i++) {
+    await new Promise(r => setTimeout(r, 1200 * (i + 1)));
+    res = await call();
+  }
+  return res;
+}
+
 export const aiConfigured = () => !!process.env.AI_API_KEY;
 
 export async function askModel(system: string, messages: ChatMsg[]): Promise<string | null> {
@@ -17,7 +27,7 @@ export async function askModel(system: string, messages: ChatMsg[]): Promise<str
   try {
     if (provider === 'gemini') {
       const model = process.env.AI_MODEL || 'gemini-3.8-flash';
-      const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
+      const res = await withRetry(() => fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
         body: JSON.stringify({
@@ -27,7 +37,7 @@ export async function askModel(system: string, messages: ChatMsg[]): Promise<str
             maxOutputTokens: 1200,
           },
         }),
-      });
+      }));
       if (!res.ok) return fail(res);
       const j = await res.json();
       const t = (j?.candidates?.[0]?.content?.parts || []).map((x: { text?: string }) => x.text || '').join('').trim();
