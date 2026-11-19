@@ -34,6 +34,16 @@ const Warn = () => {
     </span>
   );
 };
+const Rich = ({ text }: { text: string }) => (
+  <>
+    {text.split(/\*\*(.+?)\*\*/g).map((part, i) => (i % 2 ? <b key={i} className="em">{part}</b> : part.replace(/\*\*/g, '')))}
+  </>
+);
+const Hl = ({ text, q }: { text: string; q: string }) => {
+  const i = q ? text.toLowerCase().indexOf(q) : -1;
+  if (i < 0) return <>{text}</>;
+  return <>{text.slice(0, i)}<mark className="hl">{text.slice(i, i + q.length)}</mark>{text.slice(i + q.length)}</>;
+};
 const Dots = () => (
   <span className="dots" role="status" aria-label="생각 중"><i /><i /><i /></span>
 );
@@ -290,8 +300,12 @@ export default function Checklist({
   useEffect(() => {
     if (!sheet) return;
     const prev = document.body.style.overflow;
+    const y = window.scrollY;
     document.body.style.overflow = 'hidden';
-    return () => { document.body.style.overflow = prev; };
+    return () => {
+      document.body.style.overflow = prev;
+      window.scrollTo(0, y);
+    };
   }, [sheet]);
 
   const total = subject.groups.reduce((n, g) => n + g.items.length, 0);
@@ -585,7 +599,7 @@ tr { break-inside: avoid; }
               <div className="sumb">
                 {aiOn && seen.length > 0 && (
                   <div className="sumai">
-                    {sumAi[x.key]?.text && <p className="aitx">{sumAi[x.key].text}</p>}
+                    {sumAi[x.key]?.text && <p className="aitx"><Rich text={sumAi[x.key].text} /></p>}
                     {sumAi[x.key]?.busy && <p className="aitx"><Dots /></p>}
                     {sumAi[x.key]?.err && <p className="aitx">{sumAi[x.key].err}</p>}
                     <button type="button" className="sumask" disabled={sumAi[x.key]?.busy} onClick={() => askSum(x.key)}><Spark />AI 피드백</button>
@@ -638,7 +652,7 @@ tr { break-inside: avoid; }
               return (
                 <button key={it.id} type="button" className={`row ${selMode && sel.has(it.id) ? 'sel' : ''}`} onClick={() => (selMode ? toggleSel(it.id) : openSheet(it))}>
                   {selMode && <span className={`ck ${sel.has(it.id) ? 'on' : ''}`} />}
-                  <span className="t">{it.t}</span>
+                  <span className="t"><Hl text={it.t} q={query} /></span>
                   {recs.length > 0 && (
                     <span className="sm">
                       {LEVELS.map(l => {
@@ -654,12 +668,18 @@ tr { break-inside: avoid; }
         );
       })}
 
-      {!sum && <div className="foot">
-        <b>{done}/{total}</b>
-        {LEVELS.map(l => <span key={l.k} className={`lv ${l.k}`}>{l.label} {cnt(l.k)}</span>)}
-        <button type="button" className="pdf" onClick={() => printPdf([subject])}>{popup ? '팝업을 허용해주세요' : 'PDF 저장'}</button>
-        {subjects.filter(recorded).length > 1 && <button type="button" className="pdf" onClick={() => printPdf(subjects.filter(recorded))}>전체 PDF</button>}
-      </div>}
+      {!sum && (
+        <div className="foot">
+          <div className="fst">
+            <b>{done}/{total}</b>
+            {LEVELS.map(l => <span key={l.k} className={`lv ${l.k}`}>{l.label} {cnt(l.k)}</span>)}
+          </div>
+          <div className="fpdf">
+            <button type="button" className="pdf" onClick={() => printPdf([subject])}>{popup ? '팝업을 허용해주세요' : 'PDF 저장'}</button>
+            {subjects.filter(recorded).length > 1 && <button type="button" className="pdf" onClick={() => printPdf(subjects.filter(recorded))}>전체 PDF</button>}
+          </div>
+        </div>
+      )}
 
       {selMode && (
         <div className="bar2">
@@ -772,7 +792,7 @@ tr { break-inside: avoid; }
                   </div>
                 )}
                 {ai.f && <p className="aimy">{ai.a}</p>}
-                {ai.f && <p className="aitx">{ai.f}</p>}
+                {ai.f && <p className="aitx"><Rich text={ai.f} /></p>}
                 {ai.f && !ai.g && <p className="pnote">{PNOTE}</p>}
                 {ai.f && !ai.g && (
                   <div className="frow">
@@ -781,7 +801,7 @@ tr { break-inside: avoid; }
                   </div>
                 )}
                 {ai.g && <p className="aimy">{ai.b}</p>}
-                {ai.g && <p className="aitx">{ai.g}</p>}
+                {ai.g && <p className="aitx"><Rich text={ai.g} /></p>}
                 {ai.busy && <p className="aitx"><Dots /></p>}
                 {ai.err && <p className="aitx">{ai.err}</p>}
               </div>
@@ -845,9 +865,11 @@ tr { break-inside: avoid; }
         .pc .hs { display: flex; gap: 6px; overflow-x: auto; white-space: nowrap; scrollbar-width: none; margin-bottom: 6px; }
         .pc .hs button { flex-shrink: 0; border: 0; background: var(--tint); border-radius: 999px; padding: 5px 12px; font-size: 13px; font-weight: 600; color: var(--sub-text); cursor: pointer; }
         .pc .hs button.on { background: var(--primary); color: #fff; }
-        .pc .foot { display: flex; gap: 12px; align-items: baseline; justify-content: center; margin-top: 18px; font-size: 12.5px; color: var(--sub-text); }
+        .pc .foot { display: flex; flex-direction: column; align-items: center; gap: 10px; margin-top: 18px; font-size: 12.5px; color: var(--sub-text); }
+        .pc .fst, .pc .fpdf { display: flex; gap: 12px; align-items: baseline; justify-content: center; }
+        .pc .fpdf { gap: 8px; }
         .pc .foot b { color: var(--text); }
-        .pc .pdf { border: 0; background: none; color: var(--primary); font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; padding: 0; margin-left: 6px; }
+        .pc .pdf { border: 1px solid var(--line); background: none; border-radius: 999px; color: var(--primary); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; padding: 8px 16px; }
         .pc .lv { font-weight: 600; }
         .pc .lv.O, .pc .lb.O { color: var(--o); }
         .pc .lv.P, .pc .lb.P { color: var(--p); }
@@ -868,6 +890,8 @@ tr { break-inside: avoid; }
         .pc .sumh .bar i { display: block; height: 100%; background: var(--primary); }
         .pc .sumai { margin: 10px 0 4px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
         .pc .sumask { display: flex; align-items: center; gap: 6px; border: 0; background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .pc b.em { color: var(--primary); font-weight: 800; }
+        .pc mark.hl { background: color-mix(in srgb, var(--primary) 20%, transparent); color: inherit; border-radius: 3px; padding: 0 1px; }
         .pc .dots { display: inline-flex; gap: 4px; align-items: center; height: 1em; }
         .pc .dots i { width: 5px; height: 5px; border-radius: 50%; background: currentColor; opacity: .25; animation: pcdot 1.2s infinite ease-in-out; }
         .pc .dots i:nth-child(2) { animation-delay: .2s; }
