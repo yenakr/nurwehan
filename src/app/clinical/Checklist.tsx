@@ -114,11 +114,20 @@ export default function Checklist({
 
   useEffect(() => { setAi(null); }, [sheet?.id]);
 
-  const openAi = (rid: string, level: Level) => setAi({ rid, level, a: '', reply: '', busy: false, err: '' });
+  const openAi = (rid: string, level: Level) => {
+    const rc = sheet ? (prog[sheet.id] || []).find(x => x.id === rid) : undefined;
+    setAi({ rid, level, a: rc?.a || '', reply: rc?.f || '', busy: false, err: '' });
+  };
+  const patchRec = (rid: string, patch: Partial<Rec>) => {
+    if (!sheet) return;
+    const sid = sheet.id;
+    mutate(r => ({ ...r, [sid]: (r[sid] || []).map(x => (x.id === rid ? { ...x, ...patch } : x)) }));
+  };
   const sendAi = async () => {
     if (!ai || !ai.a.trim() || ai.busy) return;
     const cur = ai;
     setAi({ ...cur, busy: true, err: '' });
+    patchRec(cur.rid, { a: cur.a.trim().slice(0, 200) });
     try {
       const res = await fetch('/api/practicum/ai', {
         method: 'POST',
@@ -130,6 +139,7 @@ export default function Checklist({
         setAi({ ...cur, busy: false, err: res.status === 429 ? '오늘 횟수를 다 썼어요' : '지금은 사용할 수 없어요' });
         return;
       }
+      patchRec(cur.rid, { f: String(j.text).slice(0, 400) });
       setAi({ ...cur, busy: false, reply: j.text });
     } catch {
       setAi({ ...cur, busy: false, err: '지금은 사용할 수 없어요' });
@@ -283,7 +293,7 @@ export default function Checklist({
     if (!sheet || !editId || !ed.d) return;
     mutate(r => ({
       ...r,
-      [sheet.id]: (r[sheet.id] || []).map(x => (x.id === editId ? { id: x.id, d: ed.d, l: ed.l, ...(ed.m.trim() ? { m: ed.m.trim().slice(0, 200) } : {}) } : x)),
+      [sheet.id]: (r[sheet.id] || []).map(x => (x.id === editId ? { id: x.id, d: ed.d, l: ed.l, ...(ed.m.trim() ? { m: ed.m.trim().slice(0, 200) } : {}), ...(x.a ? { a: x.a } : {}), ...(x.f ? { f: x.f } : {}) } : x)),
     }));
     setEditId(null);
   };
@@ -607,6 +617,7 @@ tr { break-inside: avoid; }
                         <span className="hd">{md(r.d)}{noteDates.has(r.d) ? <i> · 메모</i> : null}</span>
                         <b className={`lb ${r.l}`}>{lbl(r.l)}</b>
                         {r.m && <span className="hm">{r.m}</span>}
+                        {r.a && <span className="hm ha">{r.a}</span>}
                       </button>
                       {aiOn && <button type="button" className="aq" aria-label="AI" onClick={() => openAi(r.id, r.l)}><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.9 5.6L19.5 9.5l-5.6 1.9L12 17l-1.9-5.6L4.5 9.5l5.6-1.9L12 2zM19 14l.9 2.6L22.5 17.5l-2.6.9L19 21l-.9-2.6-2.6-.9 2.6-.9L19 14z"/></svg></button>}
                     </div>
@@ -718,6 +729,7 @@ tr { break-inside: avoid; }
         .pc .hr.edit { display: block; cursor: default; }
         .pc .hd { font-weight: 700; min-width: 52px; }
         .pc .hd i { font-style: normal; font-size: 12px; font-weight: 500; color: var(--sub-text); }
+        .pc .hm.ha { border-left: 2px solid var(--primary); padding-left: 8px; }
         .pc .hm { flex-basis: 100%; font-size: 13px; color: var(--sub-text); }
         .pc .seg { display: flex; gap: 6px; }
         .pc .seg button { flex: 1; border: 0; border-radius: 8px; background: var(--tint); padding: 8px 0; font: inherit; font-size: 14px; font-weight: 600; color: var(--sub-text); cursor: pointer; }

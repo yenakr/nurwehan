@@ -14,14 +14,14 @@ export async function PUT(req: Request, { params }: { params: Promise<{ subject:
   if (!sub) return NextResponse.json({ error: 'not found' }, { status: 404 });
   const body = await req.json().catch(() => ({}));
   const ids = new Set(sub.groups.flatMap(g => g.items.map(i => i.id)));
-  const clean: Record<string, Array<{ id: string; d: string; l: string; m?: string }>> = {};
+  const clean: Record<string, Array<{ id: string; d: string; l: string; m?: string; a?: string; f?: string }>> = {};
   const notes: Record<string, string> = {};
   const raw = body?.data && typeof body.data === 'object' ? body.data : {};
   const src = raw.r && typeof raw.r === 'object' ? raw.r : {};
   for (const [k, v] of Object.entries(src)) {
     if (!ids.has(k) || !Array.isArray(v)) continue;
     const seen = new Set<string>();
-    const recs: Array<{ id: string; d: string; l: string; m?: string }> = [];
+    const recs: Array<{ id: string; d: string; l: string; m?: string; a?: string; f?: string }> = [];
     for (const x of v as Array<Record<string, unknown>>) {
       if (typeof x?.d !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(x.d)) continue;
       if (x.l !== 'O' && x.l !== 'P' && x.l !== 'D') continue;
@@ -29,7 +29,9 @@ export async function PUT(req: Request, { params }: { params: Promise<{ subject:
       while (seen.has(id)) id += '_';
       seen.add(id);
       const m = typeof x.m === 'string' ? x.m.slice(0, 200) : '';
-      recs.push({ id, d: x.d, l: x.l, ...(m ? { m } : {}) });
+      const a = typeof x.a === 'string' ? x.a.slice(0, 200) : '';
+      const f = typeof x.f === 'string' ? x.f.slice(0, 400) : '';
+      recs.push({ id, d: x.d, l: x.l, ...(m ? { m } : {}), ...(a ? { a } : {}), ...(f ? { f } : {}) });
       if (recs.length >= 200) break;
     }
     if (recs.length) clean[k] = recs;
