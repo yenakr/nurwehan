@@ -16,7 +16,7 @@ export async function askModel(system: string, messages: ChatMsg[]): Promise<str
   const provider = process.env.AI_PROVIDER === 'openai' ? 'openai' : process.env.AI_PROVIDER === 'anthropic' ? 'anthropic' : 'gemini';
   try {
     if (provider === 'gemini') {
-      const model = process.env.AI_MODEL || 'gemini-2.5-flash';
+      const model = process.env.AI_MODEL || 'gemini-3.8-flash';
       const res = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${encodeURIComponent(model)}:generateContent`, {
         method: 'POST',
         headers: { 'content-type': 'application/json', 'x-goog-api-key': key },
@@ -24,8 +24,8 @@ export async function askModel(system: string, messages: ChatMsg[]): Promise<str
           systemInstruction: { parts: [{ text: system }] },
           contents: messages.map(m => ({ role: m.role === 'assistant' ? 'model' : 'user', parts: [{ text: m.content }] })),
           generationConfig: {
-            maxOutputTokens: 600,
-            ...(model.startsWith('gemini-2.5-flash') ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
+            maxOutputTokens: 1200,
+            ...(model.startsWith('gemini-3.8-flash') ? { thinkingConfig: { thinkingBudget: 0 } } : {}),
           },
         }),
       });
