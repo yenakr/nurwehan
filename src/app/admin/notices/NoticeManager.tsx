@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { confirmDialog } from '@/components/Dialog';
 
 interface Notice {
   id: string;
@@ -60,7 +61,7 @@ export default function NoticeManager({ initial }: { initial: Notice[] }) {
   };
 
   const remove = async (n: Notice) => {
-    if (!confirm(`"${n.title}" 공지를 삭제할까요?`)) return;
+    if (!(await confirmDialog(`"${n.title}" 공지를 삭제할까요?`))) return;
     const res = await fetch(`/api/admin/notices/${n.id}`, { method: 'DELETE' });
     if (res.ok) {
       setNotices(prev => prev.filter(x => x.id !== n.id));

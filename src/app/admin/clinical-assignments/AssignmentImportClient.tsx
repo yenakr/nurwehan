@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { confirmDialog } from '@/components/Dialog';
 
 interface TermInfo {
   term: string;
@@ -52,7 +53,7 @@ export default function AssignmentImportClient({ terms }: { terms: TermInfo[] })
   };
 
   const remove = async (t: string) => {
-    if (!confirm(`'${t}' 학기 배정 데이터를 모두 삭제할까요?`)) return;
+    if (!(await confirmDialog(`'${t}' 학기 배정 데이터를 모두 삭제할까요?`))) return;
     await fetch('/api/admin/clinical/assignments', {
       method: 'DELETE',
       headers: { 'Content-Type': 'application/json' },

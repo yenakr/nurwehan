@@ -22,6 +22,7 @@ import {
   type NursingTerm,
   type QuizKind,
 } from '@/lib/quiz/taxonomy';
+import { confirmDialog } from '@/components/Dialog';
 
 function IconSearch({ size = 15, color = 'currentColor' }: { size?: number; color?: string }) {
   return (
@@ -1663,7 +1664,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, subject
   };
 
   const handleDeleteTerm = async (id: string, termName: string) => {
-    if (!confirm(`'${termName}' 항목을 삭제할까요?`)) return;
+    if (!(await confirmDialog(`'${termName}' 항목을 삭제할까요?`))) return;
     try {
       const res = await fetch(`/api/admin/quiz/terms?id=${id}`, { method: 'DELETE' });
       if (res.ok) {

@@ -7,6 +7,7 @@ export const metadata: Metadata = {
 };
 
 import Header from "@/components/Header";
+import DialogHost from "@/components/Dialog";
 
 export default function RootLayout({
   children,
@@ -20,6 +21,7 @@ export default function RootLayout({
           <Header />
           {children}
         </div>
+        <DialogHost />
       </body>
     </html>
   );

@@ -2,13 +2,14 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { confirmDialog } from '@/components/Dialog';
 
 export default function DeleteButton({ applicationId }: { applicationId: string }) {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
 
   const handleDelete = async () => {
-    if (!confirm('이 신청서를 삭제할까요? 복구할 수 없어요.')) return;
+    if (!(await confirmDialog('이 신청서를 삭제할까요? 복구할 수 없어요.'))) return;
     setLoading(true);
     try {
       const res = await fetch(`/api/admin/applications/${applicationId}`, { method: 'DELETE' });

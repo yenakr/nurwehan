@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { confirmDialog } from '@/components/Dialog';
 
 interface AdminCalendarClientProps {
   initialEvents: any[];
@@ -65,7 +66,7 @@ export default function AdminCalendarClient({ initialEvents }: AdminCalendarClie
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('일정을 삭제하시겠습니까?')) return;
+    if (!(await confirmDialog('일정을 삭제하시겠습니까?'))) return;
     await fetch(`/api/admin/calendar?id=${id}`, { method: 'DELETE' });
     refreshEvents();
   };

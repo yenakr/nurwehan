@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import ApplicationListClient from './applications/ApplicationListClient';
+import { confirmDialog } from '@/components/Dialog';
 
 interface Props {
   initialUsers: any[];
@@ -256,7 +257,7 @@ function ScheduleManagement() {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('정말로 이 운영시간 설정을 삭제하시겠습니까?')) return;
+    if (!(await confirmDialog('정말로 이 운영시간 설정을 삭제하시겠습니까?'))) return;
     try {
       const res = await fetch(`/api/admin/rules/${id}`, {
         method: 'DELETE'
@@ -628,7 +629,7 @@ function SkillManagement({ initialSkills }: { initialSkills: any[] }) {
   };
 
   const handleDeleteSkill = async (skillId: string) => {
-    if (!confirm('정말 삭제하시겠습니까? 관련 준비물도 모두 삭제됩니다.')) return;
+    if (!(await confirmDialog('정말 삭제하시겠습니까? 관련 준비물도 모두 삭제됩니다.'))) return;
     const res = await fetch(`/api/admin/skills/${skillId}`, { method: 'DELETE' });
     if (res.ok) refreshSkills();
   };
@@ -890,7 +891,7 @@ function SupplyList({ skill, onUpdate }: { skill: any, onUpdate: () => void }) {
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('정말 삭제하시겠습니까?')) return;
+    if (!(await confirmDialog('정말 삭제하시겠습니까?'))) return;
     const res = await fetch(`/api/admin/supplies/${id}`, { method: 'DELETE' });
     if (res.ok) onUpdate();
   };
