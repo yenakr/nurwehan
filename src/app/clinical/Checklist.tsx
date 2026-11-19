@@ -104,6 +104,8 @@ export default function Checklist({
   // 고정(핀): 이 기기에 저장. 고정한 과목·실습지가 항상 앞에 온다
   const [keys, setKeys] = useState<Record<string, string>>({});
   const [restored, setRestored] = useState(false);
+  const [lastRec, setLastRec] = useState<{ subject: string; id: string } | null>(null);
+  const [jump, setJump] = useState<string | null>(null);
   const [pins, setPins] = useState<{ c: string[]; s: string[] }>({ c: [], s: [] });
   useEffect(() => {
     try {
@@ -123,6 +125,10 @@ export default function Checklist({
         Object.entries(l.keys).forEach(([c2, v]) => { if (SUBJECTS.some(x => x.key === v && x.course === c2)) k2[c2] = v as string; });
         setKeys(k2);
       }
+    } catch { /* 무시 */ }
+    try {
+      const lr = JSON.parse(localStorage.getItem('pc:lastrec') || 'null');
+      if (lr && typeof lr.subject === 'string' && typeof lr.id === 'string') setLastRec(lr);
     } catch { /* 무시 */ }
     setRestored(true);
   }, []);
@@ -310,6 +316,24 @@ export default function Checklist({
 
   const total = subject.groups.reduce((n, g) => n + g.items.length, 0);
   const itemsAll = subject.groups.flatMap(g => g.items);
+  useEffect(() => {
+    if (!jump) return;
+    const el = document.getElementById(`pi-${jump}`);
+    if (el) {
+      el.scrollIntoView({ block: 'center', behavior: 'smooth' });
+      el.classList.add('hit');
+      setTimeout(() => el.classList.remove('hit'), 1600);
+    }
+    setJump(null);
+  }, [jump, key]);
+  const resume = lastRec
+    ? (() => {
+        const sb = SUBJECTS.find(x => x.key === lastRec.subject);
+        const it = sb?.groups.flatMap(g => g.items).find(i => i.id === lastRec.id);
+        return sb && it ? { sb, it } : null;
+      })()
+    : null;
+  const todoItems = itemsAll.filter(i => (prog[i.id] || []).length === 0 && i.id !== lastRec?.id).slice(0, 3);
   const done = itemsAll.filter(i => (prog[i.id] || []).length > 0).length;
   const cnt = (l: Level) => itemsAll.filter(i => top(prog[i.id] || []) === l).length;
 
@@ -376,6 +400,9 @@ export default function Checklist({
     setMemo('');
     setUndo({ id: rec.id, text: `${lbl(l)} ${md(rec.d)} 기록됨` });
     setFlash(l);
+    const lr = { subject: key, id: sheet.id };
+    setLastRec(lr);
+    try { localStorage.setItem('pc:lastrec', JSON.stringify(lr)); } catch { /* 무시 */ }
     if (aiOn) openAi(rec.id, l);
   };
   useEffect(() => {
@@ -628,6 +655,27 @@ tr { break-inside: avoid; }
       })}
 
 
+      {!sum && !selMode && filter === 'all' && !query && (resume || todoItems.length > 0) && (
+        <section className="grp today">
+          <div className="gh"><b>오늘 살펴볼까요?</b></div>
+          {resume && (
+            <button type="button" className="row" onClick={() => {
+              setCourse(resume.sb.course);
+              setKeys(p => ({ ...p, [resume.sb.course]: resume.sb.key }));
+              setJump(resume.it.id);
+            }}>
+              <span className="t">{resume.it.t}</span>
+              <span className="sm"><span className="cn">마지막 기록 이어서</span></span>
+            </button>
+          )}
+          {todoItems.map(it => (
+            <button key={it.id} type="button" className="row" onClick={() => openSheet(it)}>
+              <span className="t">{it.t}</span>
+            </button>
+          ))}
+        </section>
+      )}
+
       {!sum && visible.map(({ g, items }) => {
         const gd = g.items.filter(i => (prog[i.id] || []).length > 0).length;
         return (
@@ -654,7 +702,7 @@ tr { break-inside: avoid; }
               const recs = chrono(prog[it.id] || []);
               const last = recs.slice(-2);
               return (
-                <button key={it.id} type="button" className={`row ${selMode && sel.has(it.id) ? 'sel' : ''}`} onClick={() => (selMode ? toggleSel(it.id) : openSheet(it))}>
+                <button key={it.id} id={`pi-${it.id}`} type="button" className={`row ${selMode && sel.has(it.id) ? 'sel' : ''}`} onClick={() => (selMode ? toggleSel(it.id) : openSheet(it))}>
                   {selMode && <span className={`ck ${sel.has(it.id) ? 'on' : ''}`} />}
                   <span className="t"><Hl text={it.t} q={query} /></span>
                   {recs.length > 0 && (
@@ -895,6 +943,9 @@ tr { break-inside: avoid; }
         .pc .sumh .bar i { display: block; height: 100%; background: var(--primary); }
         .pc .sumai { margin: 10px 0 4px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
         .pc .sumask { flex-shrink: 0; display: flex; align-items: center; gap: 5px; border: 0; background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .pc .row.hit { animation: pchit 1.6s ease-out; }
+        @keyframes pchit { 0%, 60% { background: color-mix(in srgb, var(--primary) 18%, transparent); } 100% { background: transparent; } }
+        .pc .today .gh .pgb { display: none; }
         .pc b.em { color: var(--primary); font-weight: 800; }
         .pc mark.hl { background: color-mix(in srgb, var(--primary) 20%, transparent); color: inherit; border-radius: 3px; padding: 0 1px; }
         .pc .dots { display: inline-flex; gap: 4px; align-items: center; height: 1em; }
