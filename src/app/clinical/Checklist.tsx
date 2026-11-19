@@ -565,6 +565,7 @@ tr { break-inside: avoid; }
             {ai && (
               <div className="aiq">
                 <div className="aih">
+                  <span className="aiic"><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.9 5.6L19.5 9.5l-5.6 1.9L12 17l-1.9-5.6L4.5 9.5l5.6-1.9L12 2zM19 14l.9 2.6L22.5 17.5l-2.6.9L19 21l-.9-2.6-2.6-.9 2.6-.9L19 14z"/></svg></span>
                   <p className="aitx">{AI_Q[ai.level]}</p>
                   <button type="button" className="aix" onClick={() => setAi(null)}>닫기</button>
                 </div>
@@ -607,7 +608,7 @@ tr { break-inside: avoid; }
                         <b className={`lb ${r.l}`}>{lbl(r.l)}</b>
                         {r.m && <span className="hm">{r.m}</span>}
                       </button>
-                      {aiOn && <button type="button" className="aq" onClick={() => openAi(r.id, r.l)}>질문</button>}
+                      {aiOn && <button type="button" className="aq" aria-label="AI" onClick={() => openAi(r.id, r.l)}><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.9 5.6L19.5 9.5l-5.6 1.9L12 17l-1.9-5.6L4.5 9.5l5.6-1.9L12 2zM19 14l.9 2.6L22.5 17.5l-2.6.9L19 21l-.9-2.6-2.6-.9 2.6-.9L19 14z"/></svg></button>}
                     </div>
                   )
                 )}
@@ -662,6 +663,7 @@ tr { break-inside: avoid; }
         .pc .aiq { margin-top: 8px; padding: 10px 12px; border-radius: 10px; background: var(--tint); }
         .pc .aih { display: flex; align-items: flex-start; gap: 8px; }
         .pc .aih .aitx { flex: 1; }
+        .pc .aiic { flex-shrink: 0; color: var(--primary); display: flex; padding-top: 2px; }
         .pc .aix { flex-shrink: 0; border: 0; background: none; font: inherit; font-size: 12.5px; color: var(--sub-text); cursor: pointer; padding: 0; }
         .pc .aitx { margin: 0 0 8px; font-size: 13px; line-height: 1.6; color: var(--text); white-space: pre-wrap; }
         .pc .aiq .frow { margin: 0; }
@@ -711,6 +713,7 @@ tr { break-inside: avoid; }
         .pc .hr:not(.edit) { display: flex; align-items: baseline; padding: 0; gap: 8px; cursor: default; }
         .pc .hmain { flex: 1; min-width: 0; display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 12px; padding: 11px 2px; border: 0; background: none; font: inherit; font-size: 14px; color: inherit; text-align: left; cursor: pointer; }
         .pc .aq, .pc .uacts button { border: 0; background: none; color: var(--primary); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; padding: 6px 4px; }
+        .pc .aq { display: flex; align-items: center; align-self: center; }
         .pc .uacts { display: flex; gap: 8px; }
         .pc .hr.edit { display: block; cursor: default; }
         .pc .hd { font-weight: 700; min-width: 52px; }
