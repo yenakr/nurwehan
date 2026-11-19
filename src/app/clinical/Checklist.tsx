@@ -564,7 +564,7 @@ tr { break-inside: avoid; }
             ))}
           </div>
         )}
-        <button type="button" className={`selbtn ${sum ? 'on' : ''}`} onClick={() => { exitSel(); setFind(false); setSum(v => !v); }}>요약</button>
+        <button type="button" className={`selbtn ${sum ? 'on' : ''}`} onClick={() => { exitSel(); setFind(false); if (!sum) setSumOpen(new Set([key])); setSum(v => !v); }}>요약</button>
         {!sum && (selMode ? (
           <button type="button" className="selbtn on" onClick={() => exitSel()}>완료</button>
         ) : (
@@ -590,19 +590,23 @@ tr { break-inside: avoid; }
         const md = (d: string) => `${Number(d.slice(5, 7))}/${Number(d.slice(8, 10))}`;
         return (
           <section key={x.key} className="sumc">
-            <button type="button" className="sumh" onClick={() => setSumOpen(p => { const n = new Set(p); if (n.has(x.key)) n.delete(x.key); else n.add(x.key); return n; })}>
-              <b>{x.sub}</b>
-              <span>{seen.length}/{items.length}</span>
-              <i className="bar"><i style={{ width: `${items.length ? (seen.length / items.length) * 100 : 0}%` }} /></i>
-            </button>
+            <div className="sumh">
+              <button type="button" className="sumtg" onClick={() => setSumOpen(p => { const n = new Set(p); if (n.has(x.key)) n.delete(x.key); else n.add(x.key); return n; })}>
+                <b>{x.sub}</b>
+                <span>{seen.length}/{items.length}</span>
+                <i className="bar"><i style={{ width: `${items.length ? (seen.length / items.length) * 100 : 0}%` }} /></i>
+              </button>
+              {aiOn && seen.length > 0 && (
+                <button type="button" className="sumask" disabled={sumAi[x.key]?.busy} onClick={() => { setSumOpen(p => new Set(p).add(x.key)); askSum(x.key); }}><Spark />피드백</button>
+              )}
+            </div>
             {open && (
               <div className="sumb">
-                {aiOn && seen.length > 0 && (
+                {aiOn && seen.length > 0 && (sumAi[x.key]?.text || sumAi[x.key]?.busy || sumAi[x.key]?.err) && (
                   <div className="sumai">
                     {sumAi[x.key]?.text && <p className="aitx"><Rich text={sumAi[x.key].text} /></p>}
                     {sumAi[x.key]?.busy && <p className="aitx"><Dots /></p>}
                     {sumAi[x.key]?.err && <p className="aitx">{sumAi[x.key].err}</p>}
-                    <button type="button" className="sumask" disabled={sumAi[x.key]?.busy} onClick={() => askSum(x.key)}><Spark />AI 피드백</button>
                   </div>
                 )}
                 {seen.length > 0 && <div className="sumt">기록 {seen.length}</div>}
@@ -883,13 +887,14 @@ tr { break-inside: avoid; }
         .pc .flt button.on { background: var(--primary); border-color: var(--primary); color: #fff; }
         .pc .empty { padding: 30px 0; text-align: center; color: var(--sub-text); font-size: 14px; }
         .pc .sumc { margin-top: 12px; }
-        .pc .sumh { width: 100%; display: flex; align-items: center; gap: 10px; padding: 8px 2px; background: none; border: 0; border-bottom: 2px solid var(--primary); font: inherit; font-size: 14px; color: var(--text); cursor: pointer; text-align: left; }
+        .pc .sumh { width: 100%; display: flex; align-items: center; gap: 8px; padding: 2px 2px; border-bottom: 2px solid var(--primary); font-size: 14px; color: var(--text); }
+        .pc .sumtg { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; padding: 8px 0; background: none; border: 0; font: inherit; font-size: 14px; color: var(--text); cursor: pointer; text-align: left; }
         .pc .sumh b { flex: 1; }
         .pc .sumh span { font-size: 12.5px; color: var(--sub-text); }
         .pc .sumh .bar { width: 64px; height: 6px; border-radius: 3px; background: var(--tint); overflow: hidden; display: block; }
         .pc .sumh .bar i { display: block; height: 100%; background: var(--primary); }
         .pc .sumai { margin: 10px 0 4px; display: flex; flex-direction: column; gap: 8px; align-items: flex-start; }
-        .pc .sumask { display: flex; align-items: center; gap: 6px; border: 0; background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .pc .sumask { flex-shrink: 0; display: flex; align-items: center; gap: 5px; border: 0; background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
         .pc b.em { color: var(--primary); font-weight: 800; }
         .pc mark.hl { background: color-mix(in srgb, var(--primary) 20%, transparent); color: inherit; border-radius: 3px; padding: 0 1px; }
         .pc .dots { display: inline-flex; gap: 4px; align-items: center; height: 1em; }
