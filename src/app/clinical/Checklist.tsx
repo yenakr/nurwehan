@@ -682,11 +682,6 @@ tr { break-inside: avoid; }
               </ul>
             )}
 
-            <div className="quick">
-              {LEVELS.map(l => (
-                <button key={l.k} type="button" className={`q ${l.k}`} onClick={() => add(l.k)}>{l.label}</button>
-              ))}
-            </div>
             <div className="when">
               {dateStep()}
               {outside && <Warn />}
@@ -698,6 +693,11 @@ tr { break-inside: avoid; }
                             <input className="memo" autoFocus value={memo} onChange={e => setMemo(e.target.value)} maxLength={200} />
               </>
             )}
+            <div className="quick">
+              {LEVELS.map(l => (
+                <button key={l.k} type="button" className={`q ${l.k}`} onClick={() => add(l.k)}>{l.label}</button>
+              ))}
+            </div>
             {undo && (
               <div className="undo">
                 <span>{undo.text}</span>
@@ -876,7 +876,7 @@ tr { break-inside: avoid; }
         .pc .q.O { background: color-mix(in srgb, var(--o) 18%, transparent); color: var(--o); }
         .pc .q.P { background: color-mix(in srgb, var(--p) 20%, transparent); color: var(--p); }
         .pc .q.D { background: color-mix(in srgb, var(--d) 20%, transparent); color: var(--d); }
-        .pc .when { display: flex; justify-content: space-between; align-items: center; margin-top: 10px; }
+        .pc .when { display: flex; justify-content: space-between; align-items: center; margin: 0 0 10px; }
         .pc .dstep { display: flex; align-items: center; background: var(--tint); border-radius: 999px; }
         .pc .dstep button { border: 0; background: none; color: var(--sub-text); display: flex; padding: 6px 8px; cursor: pointer; }
         .pc .dstep button:disabled { opacity: .3; cursor: default; }
@@ -891,7 +891,7 @@ tr { break-inside: avoid; }
         .pc .memo, .pc .rmi, .pc .frow input { border: 0; border-bottom: 1px solid var(--line); background: transparent; color: inherit; font: inherit; font-size: 14px; padding: 8px 2px; width: 100%; border-radius: 0; min-width: 0; }
         .pc .pnote { margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: var(--sub-text); }
         .pc .aiq .pnote { margin: 0; }
-        .pc .memo { margin-top: 4px; }
+        .pc .memo { margin: 4px 0 10px; }
         .pc .rmi { margin-top: 18px; }
         .pc .undo { margin-top: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--tint); border-radius: 8px; padding: 8px 12px; font-size: 13px; }
         .pc .undo button { border: 0; background: none; color: var(--primary); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
