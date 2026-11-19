@@ -16,6 +16,8 @@ const lbl = (l: Level) => LEVELS.find(x => x.k === l)?.label ?? '';
 const rank: Record<Level, number> = { O: 1, P: 2, D: 3 };
 const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 // 날짜 오름차순 (같은 날은 입력 순서 유지)
+const PNOTE = '환자를 알아볼 수 있는 정보(이름, 등록번호 등)는 쓰지 마세요.';
+
 const Spark = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.9 5.6L19.5 9.5l-5.6 1.9L12 17l-1.9-5.6L4.5 9.5l5.6-1.9L12 2zM19 14l.9 2.6L22.5 17.5l-2.6.9L19 21l-.9-2.6-2.6-.9 2.6-.9L19 14z" /></svg>
 );
@@ -619,7 +621,12 @@ tr { break-inside: avoid; }
               {outside && <span className="warn">실습일 아님</span>}
               <button type="button" className={`lnk ${showMemo || memo ? 'on' : ''}`} onClick={() => setShowMemo(m => !m)}>메모</button>
             </div>
-            {showMemo && <input className="memo" autoFocus value={memo} onChange={e => setMemo(e.target.value)} maxLength={200} />}
+            {showMemo && (
+              <>
+                <p className="pnote">{PNOTE}</p>
+                            <input className="memo" autoFocus value={memo} onChange={e => setMemo(e.target.value)} maxLength={200} />
+              </>
+            )}
             {undo && (
               <div className="undo">
                 <span>{undo.text}</span>
@@ -636,6 +643,7 @@ tr { break-inside: avoid; }
                   <p className="aitx">{AI_Q[ai.level]}</p>
                   <button type="button" className="aix" onClick={() => setAi(null)}>닫기</button>
                 </div>
+                {!ai.f && <p className="pnote">{PNOTE}</p>}
                 {!ai.f && (
                   <div className="frow">
                     <input className="grow" maxLength={AI_ANSWER_MAX} value={ai.a} onChange={e => { const v = e.target.value; setAi(x => (x ? { ...x, a: v } : x)); }} />
@@ -644,6 +652,7 @@ tr { break-inside: avoid; }
                 )}
                 {ai.f && <p className="aimy">{ai.a}</p>}
                 {ai.f && <p className="aitx">{ai.f}</p>}
+                {ai.f && !ai.g && <p className="pnote">{PNOTE}</p>}
                 {ai.f && !ai.g && (
                   <div className="frow">
                     <input className="grow" maxLength={AI_ANSWER_MAX} value={ai.b} onChange={e => { const v = e.target.value; setAi(x => (x ? { ...x, b: v } : x)); }} />
@@ -662,6 +671,7 @@ tr { break-inside: avoid; }
                   editId === r.id ? (
                     <div key={r.id} className="hr edit">
                       {seg(ed.l, l => setEd(e => ({ ...e, l })))}
+                      <p className="pnote">{PNOTE}</p>
                       <div className="frow">
                         <input type="date" value={ed.d} onChange={e => setEd(x => ({ ...x, d: e.target.value }))} />
                         <input className="grow" value={ed.m} onChange={e => setEd(x => ({ ...x, m: e.target.value }))} placeholder="메모" maxLength={200} />
@@ -796,7 +806,9 @@ tr { break-inside: avoid; }
         .pc .lnk { border: 0; background: none; font: inherit; font-size: 13px; font-weight: 600; color: var(--sub-text); cursor: pointer; padding: 5px 4px; }
         .pc .lnk.on { color: var(--primary); }
         .pc .memo, .pc .rmi, .pc .frow input { border: 0; border-bottom: 1px solid var(--line); background: transparent; color: inherit; font: inherit; font-size: 14px; padding: 8px 2px; width: 100%; border-radius: 0; min-width: 0; }
-        .pc .memo { margin-top: 8px; }
+        .pc .pnote { margin: 8px 0 0; font-size: 12px; line-height: 1.5; color: var(--sub-text); }
+        .pc .aiq .pnote { margin: 0; }
+        .pc .memo { margin-top: 4px; }
         .pc .rmi { margin-top: 18px; }
         .pc .undo { margin-top: 10px; display: flex; justify-content: space-between; align-items: center; background: var(--tint); border-radius: 8px; padding: 8px 12px; font-size: 13px; }
         .pc .undo button { border: 0; background: none; color: var(--primary); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
