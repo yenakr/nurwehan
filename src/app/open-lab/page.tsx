@@ -49,9 +49,12 @@ export default async function OpenLabApplyPage() {
   return (
     <main style={{ backgroundColor: 'var(--muted-background)', padding: '40px 0' }}>
       <div className="container" style={{ maxWidth: '680px' }}>
-        <h1 style={{ fontSize: '1.375rem', fontWeight: 800, marginBottom: '16px', color: 'var(--text)' }}>
-          OPEN LAB 신청서 생성 {!userData && <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--sub-text)', marginLeft: '6px' }}>비회원</span>}
-        </h1>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 12, marginBottom: '16px' }}>
+          <h1 style={{ fontSize: '1.375rem', fontWeight: 800, margin: 0, color: 'var(--text)' }}>
+            OPEN LAB 신청서 생성 {!userData && <span style={{ fontSize: '0.875rem', fontWeight: 500, color: 'var(--sub-text)', marginLeft: '6px' }}>비회원</span>}
+          </h1>
+          {userData && <Link href="/history" style={{ border: '1px solid var(--border)', borderRadius: 999, padding: '7px 14px', fontSize: '0.8125rem', fontWeight: 700, color: 'var(--primary)', whiteSpace: 'nowrap' }}>작성 내역</Link>}
+        </div>
         <ApplyForm user={userData} clinicalWeeks={clinicalWeeks} />
       </div>
     </main>
