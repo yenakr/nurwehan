@@ -11,6 +11,7 @@ import { confirmDialog, notify } from '@/components/Dialog';
 import { VitalsExtra, VitalsBulk, IoBulk, LabSets, IoTotals, printChart, useDictation } from './EhrExtras';
 import AiMark from '@/components/AiMark';
 import { NANDA, dxIssues } from '../nanda';
+import VisitStrip from './EhrVisit';
 import RegisterCard from './EhrRegister';
 import MarPanel from './EhrMar';
 import MemoPanel from './EhrMemo';
@@ -444,6 +445,7 @@ export default function EhrEditor({
   const navRef = useRef<HTMLDivElement>(null);
   const wardRef = useRef<HTMLDivElement>(null);
   const [wardOpen, setWardOpen] = useState(false);
+  const [moreOpen, setMoreOpen] = useState(false);
   const [editInfo, setEditInfo] = useState(false); // 기본정보는 수정 버튼을 눌러야 편집
   const [status, setStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const first = useRef(true);
@@ -654,28 +656,38 @@ export default function EhrEditor({
   return (
     <div className="ehr">
       <div className="bar">
+        <button type="button" className="back" onClick={() => router.push(`/ehr?view=${encodeURIComponent(info.ward === '응급실' ? '응급' : info.ward || '')}`)}>&larr; {info.ward === '응급실' ? '응급' : info.ward || '목록'}</button>
         <input className="ttl" value={title} onChange={e => setTitle(e.target.value)} aria-label="제목" />
         <span className={`st ${status}`}>{status === 'saved' ? '저장됨' : status === 'saving' ? '저장 중…' : '저장 실패'}</span>
         {ai && !locked && aiOn && <button type="button" className="aib" onClick={askFb} disabled={fbBusy || fbLeft <= 0}><AiMark size={14} />{fbBusy ? '살펴보는 중' : `AI 피드백 ${fbLeft}회`}</button>}
-        {ai && !locked && <label className="aisw"><input type="checkbox" checked={aiOn} onChange={toggleAi} />AI</label>}
         {locked
-          ? (!info.reviewed && <button type="button" className="dis" onClick={unsubmit}>제출 취소</button>)
+          ? (!info.reviewed && <button type="button" className="subm out" onClick={unsubmit}>제출 취소</button>)
           : <button type="button" className="subm" onClick={submit}>제출</button>}
-        <button type="button" className="dis" onClick={() => { if (!printChart(title, data, userName || '')) notify('팝업을 허용해 주세요.'); }}>인쇄</button>
-        <button type="button" className="dis" onClick={toggleDischarge} disabled={locked}>
-          {info.discharged ? '퇴원 취소' : '퇴원'}
-        </button>
-        <button
-          type="button"
-          className="dis del"
-          onClick={async () => {
-            if (!(await confirmDialog('이 차트를 삭제할까요? 모든 기록이 사라지고 되돌릴 수 없어요.'))) return;
-            const res = await fetch(`/api/ehr/${id}`, { method: 'DELETE' });
-            if (res.ok) router.push('/ehr');
-          }}
-        >
-          삭제
-        </button>
+        <div className="more">
+          <button type="button" className="mbtn" aria-label="더보기" onClick={() => setMoreOpen(o => !o)}>&middot;&middot;&middot;</button>
+          {moreOpen && (
+            <>
+              <button type="button" className="mbk" aria-label="닫기" onClick={() => setMoreOpen(false)} />
+              <div className="mm">
+                <button type="button" onClick={() => { setMoreOpen(false); if (!printChart(title, data, userName || '')) notify('팝업을 허용해 주세요.'); }}>인쇄</button>
+                <button type="button" disabled={locked} onClick={() => { setMoreOpen(false); toggleDischarge(); }}>{info.discharged ? '퇴원 취소' : '퇴원'}</button>
+                {ai && !locked && <button type="button" onClick={() => { toggleAi(); setMoreOpen(false); }}>AI 피드백 {aiOn ? '끄기' : '켜기'}</button>}
+                <button
+                  type="button"
+                  className="del"
+                  onClick={async () => {
+                    setMoreOpen(false);
+                    if (!(await confirmDialog('이 차트를 삭제할까요? 모든 기록이 사라지고 되돌릴 수 없어요.'))) return;
+                    const res = await fetch(`/api/ehr/${id}`, { method: 'DELETE' });
+                    if (res.ok) router.push('/ehr');
+                  }}
+                >
+                  삭제
+                </button>
+              </div>
+            </>
+          )}
+        </div>
       </div>
 
       <p className="pvn">실제 환자 정보(이름, 등록번호, 생년월일, 병실 등)는 쓰지 마세요. 가상 정보로 바꿔서 연습하세요.</p>
@@ -765,6 +777,7 @@ export default function EhrEditor({
           </aside>
 
           <section className="main">
+            {(info.ward === '외래' || info.ward === '응급실') && <VisitStrip info={info} set={setInfo} />}
             {!locked && !info.name?.trim() && (
               <RegisterCard
                 info={info}
@@ -940,6 +953,16 @@ export default function EhrEditor({
       <style jsx global>{`
         .ehr { --nv1: #1c2f4b; --nv2: #13233a; --tl: #cfe5e6; --ln: #cfd5dc; }
         .ehr .bar { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
+        .ehr .back { border: 1px solid var(--border); background: transparent; color: var(--text); border-radius: 999px; padding: 5px 12px; font: inherit; font-size: 0.8125rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
+        .ehr .more { position: relative; }
+        .ehr .mbtn { border: 0; background: transparent; color: var(--sub-text); font-size: 1.25rem; line-height: 1; letter-spacing: 1px; padding: 2px 8px; cursor: pointer; }
+        .ehr .mbk { position: fixed; inset: 0; background: transparent; border: 0; z-index: 30; cursor: default; }
+        .ehr .mm { position: absolute; right: 0; top: calc(100% + 4px); z-index: 31; min-width: 150px; background: var(--background, #fff); border: 1px solid var(--border); border-radius: 10px; box-shadow: 0 6px 20px rgba(0,0,0,0.14); padding: 4px; display: flex; flex-direction: column; }
+        .ehr .mm button { border: 0; background: transparent; color: var(--text); text-align: left; font: inherit; font-size: 0.875rem; padding: 9px 12px; border-radius: 7px; cursor: pointer; }
+        .ehr .mm button:hover { background: var(--muted-background); }
+        .ehr .mm button:disabled { opacity: .4; cursor: default; }
+        .ehr .mm button.del { color: #b91c1c; }
+        .ehr .subm.out { background: transparent; color: var(--primary); border: 1px solid var(--primary); }
         .ehr .back { font-size: 0.8125rem; color: var(--sub-text); text-decoration: none; white-space: nowrap; }
         .ehr .ttl { flex: 1; min-width: 0; border: 0; background: transparent; font-size: 1rem; font-weight: 800; color: var(--text); font-family: inherit; padding: 4px 0; }
         .ehr .ttl:focus { outline: none; border-bottom: 2px solid var(--primary); }
@@ -998,7 +1021,7 @@ export default function EhrEditor({
         .ehr .fmts .mic.on { background: #dc2626; border-color: #dc2626; color: #fff; }
         .ehr .ncGrid.six { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         .ehr .ncGrid.one { grid-template-columns: 1fr; }
-        .ehr .pvn { margin: 0 0 8px; font-size: 0.75rem; color: #b45309; font-weight: 700; }
+        .ehr .pvn { margin: 0 0 8px; font-size: 0.6875rem; color: #b45309; font-weight: 600; }
         .ehr .lkb { margin-bottom: 8px; padding: 8px 12px; border-radius: 8px; background: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--primary); font-size: 0.8125rem; font-weight: 700; }
         .ehr .cmt { position: relative; margin-bottom: 8px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--primary); background: var(--white); }
         .ehr .cmt.ai { border-color: var(--line); background: color-mix(in srgb, var(--primary) 6%, transparent); }
