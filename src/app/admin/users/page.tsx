@@ -6,6 +6,7 @@ import UserList from './UserList';
 import { getTiers } from '@/lib/access';
 import { getChecklistUserIds } from '@/lib/checklist-access';
 import { getEhrUserIds } from '@/lib/ehr-access';
+import { getProfRequestIds } from '@/lib/user-kind';
 
 export const dynamic = 'force-dynamic';
 
@@ -41,7 +42,8 @@ export default async function AdminUsersPage() {
   const tiers = superAdmin ? await getTiers() : {};
   const ck = superAdmin ? await getChecklistUserIds() : new Set<string>();
   const eh = superAdmin ? await getEhrUserIds() : new Set<string>();
-  const withTier = users.map(u => ({ ...u, tier: tiers[u.id] ?? 0, checklist: ck.has(u.id), ehr: eh.has(u.id) }));
+  const pf = await getProfRequestIds();
+  const withTier = users.map(u => ({ ...u, tier: tiers[u.id] ?? 0, checklist: ck.has(u.id), ehr: eh.has(u.id), prof: pf.has(u.id) }));
 
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '40px 0' }}>

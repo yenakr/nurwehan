@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import bcrypt from 'bcryptjs';
+import { setProfRequest } from '@/lib/user-kind';
 
 export async function POST(request: Request) {
   try {
@@ -65,6 +66,8 @@ export async function POST(request: Request) {
         approvalStatus: 'PENDING',
       },
     });
+
+    if (body.kind === 'PROF') await setProfRequest(user.id);
 
     // Link legacy records based on studentId
     await prisma.applicationParticipant.updateMany({
