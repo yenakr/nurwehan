@@ -19,12 +19,13 @@ export type ChartData = {
   risk: Row[]; // 위험도평가
   history: Row[]; // 상병이력
   imaging: Row[]; // 영상검사
+  forms: Record<string, Row[]>; // 평가도구(낙상·욕창·통증·수술 전 확인)
 };
 
 const LISTS = ['progress', 'orders', 'vitals', 'io', 'labs', 'notes', 'care', 'transfusion', 'nutrition', 'consult', 'consent', 'surgery', 'appts', 'handover', 'risk', 'history', 'imaging'] as const;
 
 export const emptyChart = (): ChartData => {
-  const d: Record<string, unknown> = { info: {} };
+  const d: Record<string, unknown> = { info: {}, forms: {} };
   LISTS.forEach(k => (d[k] = []));
   return d as ChartData;
 };
@@ -43,6 +44,7 @@ export function migrate(raw: unknown): ChartData {
   if (info.orders && !info.plan) info.plan = info.orders;
   const out = base as unknown as ChartData;
   out.info = info;
+  out.forms = r.forms && typeof r.forms === 'object' && !Array.isArray(r.forms) ? (r.forms as Record<string, Row[]>) : {};
 
   const meds = Array.isArray(r.meds) ? (r.meds as Row[]) : [];
   if (out.orders.length === 0 && meds.length > 0) {
