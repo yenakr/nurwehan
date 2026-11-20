@@ -32,7 +32,7 @@ export default async function HandoverPage({ searchParams }: { searchParams: Pro
         `}</style>
         <div className="noprint" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
           <Link href="/ehr" style={{ color: 'inherit' }}>← 목록</Link>
-          <b style={{ marginLeft: 8 }}>{ward} 인수인계지</b>
+          <b style={{ marginLeft: 8 }}>{ward} 인수인계지 ({(() => { const h = new Date(Date.now() + 9 * 3600e3).getUTCHours(); return h >= 7 && h < 15 ? 'D' : h >= 15 && h < 23 ? 'E' : 'N'; })()} 근무)</b>
           <PrintBtn />
         </div>
         <div className="hov">
@@ -51,7 +51,7 @@ export default async function HandoverPage({ searchParams }: { searchParams: Pro
                     <td>{c.dx}</td>
                     <td>{vit(v)}</td>
                     <td>{h ? [h.s && `S ${h.s}`, h.b && `B ${h.b}`, h.a && `A ${h.a}`, h.r && `R ${h.r}`].filter(Boolean).join('\n') : ''}</td>
-                    <td>{m.map((x, i) => <div key={i} className={x.imp ? 'im' : ''}>[{x.type}] {x.text}</div>)}</td>
+                    <td>{m.map((x, i) => <div key={i} className={x.imp ? 'im' : ''}>[{x.type}{x.shift ? ` ${x.shift}` : ''}] {x.text}</div>)}</td>
                   </tr>
                 );
               })}
