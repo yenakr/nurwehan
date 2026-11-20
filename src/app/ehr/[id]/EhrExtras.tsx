@@ -118,6 +118,7 @@ ${sec('간호과정', ['간호진단', '자료', '목표', '중재', '평가'], 
 ${sec('임상관찰', ['시간', '혈압', '맥박', '호흡', '체온', 'SpO2', '통증'], ['time', 'bp', 'hr', 'rr', 'bt', 'spo2', 'pain'], d.vitals)}
 ${sec('섭취/배설', ['시간', '섭취', '배설', '비고'], ['time', 'intake', 'output', 'note'], d.io)}
 ${sec('검사결과', ['검사명', '결과', '단위', 'Min', 'Max', '검사일시'], ['name', 'value', 'unit', 'min', 'max', 'time'], d.labs)}
+${sec('동의서', ['동의서', '일자', '상태', '설명 의사', '서명자', '간호 확인'], ['name', 'date', 'st', 'doctor', 'signer', 'chk'], d.consent)}
 ${sec('투약 수행', ['수행일시', '약물', '용량', '경로', '수행자', '특이사항'], ['time', 'name', 'dose', 'route', 'by', 'note'], d.mar)}
 ${sec('메모·인수인계', ['일시', '구분', '내용', '작성자'], ['time', 'type', 'text', 'author'], d.memos)}
 ${sec('인계(SBAR)', ['일시', 'S', 'B', 'A', 'R', '작성자'], ['time', 's', 'b', 'a', 'r', 'author'], d.handover)}

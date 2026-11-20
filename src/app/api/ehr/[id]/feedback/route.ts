@@ -35,6 +35,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     `I/O:\n${rows(d.io)}`,
     `검사:\n${rows(d.labs)}`,
     `처방:\n${rows(d.orders)}`,
+    `동의서:\n${rows(d.consent, 8)}`,
     `투약 수행:\n${rows(d.mar, 10)}`,
     `간호기록:\n${rows(d.notes, 20)}`,
     `간호과정:\n${rows(d.care, 6)}`,
