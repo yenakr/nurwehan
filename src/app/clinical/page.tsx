@@ -26,7 +26,8 @@ async function loadSchedule(user: any): Promise<ScheduleItem[]> {
   }));
 }
 
-export default async function ClinicalPage() {
+export default async function ClinicalPage({ searchParams }: { searchParams: Promise<{ tab?: string }> }) {
+  const { tab } = await searchParams;
   const user = await getCurrentUser();
   await purgeExpiredAssignments();
   const schedule = await loadSchedule(user);
@@ -36,7 +37,7 @@ export default async function ClinicalPage() {
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--white)', padding: '14px 0 32px' }}>
       <div className="container">
-        <ClinicalClient schedule={schedule} user={user} progress={progress} aiOn={canCheck && aiConfigured()} canCheck={canCheck} />
+        <ClinicalClient schedule={schedule} user={user} progress={progress} aiOn={canCheck && aiConfigured()} canCheck={canCheck} initialTab={tab} />
       </div>
     </main>
   );
