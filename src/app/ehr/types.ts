@@ -19,10 +19,11 @@ export type ChartData = {
   risk: Row[]; // 위험도평가
   history: Row[]; // 상병이력
   imaging: Row[]; // 영상검사
+  memos: Row[]; // 간호·진료 메모, 인수인계
   forms: Record<string, Row[]>; // 평가도구(낙상·욕창·통증·수술 전 확인)
 };
 
-const LISTS = ['progress', 'orders', 'vitals', 'io', 'labs', 'notes', 'care', 'transfusion', 'nutrition', 'consult', 'consent', 'surgery', 'appts', 'handover', 'risk', 'history', 'imaging'] as const;
+const LISTS = ['progress', 'orders', 'vitals', 'io', 'labs', 'notes', 'care', 'transfusion', 'nutrition', 'consult', 'consent', 'surgery', 'appts', 'handover', 'risk', 'history', 'imaging', 'memos'] as const;
 
 export const emptyChart = (): ChartData => {
   const d: Record<string, unknown> = { info: {}, forms: {} };

@@ -9,11 +9,12 @@ import { VIEW_LIST } from '../samples';
 import { ALLERGIES, DEPTS, DOCTORS, WARD_OPTIONS, bedOptions } from '../directory';
 import { confirmDialog, notify } from '@/components/Dialog';
 import { VitalsExtra, VitalsBulk, IoBulk, LabSets, IoTotals, printChart, useDictation } from './EhrExtras';
+import MemoPanel from './EhrMemo';
 import FormPanel, { FORMS, FORM_CSS, type FormKey } from './EhrForms';
 
 type ListKey =
   | 'progress' | 'vitals' | 'io' | 'labs' | 'notes' | 'care'
-  | 'transfusion' | 'nutrition' | 'consult' | 'consent' | 'surgery' | 'appts' | 'handover' | 'risk' | 'history' | 'imaging';
+  | 'transfusion' | 'nutrition' | 'consult' | 'consent' | 'surgery' | 'appts' | 'handover' | 'risk' | 'history' | 'imaging' | 'memos';
 type FormTab = 'f_morse' | 'f_braden' | 'f_pain' | 'f_preop';
 type TabId = ListKey | 'orders' | 'admission' | 'nurseinfo' | 'discharge' | FormTab;
 const isForm = (t: TabId): t is FormTab => t.startsWith('f_');
@@ -28,7 +29,7 @@ const MENU: MenuNode[] = [
   { label: '치료/검사', items: [{ id: 'labs', label: '검사결과' }, { id: 'imaging', label: '영상검사' }, { id: 'transfusion', label: '수혈기록' }] },
   { label: '영양기록', items: [{ id: 'nutrition', label: '영양기록' }] },
   { label: '평가도구', items: FORMS.map(f => ({ id: f.tab as TabId, label: f.label })) },
-  { label: '간호기록', items: [{ id: 'notes', label: '간호기록' }, { id: 'risk', label: '위험도평가' }, { id: 'handover', label: '인계(SBAR)' }] },
+  { label: '간호기록', items: [{ id: 'notes', label: '간호기록' }, { id: 'risk', label: '위험도평가' }, { id: 'handover', label: '인계(SBAR)' }, { id: 'memos', label: '메모·인수인계' }] },
   { label: '간호과정', items: [{ id: 'care', label: '간호과정' }] },
   { label: '동의서', items: [{ id: 'consent', label: '동의서' }] },
   { label: '외래예약', items: [{ id: 'appts', label: '외래예약' }] },
@@ -119,6 +120,12 @@ export const COLS: Record<ListKey, Col[]> = {
     { key: 'doc', label: '의사', w: 80 },
     { key: 'purpose', label: '목적', w: 260 },
     { key: 'st', label: '상태', w: 90, type: 'select', opts: ['', '예약', '접수', '진료완료', '취소', '부도'] },
+  ],
+  memos: [
+    { key: 'time', label: '일시', w: 110 },
+    { key: 'type', label: '구분', w: 90 },
+    { key: 'text', label: '내용', w: 520, type: 'area' },
+    { key: 'author', label: '작성자', w: 80 },
   ],
   handover: [
     { key: 'time', label: '일시', w: 110 },
@@ -864,8 +871,9 @@ export default function EhrEditor({
               return <FormPanel kind={f.key as FormKey} rows={data.forms?.[f.key] || []} onChange={rows => setData(d => ({ ...d, forms: { ...(d.forms || {}), [f.key]: rows } }))} />;
             })()}
 
+            {tab === 'memos' && <MemoPanel rows={data.memos} author={userName || ''} onChange={rs => setData(d => ({ ...d, memos: rs }))} />}
             {tab === 'labs' && <LabSets onApply={rs => setData(d => ({ ...d, labs: [...d.labs, ...rs] }))} />}
-            {!isForm(tab) && tab !== 'notes' && tab !== 'care' && tab !== 'orders' && tab !== 'admission' && tab !== 'discharge' && tab !== 'nurseinfo' && tab !== 'vitals' && tbl(tab)}
+            {!isForm(tab) && tab !== 'notes' && tab !== 'care' && tab !== 'orders' && tab !== 'admission' && tab !== 'discharge' && tab !== 'nurseinfo' && tab !== 'vitals' && tab !== 'memos' && tbl(tab)}
           </section>
         </div>
       </div>

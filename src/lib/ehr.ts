@@ -127,3 +127,18 @@ export async function setReview(id: string, comment: string): Promise<boolean> {
     return false;
   }
 }
+
+// 병동 단위 활력징후 일괄 입력: 제출 전 본인 차트에만 한 줄씩 덧붙인다
+export async function appendVitals(userId: string, items: { id: string; row: Record<string, string> }[]): Promise<number> {
+  let done = 0;
+  for (const it of items) {
+    try {
+      const n = await prisma.$executeRaw`
+        UPDATE "EhrCase" SET "data" = jsonb_set("data", '{vitals}', COALESCE("data"->'vitals', '[]'::jsonb) || ${JSON.stringify([it.row])}::jsonb, true),
+          "updatedAt" = CURRENT_TIMESTAMP
+        WHERE "userId" = ${userId} AND "id" = ${it.id} AND ("data"->'info'->>'submitted' IS NULL)`;
+      if (n > 0) done++;
+    } catch { /* 한 건 실패해도 나머지는 계속 */ }
+  }
+  return done;
+}
