@@ -1,6 +1,6 @@
 .list { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 12px; }
 .tile { display: flex; flex-direction: column; gap: 12px; padding: 14px 16px; text-decoration: none; color: inherit; }
-.head { display: flex; align-items: center; gap: 10px; }
+.head { display: flex; align-items: center; gap: 10px; text-decoration: none; color: inherit; }
 .ic { flex: 0 0 auto; width: 36px; height: 36px; border-radius: 11px; display: flex; align-items: center; justify-content: center; }
 .ic svg { width: 20px; height: 20px; }
 .quiz { color: #0e4a84; background: color-mix(in srgb, #0e4a84 13%, transparent); }
@@ -8,10 +8,8 @@
 .lab { color: #2563eb; background: color-mix(in srgb, #2563eb 13%, transparent); }
 .title { flex: 1; min-width: 0; font-size: 1rem; font-weight: 800; color: var(--text); }
 .chev { flex: 0 0 auto; width: 18px; height: 18px; color: var(--sub-text); }
-.stats { display: flex; gap: 18px; flex-wrap: wrap; }
-.stat { display: flex; flex-direction: column; gap: 1px; min-width: 0; }
-.stat b { font-size: 1.125rem; font-weight: 800; color: var(--text); line-height: 1.25; }
-.stat span { font-size: 0.75rem; color: var(--sub-text); white-space: nowrap; }
+.acts { display: flex; flex-wrap: wrap; gap: 8px; }
+.act { padding: 8px 14px; border-radius: 999px; border: 1px solid var(--border); background: transparent; color: var(--text); font-size: 0.875rem; font-weight: 600; text-decoration: none; }
 @media (prefers-color-scheme: dark) {
   .quiz { color: #7fb4ee; background: color-mix(in srgb, #7fb4ee 16%, transparent); }
   .clinical { color: #5fd3c7; background: color-mix(in srgb, #5fd3c7 16%, transparent); }

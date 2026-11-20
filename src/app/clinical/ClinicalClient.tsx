@@ -12,6 +12,7 @@ interface ClinicalClientProps {
   user: any;
   progress: Record<string, Record<string, unknown>>;
   aiOn?: boolean;
+  initialTab?: string;
   canCheck?: boolean;
 }
 
@@ -33,8 +34,8 @@ const QUIZ_SUBJECT: Record<string, string> = {
 };
 const quizSubjectOf = (subject: string) => QUIZ_SUBJECT[subject.split('_')[0]];
 
-export default function ClinicalClient({ schedule, user, progress, aiOn, canCheck }: ClinicalClientProps) {
-  const [tab, setTab] = useState<Tab>('mine');
+export default function ClinicalClient({ schedule, user, progress, aiOn, canCheck, initialTab }: ClinicalClientProps) {
+  const [tab, setTab] = useState<Tab>(() => (TABS.some(t => t.id === initialTab && (t.id !== 'check' || canCheck)) ? (initialTab as Tab) : 'mine'));
   const [prog, setProg] = useState<Record<string, Store>>(() => Object.fromEntries(Object.entries(progress).map(([k, v]) => [k, normalizeStore(v)])));
   const [notes, setNotes] = useState<Note[]>([]);
   const [unavailable, setUnavailable] = useState(false);

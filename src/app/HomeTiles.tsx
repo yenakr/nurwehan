@@ -1,14 +1,9 @@
 import Link from 'next/link';
 import s from './HomeTiles.module.css';
 
-export interface TileStat {
-  value: string;
-  label: string;
-}
 export interface HomeTilesData {
-  quiz: TileStat[];
-  clinical: TileStat[];
-  lab: TileStat[];
+  canCheck: boolean;
+  quizSubject: { subject: string; label: string } | null;
 }
 
 const ICONS = {
@@ -20,8 +15,7 @@ const ICONS = {
   ),
   clinical: (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <path d="M12 5v14M5 12h14" />
-      <rect x="3" y="3" width="18" height="18" rx="4" />
+      <path d="M5 4h11l3 3v13H5zM9 11h6M9 15h6" />
     </svg>
   ),
   lab: (
@@ -32,46 +26,45 @@ const ICONS = {
   ),
 };
 
-function Tile({
-  href,
-  kind,
-  label,
-  stats,
-}: {
-  href: string;
-  kind: 'quiz' | 'clinical' | 'lab';
-  label: string;
-  stats: TileStat[];
-}) {
+type Act = { href: string; label: string };
+
+function Tile({ href, kind, label, acts }: { href: string; kind: 'quiz' | 'clinical' | 'lab'; label: string; acts: Act[] }) {
   return (
-    <Link href={href} className={`card ${s.tile}`}>
-      <div className={s.head}>
+    <div className={`card ${s.tile}`}>
+      <Link href={href} className={s.head}>
         <div className={`${s.ic} ${s[kind]}`}>{ICONS[kind]}</div>
         <span className={s.title}>{label}</span>
         <svg className={s.chev} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
           <path d="M9 6l6 6-6 6" />
         </svg>
+      </Link>
+      <div className={s.acts}>
+        {acts.map(a => (
+          <Link key={a.href + a.label} href={a.href} className={s.act}>{a.label}</Link>
+        ))}
       </div>
-      {stats.length > 0 && (
-        <div className={s.stats}>
-          {stats.map(st => (
-            <div key={st.label} className={s.stat}>
-              <b>{st.value}</b>
-              <span>{st.label}</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </Link>
+    </div>
   );
 }
 
 export default function HomeTiles({ data }: { data: HomeTilesData }) {
+  const quiz: Act[] = [{ href: '/quiz', label: '학습·퀴즈' }];
+  if (data.quizSubject) quiz.unshift({ href: `/quiz?subject=${encodeURIComponent(data.quizSubject.subject)}`, label: data.quizSubject.label });
+  const note: Act[] = [
+    ...(data.canCheck ? [{ href: '/clinical?tab=check', label: '체크리스트' }] : []),
+    { href: '/clinical?tab=notes', label: '메모' },
+    { href: '/clinical?tab=terms', label: '의학용어' },
+    { href: '/clinical?tab=mine', label: '내 실습' },
+  ];
+  const lab: Act[] = [
+    { href: '/open-lab', label: '신청서 작성' },
+    { href: '/history', label: '작성 내역' },
+  ];
   return (
     <div className={s.list}>
-      <Tile href="/quiz" kind="quiz" label="QUIZ" stats={data.quiz} />
-      <Tile href="/clinical" kind="clinical" label="실습 노트" stats={data.clinical} />
-      <Tile href="/open-lab" kind="lab" label="OPEN LAB" stats={data.lab} />
+      <Tile href="/quiz" kind="quiz" label="QUIZ" acts={quiz} />
+      <Tile href="/clinical" kind="clinical" label="실습 노트" acts={note} />
+      <Tile href="/open-lab" kind="lab" label="OPEN LAB" acts={lab} />
     </div>
   );
 }
