@@ -299,3 +299,4 @@
 .switch { padding: 0 10px; }
 .ttsBtn { width: 36px; }
 .searchInput { height: 38px; border-color: transparent; background: var(--q-primary-soft); border-radius: 10px; }
+.pressable { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }

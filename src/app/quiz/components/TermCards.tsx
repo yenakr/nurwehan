@@ -1,5 +1,6 @@
 'use client';
 
+import { useRef, type PointerEvent as PEvent } from 'react';
 import s from '../quiz.module.css';
 import type { NursingTerm } from '@/lib/quiz/taxonomy';
 
@@ -97,6 +98,27 @@ export default function TermCards({
   favorites?: Set<string>;
   onToggleFav?: (id: string) => void;
 }) {
+  // 카드를 꾹 누르면 즐겨찾기 토글 (움직이면 스크롤로 보고 취소)
+  const press = useRef<{ t: ReturnType<typeof setTimeout>; x: number; y: number } | null>(null);
+  const stop = () => { if (press.current) { clearTimeout(press.current.t); press.current = null; } };
+  const down = (id: string) => (e: PEvent) => {
+    if (!onToggleFav || editMode || (e.target as HTMLElement).closest('button')) return;
+    stop();
+    press.current = {
+      x: e.clientX,
+      y: e.clientY,
+      t: setTimeout(() => {
+        press.current = null;
+        onToggleFav(id);
+        try { navigator.vibrate?.(30); } catch {}
+      }, 500),
+    };
+  };
+  const move = (e: PEvent) => {
+    const p = press.current;
+    if (p && Math.hypot(e.clientX - p.x, e.clientY - p.y) > 8) stop();
+  };
+
   if (terms.length === 0) return <div className={s.empty}>표시할 항목이 없어요.</div>;
 
   return (
@@ -106,10 +128,10 @@ export default function TermCards({
         const hasOptions = (t.options?.length ?? 0) > 0;
         const en = t.englishTerm?.trim();
         return (
-          <article key={t.id} className={s.card}>
+          <article key={t.id} className={`${s.card} ${onToggleFav && !editMode ? s.pressable : ''}`} onPointerDown={down(t.id)} onPointerMove={move} onPointerUp={stop} onPointerCancel={stop} onPointerLeave={stop} onContextMenu={onToggleFav && !editMode ? e => e.preventDefault() : undefined}>
             <div className={s.cardHead}>
               <span className={s.cardTerm}>{t.term}</span>
-              {onToggleFav && (
+              {onToggleFav && favorites?.has(t.id) && (
                 <button
                   type="button"
                   className={`${s.star} ${favorites?.has(t.id) ? s.starOn : ''}`}
