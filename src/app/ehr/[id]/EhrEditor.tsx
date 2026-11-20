@@ -425,10 +425,14 @@ function CareComposer({ onAdd }: { onAdd: (r: Row) => void }) {
   const [dx, setDx] = useState('');
   const [txt, setTxt] = useState<{ data: string; goal: string; plan: string; eval: string }>({ data: '', goal: '', plan: '', eval: '' });
   const lib = CARE_DX.find(c => c.dx === dx);
-  const [nd, setNd] = useState(false);
-  const [dom, setDom] = useState(0);
   const q = dx.trim().toLowerCase();
-  const found = nd && q ? NANDA.flatMap(g => g.items).filter(([ko, en]) => ko.toLowerCase().includes(q) || en.toLowerCase().includes(q)) : NANDA[dom].items;
+  const allDx = (() => {
+    const m = new Map<string, { ko: string; en: string; dom: string; tpl: boolean }>();
+    NANDA.forEach(g => g.items.forEach(([ko, en]) => m.set(ko, { ko, en, dom: g.domain, tpl: false })));
+    CARE_DX.forEach(c => { const o = m.get(c.dx); m.set(c.dx, { ko: c.dx, en: o?.en || '', dom: o?.dom || '', tpl: true }); });
+    return [...m.values()].sort((x, y) => x.ko.localeCompare(y.ko, 'ko'));
+  })();
+  const dxRows = q ? allDx.filter(r => r.ko.toLowerCase().includes(q) || r.en.toLowerCase().includes(q)) : allDx;
   const push = (k: 'data' | 'goal' | 'plan' | 'eval', v: string) => setTxt(t => ({ ...t, [k]: t[k] ? `${t[k]}\n${v}` : v }));
   const empty = !dx.trim() && !txt.data.trim() && !txt.goal.trim() && !txt.plan.trim() && !txt.eval.trim();
   const cols: { k: 'data' | 'goal' | 'plan' | 'eval'; label: string; src: string[] }[] = [
@@ -453,30 +457,28 @@ function CareComposer({ onAdd }: { onAdd: (r: Row) => void }) {
         </label>
       </div>
       {dxIssues(dx).length > 0 && <ul style={{ margin: '0 0 6px', paddingLeft: 18, fontSize: 12.5, color: '#b45309', fontWeight: 700 }}>{dxIssues(dx).map(m => <li key={m}>{m}</li>)}</ul>}
-      <div className="chips">
-        {CARE_DX.map(c => (
-          <button key={c.dx} type="button" className={dx === c.dx ? 'on' : ''} onClick={() => setDx(c.dx)}>{c.dx}</button>
-        ))}
+      <div className="dxt">
+        <style>{`
+          .dxt { border: 1px solid var(--border); border-radius: 10px; max-height: 240px; overflow: auto; }
+          .dxt table { width: 100%; border-collapse: collapse; font-size: 13px; }
+          .dxt th { position: sticky; top: 0; background: var(--bg, #fff); text-align: left; padding: 6px 10px; border-bottom: 1px solid var(--border); font-weight: 700; white-space: nowrap; }
+          .dxt td { padding: 6px 10px; border-bottom: 1px solid var(--border); cursor: pointer; }
+          .dxt tr.on td { background: color-mix(in srgb, var(--primary) 14%, transparent); font-weight: 700; }
+          .dxt td.en, .dxt td.dm { color: var(--sub-text); font-size: 12px; }
+          .dxt td b { color: var(--primary); font-size: 11px; margin-left: 6px; }
+        `}</style>
+        <table>
+          <thead><tr><th>간호진단</th><th>영문</th><th>영역</th></tr></thead>
+          <tbody>
+            {dxRows.length === 0 && <tr><td colSpan={3} className="hint">일치하는 진단이 없어요</td></tr>}
+            {dxRows.map(r => (
+              <tr key={r.ko} className={dx === r.ko ? 'on' : ''} onClick={() => setDx(r.ko)}>
+                <td>{r.ko}{r.tpl && <b>예시 문구</b>}</td><td className="en">{r.en}</td><td className="dm">{r.dom}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
-      <button type="button" className="clr" style={{ alignSelf: 'flex-start' }} onClick={() => setNd(v => !v)}>{nd ? 'NANDA 목록 닫기' : 'NANDA 진단 목록'}</button>
-      {nd && (
-        <div className="ndp">
-          <style>{`
-            .ndp { border: 1px solid var(--border); border-radius: 10px; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
-            .ndp .dm { display: flex; flex-wrap: wrap; gap: 5px; }
-            .ndp .dm button, .ndp .ls button { border: 1px solid var(--border); background: transparent; color: inherit; border-radius: 999px; padding: 5px 11px; font: inherit; font-size: 12.5px; cursor: pointer; }
-            .ndp .dm button.on { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 700; }
-            .ndp .ls { display: flex; flex-wrap: wrap; gap: 5px; max-height: 190px; overflow-y: auto; }
-            .ndp .ls button { border-radius: 8px; text-align: left; }
-            .ndp .ls button i { display: block; font-style: normal; font-size: 11px; color: var(--sub-text); }
-          `}</style>
-          {!q && <div className="dm">{NANDA.map((g, i) => <button key={g.domain} type="button" className={dom === i ? 'on' : ''} onClick={() => setDom(i)}>{g.domain}</button>)}</div>}
-          <div className="ls">
-            {found.length === 0 && <span className="hint">일치하는 진단이 없어요</span>}
-            {found.slice(0, 60).map(([ko, en]) => <button key={ko} type="button" onClick={() => { setDx(ko); setNd(false); }}>{ko}<i>{en}</i></button>)}
-          </div>
-        </div>
-      )}
       <div className="ncGrid four">
         {cols.map(c => (
           <div key={c.k} className="ncCol">
