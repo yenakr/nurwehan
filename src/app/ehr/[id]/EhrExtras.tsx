@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import type { ChartData, Row } from '../types';
+import { FORMS, formLine } from './EhrForms';
 
 const num = (v: string | undefined) => {
   const n = parseFloat((v || '').replace(/[^\d.]/g, ''));
@@ -116,6 +117,12 @@ ${sec('간호기록', ['기록일시', 'Focus', '간호기록', '작성자'], ['
 ${sec('간호과정', ['간호진단', '자료', '목표', '중재', '평가'], ['dx', 'data', 'goal', 'plan', 'eval'], d.care)}
 ${sec('임상관찰', ['시간', '혈압', '맥박', '호흡', '체온', 'SpO2', '통증'], ['time', 'bp', 'hr', 'rr', 'bt', 'spo2', 'pain'], d.vitals)}
 ${sec('섭취/배설', ['시간', '섭취', '배설', '비고'], ['time', 'intake', 'output', 'note'], d.io)}
+${sec('검사결과', ['검사명', '결과', '단위', 'Min', 'Max', '검사일시'], ['name', 'value', 'unit', 'min', 'max', 'time'], d.labs)}
+${sec('투약 수행', ['수행일시', '약물', '용량', '경로', '수행자', '특이사항'], ['time', 'name', 'dose', 'route', 'by', 'note'], d.mar)}
+${sec('메모·인수인계', ['일시', '구분', '내용', '작성자'], ['time', 'type', 'text', 'author'], d.memos)}
+${sec('인계(SBAR)', ['일시', 'S', 'B', 'A', 'R', '작성자'], ['time', 's', 'b', 'a', 'r', 'author'], d.handover)}
+${sec('위험도평가', ['평가일시', '평가', '점수', '위험도', '중재'], ['time', 'kind', 'score', 'level', 'plan'], d.risk)}
+${sec('평가도구', ['평가도구', '평가일시', '결과'], ['form', 'time', 'sum'], FORMS.flatMap(f => (d.forms?.[f.key] || []).map(r => ({ form: f.label, time: r.time || '', sum: formLine(f.key, r) }))))}
 </div></body></html>`;
   const w = window.open('', '_blank');
   if (!w) return false;

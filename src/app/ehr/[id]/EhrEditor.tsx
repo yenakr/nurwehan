@@ -11,6 +11,7 @@ import { confirmDialog, notify } from '@/components/Dialog';
 import { VitalsExtra, VitalsBulk, IoBulk, LabSets, IoTotals, printChart, useDictation } from './EhrExtras';
 import AiMark from '@/components/AiMark';
 import { NANDA, dxIssues } from '../nanda';
+import RegisterCard from './EhrRegister';
 import MarPanel from './EhrMar';
 import MemoPanel from './EhrMemo';
 import FormPanel, { FORMS, FORM_CSS, type FormKey } from './EhrForms';
@@ -764,6 +765,15 @@ export default function EhrEditor({
           </aside>
 
           <section className="main">
+            {!locked && !info.name?.trim() && (
+              <RegisterCard
+                info={info}
+                onRegister={patch => {
+                  setData(d => ({ ...d, info: { ...d.info, ...patch } }));
+                  setTitle(`${patch.name} · ${patch.dx}`.slice(0, 100));
+                }}
+              />
+            )}
             {tab === 'orders' && (
               <div className="tw">
                 <div className="ohead">
