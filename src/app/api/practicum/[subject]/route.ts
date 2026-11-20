@@ -16,14 +16,14 @@ export async function PUT(req: Request, { params }: { params: Promise<{ subject:
   if (!sub) return NextResponse.json({ error: 'not found' }, { status: 404 });
   const body = await req.json().catch(() => ({}));
   const ids = new Set(sub.groups.flatMap(g => g.items.map(i => i.id)));
-  const clean: Record<string, Array<{ id: string; d: string; l: string; m?: string; a?: string; f?: string; b?: string; g?: string }>> = {};
+  const clean: Record<string, Array<{ id: string; d: string; h?: string; l: string; m?: string; a?: string; f?: string; b?: string; g?: string }>> = {};
   const notes: Record<string, string> = {};
   const raw = body?.data && typeof body.data === 'object' ? body.data : {};
   const src = raw.r && typeof raw.r === 'object' ? raw.r : {};
   for (const [k, v] of Object.entries(src)) {
     if (!ids.has(k) || !Array.isArray(v)) continue;
     const seen = new Set<string>();
-    const recs: Array<{ id: string; d: string; l: string; m?: string; a?: string; f?: string; b?: string; g?: string }> = [];
+    const recs: Array<{ id: string; d: string; h?: string; l: string; m?: string; a?: string; f?: string; b?: string; g?: string }> = [];
     for (const x of v as Array<Record<string, unknown>>) {
       if (typeof x?.d !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(x.d)) continue;
       if (x.l !== 'O' && x.l !== 'P' && x.l !== 'D') continue;
@@ -35,7 +35,8 @@ export async function PUT(req: Request, { params }: { params: Promise<{ subject:
       const f = typeof x.f === 'string' ? x.f.slice(0, 400) : '';
       const b = typeof x.b === 'string' ? x.b.slice(0, 200) : '';
       const g = typeof x.g === 'string' ? x.g.slice(0, 400) : '';
-      recs.push({ id, d: x.d, l: x.l, ...(m ? { m } : {}), ...(a ? { a } : {}), ...(f ? { f } : {}), ...(b ? { b } : {}), ...(g ? { g } : {}) });
+      const h = typeof x.h === 'string' && /^([01]\d|2[0-3]):[0-5]\d$/.test(x.h) ? x.h : '';
+      recs.push({ id, d: x.d, l: x.l, ...(h ? { h } : {}), ...(m ? { m } : {}), ...(a ? { a } : {}), ...(f ? { f } : {}), ...(b ? { b } : {}), ...(g ? { g } : {}) });
       if (recs.length >= 200) break;
     }
     if (recs.length) clean[k] = recs;

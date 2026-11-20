@@ -51,8 +51,11 @@ const Spark = () => (
   <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.9 5.6L19.5 9.5l-5.6 1.9L12 17l-1.9-5.6L4.5 9.5l5.6-1.9L12 2zM19 14l.9 2.6L22.5 17.5l-2.6.9L19 21l-.9-2.6-2.6-.9 2.6-.9L19 14z" /></svg>
 );
 
-const chrono = (recs: Rec[]) => recs.map((r, i) => ({ r, i })).sort((a, b) => a.r.d.localeCompare(b.r.d) || a.i - b.i).map(x => x.r);
+const chrono = (recs: Rec[]) => recs.map((r, i) => ({ r, i })).sort((a, b) => a.r.d.localeCompare(b.r.d) || (a.r.h || '').localeCompare(b.r.h || '') || a.i - b.i).map(x => x.r);
 const top = (recs: Rec[]): Level | null => (recs.length ? recs.reduce((m, r) => (rank[r.l] > rank[m] ? r.l : m), recs[0].l) : null);
+
+const nowHM = () => { const n = new Date(); return `${String(n.getHours()).padStart(2, '0')}:${String(n.getMinutes()).padStart(2, '0')}`; };
+const okHM = (v: string) => (/^([01]\d|2[0-3]):[0-5]\d$/.test(v) ? v : undefined);
 
 type Filter = 'all' | 'todo' | 'done';
 
@@ -226,7 +229,7 @@ export default function Checklist({
   const [sel, setSel] = useState<Set<string>>(new Set());
   const [bundo, setBundo] = useState<{ text: string; recs: { item: string; id: string }[] } | null>(null);
   const [editId, setEditId] = useState<string | null>(null);
-  const [ed, setEd] = useState<{ l: Level; d: string; m: string }>({ l: 'O', d: today(), m: '' });
+  const [ed, setEd] = useState<{ l: Level; d: string; h: string; m: string }>({ l: 'O', d: today(), h: '', m: '' });
   const [delId, setDelId] = useState<string | null>(null);
 
   useEffect(() => { setAi(null); }, [sheet?.id]);
@@ -371,8 +374,11 @@ export default function Checklist({
     const p = (n: number) => String(n).padStart(2, '0');
     return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
   };
+  const [time, setTime] = useState('');
+  useEffect(() => { setTime(date === today() ? nowHM() : ''); }, [date, sheet?.id, selMode]);
   const useDate = date;
   const dateStep = () => (
+    <div className="dts">
     <div className="dstep">
       <button type="button" aria-label="이전 날" onClick={() => setDate(addDays(date, -1))}>
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M15 5l-7 7 7 7" /></svg>
@@ -385,6 +391,8 @@ export default function Checklist({
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M9 5l7 7-7 7" /></svg>
       </button>
     </div>
+    <input className="tmi" type="time" aria-label="시간" value={time} onChange={e => setTime(e.target.value)} />
+    </div>
   );
   const outside = practiceDays.size > 0 && !practiceDays.has(useDate);
   const [flash, setFlash] = useState<Level | null>(null);
@@ -395,9 +403,10 @@ export default function Checklist({
   }, [flash]);
   const add = (l: Level) => {
     if (!sheet || !useDate) return;
-    const rec: Rec = { id: newId(), d: useDate, l, ...(memo.trim() ? { m: memo.trim().slice(0, 200) } : {}) };
+    const rec: Rec = { id: newId(), d: useDate, l, ...(okHM(time) ? { h: okHM(time) } : {}), ...(memo.trim() ? { m: memo.trim().slice(0, 200) } : {}) };
     mutate(r => ({ ...r, [sheet.id]: [...(r[sheet.id] || []), rec] }));
     setMemo('');
+    setTime(useDate === today() ? nowHM() : '');
     setUndo({ id: rec.id, text: `${lbl(l)} ${md(rec.d)} 기록됨` });
     setFlash(l);
     const lr = { subject: key, id: sheet.id };
@@ -423,7 +432,7 @@ export default function Checklist({
   };
   const addBatch = (l: Level) => {
     if (!sel.size || !useDate) return;
-    const made = Array.from(sel).map(item => ({ item, rec: { id: newId(), d: useDate, l } as Rec }));
+    const made = Array.from(sel).map(item => ({ item, rec: { id: newId(), d: useDate, l, ...(okHM(time) ? { h: okHM(time) } : {}) } as Rec }));
     mutate(r => {
       const next = { ...r };
       made.forEach(x => { next[x.item] = [...(next[x.item] || []), x.rec]; });
@@ -452,14 +461,14 @@ export default function Checklist({
   }, [bundo]);
   const startEdit = (r: Rec) => {
     setEditId(r.id);
-    setEd({ l: r.l, d: r.d, m: r.m || '' });
+    setEd({ l: r.l, d: r.d, h: r.h || '', m: r.m || '' });
     setDelId(null);
   };
   const saveEdit = () => {
     if (!sheet || !editId || !ed.d) return;
     mutate(r => ({
       ...r,
-      [sheet.id]: (r[sheet.id] || []).map(x => (x.id === editId ? { id: x.id, d: ed.d, l: ed.l, ...(ed.m.trim() ? { m: ed.m.trim().slice(0, 200) } : {}), ...(x.a ? { a: x.a } : {}), ...(x.f ? { f: x.f } : {}), ...(x.b ? { b: x.b } : {}), ...(x.g ? { g: x.g } : {}) } : x)),
+      [sheet.id]: (r[sheet.id] || []).map(x => (x.id === editId ? { id: x.id, d: ed.d, l: ed.l, ...(okHM(ed.h) ? { h: okHM(ed.h) } : {}), ...(ed.m.trim() ? { m: ed.m.trim().slice(0, 200) } : {}), ...(x.a ? { a: x.a } : {}), ...(x.f ? { f: x.f } : {}), ...(x.b ? { b: x.b } : {}), ...(x.g ? { g: x.g } : {}) } : x)),
     }));
     setEditId(null);
   };
@@ -805,6 +814,7 @@ tr { break-inside: avoid; }
                       <p className="pnote">{PNOTE}</p>
                       <div className="frow">
                         <input type="date" value={ed.d} onChange={e => setEd(x => ({ ...x, d: e.target.value }))} />
+                        <input type="time" value={ed.h} onChange={e => setEd(x => ({ ...x, h: e.target.value }))} />
                         <input className="grow" value={ed.m} onChange={e => setEd(x => ({ ...x, m: e.target.value }))} placeholder="메모" maxLength={200} />
                       </div>
                       <div className="acts">
@@ -822,7 +832,7 @@ tr { break-inside: avoid; }
                     <div key={r.id}>
                     <div className="hr">
                       <button type="button" className="hmain" onClick={() => startEdit(r)}>
-                        <span className="hd">{md(r.d)}{noteDates.has(r.d) ? <i> · 메모</i> : null}</span>
+                        <span className="hd">{md(r.d)}{r.h ? ` ${r.h}` : ''}{noteDates.has(r.d) ? <i> · 메모</i> : null}</span>
                         <b className={`lb ${r.l}`}>{lbl(r.l)}</b>
                         {r.m && <span className="hm">{r.m}</span>}
                         {r.a && <span className="hm ha">{r.a}</span>}
@@ -1017,6 +1027,8 @@ tr { break-inside: avoid; }
         .pc .q.P { background: color-mix(in srgb, var(--p) 20%, transparent); color: var(--p); }
         .pc .q.D { background: color-mix(in srgb, var(--d) 20%, transparent); color: var(--d); }
         .pc .when { display: flex; justify-content: space-between; align-items: center; margin: 0 0 10px; }
+        .pc .dts { display: flex; align-items: center; gap: 6px; }
+        .pc .tmi { border: 0; background: var(--tint); color: var(--text); border-radius: 999px; padding: 5px 10px; font: inherit; font-size: 13px; font-weight: 700; width: 92px; }
         .pc .dstep { display: flex; align-items: center; background: var(--tint); border-radius: 999px; }
         .pc .dstep button { border: 0; background: none; color: var(--sub-text); display: flex; padding: 6px 8px; cursor: pointer; }
         .pc .dstep button:disabled { opacity: .3; cursor: default; }
