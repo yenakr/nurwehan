@@ -174,7 +174,6 @@ const VCOLS: { key: string; label: string; ph: string }[] = [
   { key: 'pain', label: '통증', ph: '0' },
 ];
 const SLOTS = ['08:00', '12:00', '16:00', '20:00'];
-const NORMAL: Row = { bp: '120/80', hr: '72', rr: '18', bt: '36.5', spo2: '98', pain: '0' };
 
 const BULK_CSS = `
         .vbp { border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin: 6px 0 10px; display: flex; flex-direction: column; gap: 8px; }
@@ -220,8 +219,6 @@ export function VitalsBulk({ onApply }: { onApply: (rows: Row[]) => void }) {
       </div>
       <div className="bar">
         <button type="button" onClick={() => setRows(rs => [...rs, { time: '' }])}>+ 시간</button>
-        <button type="button" onClick={() => setRows(rs => rs.map((r, i) => (i === 0 ? r : { ...r, ...Object.fromEntries(VCOLS.map(c => [c.key, rs[0][c.key] || ''])) })))}>첫 행 복사</button>
-        <button type="button" onClick={() => setRows(rs => rs.map(r => ({ ...r, ...NORMAL })))}>정상값</button>
         <button type="button" onClick={() => setOpen(false)}>닫기</button>
         <button type="button" className="ok" onClick={apply}>추가</button>
       </div>

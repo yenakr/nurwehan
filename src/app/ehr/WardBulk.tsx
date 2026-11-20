@@ -15,7 +15,6 @@ const COLS: { key: string; label: string; ph: string }[] = [
   { key: 'spo2', label: 'SpO₂', ph: '98' },
   { key: 'pain', label: '통증', ph: '0' },
 ];
-const NORMAL: Row = { bp: '120/80', hr: '72', rr: '18', bt: '36.5', spo2: '98', pain: '0' };
 const nowHM = () => { const d = new Date(); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
 
 export default function WardBulk({ pts, onClose }: { pts: BulkPt[]; onClose: () => void }) {
@@ -68,7 +67,6 @@ export default function WardBulk({ pts, onClose }: { pts: BulkPt[]; onClose: () 
       <div className="bar">
         <b style={{ fontSize: 14 }}>활력징후 일괄 입력</b>
         <input value={time} onChange={e => setTime(e.target.value)} aria-label="측정 시간" />
-        <button type="button" onClick={() => setVals(Object.fromEntries(pts.map(p => [p.key, { ...NORMAL }])))}>전체 정상값</button>
         <button type="button" onClick={() => setVals({})}>비우기</button>
       </div>
       <div className="sc">
