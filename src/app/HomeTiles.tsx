@@ -45,11 +45,14 @@ function Tile({
 }) {
   return (
     <Link href={href} className={`card ${s.tile}`}>
-      <div className={`${s.sq} ${s[kind]}`}>
-        {ICONS[kind]}
-        <span>{label}</span>
+      <div className={s.head}>
+        <div className={`${s.ic} ${s[kind]}`}>{ICONS[kind]}</div>
+        <span className={s.title}>{label}</span>
+        <svg className={s.chev} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+          <path d="M9 6l6 6-6 6" />
+        </svg>
       </div>
-      {stats.length > 0 ? (
+      {stats.length > 0 && (
         <div className={s.stats}>
           {stats.map(st => (
             <div key={st.label} className={s.stat}>
@@ -58,8 +61,6 @@ function Tile({
             </div>
           ))}
         </div>
-      ) : (
-        <div className={s.go}>바로가기 →</div>
       )}
     </Link>
   );
@@ -69,7 +70,7 @@ export default function HomeTiles({ data }: { data: HomeTilesData }) {
   return (
     <div className={s.list}>
       <Tile href="/quiz" kind="quiz" label="QUIZ" stats={data.quiz} />
-      <Tile href="/clinical" kind="clinical" label="임상실습" stats={data.clinical} />
+      <Tile href="/clinical" kind="clinical" label="실습 노트" stats={data.clinical} />
       <Tile href="/open-lab" kind="lab" label="OPEN LAB" stats={data.lab} />
     </div>
   );
