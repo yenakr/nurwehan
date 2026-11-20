@@ -10,6 +10,7 @@ type Item = {
   id: string; ward: string | null; bed: string | null; sampleKey: string | null;
   ptNo: string | null; name: string | null; ageSex: string | null; dx: string | null; doctor: string | null; admit: string | null;
   dept: string | null; visitTime: string | null; vstatus: string | null; ktas: string | null; zone: string | null; cc: string | null; discharged: string | null;
+  submitted?: string | null; reviewed?: string | null;
 };
 type P = Partial<Omit<Item, 'id'>>;
 
@@ -183,7 +184,7 @@ export default function EhrHome({ cases, initialView }: { cases: Item[]; initial
                     </tr>
                   );
                 }
-                const nm = busy === e.key ? '…' : p.name;
+                const nm = busy === e.key ? '…' : <>{p.name}{e.saved?.submitted && <span className={`sbd ${e.saved.reviewed ? 'rv' : ''}`}>{e.saved.reviewed ? '확인' : '제출'}</span>}</>;
                 return (
                   <tr key={e.key} onClick={() => open(e.key, e.saved, e.make)}>
                     {view.kind === 'ward' && (
@@ -257,6 +258,8 @@ export default function EhrHome({ cases, initialView }: { cases: Item[]; initial
         .ehrWard .kt { display: inline-block; min-width: 22px; text-align: center; border-radius: 4px; padding: 1px 6px; font-weight: 800; color: #fff; background: #94a3b8; }
         .ehrWard .k1 { background: #dc2626; } .ehrWard .k2 { background: #ea580c; } .ehrWard .k3 { background: #ca8a04; }
         .ehrWard .k4 { background: #16a34a; } .ehrWard .k5 { background: #64748b; }
+        .ehrWard .sbd { margin-left: 6px; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 4px; background: #e8f0fb; color: #1d4e89; }
+        .ehrWard .sbd.rv { background: #e3f3e8; color: #2f7a46; }
         .ehrWard .err { color: #b91c1c; font-size: 0.8125rem; margin-top: 10px; }
       `}</style>
     </div>

@@ -20,7 +20,7 @@ export default async function EhrCasePage({ params }: { params: Promise<{ id: st
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '20px 0' }}>
       <div className="container" style={{ maxWidth: '1240px' }}>
-        <EhrEditor id={row.id} initialTitle={row.title} subject={row.subject} initial={data} ai={ai} />
+        <EhrEditor id={row.id} initialTitle={row.title} subject={row.subject} initial={data} ai={ai} userName={user.name} />
       </div>
     </main>
   );
