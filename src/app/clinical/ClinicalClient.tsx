@@ -1,5 +1,6 @@
 'use client';
 
+import Guide from './Guide';
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import MySchedule, { type ScheduleItem } from './MySchedule';
@@ -70,12 +71,15 @@ export default function ClinicalClient({ schedule, user, progress, aiOn, canChec
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-      <div className="mtabs">
-        {TABS.filter(t => t.id !== 'check' || canCheck).map(t => (
-          <button key={t.id} type="button" onClick={() => setTab(t.id)} className={tab === t.id ? 'on' : ''}>
-            {t.label}
-          </button>
-        ))}
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="mtabs" style={{ flex: 1 }}>
+          {TABS.filter(t => t.id !== 'check' || canCheck).map(t => (
+            <button key={t.id} type="button" onClick={() => setTab(t.id)} className={tab === t.id ? 'on' : ''}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+        <Guide />
       </div>
 
       {tab === 'mine' && (user ? <MySchedule schedule={schedule} me={user.name} noteDates={noteDates} onPickDay={pickDay} /> : (
