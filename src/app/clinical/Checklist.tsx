@@ -657,7 +657,7 @@ tr { break-inside: avoid; }
 
       {!sum && !selMode && filter === 'all' && !query && (resume || todoItems.length > 0) && (
         <section className="grp today">
-          <div className="gh"><b>오늘 살펴볼까요?</b></div>
+          <div className="th"><b>오늘 살펴볼까요?</b><em>추천</em></div>
           {resume && (
             <button type="button" className="row" onClick={() => {
               setCourse(resume.sb.course);
@@ -945,7 +945,11 @@ tr { break-inside: avoid; }
         .pc .sumask { flex-shrink: 0; display: flex; align-items: center; gap: 5px; border: 0; background: color-mix(in srgb, var(--primary) 12%, transparent); color: var(--primary); border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
         .pc .row.hit { animation: pchit 1.6s ease-out; }
         @keyframes pchit { 0%, 60% { background: color-mix(in srgb, var(--primary) 18%, transparent); } 100% { background: transparent; } }
-        .pc .today .gh .pgb { display: none; }
+        .pc .today { margin: 4px 0 14px; padding: 10px 12px 6px; border-radius: 14px; background: color-mix(in srgb, var(--primary) 7%, transparent); border: 1px solid color-mix(in srgb, var(--primary) 22%, transparent); }
+        .pc .today .th { display: flex; align-items: center; gap: 8px; padding: 2px 2px 6px; font-size: 14px; }
+        .pc .today .th em { font-style: normal; font-size: 11px; font-weight: 700; color: var(--primary); background: color-mix(in srgb, var(--primary) 14%, transparent); border-radius: 999px; padding: 2px 8px; }
+        .pc .today .row { border-bottom: 1px solid color-mix(in srgb, var(--primary) 14%, transparent); }
+        .pc .today .row:last-child { border-bottom: 0; }
         .pc b.em { color: var(--primary); font-weight: 800; }
         .pc mark.hl { background: color-mix(in srgb, var(--primary) 20%, transparent); color: inherit; border-radius: 3px; padding: 0 1px; }
         .pc .dots { display: inline-flex; gap: 4px; align-items: center; height: 1em; }
