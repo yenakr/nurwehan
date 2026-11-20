@@ -527,10 +527,10 @@ export default function Checklist({
 </section>`;
     };
     const title = `체크리스트_${list.length > 1 ? courseLabel : list[0].sub}${userName ? '_' + userName : ''}`;
-    const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>${esc(title)}</title><style>
+    const html = `<!doctype html><html lang="ko"><head><meta charset="utf-8"><meta name="viewport" content="width=794"><title>${esc(title)}</title><style>
 @page { size: A4; margin: 12mm; }
 * { box-sizing: border-box; }
-body { margin: 0; padding: 16px; font-family: 'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',sans-serif; color: #000; background: #fff; font-size: 10.5px; }
+body { margin: 0; font-family: 'Noto Sans KR','Malgun Gothic','Apple SD Gothic Neo',sans-serif; color: #000; background: #fff; font-size: 10.5px; }
 h1 { font-size: 16px; margin: 0 0 6px; }
 .meta { margin: 6px 0; font-size: 10.5px; text-align: right; }
 table { width: 100%; border-collapse: collapse; table-layout: fixed; }
@@ -546,6 +546,11 @@ tr { break-inside: avoid; }
 .brk { break-after: page; }
 .sign { display: flex; justify-content: flex-end; gap: 28px; margin-top: 14px; font-size: 11px; }
 .sign span { display: inline-block; min-width: 150px; border-bottom: 1px solid #000; margin-left: 6px; }
+@media screen {
+  body { background: #d9d9d9; padding: 12px 0; }
+  section { width: 210mm; min-height: 297mm; margin: 0 auto 12px; padding: 12mm; background: #fff; box-shadow: 0 1px 6px rgba(0,0,0,.25); }
+}
+@media print { section { padding: 0; } }
 </style></head><body>${list.map((x, i) => page(x, i === list.length - 1)).join('')}</body></html>`;
     const w = window.open('', '_blank');
     if (!w) { setPopup(true); setTimeout(() => setPopup(false), 3000); return; }
