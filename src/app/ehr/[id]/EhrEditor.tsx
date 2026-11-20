@@ -8,7 +8,7 @@ import { PHRASES, CARE_DX } from '../phrases';
 import { VIEW_LIST } from '../samples';
 import { ALLERGIES, DEPTS, DOCTORS, WARD_OPTIONS, bedOptions } from '../directory';
 import { confirmDialog, notify } from '@/components/Dialog';
-import { VitalsExtra, IoTotals, printChart, useDictation } from './EhrExtras';
+import { VitalsExtra, VitalsBulk, IoTotals, printChart, useDictation } from './EhrExtras';
 import FormPanel, { FORMS, FORM_CSS, type FormKey } from './EhrForms';
 
 type ListKey =
@@ -849,6 +849,7 @@ export default function EhrEditor({
             {tab === 'vitals' && (
               <>
                 <h4 className="ph">활력징후</h4>
+                <VitalsBulk onApply={rs => setData(d => ({ ...d, vitals: [...d.vitals, ...rs] }))} />
                 {tbl('vitals')}
                 <VitalsExtra rows={data.vitals} />
                 <h4 className="ph">섭취/배설 (I&amp;O)</h4>
