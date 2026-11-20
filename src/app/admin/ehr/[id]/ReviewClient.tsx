@@ -20,6 +20,7 @@ const SECTIONS = ([
   { key: 'consent', label: '동의서' },
   { key: 'surgery', label: '수술기록' },
   { key: 'memos', label: '메모·인수인계' },
+  { key: 'mar', label: '투약 수행' },
 ]).filter(s => !!(COLS as Record<string, unknown>)[s.key]) as { key: keyof typeof COLS; label: string }[];
 
 const th: CSSProperties = { textAlign: 'left', padding: '6px 8px', borderBottom: '1px solid var(--border)', color: 'var(--sub-text)', fontWeight: 600, whiteSpace: 'nowrap' };
