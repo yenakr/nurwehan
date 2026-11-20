@@ -23,6 +23,13 @@ const label = (s: string) => {
 };
 const MAX = 3000;
 
+// AI 답변의 **강조**를 남색 굵은 글씨로 보여 준다
+const Rich = ({ text }: { text: string }) => (
+  <>
+    {text.split(/\*\*(.+?)\*\*/g).map((part, i) => (i % 2 ? <b key={i} style={{ color: 'var(--primary)', fontWeight: 800 }}>{part}</b> : part.replace(/\*\*/g, '')))}
+  </>
+);
+
 const addDay = (s: string, n: number) => {
   const [y, m, d] = s.split('-').map(Number);
   const dt = new Date(y, m - 1, d + n);
@@ -101,6 +108,26 @@ export default function ClinicalNotes({
     );
     return out;
   }, [progress, date]);
+  // 이날 체크리스트 기록을 시간순으로(질문 답변·AI 답장 포함)
+  const entries = useMemo(() => {
+    const out: { id: string; h: string; label: string; t: string; m?: string; a?: string; f?: string; b?: string; g?: string }[] = [];
+    SUBJECTS.forEach(sub =>
+      sub.groups.forEach(g =>
+        g.items.forEach(it => {
+          (progress[sub.key]?.r?.[it.id] || []).forEach(r => {
+            if (r.d !== date) return;
+            out.push({ id: r.id, h: r.h || '', label: LEVELS.find(x => x.k === r.l)?.label ?? '', t: it.t, m: r.m, a: r.a, f: r.f, b: r.b, g: r.g });
+          });
+        })
+      )
+    );
+    return out.sort((x, y) => (x.h || '99:99').localeCompare(y.h || '99:99'));
+  }, [progress, date]);
+  const [openE, setOpenE] = useState<Set<string>>(new Set());
+  const insertOne = (e: (typeof entries)[number]) => {
+    const line = [`${e.label}: ${e.t}${e.m ? ` - ${e.m}` : ''}`, ...(e.a ? [`  내 답: ${e.a}`] : []), ...(e.b ? [`  내 답: ${e.b}`] : [])].join('\n');
+    setContent(c => `${c}${c && !c.endsWith('\n') ? '\n' : ''}${line}\n`.slice(0, MAX));
+  };
   // 이날 기록으로 메모 초안을 만든다: 한 것 / 배운 점(내가 쓴 답) / 궁금한 점. 이미 메모에 있는 항목은 제외
   const missing = checked.filter(c => !content.includes(c.t));
   const insert = () => {
@@ -183,17 +210,38 @@ export default function ClinicalNotes({
             />
           ) : null}
         </div>
-        {checked.length > 0 && (
-          <div style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '10px 12px', marginBottom: 10, fontSize: '0.8125rem' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 }}>
+        {entries.length > 0 && (
+          <div style={{ border: '1px solid var(--border)', borderRadius: 10, padding: '10px 12px', marginBottom: 10, fontSize: '0.8125rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 4 }}>
               <b>이날 체크리스트</b>
-              <button className="btn-outline" onClick={insert} disabled={!missing.length} style={{ padding: '3px 10px', fontSize: '0.75rem' }}>메모에 넣기</button>
+              <button className="btn-outline" onClick={insert} disabled={!missing.length} style={{ padding: '3px 10px', fontSize: '0.75rem' }}>전체 메모에 넣기</button>
             </div>
-            {checked.map((c, i) => (
-              <div key={i} style={{ lineHeight: 1.7 }}>
-                <span style={{ color: 'var(--sub-text)', marginRight: 8 }}>{c.l}</span>{c.t}
-              </div>
-            ))}
+            {entries.map(e => {
+              const more = !!(e.a || e.f || e.b || e.g);
+              const open = openE.has(e.id);
+              return (
+                <div key={e.id} style={{ padding: '8px 0', borderTop: '1px solid var(--border)' }}>
+                  <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
+                    <span style={{ color: 'var(--sub-text)', minWidth: 38, fontVariantNumeric: 'tabular-nums' }}>{e.h || '--:--'}</span>
+                    <span style={{ fontWeight: 700, color: 'var(--primary)' }}>{e.label}</span>
+                    <span style={{ flex: 1, minWidth: 0 }}>{e.t}</span>
+                    {more && (
+                      <button type="button" onClick={() => setOpenE(p => { const n = new Set(p); if (n.has(e.id)) n.delete(e.id); else n.add(e.id); return n; })} style={{ border: 0, background: 'none', color: 'var(--sub-text)', fontSize: '0.75rem', cursor: 'pointer', padding: '2px 4px' }}>{open ? '접기' : '대화'}</button>
+                    )}
+                    <button type="button" onClick={() => insertOne(e)} style={{ border: 0, background: 'none', color: 'var(--primary)', fontSize: '0.75rem', fontWeight: 700, cursor: 'pointer', padding: '2px 4px' }}>넣기</button>
+                  </div>
+                  {e.m && <div style={{ marginLeft: 46, marginTop: 2, lineHeight: 1.5 }}>{e.m}</div>}
+                  {open && (
+                    <div style={{ marginLeft: 46, marginTop: 6, display: 'flex', flexDirection: 'column', gap: 6, lineHeight: 1.55 }}>
+                      {e.a && <div><span style={{ color: 'var(--sub-text)' }}>내 답 </span>{e.a}</div>}
+                      {e.f && <div><span style={{ color: 'var(--sub-text)' }}>AI </span><Rich text={e.f} /></div>}
+                      {e.b && <div><span style={{ color: 'var(--sub-text)' }}>내 답 </span>{e.b}</div>}
+                      {e.g && <div><span style={{ color: 'var(--sub-text)' }}>AI </span><Rich text={e.g} /></div>}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         )}
         <textarea
