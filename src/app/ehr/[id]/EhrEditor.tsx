@@ -11,6 +11,7 @@ import { confirmDialog, notify } from '@/components/Dialog';
 import { VitalsExtra, VitalsBulk, IoBulk, LabSets, IoTotals, printChart, useDictation } from './EhrExtras';
 import AiMark from '@/components/AiMark';
 import { NANDA, dxIssues } from '../nanda';
+import ConsentPanel from './EhrConsent';
 import VisitStrip from './EhrVisit';
 import RegisterCard from './EhrRegister';
 import MarPanel from './EhrMar';
@@ -109,6 +110,9 @@ export const COLS: Record<ListKey, Col[]> = {
     { key: 'name', label: '동의서명', w: 240 },
     { key: 'date', label: '일자', w: 100 },
     { key: 'st', label: '상태', w: 100, type: 'select', opts: ['', '미작성', '작성', '서명완료', '거부'] },
+    { key: 'doctor', label: '설명 의사', w: 90 },
+    { key: 'signer', label: '서명자', w: 90 },
+    { key: 'chk', label: '간호 확인', w: 90 },
     { key: 'note', label: '비고', w: 240 },
   ],
   surgery: [
@@ -940,10 +944,11 @@ export default function EhrEditor({
               return <FormPanel kind={f.key as FormKey} rows={data.forms?.[f.key] || []} onChange={rows => setData(d => ({ ...d, forms: { ...(d.forms || {}), [f.key]: rows } }))} />;
             })()}
 
+            {tab === 'consent' && <ConsentPanel rows={data.consent} dept={info.dept} onChange={rs => setData(d => ({ ...d, consent: rs }))} />}
             {tab === 'mar' && <MarPanel data={data} author={userName || ''} onChange={(orders, mar) => setData(d => ({ ...d, orders, mar }))} />}
             {tab === 'memos' && <MemoPanel rows={data.memos} author={userName || ''} onChange={rs => setData(d => ({ ...d, memos: rs }))} />}
             {tab === 'labs' && <LabSets onApply={rs => setData(d => ({ ...d, labs: [...d.labs, ...rs] }))} />}
-            {!isForm(tab) && tab !== 'notes' && tab !== 'care' && tab !== 'orders' && tab !== 'admission' && tab !== 'discharge' && tab !== 'nurseinfo' && tab !== 'vitals' && tab !== 'memos' && tab !== 'mar' && tbl(tab)}
+            {!isForm(tab) && tab !== 'notes' && tab !== 'care' && tab !== 'orders' && tab !== 'admission' && tab !== 'discharge' && tab !== 'nurseinfo' && tab !== 'vitals' && tab !== 'memos' && tab !== 'mar' && tab !== 'consent' && tbl(tab)}
           </section>
         </div>
       </div>
