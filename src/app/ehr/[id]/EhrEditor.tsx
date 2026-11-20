@@ -6,7 +6,7 @@ import type { ChartData, Row } from '../types';
 import { PHRASES, CARE_DX } from '../phrases';
 import { VIEW_LIST } from '../samples';
 import { ALLERGIES, DEPTS, DOCTORS, WARD_OPTIONS, bedOptions } from '../directory';
-import { confirmDialog } from '@/components/Dialog';
+import { confirmDialog, notify } from '@/components/Dialog';
 
 type ListKey =
   | 'progress' | 'vitals' | 'io' | 'labs' | 'notes' | 'care'
@@ -31,7 +31,7 @@ const MENU: MenuNode[] = [
 
 type Col = { key: string; label: string; w: number; type?: 'area' | 'select'; opts?: string[]; ph?: string };
 
-const COLS: Record<ListKey, Col[]> = {
+export const COLS: Record<ListKey, Col[]> = {
   progress: [
     { key: 'time', label: '기록일시', w: 130, ph: '2026-11-10 10:00' },
     { key: 'dept', label: '진료과', w: 60 },
@@ -351,7 +351,9 @@ export default function EhrEditor({
   initialTitle,
   subject,
   initial,
+  ai,
 }: {
+  ai: boolean;
   id: string;
   initialTitle: string;
   subject: string | null;
@@ -368,12 +370,19 @@ export default function EhrEditor({
   const [editInfo, setEditInfo] = useState(false); // 기본정보는 수정 버튼을 눌러야 편집
   const [status, setStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const first = useRef(true);
+  const [aiOn, setAiOn] = useState(true);
+  const [fb, setFb] = useState('');
+  const [fbBusy, setFbBusy] = useState(false);
+  useEffect(() => {
+    try { setAiOn(localStorage.getItem('ehr:ai') !== '0'); } catch {}
+  }, []);
 
   useEffect(() => {
     if (first.current) {
       first.current = false;
       return;
     }
+    if (data.info.submitted) return; // 제출한 차트는 저장하지 않는다
     setStatus('saving');
     const t = setTimeout(async () => {
       try {
@@ -400,6 +409,35 @@ export default function EhrEditor({
   }, []);
 
   const info = data.info;
+  const locked = !!info.submitted;
+  const toggleAi = () => {
+    const v = !aiOn;
+    setAiOn(v);
+    try { localStorage.setItem('ehr:ai', v ? '1' : '0'); } catch {}
+  };
+  const askFb = async () => {
+    setFbBusy(true);
+    try {
+      // 방금 쓴 내용이 저장된 뒤에 본다
+      await fetch(`/api/ehr/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, subject, data }) });
+      const r = await fetch(`/api/ehr/${id}/feedback`, { method: 'POST' });
+      const j = await r.json().catch(() => ({}));
+      if (r.ok) setFb(j.text);
+      else notify(r.status === 400 ? '간호기록이나 간호과정을 먼저 써 주세요.' : r.status === 429 ? '오늘 피드백 횟수를 다 썼어요.' : '피드백을 받지 못했어요.');
+    } finally { setFbBusy(false); }
+  };
+  const submit = async () => {
+    if (!(await confirmDialog('제출하면 교수님이 볼 수 있고, 확인 전까지만 취소할 수 있어요. 제출할까요?'))) return;
+    const sv = await fetch(`/api/ehr/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, subject, data }) });
+    const r = sv.ok ? await fetch(`/api/ehr/${id}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ on: true }) }) : sv;
+    if (r.ok) { setData(d => ({ ...d, info: { ...d.info, submitted: new Date().toISOString() } })); notify('제출했어요.'); }
+    else notify('제출하지 못했어요.');
+  };
+  const unsubmit = async () => {
+    const r = await fetch(`/api/ehr/${id}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ on: false }) });
+    if (r.ok) setData(d => { const { submitted: _s, ...rest } = d.info; return { ...d, info: rest }; });
+    else notify('교수님이 이미 확인한 차트는 고칠 수 없어요.');
+  };
   const setInfo = (k: string, v: string) => setData(d => ({ ...d, info: { ...d.info, [k]: v } }));
   type AnyList = ListKey | 'orders';
   const setCell = (lk: AnyList, i: number, k: string, v: string) =>
@@ -519,7 +557,12 @@ export default function EhrEditor({
       <div className="bar">
         <input className="ttl" value={title} onChange={e => setTitle(e.target.value)} aria-label="제목" />
         <span className={`st ${status}`}>{status === 'saved' ? '저장됨' : status === 'saving' ? '저장 중…' : '저장 실패'}</span>
-        <button type="button" className="dis" onClick={toggleDischarge}>
+        {ai && !locked && aiOn && <button type="button" className="aib" onClick={askFb} disabled={fbBusy}>{fbBusy ? '살펴보는 중' : 'AI 피드백'}</button>}
+        {ai && !locked && <label className="aisw"><input type="checkbox" checked={aiOn} onChange={toggleAi} />AI</label>}
+        {locked
+          ? (!info.reviewed && <button type="button" className="dis" onClick={unsubmit}>제출 취소</button>)
+          : <button type="button" className="subm" onClick={submit}>제출</button>}
+        <button type="button" className="dis" onClick={toggleDischarge} disabled={locked}>
           {info.discharged ? '퇴원 취소' : '퇴원'}
         </button>
         <button
@@ -535,6 +578,11 @@ export default function EhrEditor({
         </button>
       </div>
 
+      {locked && <div className="lkb">{info.reviewed ? '교수님이 확인했어요' : '제출했어요. 교수님 확인 전에는 제출 취소로 고칠 수 있어요'}</div>}
+      {info.comment && <div className="cmt"><b>교수님 의견</b><p>{info.comment}</p></div>}
+      {fb && <div className="cmt ai"><b>AI 피드백</b><button type="button" className="cx" aria-label="닫기" onClick={() => setFb('')}>&times;</button><p>{fb}</p></div>}
+
+      <fieldset disabled={locked} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
       <div className="shell">
         <div className="top">
           <div className="wardSel" ref={wardRef}>
@@ -757,6 +805,7 @@ export default function EhrEditor({
           </section>
         </div>
       </div>
+      </fieldset>
 
       <style jsx global>{`
         .ehr { --nv1: #1c2f4b; --nv2: #13233a; --tl: #cfe5e6; --ln: #cfd5dc; }
@@ -798,6 +847,16 @@ export default function EhrEditor({
         .ehr .sd input:focus { outline: none; background: rgba(255,255,255,0.1); }
         .ehr .dcb { background: #475569; color: #e2e8f0; font-weight: 700; font-size: 11.5px; padding: 4px 8px; border-radius: 4px; text-align: center; }
         .ehr .dis.del { color: #b91c1c; }
+        .ehr .subm { border: 0; border-radius: 999px; background: var(--primary); color: #fff; font: inherit; font-size: 0.75rem; font-weight: 700; padding: 6px 14px; cursor: pointer; white-space: nowrap; }
+        .ehr .aib { border: 1px solid var(--primary); border-radius: 999px; background: none; color: var(--primary); font: inherit; font-size: 0.75rem; font-weight: 700; padding: 5px 12px; cursor: pointer; white-space: nowrap; }
+        .ehr .aib:disabled { opacity: .6; }
+        .ehr .aisw { display: flex; align-items: center; gap: 4px; font-size: 0.75rem; color: var(--sub-text); cursor: pointer; }
+        .ehr .lkb { margin-bottom: 8px; padding: 8px 12px; border-radius: 8px; background: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--primary); font-size: 0.8125rem; font-weight: 700; }
+        .ehr .cmt { position: relative; margin-bottom: 8px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--primary); background: var(--white); }
+        .ehr .cmt.ai { border-color: var(--line); background: color-mix(in srgb, var(--primary) 6%, transparent); }
+        .ehr .cmt b { font-size: 0.8125rem; color: var(--primary); }
+        .ehr .cmt p { margin: 6px 0 0; font-size: 0.875rem; line-height: 1.7; white-space: pre-wrap; }
+        .ehr .cmt .cx { position: absolute; top: 6px; right: 8px; border: 0; background: none; font-size: 1.25rem; color: var(--sub-text); cursor: pointer; }
         .ehr .alg { background: #7f1d1d; color: #fee2e2; font-weight: 700; font-size: 11.5px; padding: 4px 8px; border-radius: 4px; text-align: center; }
 
         .ehr .main { background: #f1f3f5; padding: 10px; min-width: 0; }
