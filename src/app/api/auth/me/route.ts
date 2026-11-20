@@ -1,12 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/prisma';
 import { getCurrentUser } from '@/lib/auth';
+import { hasEhrAccess } from '@/lib/ehr-access';
 
 export async function GET() {
   try {
     const user = await getCurrentUser();
     // Always return an object with a "user" key (null if not authenticated)
-    return NextResponse.json({ user: user ?? null });
+    return NextResponse.json({ user: user ? { ...user, ehr: await hasEhrAccess(user) } : null });
   } catch (error) {
     console.error('Get profile error:', error);
     return NextResponse.json({ user: null }, { status: 500 });

@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { SAMPLES, WARDS, bedLabel, roomNo } from './samples';
 import { emptyChart, migrate, shiftChart } from './types';
 import { newPtNo } from './directory';
+import AiMark from '@/components/AiMark';
 import WardBulk, { type BulkPt } from './WardBulk';
 
 type Item = {
@@ -52,7 +53,7 @@ const TOP: { label: string; idx: number[] }[] = (() => {
   return out;
 })();
 
-export default function EhrHome({ cases, initialView, ai }: { cases: Item[]; initialView?: string; ai?: boolean }) {
+export default function EhrHome({ cases, initialView, ai, aiLeft }: { cases: Item[]; initialView?: string; ai?: boolean; aiLeft?: number }) {
   const router = useRouter();
   const [vi, setVi] = useState(() => Math.max(0, VIEWS.findIndex(v => v.name === initialView)));
   const [openG, setOpenG] = useState<string | null>(null);
@@ -189,7 +190,7 @@ export default function EhrHome({ cases, initialView, ai }: { cases: Item[]; ini
           </nav>
           {view.kind === 'ward' && <button type="button" className="aipt" style={{ marginLeft: 'auto' }} onClick={() => setBulk(b => !b)}>활력징후 일괄</button>}
           {view.kind === 'ward' && <button type="button" className="aipt" onClick={() => router.push(`/ehr/handover?ward=${encodeURIComponent(view.name)}`)}>인수인계지</button>}
-          {ai && view.kind !== 'dc' && <button type="button" className="aipt" style={view.kind === 'ward' ? undefined : { marginLeft: 'auto' }} onClick={aiPatient} disabled={!!busy}>{busy === 'ai' ? '만드는 중' : 'AI 가상 환자'}</button>}
+          {ai && view.kind !== 'dc' && <button type="button" className="aipt" style={view.kind === 'ward' ? undefined : { marginLeft: 'auto' }} onClick={aiPatient} disabled={!!busy || !aiLeft}><AiMark size={14} />{busy === 'ai' ? '만드는 중' : `AI 가상 환자 ${aiLeft ?? 0}회`}</button>}
         </div>
         {bulk && view.kind === 'ward' && (
           <WardBulk
@@ -299,7 +300,7 @@ export default function EhrHome({ cases, initialView, ai }: { cases: Item[]; ini
         .ehrWard .k4 { background: #16a34a; } .ehrWard .k5 { background: #64748b; }
         .ehrWard .sbd { margin-left: 6px; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 4px; background: #e8f0fb; color: #1d4e89; }
         .ehrWard .sbd.rv { background: #e3f3e8; color: #2f7a46; }
-        .ehrWard .aipt { margin: 0 0 0 8px; align-self: center; border: 1px solid #e8c97a; background: transparent; color: #e8c97a; border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 0.8125rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
+        .ehrWard .aipt { display: inline-flex; align-items: center; gap: 5px; margin: 0 0 0 8px; align-self: center; border: 1px solid #e8c97a; background: transparent; color: #e8c97a; border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 0.8125rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
         .ehrWard .top .aipt:last-child { margin-right: 10px; }
         .ehrWard .aipt:disabled { opacity: 0.5; }
         .ehrWard .err { color: #b91c1c; font-size: 0.8125rem; margin-top: 10px; }

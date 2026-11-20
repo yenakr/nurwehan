@@ -1,6 +1,7 @@
 import { getCurrentUser } from '@/lib/auth';
 import { getCase, listCases } from '@/lib/ehr';
-import { redirect } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
+import { hasEhrAccess } from '@/lib/ehr-access';
 import Link from 'next/link';
 import { migrate } from '../types';
 import PrintBtn from './PrintBtn';
@@ -15,6 +16,7 @@ export default async function HandoverPage({ searchParams }: { searchParams: Pro
   const { ward } = await searchParams;
   const user = await getCurrentUser();
   if (!user) redirect('/login?redirect=/ehr');
+  if (!(await hasEhrAccess(user))) notFound();
   const list = (await listCases(user.id)).filter(c => !c.discharged && c.ward === (ward || '') && c.bed).sort((a, b) => (a.bed || '').localeCompare(b.bed || ''));
   const rows = await Promise.all(list.map(async c => ({ c, d: migrate((await getCase(user.id, c.id))?.data) })));
   return (

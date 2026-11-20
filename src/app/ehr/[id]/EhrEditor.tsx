@@ -9,6 +9,7 @@ import { VIEW_LIST } from '../samples';
 import { ALLERGIES, DEPTS, DOCTORS, WARD_OPTIONS, bedOptions } from '../directory';
 import { confirmDialog, notify } from '@/components/Dialog';
 import { VitalsExtra, VitalsBulk, IoBulk, LabSets, IoTotals, printChart, useDictation } from './EhrExtras';
+import AiMark from '@/components/AiMark';
 import { NANDA } from '../nanda';
 import MemoPanel from './EhrMemo';
 import FormPanel, { FORMS, FORM_CSS, type FormKey } from './EhrForms';
@@ -412,9 +413,11 @@ export default function EhrEditor({
   subject,
   initial,
   ai,
+  aiLeft,
   userName,
 }: {
   ai: boolean;
+  aiLeft?: number;
   userName?: string;
   id: string;
   initialTitle: string;
@@ -452,6 +455,7 @@ export default function EhrEditor({
   const [aiOn, setAiOn] = useState(true);
   const [fb, setFb] = useState('');
   const [fbBusy, setFbBusy] = useState(false);
+  const [fbLeft, setFbLeft] = useState(aiLeft ?? 0);
   useEffect(() => {
     try { setAiOn(localStorage.getItem('ehr:ai') !== '0'); } catch {}
   }, []);
@@ -503,7 +507,7 @@ export default function EhrEditor({
       await fetch(`/api/ehr/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, subject, data }) });
       const r = await fetch(`/api/ehr/${id}/feedback`, { method: 'POST' });
       const j = await r.json().catch(() => ({}));
-      if (r.ok) setFb(j.text);
+      if (r.ok) { setFb(j.text); if (typeof j.left === 'number') setFbLeft(j.left); }
       else notify(r.status === 400 ? '간호기록이나 간호과정을 먼저 써 주세요.' : r.status === 422 ? '실제 정보로 보이는 번호가 있어요. 가상 정보로 바꿔 주세요.' : r.status === 429 ? '오늘 피드백 횟수를 다 썼어요.' : '피드백을 받지 못했어요.');
     } finally { setFbBusy(false); }
   };
@@ -640,7 +644,7 @@ export default function EhrEditor({
       <div className="bar">
         <input className="ttl" value={title} onChange={e => setTitle(e.target.value)} aria-label="제목" />
         <span className={`st ${status}`}>{status === 'saved' ? '저장됨' : status === 'saving' ? '저장 중…' : '저장 실패'}</span>
-        {ai && !locked && aiOn && <button type="button" className="aib" onClick={askFb} disabled={fbBusy}>{fbBusy ? '살펴보는 중' : 'AI 피드백'}</button>}
+        {ai && !locked && aiOn && <button type="button" className="aib" onClick={askFb} disabled={fbBusy || fbLeft <= 0}><AiMark size={14} />{fbBusy ? '살펴보는 중' : `AI 피드백 ${fbLeft}회`}</button>}
         {ai && !locked && <label className="aisw"><input type="checkbox" checked={aiOn} onChange={toggleAi} />AI</label>}
         {locked
           ? (!info.reviewed && <button type="button" className="dis" onClick={unsubmit}>제출 취소</button>)
@@ -665,7 +669,7 @@ export default function EhrEditor({
       <p className="pvn">실제 환자 정보(이름, 등록번호, 생년월일, 병실 등)는 쓰지 마세요. 가상 정보로 바꿔서 연습하세요.</p>
       {locked && <div className="lkb">{info.reviewed ? '교수님이 확인했어요' : '제출했어요. 교수님 확인 전에는 제출 취소로 고칠 수 있어요'}</div>}
       {info.comment && <div className="cmt"><b>교수님 의견</b><p>{info.comment}</p></div>}
-      {fb && <div className="cmt ai"><b>AI 피드백</b><button type="button" className="cx" aria-label="닫기" onClick={() => setFb('')}>&times;</button><p>{fb}</p></div>}
+      {fb && <div className="cmt ai"><b style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><AiMark size={14} />AI 피드백</b><button type="button" className="cx" aria-label="닫기" onClick={() => setFb('')}>&times;</button><p>{fb}</p></div>}
 
       <fieldset disabled={locked} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
       <div className="shell">
@@ -945,7 +949,7 @@ export default function EhrEditor({
         .ehr .dcb { background: #475569; color: #e2e8f0; font-weight: 700; font-size: 11.5px; padding: 4px 8px; border-radius: 4px; text-align: center; }
         .ehr .dis.del { color: #b91c1c; }
         .ehr .subm { border: 0; border-radius: 999px; background: var(--primary); color: #fff; font: inherit; font-size: 0.75rem; font-weight: 700; padding: 6px 14px; cursor: pointer; white-space: nowrap; }
-        .ehr .aib { border: 1px solid var(--primary); border-radius: 999px; background: none; color: var(--primary); font: inherit; font-size: 0.75rem; font-weight: 700; padding: 5px 12px; cursor: pointer; white-space: nowrap; }
+        .ehr .aib { display: inline-flex; align-items: center; gap: 5px; border: 1px solid var(--primary); border-radius: 999px; background: none; color: var(--primary); font: inherit; font-size: 0.75rem; font-weight: 700; padding: 5px 12px; cursor: pointer; white-space: nowrap; }
         .ehr .aib:disabled { opacity: .6; }
         .ehr .aisw { display: flex; align-items: center; gap: 4px; font-size: 0.75rem; color: var(--sub-text); cursor: pointer; }
         .ehr .spk { display: flex; flex-direction: column; gap: 2px; font-size: 11.5px; color: #475569; }

@@ -1,10 +1,11 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { isAdminRole } from '@/lib/auth-core';
-import { hasChecklistAccess } from '@/lib/checklist-access';
+import { hasEhrAccess } from '@/lib/ehr-access';
 import { aiConfigured, askModel } from '@/lib/ai';
 import { takeAiQuota, refundAiQuota } from '@/lib/practicum-ai';
 import { getCase } from '@/lib/ehr';
+import { EHR_FEEDBACK_LIMIT } from '@/lib/ehr-access';
+import { aiQuotaLeft } from '@/lib/practicum-ai';
 import { migrate } from '@/app/ehr/types';
 import { findPhi } from '@/app/ehr/phi';
 
@@ -18,15 +19,14 @@ const rows = (list: Record<string, string>[], n = 15) =>
 
 export async function POST(_req: Request, { params }: { params: Promise<{ id: string }> }) {
   const user = await getCurrentUser();
-  if (!user || !(user.approvalStatus === 'APPROVED' || isAdminRole(user.role))) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-  if (!(await hasChecklistAccess(user))) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  if (!user || !(await hasEhrAccess(user))) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   if (!aiConfigured()) return NextResponse.json({ error: 'off' }, { status: 503 });
   const row = await getCase(user.id, (await params).id);
   if (!row) return NextResponse.json({ error: 'not found' }, { status: 404 });
   const d = migrate(row.data);
   if (d.notes.length === 0 && d.care.length === 0) return NextResponse.json({ error: 'empty' }, { status: 400 });
   if (findPhi(d).length) return NextResponse.json({ error: 'phi' }, { status: 422 });
-  if (!(await takeAiQuota(user.id, '#ehrfb', 10))) return NextResponse.json({ error: 'limit' }, { status: 429 });
+  if (!(await takeAiQuota(user.id, '#ehrfb', EHR_FEEDBACK_LIMIT))) return NextResponse.json({ error: 'limit' }, { status: 429 });
   const i = d.info;
   const text = [
     `[차트]`,
@@ -46,5 +46,5 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     await refundAiQuota(user.id, '#ehrfb');
     return NextResponse.json({ error: 'failed' }, { status: 502 });
   }
-  return NextResponse.json({ text: out });
+  return NextResponse.json({ text: out, left: await aiQuotaLeft(user.id, '#ehrfb', EHR_FEEDBACK_LIMIT) });
 }

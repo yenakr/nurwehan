@@ -1,13 +1,13 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { isAdminRole } from '@/lib/auth-core';
+import { hasEhrAccess } from '@/lib/ehr-access';
 import { appendVitals } from '@/lib/ehr';
 
 const KEYS = ['time', 'bp', 'hr', 'rr', 'bt', 'spo2', 'pain'];
 
 export async function POST(req: Request) {
   const user = await getCurrentUser();
-  if (!user || !(user.approvalStatus === 'APPROVED' || isAdminRole(user.role))) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  if (!user || !(await hasEhrAccess(user))) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   const body = await req.json().catch(() => ({}));
   const list = Array.isArray(body?.items) ? body.items.slice(0, 40) : [];
   const items = list

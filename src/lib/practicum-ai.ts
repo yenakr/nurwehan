@@ -28,3 +28,15 @@ export async function refundAiQuota(userId: string, bucket = ''): Promise<void> 
     /* 무시 */
   }
 }
+
+// 오늘 남은 횟수 (표가 없거나 오류면 0)
+export async function aiQuotaLeft(userId: string, bucket: string, limit: number): Promise<number> {
+  const day = new Date(Date.now() + 9 * 3600 * 1000).toISOString().slice(0, 10) + bucket;
+  try {
+    const rows = await prisma.$queryRaw<Array<{ count: number }>>`
+      SELECT "count" FROM "PracticumAiUsage" WHERE "userId" = ${userId} AND "day" = ${day}`;
+    return Math.max(0, limit - (rows[0]?.count ?? 0));
+  } catch {
+    return 0;
+  }
+}
