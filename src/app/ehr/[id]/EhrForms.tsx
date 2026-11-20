@@ -222,3 +222,9 @@ export const FORM_CSS = `
   .ehr .pt th, .ehr .pt td { border: 1px solid var(--ln); padding: 6px 8px; }
   .ehr .pt th { background: #e9edf1; font-size: 12px; } .ehr .pt td + td, .ehr .pt th + th { text-align: center; width: 70px; }
 `;
+
+// 병상 배지용: 평가 점수 (미완료면 null)
+export function formScore(kind: 'morse' | 'braden', r: Row): number | null {
+  const items = kind === 'morse' ? MORSE : BRADEN;
+  return done(items, r) ? sum(items, r) : null;
+}

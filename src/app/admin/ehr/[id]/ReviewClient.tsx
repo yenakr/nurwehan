@@ -21,6 +21,14 @@ const SECTIONS = ([
   { key: 'surgery', label: '수술기록' },
   { key: 'memos', label: '메모·인수인계' },
   { key: 'mar', label: '투약 수행' },
+  { key: 'lines', label: '튜브·라인' },
+  { key: 'iv', label: 'IV 수액' },
+  { key: 'wounds', label: '상처·드레싱' },
+  { key: 'edu', label: '환자 교육' },
+  { key: 'specimen', label: '검체 채취' },
+  { key: 'transport', label: '이송 의뢰' },
+  { key: 'moves', label: '전동·전과·외출' },
+  { key: 'cpr', label: 'CPR 기록지' },
 ]).filter(s => !!(COLS as Record<string, unknown>)[s.key]) as { key: keyof typeof COLS; label: string }[];
 
 const th: CSSProperties = { textAlign: 'left', padding: '6px 8px', borderBottom: '1px solid var(--border)', color: 'var(--sub-text)', fontWeight: 600, whiteSpace: 'nowrap' };
