@@ -29,10 +29,11 @@ export type ChartData = {
   transport: Row[]; // 이송 의뢰
   moves: Row[]; // 전동·전과·외출·외박
   cpr: Row[]; // 응급 CPR
+  anes: Row[]; // 마취기록
   forms: Record<string, Row[]>; // 평가도구(낙상·욕창·통증·수술 전 확인)
 };
 
-const LISTS = ['progress', 'orders', 'vitals', 'io', 'labs', 'notes', 'care', 'transfusion', 'nutrition', 'consult', 'consent', 'surgery', 'appts', 'handover', 'risk', 'history', 'imaging', 'memos', 'mar', 'lines', 'iv', 'wounds', 'edu', 'specimen', 'transport', 'moves', 'cpr'] as const;
+const LISTS = ['progress', 'orders', 'vitals', 'io', 'labs', 'notes', 'care', 'transfusion', 'nutrition', 'consult', 'consent', 'surgery', 'appts', 'handover', 'risk', 'history', 'imaging', 'memos', 'mar', 'lines', 'iv', 'wounds', 'edu', 'specimen', 'transport', 'moves', 'cpr', 'anes'] as const;
 
 export const emptyChart = (): ChartData => {
   const d: Record<string, unknown> = { info: {}, forms: {} };

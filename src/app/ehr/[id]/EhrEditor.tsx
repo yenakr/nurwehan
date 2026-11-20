@@ -21,7 +21,7 @@ import FormPanel, { FORMS, FORM_CSS, type FormKey } from './EhrForms';
 
 type ListKey =
   | 'progress' | 'vitals' | 'io' | 'labs' | 'notes' | 'care'
-  | 'transfusion' | 'nutrition' | 'consult' | 'consent' | 'surgery' | 'appts' | 'handover' | 'risk' | 'history' | 'imaging' | 'memos' | 'mar'
+  | 'transfusion' | 'nutrition' | 'consult' | 'consent' | 'surgery' | 'appts' | 'handover' | 'risk' | 'history' | 'imaging' | 'memos' | 'mar' | 'anes'
   | 'lines' | 'iv' | 'wounds' | 'edu' | 'specimen' | 'transport' | 'moves' | 'cpr';
 type FormTab = 'f_morse' | 'f_braden' | 'f_pain' | 'f_preop';
 type TabId = ListKey | 'orders' | 'admission' | 'nurseinfo' | 'discharge' | FormTab;
@@ -30,7 +30,8 @@ const isForm = (t: TabId): t is FormTab => t.startsWith('f_');
 type MenuItem = { id: TabId; label: string };
 type MenuNode = { label: string; items: MenuItem[] };
 const MENU: MenuNode[] = [
-  { label: '경과기록', items: [{ id: 'progress', label: '경과기록' }, { id: 'consult', label: '협진기록' }, { id: 'surgery', label: '수술기록' }] },
+  { label: '경과기록', items: [{ id: 'progress', label: '경과기록' }, { id: 'consult', label: '협진기록' }] },
+  { label: '수술', items: [{ id: 'surgery', label: '수술기록' }, { id: 'anes', label: '마취기록' }, { id: 'f_preop', label: '수술 전 확인' }] },
   { label: '의사처방', items: [{ id: 'orders', label: '의사처방' }, { id: 'mar', label: '투약' }] },
   { label: '입원기록', items: [{ id: 'admission', label: '입원기록' }, { id: 'nurseinfo', label: '간호정보조사지' }, { id: 'history', label: '상병이력' }] },
   { label: '임상관찰', items: [{ id: 'vitals', label: '임상관찰' }] },
@@ -38,7 +39,7 @@ const MENU: MenuNode[] = [
   { label: '간호관리', items: [{ id: 'lines', label: '튜브·라인' }, { id: 'iv', label: 'IV 수액' }, { id: 'wounds', label: '상처·드레싱' }, { id: 'edu', label: '환자 교육' }] },
   { label: '응급', items: [{ id: 'cpr', label: 'CPR 기록지' }] },
   { label: '영양기록', items: [{ id: 'nutrition', label: '영양기록' }] },
-  { label: '평가도구', items: FORMS.map(f => ({ id: f.tab as TabId, label: f.label })) },
+  { label: '평가도구', items: FORMS.filter(f => f.key !== 'preop').map(f => ({ id: f.tab as TabId, label: f.label })) },
   { label: '간호기록', items: [{ id: 'notes', label: '간호기록' }, { id: 'risk', label: '위험도평가' }, { id: 'handover', label: '인계(SBAR)' }, { id: 'memos', label: '메모·인수인계' }] },
   { label: '간호과정', items: [{ id: 'care', label: '간호과정' }] },
   { label: '동의서', items: [{ id: 'consent', label: '동의서' }] },
@@ -206,6 +207,12 @@ export const COLS: Record<ListKey, Col[]> = {
     { key: 'ev', label: '사건', w: 140, type: 'select', opts: ['', '의식·호흡 없음 확인', 'CPR 시작', '제세동', 'Epinephrine 1mg', 'Amiodarone', '기관 삽관', 'ROSC', '사망 선언', '기타'] },
     { key: 'detail', label: '내용', w: 260, type: 'area' },
     { key: 'by', label: '기록자', w: 80 },
+  ],
+  anes: [
+    { key: 'time', label: '시각', w: 100, ph: '11-17 09:30' },
+    { key: 'ev', label: '구분', w: 120, type: 'select', opts: ['', '마취 전 평가', '마취 시작', '기관 삽관', '수술 시작', '수술 종료', '발관', '회복실 입실', '회복실 퇴실'] },
+    { key: 'detail', label: '내용 (약물·용량·활력징후)', w: 340, type: 'area' },
+    { key: 'by', label: '마취 담당', w: 90 },
   ],
   memos: [
     { key: 'time', label: '일시', w: 110 },
@@ -648,6 +655,16 @@ export default function EhrEditor({
     }
   };
 
+  // 환자 상황에 따라 상단 메뉴가 달라진다 (수술 환자 / 응급 / 외래)
+  const surgical = info.surg === '0' ? false : info.surg === '1' || data.surgery.length > 0;
+  const menu = MENU.filter(g =>
+    (g.label !== '응급' || info.ward === '응급실') &&
+    (g.label !== '수술' || surgical) &&
+    (info.ward !== '외래' || (g.label !== '퇴원' && g.label !== '간호관리')),
+  );
+  useEffect(() => {
+    if (!menu.some(g => g.items.some(i => i.id === tab))) setTab('notes');
+  }, [menu.length]); // eslint-disable-line react-hooks/exhaustive-deps
   const crit = criticalFlags(data);
   const bd = badgesOf(data);
   useEffect(() => {
@@ -810,7 +827,7 @@ export default function EhrEditor({
             )}
           </div>
           <div className="nav" ref={navRef} role="tablist">
-            {MENU.filter(g => g.label !== '응급' || info.ward === '응급실').map(g => {
+            {menu.map(g => {
               const active = g.items.some(i => i.id === tab);
               const multi = g.items.length > 1;
               return (
@@ -875,6 +892,7 @@ export default function EhrEditor({
             {side('height', '키 (cm)')}
             {side('weight', '체중 (kg)')}
             {BMI(info.height, info.weight) && <div className="sd"><em>BMI</em><span className="v">{BMI(info.height, info.weight)}</span></div>}
+            {sel('surg', '수술 여부', [{ v: '1', l: '수술 환자' }, { v: '0', l: '해당 없음' }])}
             {sel('iso', '격리', ISO.map(v => ({ v, l: v })))}
             {sel('npo', '금식', [{ v: '1', l: '금식' }, { v: '0', l: '해당 없음' }])}
             {hasAllergy && <div className="alg">알레르기 있음</div>}

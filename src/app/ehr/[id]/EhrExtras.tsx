@@ -128,6 +128,7 @@ ${sec('환자 교육', ['일시', '내용', '대상', '방법', '이해도'], ['
 ${sec('검체 채취', ['일시', '검사', '용기', '상태'], ['time', 'test', 'tube', 'st'], d.specimen)}
 ${sec('이송 의뢰', ['일시', '출발', '도착', '수단', '상태'], ['time', 'from', 'to', 'mode', 'st'], d.transport)}
 ${sec('전동·전과·외출', ['일시', '구분', '이전', '이후', '사유'], ['time', 'type', 'from', 'to', 'reason'], d.moves)}
+${sec('마취기록', ['시각', '구분', '내용', '담당'], ['time', 'ev', 'detail', 'by'], d.anes)}
 ${sec('CPR 기록지', ['시각', '사건', '내용'], ['time', 'ev', 'detail'], d.cpr)}
 ${sec('인계(SBAR)', ['일시', 'S', 'B', 'A', 'R', '작성자'], ['time', 's', 'b', 'a', 'r', 'author'], d.handover)}
 ${sec('위험도평가', ['평가일시', '평가', '점수', '위험도', '중재'], ['time', 'kind', 'score', 'level', 'plan'], d.risk)}
