@@ -1,6 +1,6 @@
 import { isAdminRole } from './auth-core';
 import { hasChecklistAccess } from './checklist-access';
-import { pickPlacement, type Placement } from '@/app/PlacementBox';
+import { pickPlacement, type Placement } from './placement-pick';
 import type { HomeTilesData } from '@/app/HomeTiles';
 
 type Viewer = { id: string; role: string; approvalStatus?: string | null } | null;
