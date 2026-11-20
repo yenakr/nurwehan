@@ -101,15 +101,17 @@ export default function TermCards({
   // 카드를 꾹 누르면 즐겨찾기 토글 (움직이면 스크롤로 보고 취소)
   const press = useRef<{ t: ReturnType<typeof setTimeout>; x: number; y: number } | null>(null);
   const stop = () => { if (press.current) { clearTimeout(press.current.t); press.current = null; } };
-  const down = (id: string) => (e: PEvent) => {
-    if (!onToggleFav || editMode || (e.target as HTMLElement).closest('button')) return;
+  const down = (t: NursingTerm) => (e: PEvent) => {
+    if (editMode ? false : !onToggleFav) return;
+    if ((e.target as HTMLElement).closest('button')) return;
     stop();
     press.current = {
       x: e.clientX,
       y: e.clientY,
       t: setTimeout(() => {
         press.current = null;
-        onToggleFav(id);
+        if (editMode) onEdit(t);
+        else onToggleFav?.(t.id);
         try { navigator.vibrate?.(30); } catch {}
       }, 500),
     };
@@ -128,7 +130,7 @@ export default function TermCards({
         const hasOptions = (t.options?.length ?? 0) > 0;
         const en = t.englishTerm?.trim();
         return (
-          <article key={t.id} className={`${s.card} ${onToggleFav && !editMode ? s.pressable : ''}`} onPointerDown={down(t.id)} onPointerMove={move} onPointerUp={stop} onPointerCancel={stop} onPointerLeave={stop} onContextMenu={onToggleFav && !editMode ? e => e.preventDefault() : undefined}>
+          <article key={t.id} className={`${s.card} ${onToggleFav || editMode ? s.pressable : ''}`} onPointerDown={down(t)} onPointerMove={move} onPointerUp={stop} onPointerCancel={stop} onPointerLeave={stop} onContextMenu={onToggleFav || editMode ? e => e.preventDefault() : undefined}>
             <div className={s.cardHead}>
               <span className={s.cardTerm}>{t.term}</span>
               {onToggleFav && favorites?.has(t.id) && (
