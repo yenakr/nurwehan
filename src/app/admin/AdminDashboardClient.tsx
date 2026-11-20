@@ -50,7 +50,6 @@ export default function AdminDashboardClient({
         { icon: '📅', label: '캘린더', desc: '공식 일정 관리', href: '/admin/calendar' },
         { icon: '📢', label: '공지사항', desc: '공지 작성·고정', href: '/admin/notices' },
         { icon: '🏥', label: '실습 배정표', desc: '학기별 배정 올리기', href: '/admin/clinical-assignments', badge: assignmentNeedsUpdate ? 1 : 0 },
-        { icon: '', label: 'EHR 연습', desc: '학생이 제출한 기록 보기', href: '/admin/ehr' },
         { icon: '🩺', label: '건강요건 규칙', desc: '임상실습 요건 설정', href: '/admin/clinical' },
       ],
     },
