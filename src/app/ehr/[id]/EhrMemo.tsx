@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { shiftOf } from '../emr';
 import type { Row } from '../types';
 
 export const MEMO_TYPES = ['간호메모', '진료메모', '인수인계'] as const;
@@ -15,7 +16,7 @@ export default function MemoPanel({ rows, author, onChange }: { rows: Row[]; aut
   const add = () => {
     const t = text.trim();
     if (!t) return;
-    onChange([{ time: stamp(), type, text: t, author, ...(imp ? { imp: '1' } : {}) }, ...rows]);
+    onChange([{ time: stamp(), type, text: t, author, shift: shiftOf(), ...(imp ? { imp: '1' } : {}) }, ...rows]);
     setText('');
     setImp(false);
   };
@@ -51,7 +52,7 @@ export default function MemoPanel({ rows, author, onChange }: { rows: Row[]; aut
       </div>
       {rows.map((r, i) => (
         <div key={i} className={`it t${MEMO_TYPES.indexOf(r.type as (typeof MEMO_TYPES)[number]) + 1} ${r.imp ? 'im' : ''}`}>
-          <div className="h"><b>{r.type}</b><span>{r.time}</span><span>{r.author}</span>{r.imp ? <b style={{ color: '#dc2626' }}>중요</b> : null}
+          <div className="h"><b>{r.type}</b><span>{r.time}{r.shift ? ` ${r.shift}` : ''}</span><span>{r.author}</span>{r.imp ? <b style={{ color: '#dc2626' }}>중요</b> : null}
             <button type="button" className="x" aria-label="삭제" onClick={() => onChange(rows.filter((_, j) => j !== i))}>×</button></div>
           <p>{r.text}</p>
         </div>

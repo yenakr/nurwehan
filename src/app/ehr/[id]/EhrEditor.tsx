@@ -16,7 +16,7 @@ import VisitStrip from './EhrVisit';
 import RegisterCard from './EhrRegister';
 import MarPanel from './EhrMar';
 import MemoPanel from './EhrMemo';
-import { criticalFlags, badgesOf, BMI, DC_EDU, ISO } from '../emr';
+import { shiftOf, criticalFlags, badgesOf, BMI, DC_EDU, ISO } from '../emr';
 import FormPanel, { FORMS, FORM_CSS, type FormKey } from './EhrForms';
 
 type ListKey =
@@ -84,6 +84,7 @@ export const COLS: Record<ListKey, Col[]> = {
     { key: 'focus', label: 'Focus', w: 110 },
     { key: 'text', label: '간호기록', w: 560, type: 'area' },
     { key: 'author', label: '작성자', w: 80 },
+    { key: 'shift', label: '근무', w: 60, type: 'select', opts: ['', 'D', 'E', 'N'] },
     { key: 'mod', label: '수정 이력', w: 90, type: 'ro' },
   ],
   transfusion: [
@@ -359,7 +360,7 @@ function NoteComposer({ onAdd, author }: { onAdd: (n: Row) => void; author: stri
     const body = fmt === 'NARR'
       ? (txt.N || '').trim()
       : fields.map(f => (txt[f.k] || '').trim() && `${f.k})\n${txt[f.k].trim()}`).filter(Boolean).join('\n\n');
-    onAdd({ time: time || nowStamp(), focus, text: body, author });
+    onAdd({ time: time || nowStamp(), focus, text: body, author, shift: shiftOf() });
     setTxt({});
     setTime('');
     if (dict.on) dict.stop();
