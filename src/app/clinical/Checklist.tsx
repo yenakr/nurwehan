@@ -1,5 +1,6 @@
 'use client';
 
+import { confirmDialog } from '@/components/Dialog';
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import type { ScheduleItem } from './MySchedule';
 import { DETAIL } from './practicum-detail';
@@ -810,19 +811,19 @@ tr { break-inside: avoid; }
                 {shown.map(r =>
                   editId === r.id ? (
                     <div key={r.id} className="hr edit">
+                      <div className="eh"><b>기록 수정</b></div>
                       {seg(ed.l, l => setEd(e => ({ ...e, l })))}
-                      <p className="pnote">{PNOTE}</p>
-                      <div className="frow">
-                        <input type="date" value={ed.d} onChange={e => setEd(x => ({ ...x, d: e.target.value }))} />
-                        <input type="time" value={ed.h} onChange={e => setEd(x => ({ ...x, h: e.target.value }))} />
-                        <input className="grow" value={ed.m} onChange={e => setEd(x => ({ ...x, m: e.target.value }))} placeholder="메모" maxLength={200} />
+                      <div className="erow">
+                        <input type="date" aria-label="날짜" value={ed.d} onChange={e => setEd(x => ({ ...x, d: e.target.value }))} />
+                        <input type="time" aria-label="시간" value={ed.h} onChange={e => setEd(x => ({ ...x, h: e.target.value }))} />
                       </div>
+                      <p className="pnote">{PNOTE}</p>
+                      <input className="memo" value={ed.m} onChange={e => setEd(x => ({ ...x, m: e.target.value }))} placeholder="메모" maxLength={200} />
                       <div className="acts">
-                        {delId === r.id ? (
-                          <button type="button" className="dng" onClick={() => { del(r.id); setEditId(null); }}>삭제 확인</button>
-                        ) : (
-                          <button type="button" className="dng" onClick={() => setDelId(r.id)}>삭제</button>
-                        )}
+                        <button type="button" className="dng" aria-label="기록 삭제" onClick={async () => { if (await confirmDialog('이 기록을 삭제할까요?')) { del(r.id); setEditId(null); } }}>
+                          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 7h16M9 7V4h6v3M6 7l1 13h10l1-13M10 11v6M14 11v6" /></svg>
+                          삭제
+                        </button>
                         <span className="sp" />
                         <button type="button" onClick={() => setEditId(null)}>취소</button>
                         <button type="button" className="pri" onClick={saveEdit}>저장</button>
@@ -831,13 +832,14 @@ tr { break-inside: avoid; }
                   ) : (
                     <div key={r.id}>
                     <div className="hr">
-                      <button type="button" className="hmain" onClick={() => startEdit(r)}>
+                      <div className="hmain">
                         <span className="hd">{md(r.d)}{r.h ? ` ${r.h}` : ''}{noteDates.has(r.d) ? <i> · 메모</i> : null}</span>
                         <b className={`lb ${r.l}`}>{lbl(r.l)}</b>
                         {r.m && <span className="hm">{r.m}</span>}
                         {r.a && <span className="hm ha">{r.a}</span>}
                         {r.b && <span className="hm ha">{r.b}</span>}
-                      </button>
+                      </div>
+                      <button type="button" className="eb" aria-label="기록 수정" onClick={() => startEdit(r)}><svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d="M4 20h4L19 9l-4-4L4 16zM13.5 6.5l4 4" /></svg></button>
                       {aiOn && <button type="button" className="aq" aria-label="AI" onClick={() => openAi(r.id, r.l)}><svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><path d="M12 2l1.9 5.6L19.5 9.5l-5.6 1.9L12 17l-1.9-5.6L4.5 9.5l5.6-1.9L12 2zM19 14l.9 2.6L22.5 17.5l-2.6.9L19 21l-.9-2.6-2.6-.9 2.6-.9L19 14z"/></svg></button>}
                     </div>
                     {ai && ai.rid === r.id && (
@@ -1059,7 +1061,12 @@ tr { break-inside: avoid; }
         .pc .aq, .pc .uacts button { border: 0; background: none; color: var(--primary); font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; padding: 6px 4px; }
         .pc .aq { display: flex; align-items: center; justify-content: center; align-self: flex-start; flex-shrink: 0; width: 26px; height: 26px; margin-top: -2px; padding: 0; border-radius: 50%; background: color-mix(in srgb, var(--primary) 14%, transparent); }
         .pc .uacts { display: flex; gap: 8px; }
-        .pc .hr.edit { display: block; cursor: default; }
+        .pc .hr.edit { display: block; cursor: default; padding: 12px 0 8px; }
+        .pc .eh { margin-bottom: 8px; font-size: 13px; color: var(--sub-text); }
+        .pc .erow { display: flex; gap: 8px; margin-top: 8px; }
+        .pc .erow input { flex: 1; min-width: 0; border: 0; background: var(--tint); color: var(--text); border-radius: 10px; padding: 9px 12px; font: inherit; font-size: 14px; }
+        .pc .eb { display: flex; align-items: center; justify-content: center; align-self: flex-start; flex-shrink: 0; width: 26px; height: 26px; margin-top: -2px; padding: 0; border: 0; border-radius: 50%; background: var(--tint); color: var(--sub-text); cursor: pointer; position: relative; }
+        .pc .eb::after { content: ''; position: absolute; inset: -8px; }
         .pc .hd { font-weight: 700; font-size: 13px; color: var(--sub-text); }
         .pc .hd i { font-style: normal; font-size: 12px; font-weight: 500; color: var(--sub-text); }
         .pc .hm.ha { color: var(--text); line-height: 1.5; }
@@ -1075,7 +1082,7 @@ tr { break-inside: avoid; }
         .pc .acts .sp { flex: 1; }
         .pc .acts button { border: 0; background: var(--tint); border-radius: 8px; padding: 7px 14px; font: inherit; font-size: 13px; font-weight: 600; color: var(--sub-text); cursor: pointer; }
         .pc .acts button.pri { background: var(--primary); color: #fff; }
-        .pc .acts button.dng { background: none; color: #DC2626; padding-left: 0; }
+        .pc .acts button.dng { display: inline-flex; align-items: center; gap: 4px; background: none; color: #DC2626; padding-left: 0; }
         .pc .warn { display: inline-flex; align-items: center; gap: 6px; color: #D97706; margin-left: 8px; font-size: 12px; font-weight: 600; }
         .pc .warn em { font-style: normal; }
         .pc .wl { display: flex; align-items: center; gap: 2px; }
