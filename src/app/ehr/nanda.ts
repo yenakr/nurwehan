@@ -151,3 +151,18 @@ export const NANDA: { domain: string; items: [string, string][] }[] = [
 두개 내압 조절력 감소|Decreased intracranial adaptive capacity
 영아의 조직적 행위 향상 가능성|Readiness for enhanced organized infant behavior`) },
 ];
+
+// 간호진단 진술 오류 점검 (법적·의학적 문제, 가치판단, 두 가지 문제 동시 진술)
+export function dxIssues(dx: string): string[] {
+  const t = dx.trim();
+  if (!t) return [];
+  const out: string[] = [];
+  const m = t.match(/^(.*?)(?:과|와)\s*관련된?\s*(.*)$/);
+  const cause = m ? m[1] : '';
+  const diag = m ? m[2] : t;
+  if (/(난간|억제대|보호대|안전장치|침상).*(없|미비|부족)|(없|미비|부족)음?(과|와)\s*관련/.test(t)) out.push('법적 문제가 될 수 있는 진술이에요');
+  if (/(암|절제술|저혈량증|심부전|당뇨병|폐렴|뇌졸중|고혈압|경색|출혈)/.test(cause)) out.push('원인에 의학용어나 진단명을 쓰지 마세요');
+  if (/(결코|무신론|게으른|비협조|불성실|나쁜|고집)/.test(t)) out.push('가치판단이 들어 있어요');
+  if (m && diag.split(/\s*(?:과|와|및|,)\s*/).filter(x => x.trim().length >= 2).length >= 2) out.push('두 가지 문제를 한 진단에 쓰지 마세요');
+  return out;
+}
