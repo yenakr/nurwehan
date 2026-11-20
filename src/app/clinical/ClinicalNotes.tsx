@@ -1,5 +1,6 @@
 'use client';
 
+import Rich from './Rich';
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import type { ScheduleItem } from './MySchedule';
 import { LEVELS, SUBJECTS, type Store } from './practicum-data';
@@ -22,13 +23,6 @@ const label = (s: string) => {
   return `${m}/${d}(${WD[new Date(y, m - 1, d).getDay()]})`;
 };
 const MAX = 3000;
-
-// AI 답변의 **강조**를 남색 굵은 글씨로 보여 준다
-const Rich = ({ text }: { text: string }) => (
-  <>
-    {text.split(/\*\*(.+?)\*\*/g).map((part, i) => (i % 2 ? <b key={i} style={{ color: 'var(--primary)', fontWeight: 800 }}>{part}</b> : part.replace(/\*\*/g, '')))}
-  </>
-);
 
 const addDay = (s: string, n: number) => {
   const [y, m, d] = s.split('-').map(Number);

@@ -3,6 +3,7 @@
 import { confirmDialog } from '@/components/Dialog';
 import { useEffect, useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import type { ScheduleItem } from './MySchedule';
+import Rich from './Rich';
 import { DETAIL } from './practicum-detail';
 import { AI_Q, AI_ANSWER_MAX } from './practicum-ai-q';
 import { COURSES, LEVELS, SUBJECTS, normalizeStore, type Level, type Progress, type PSubject, type PItem, type Rec, type Store } from './practicum-data';
@@ -35,11 +36,6 @@ const Warn = () => {
     </span>
   );
 };
-const Rich = ({ text }: { text: string }) => (
-  <>
-    {text.split(/\*\*(.+?)\*\*/g).map((part, i) => (i % 2 ? <b key={i} className="em">{part}</b> : part.replace(/\*\*/g, '')))}
-  </>
-);
 const Hl = ({ text, q }: { text: string; q: string }) => {
   const i = q ? text.toLowerCase().indexOf(q) : -1;
   if (i < 0) return <>{text}</>;
