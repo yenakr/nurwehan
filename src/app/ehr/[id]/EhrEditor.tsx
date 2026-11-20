@@ -231,7 +231,7 @@ const nowStamp = () => {
 };
 
 // 간호기록 작성: Focus를 고르고 상용구를 눌러 D/A/R에 채운 뒤 직접 수정해서 기록한다
-function NoteComposer({ onAdd }: { onAdd: (n: Row) => void }) {
+function NoteComposer({ onAdd, author }: { onAdd: (n: Row) => void; author: string }) {
   const [focus, setFocus] = useState('');
   const [txt, setTxt] = useState<{ d: string; a: string; r: string }>({ d: '', a: '', r: '' });
   const [time, setTime] = useState('');
@@ -244,7 +244,7 @@ function NoteComposer({ onAdd }: { onAdd: (n: Row) => void }) {
   const add = () => {
     if (empty) return;
     const body = [txt.d.trim() && `D)\n${txt.d.trim()}`, txt.a.trim() && `A)\n${txt.a.trim()}`, txt.r.trim() && `R)\n${txt.r.trim()}`].filter(Boolean).join('\n\n');
-    onAdd({ time: time || nowStamp(), focus, text: body, author: '' });
+    onAdd({ time: time || nowStamp(), focus, text: body, author });
     setTxt({ d: '', a: '', r: '' });
     setTime('');
   };
@@ -352,8 +352,10 @@ export default function EhrEditor({
   subject,
   initial,
   ai,
+  userName,
 }: {
   ai: boolean;
+  userName?: string;
   id: string;
   initialTitle: string;
   subject: string | null;
@@ -370,6 +372,23 @@ export default function EhrEditor({
   const [editInfo, setEditInfo] = useState(false); // 기본정보는 수정 버튼을 눌러야 편집
   const [status, setStatus] = useState<'saved' | 'saving' | 'error'>('saved');
   const first = useRef(true);
+  const dirty = useRef(false);
+  const latest = useRef({ title, subject, data });
+  latest.current = { title, subject, data };
+  // 탭을 닫거나 화면을 떠날 때 아직 저장되지 않은 내용이 있으면 한 번 더 저장
+  useEffect(() => {
+    const flush = () => {
+      if (!dirty.current || latest.current.data.info.submitted) return;
+      dirty.current = false;
+      try {
+        fetch(`/api/ehr/${id}`, { method: 'PUT', keepalive: true, headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(latest.current) });
+      } catch {}
+    };
+    const vis = () => { if (document.visibilityState === 'hidden') flush(); };
+    window.addEventListener('pagehide', flush);
+    document.addEventListener('visibilitychange', vis);
+    return () => { window.removeEventListener('pagehide', flush); document.removeEventListener('visibilitychange', vis); };
+  }, [id]);
   const [aiOn, setAiOn] = useState(true);
   const [fb, setFb] = useState('');
   const [fbBusy, setFbBusy] = useState(false);
@@ -384,6 +403,7 @@ export default function EhrEditor({
     }
     if (data.info.submitted) return; // 제출한 차트는 저장하지 않는다
     setStatus('saving');
+    dirty.current = true;
     const t = setTimeout(async () => {
       try {
         const res = await fetch(`/api/ehr/${id}`, {
@@ -391,6 +411,7 @@ export default function EhrEditor({
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ title, subject, data }),
         });
+        if (res.ok) dirty.current = false;
         setStatus(res.ok ? 'saved' : 'error');
       } catch {
         setStatus('error');
@@ -757,7 +778,7 @@ export default function EhrEditor({
 
             {tab === 'notes' && (
               <>
-                <NoteComposer onAdd={n => setData(d => ({ ...d, notes: [n, ...d.notes] }))} />
+                <NoteComposer author={userName || ''} onAdd={n => setData(d => ({ ...d, notes: [n, ...d.notes] }))} />
                 {tbl('notes')}
               </>
             )}

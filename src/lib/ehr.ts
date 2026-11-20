@@ -6,6 +6,7 @@ export type EhrListRow = EhrRow & {
   ward: string | null; bed: string | null; sampleKey: string | null;
   ptNo: string | null; name: string | null; ageSex: string | null; dx: string | null; doctor: string | null; admit: string | null;
   dept: string | null; visitTime: string | null; vstatus: string | null; ktas: string | null; zone: string | null; cc: string | null; discharged: string | null;
+  submitted: string | null; reviewed: string | null;
 };
 
 export async function listCases(userId: string): Promise<EhrListRow[]> {
@@ -17,7 +18,8 @@ export async function listCases(userId: string): Promise<EhrListRow[]> {
         "data"->'info'->>'dx' AS "dx", "data"->'info'->>'doctor' AS "doctor", "data"->'info'->>'admit' AS "admit",
         "data"->'info'->>'dept' AS "dept", "data"->'info'->>'visitTime' AS "visitTime", "data"->'info'->>'vstatus' AS "vstatus",
         "data"->'info'->>'ktas' AS "ktas", "data"->'info'->>'zone' AS "zone", "data"->'info'->>'cc' AS "cc",
-        "data"->'info'->>'discharged' AS "discharged"
+        "data"->'info'->>'discharged' AS "discharged",
+        "data"->'info'->>'submitted' AS "submitted", "data"->'info'->>'reviewed' AS "reviewed"
       FROM "EhrCase"
       WHERE "userId" = ${userId} ORDER BY "updatedAt" DESC LIMIT 100`;
   } catch {
