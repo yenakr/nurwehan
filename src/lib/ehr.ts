@@ -53,7 +53,7 @@ export async function saveCase(userId: string, id: string, title: string, subjec
     const n = await prisma.$executeRaw`
       UPDATE "EhrCase" SET "title" = ${title}, "subject" = ${subject}, "data" = ${JSON.stringify(data)}::jsonb,
         "updatedAt" = CURRENT_TIMESTAMP
-      WHERE "userId" = ${userId} AND "id" = ${id}`;
+      WHERE "userId" = ${userId} AND "id" = ${id} AND ("data"->'info'->>'submitted' IS NULL)`;
     return n > 0;
   } catch {
     return false;
@@ -64,6 +64,63 @@ export async function removeCase(userId: string, id: string) {
   try {
     await prisma.$executeRaw`DELETE FROM "EhrCase" WHERE "userId" = ${userId} AND "id" = ${id}`;
     return true;
+  } catch {
+    return false;
+  }
+}
+
+// ---- 제출·교수 열람 (표를 바꾸지 않고 차트 data.info 안에 상태를 둔다) ----
+export async function submitCase(userId: string, id: string, on: boolean): Promise<boolean> {
+  try {
+    const n = on
+      ? await prisma.$executeRaw`
+          UPDATE "EhrCase" SET "data" = jsonb_set("data", '{info,submitted}', to_jsonb(${new Date().toISOString()}::text), true), "updatedAt" = CURRENT_TIMESTAMP
+          WHERE "userId" = ${userId} AND "id" = ${id} AND "data"->'info'->>'submitted' IS NULL`
+      : await prisma.$executeRaw`
+          UPDATE "EhrCase" SET "data" = "data" #- '{info,submitted}', "updatedAt" = CURRENT_TIMESTAMP
+          WHERE "userId" = ${userId} AND "id" = ${id} AND "data"->'info'->>'submitted' IS NOT NULL AND "data"->'info'->>'reviewed' IS NULL`;
+    return n > 0;
+  } catch {
+    return false;
+  }
+}
+
+export async function isLocked(userId: string, id: string): Promise<boolean> {
+  try {
+    const rows = await prisma.$queryRaw<Array<{ s: string | null }>>`
+      SELECT "data"->'info'->>'submitted' AS "s" FROM "EhrCase" WHERE "userId" = ${userId} AND "id" = ${id}`;
+    return !!rows[0]?.s;
+  } catch {
+    return false;
+  }
+}
+
+export async function listSubmittedCases() {
+  try {
+    return await prisma.$queryRaw<Array<{ id: string; userId: string; title: string; submitted: string; reviewed: string | null }>>`
+      SELECT "id", "userId", "title", "data"->'info'->>'submitted' AS "submitted", "data"->'info'->>'reviewed' AS "reviewed"
+      FROM "EhrCase" WHERE "data"->'info'->>'submitted' IS NOT NULL ORDER BY "data"->'info'->>'submitted' DESC LIMIT 300`;
+  } catch {
+    return [];
+  }
+}
+
+export async function getCaseAny(id: string) {
+  try {
+    const rows = await prisma.$queryRaw<Array<{ id: string; userId: string; title: string; data: unknown }>>`
+      SELECT "id", "userId", "title", "data" FROM "EhrCase" WHERE "id" = ${id}`;
+    return rows[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+export async function setReview(id: string, comment: string): Promise<boolean> {
+  try {
+    const n = await prisma.$executeRaw`
+      UPDATE "EhrCase" SET "data" = jsonb_set(jsonb_set("data", '{info,comment}', to_jsonb(${comment}::text), true), '{info,reviewed}', to_jsonb(${new Date().toISOString()}::text), true)
+      WHERE "id" = ${id} AND "data"->'info'->>'submitted' IS NOT NULL`;
+    return n > 0;
   } catch {
     return false;
   }
