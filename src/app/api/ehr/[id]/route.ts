@@ -1,12 +1,12 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { isAdminRole } from '@/lib/auth-core';
+import { hasEhrAccess } from '@/lib/ehr-access';
 import { removeCase, saveCase } from '@/lib/ehr';
 
 async function approvedUser() {
   const user = await getCurrentUser();
   if (!user) return null;
-  return user.approvalStatus === 'APPROVED' || isAdminRole(user.role) ? user : null;
+  return (await hasEhrAccess(user)) ? user : null;
 }
 
 export async function PUT(req: Request, { params }: { params: Promise<{ id: string }> }) {

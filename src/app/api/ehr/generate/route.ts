@@ -1,9 +1,9 @@
 import { NextResponse } from 'next/server';
 import { getCurrentUser } from '@/lib/auth';
-import { isAdminRole } from '@/lib/auth-core';
-import { hasChecklistAccess } from '@/lib/checklist-access';
+import { hasEhrAccess } from '@/lib/ehr-access';
 import { aiConfigured, askModel } from '@/lib/ai';
 import { takeAiQuota, refundAiQuota } from '@/lib/practicum-ai';
+import { EHR_CASE_LIMIT } from '@/lib/ehr-access';
 import { createCase } from '@/lib/ehr';
 import { emptyChart, type Row } from '@/app/ehr/types';
 import { findPhi } from '@/app/ehr/phi';
@@ -26,8 +26,7 @@ const list = (v: unknown, keys: string[], max: number): Row[] =>
 
 export async function POST(req: Request) {
   const user = await getCurrentUser();
-  if (!user || !(user.approvalStatus === 'APPROVED' || isAdminRole(user.role))) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
-  if (!(await hasChecklistAccess(user))) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
+  if (!user || !(await hasEhrAccess(user))) return NextResponse.json({ error: 'unauthorized' }, { status: 401 });
   if (!aiConfigured()) return NextResponse.json({ error: 'off' }, { status: 503 });
   const body = await req.json().catch(() => ({}));
   const wardName = s(body?.ward, 20);
@@ -37,7 +36,7 @@ export async function POST(req: Request) {
   const w = WARDS.find(x => x.name === wardName);
   if (kind === 'ward' && (!w || !bed)) return NextResponse.json({ error: 'bad' }, { status: 400 });
   if (kind !== 'ward' && wardName !== (kind === 'er' ? '응급실' : '외래')) return NextResponse.json({ error: 'bad' }, { status: 400 });
-  if (!(await takeAiQuota(user.id, '#ehrgen', 5))) return NextResponse.json({ error: 'limit' }, { status: 429 });
+  if (!(await takeAiQuota(user.id, '#ehrgen', EHR_CASE_LIMIT))) return NextResponse.json({ error: 'limit' }, { status: 429 });
 
   const ask = kind === 'ward' ? `병동 진료과: ${w!.dept}. 입원 환자 1명.` : kind === 'er' ? '응급실 내원 환자 1명.' : '외래 내원 환자 1명.';
   const out = await askModel(SYS, [{ role: 'user', content: `${ask}${hint ? ` 요청: ${hint}` : ''}` }], 1800);

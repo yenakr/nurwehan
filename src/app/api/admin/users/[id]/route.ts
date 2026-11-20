@@ -4,6 +4,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { isAdminRole, isSuperAdmin } from '@/lib/auth-core';
 import { setTier } from '@/lib/access';
 import { setChecklistAccess } from '@/lib/checklist-access';
+import { setEhrAccess } from '@/lib/ehr-access';
 
 export async function PATCH(
   request: NextRequest,
@@ -17,7 +18,7 @@ export async function PATCH(
 
     const { id } = await params;
     const body = await request.json();
-    const { grade, approvalStatus, rejectedReason, tier, role, checklist } = body;
+    const { grade, approvalStatus, rejectedReason, tier, role, checklist, ehr } = body;
 
     if (grade !== undefined && !(Number.isInteger(grade) && grade >= 1 && grade <= 4)) {
       return NextResponse.json({ message: '학년이 올바르지 않습니다.' }, { status: 400 });
@@ -26,7 +27,7 @@ export async function PATCH(
       return NextResponse.json({ message: '상태 값이 올바르지 않습니다.' }, { status: 400 });
     }
 
-    if ((tier !== undefined || role !== undefined || checklist !== undefined) && !isSuperAdmin(user.role)) {
+    if ((tier !== undefined || role !== undefined || checklist !== undefined || ehr !== undefined) && !isSuperAdmin(user.role)) {
       return NextResponse.json({ message: '권한이 없습니다.' }, { status: 403 });
     }
     if (role !== undefined && role !== 'STUDENT' && role !== 'ADMIN') {
@@ -58,6 +59,7 @@ export async function PATCH(
 
     if (tier !== undefined) await setTier(id, tier);
     if (checklist !== undefined) await setChecklistAccess(id, checklist === true);
+    if (ehr !== undefined) await setEhrAccess(id, ehr === true);
 
     return NextResponse.json(updatedUser);
   } catch (error) {

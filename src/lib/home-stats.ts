@@ -1,5 +1,6 @@
 import { isAdminRole } from './auth-core';
 import { hasChecklistAccess } from './checklist-access';
+import { hasEhrAccess } from './ehr-access';
 import { pickPlacement, type Placement } from './placement-pick';
 import type { HomeTilesData } from '@/app/HomeTiles';
 
@@ -15,10 +16,11 @@ const QUIZ_SUBJECT: Record<string, string> = {
 
 export async function getHomeTiles(user: Viewer, placements: Placement[]): Promise<HomeTilesData> {
   const ok = !!user && (user.approvalStatus === 'APPROVED' || isAdminRole(user.role));
-  if (!user || !ok) return { canCheck: false, quizSubject: null };
+  if (!user || !ok) return { canCheck: false, canEhr: false, quizSubject: null };
   const canCheck = await hasChecklistAccess(user).catch(() => false);
+  const canEhr = await hasEhrAccess(user).catch(() => false);
   const pick = placements.length ? pickPlacement(placements, new Date()) : null;
   const course = pick?.kind === 'current' ? pick.items[0]?.subject.split('_')[0] : undefined;
   const subject = course ? QUIZ_SUBJECT[course] : undefined;
-  return { canCheck, quizSubject: subject ? { subject, label: subject } : null };
+  return { canCheck, canEhr, quizSubject: subject ? { subject, label: subject } : null };
 }

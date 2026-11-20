@@ -26,6 +26,7 @@ interface User {
   approvalStatus: string;
   tier?: number;
   checklist?: boolean;
+  ehr?: boolean;
   role?: string;
   createdAt: string;
   restrictions: Restriction[];
@@ -98,6 +99,23 @@ export default function UserList({ initialUsers, superAdmin = false }: { initial
         body: JSON.stringify({ tier }),
       });
       if (res.ok) setUsers(users.map(u => (u.id === id ? { ...u, tier } : u)));
+      else alert('저장하지 못했습니다.');
+    } catch {
+      alert('오류가 발생했습니다.');
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleEhrUpdate = async (id: string, on: boolean) => {
+    setLoading(id);
+    try {
+      const res = await fetch(`/api/admin/users/${id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ehr: on }),
+      });
+      if (res.ok) setUsers(users.map(u => (u.id === id ? { ...u, ehr: on } : u)));
       else alert('저장하지 못했습니다.');
     } catch {
       alert('오류가 발생했습니다.');
@@ -283,6 +301,17 @@ export default function UserList({ initialUsers, superAdmin = false }: { initial
                     >
                       <option value={0}>체크 끔</option>
                       <option value={1}>체크 사용</option>
+                    </select>
+                  )}
+                  {superAdmin && user.approvalStatus === 'APPROVED' && (
+                    <select
+                      value={user.ehr ? 1 : 0}
+                      onChange={e => handleEhrUpdate(user.id, e.target.value === '1')}
+                      disabled={loading === user.id}
+                      aria-label="EHR"
+                    >
+                      <option value={0}>EHR 끔</option>
+                      <option value={1}>EHR 사용</option>
                     </select>
                   )}
                   <select
