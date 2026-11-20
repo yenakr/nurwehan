@@ -54,7 +54,7 @@ export default function HomeTiles({ data }: { data: HomeTilesData }) {
   const note: Act[] = [
     ...(data.canCheck ? [{ href: '/clinical?tab=check', label: '체크리스트' }] : []),
     { href: '/clinical?tab=notes', label: '메모' },
-    ...(data.canEhr ? [{ href: '/ehr', label: 'EHR 연습' }] : []),
+    ...(data.canEhr ? [{ href: '/ehr', label: 'EHR' }] : []),
     { href: '/clinical?tab=terms', label: '의학용어' },
     { href: '/clinical?tab=mine', label: '내 실습' },
   ];

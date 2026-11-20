@@ -10,7 +10,7 @@ import { hasEhrAccess, EHR_CASE_LIMIT } from '@/lib/ehr-access';
 import { aiQuotaLeft } from '@/lib/practicum-ai';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'EHR 연습' };
+export const metadata = { title: 'EHR' };
 
 export default async function EhrPage({ searchParams }: { searchParams: Promise<{ view?: string }> }) {
   const { view } = await searchParams;

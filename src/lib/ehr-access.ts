@@ -3,7 +3,7 @@ import { isAdminRole } from './auth-core';
 
 type Viewer = { id: string; role: string; approvalStatus?: string | null } | null | undefined;
 
-// EHR 연습은 관리자가 지정한 사용자(와 관리자)만 쓴다. 표가 없거나 오류면 막는다.
+// EHR은 관리자가 지정한 사용자(와 관리자)만 쓴다. 표가 없거나 오류면 막는다.
 export async function hasEhrAccess(user: Viewer): Promise<boolean> {
   if (!user) return false;
   if (isAdminRole(user.role)) return true;
