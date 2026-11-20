@@ -19,7 +19,11 @@ export default async function AdminEhrPage() {
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '32px 0' }}>
       <div className="container" style={{ maxWidth: 720 }}>
-        <h1 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: 16 }}>EHR 연습 제출 기록</h1>
+        <h1 style={{ fontSize: '1.25rem', fontWeight: 800, marginBottom: 12 }}>EHR 연습 제출 기록</h1>
+        <div style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+          <Link href="/admin/ehr/classes" style={{ border: '1px solid var(--border)', borderRadius: 999, padding: '7px 16px', fontSize: 14, fontWeight: 700 }}>분반 관리</Link>
+          <Link href="/admin/ehr/patients" style={{ border: '1px solid var(--border)', borderRadius: 999, padding: '7px 16px', fontSize: 14, fontWeight: 700 }}>가상환자 관리</Link>
+        </div>
         <div className="card" style={{ padding: 0 }}>
           {rows.length === 0 && <p style={{ padding: 24, textAlign: 'center', color: 'var(--sub-text)' }}>제출된 차트가 없어요.</p>}
           {rows.map((r, i) => {
