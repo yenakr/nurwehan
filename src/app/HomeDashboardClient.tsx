@@ -49,34 +49,29 @@ export default function HomeDashboardClient({
   const showPlacement = !!pickPlacement(placements, new Date());
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       {/* Top Banner / Hero Context */}
       <div
         style={{
           backgroundColor: '#0E4A84',
           color: '#FFFFFF',
           borderRadius: '12px',
-          padding: '28px 24px',
+          padding: '16px 18px',
           boxShadow: '0 4px 12px rgba(14, 74, 132, 0.15)',
         }}
       >
-        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: '16px' }}>
-          <div>
-            <div style={{ fontSize: '0.875rem', opacity: 0.85, marginBottom: '6px' }}>
-              {todayStr}
-            </div>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: 800, marginBottom: '4px' }}>
-              {user ? `${user.name}님, 안녕하세요` : 'NUR위한'}
-            </h1>
-          </div>
-
+        <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'baseline', gap: '2px 12px' }}>
+          <h1 style={{ fontSize: '1.0625rem', fontWeight: 800, margin: 0 }}>
+            {user ? `${user.name}님, 안녕하세요` : 'NUR위한'}
+          </h1>
+          <div style={{ fontSize: '0.75rem', opacity: 0.8 }}>{todayStr}</div>
         </div>
 
         {/* 실습 기간: 내 배정 / 그 외: 가장 가까운 주요 일정 */}
         {showPlacement ? (
           <PlacementBox placements={placements} />
         ) : (
-        <div style={{ marginTop: '20px', backgroundColor: 'rgba(255, 255, 255, 0.15)', padding: '14px 16px', borderRadius: '8px' }}>
+        <div style={{ marginTop: '12px', backgroundColor: 'rgba(255, 255, 255, 0.15)', padding: '12px 14px', borderRadius: '8px' }}>
           <div style={{ fontSize: '0.75rem', fontWeight: 700, opacity: 0.85, marginBottom: '6px' }}>가장 가까운 주요 일정</div>
           {nearestEvent ? (
             <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'space-between', gap: '8px 16px' }}>
