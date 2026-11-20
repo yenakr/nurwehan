@@ -1,6 +1,7 @@
 'use client';
 
 import Guide from './Guide';
+import Ehr from './Ehr';
 import { useEffect, useMemo, useState } from 'react';
 import Link from 'next/link';
 import MySchedule, { type ScheduleItem } from './MySchedule';
@@ -17,11 +18,12 @@ interface ClinicalClientProps {
   canCheck?: boolean;
 }
 
-type Tab = 'mine' | 'notes' | 'check' | 'terms';
+type Tab = 'mine' | 'notes' | 'check' | 'ehr' | 'terms';
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'check', label: '체크리스트' },
   { id: 'notes', label: '메모' },
+  { id: 'ehr', label: 'EHR' },
   { id: 'mine', label: '내 실습' },
   { id: 'terms', label: '의학용어' },
 ];
@@ -36,7 +38,7 @@ const QUIZ_SUBJECT: Record<string, string> = {
 const quizSubjectOf = (subject: string) => QUIZ_SUBJECT[subject.split('_')[0]];
 
 export default function ClinicalClient({ schedule, user, progress, aiOn, canCheck, initialTab }: ClinicalClientProps) {
-  const [tab, setTab] = useState<Tab>(() => (TABS.some(t => t.id === initialTab && (t.id !== 'check' || canCheck)) ? (initialTab as Tab) : canCheck ? 'check' : 'mine'));
+  const [tab, setTab] = useState<Tab>(() => (TABS.some(t => t.id === initialTab && ((t.id !== 'check' && t.id !== 'ehr') || canCheck)) ? (initialTab as Tab) : canCheck ? 'check' : 'mine'));
   const [prog, setProg] = useState<Record<string, Store>>(() => Object.fromEntries(Object.entries(progress).map(([k, v]) => [k, normalizeStore(v)])));
   const [notes, setNotes] = useState<Note[]>([]);
   const [unavailable, setUnavailable] = useState(false);
@@ -73,7 +75,7 @@ export default function ClinicalClient({ schedule, user, progress, aiOn, canChec
     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
       <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         <div className="mtabs" style={{ flex: 1 }}>
-          {TABS.filter(t => t.id !== 'check' || canCheck).map(t => (
+          {TABS.filter(t => (t.id !== 'check' && t.id !== 'ehr') || canCheck).map(t => (
             <button key={t.id} type="button" onClick={() => setTab(t.id)} className={tab === t.id ? 'on' : ''}>
               {t.label}
             </button>
@@ -104,6 +106,8 @@ export default function ClinicalClient({ schedule, user, progress, aiOn, canChec
           로그인하면 체크리스트를 기록할 수 있어요.
         </div>
       )}
+
+      {tab === 'ehr' && user && canCheck && <Ehr />}
 
       {tab === 'terms' && (
         <div className="card">
