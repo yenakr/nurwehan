@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { SAMPLES, WARDS, bedLabel, roomNo } from './samples';
-import { emptyChart, migrate, shiftChart } from './types';
+import { emptyChart, migrate, shiftChart, type Sample } from './types';
 import { newPtNo } from './directory';
 import AiMark from '@/components/AiMark';
 import WardBulk, { type BulkPt } from './WardBulk';
@@ -53,7 +53,7 @@ const TOP: { label: string; idx: number[] }[] = (() => {
   return out;
 })();
 
-export default function EhrHome({ cases, initialView, ai, aiLeft }: { cases: Item[]; initialView?: string; ai?: boolean; aiLeft?: number }) {
+export default function EhrHome({ cases, initialView, ai, aiLeft, extra }: { cases: Item[]; initialView?: string; ai?: boolean; aiLeft?: number; extra?: Sample[] }) {
   const router = useRouter();
   const [vi, setVi] = useState(() => Math.max(0, VIEWS.findIndex(v => v.name === initialView)));
   const [openG, setOpenG] = useState<string | null>(null);
@@ -91,7 +91,7 @@ export default function EhrHome({ cases, initialView, ai, aiLeft }: { cases: Ite
     w.rooms.forEach((size, ri) => {
       for (let b = 1; b <= size; b++) {
         const bed = bedLabel(w, ri + 1, b);
-        const sample = SAMPLES.find(sp => sp.data.info.ward === w.name && sp.data.info.bed === bed);
+        const sample = [...SAMPLES, ...(extra || [])].find(sp => sp.data.info.ward === w.name && sp.data.info.bed === bed);
         const savedAny = sample ? cases.find(c => c.sampleKey === sample.key) : undefined;
         const dcSample = !!savedAny?.discharged; // 퇴원한 샘플 환자의 병상은 비워둔다
         const saved = dcSample ? undefined : sample ? savedAny : active.find(c => c.ward === w.name && c.bed === bed);
@@ -116,7 +116,7 @@ export default function EhrHome({ cases, initialView, ai, aiLeft }: { cases: Ite
   } else if (view.kind === 'dc') {
     cases.filter(c => c.discharged).sort((a, b) => (b.discharged || '').localeCompare(a.discharged || '')).forEach(c => entries.push({ key: c.id, label: '', saved: c, p: c, make: () => ({ title: '', subject: null, data: {} }) }));
   } else {
-    const samples = SAMPLES.filter(s => s.data.info.ward === wardName);
+    const samples = [...SAMPLES, ...(extra || [])].filter(s => s.data.info.ward === wardName);
     const savedHere = active.filter(c => c.ward === wardName);
     const savedAll = cases.filter(c => c.ward === wardName);
     const used = new Set<string>();
