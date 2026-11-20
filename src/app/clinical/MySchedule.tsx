@@ -38,14 +38,10 @@ const subjectLabel = (s: string) => s.replace('_', ' ');
 const timeText = (i: ScheduleItem) =>
   i.shift && SHIFT_TIME[i.shift] ? `${SHIFT_LABEL[i.shift]} ${SHIFT_TIME[i.shift].join('–')}` : '';
 
-const COLORS: Record<string, string> = {
-  성인1: '#DBEAFE',
-  성인2: '#FED7AA',
-  간호과정: '#ECFCCB',
-  여성_산과: '#FBCFE8',
-  여성_부인과: '#FBCFE8',
-  여성: '#FBCFE8',
-};
+// 과목별 대표색(밝은 배경/어두운 배경 모두에서 읽히는 중간 채도)
+const ACCENT: Record<string, string> = { 성인1: '#2f7de1', 성인2: '#e08a1e', 간호과정: '#2fa05a', 여성: '#d6458b' };
+const accentOf = (subject: string) => ACCENT[subject.split('_')[0]] || '#6b7280';
+const tint = (c: string, pct: number) => `color-mix(in srgb, ${c} ${pct}%, var(--white))`;
 
 function buildIcs(items: ScheduleItem[]) {
   const stamp = new Date().toISOString().replace(/[-:]/g, '').slice(0, 15) + 'Z';
@@ -164,8 +160,9 @@ export default function MySchedule({
                   gap: '4px 12px',
                   padding: '12px 10px',
                   borderTop: '1px solid var(--border)',
-                  backgroundColor: current ? '#EFF6FF' : 'transparent',
-                  borderLeft: current ? '3px solid var(--primary)' : '3px solid transparent',
+                  backgroundColor: current ? tint(it ? accentOf(it.subject) : 'var(--primary)', 10) : 'transparent',
+                  borderLeft: `4px solid ${it ? accentOf(it.subject) : 'var(--border)'}`,
+                  opacity: !current && addDays(w.endDate, 2) < today ? 0.55 : 1,
                 }}
               >
                 <div>
@@ -178,7 +175,7 @@ export default function MySchedule({
                   <div>
                     <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: '4px 8px' }}>
                       <span style={{ fontWeight: 700 }}>{place(it)}</span>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 700, backgroundColor: COLORS[it.subject] || '#E5E7EB', padding: '1px 8px', borderRadius: '999px' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: accentOf(it.subject), backgroundColor: tint(accentOf(it.subject), 14), padding: '1px 9px', borderRadius: '999px' }}>
                         {subjectLabel(it.subject)}
                       </span>
                       {timeText(it) && <span style={{ fontSize: '0.8125rem', color: 'var(--sub-text)' }}>{timeText(it)}</span>}
@@ -214,6 +211,14 @@ export default function MySchedule({
             ›
           </button>
         </div>
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px 12px', margin: '0 0 8px', fontSize: '0.75rem', color: 'var(--sub-text)' }}>
+          {Array.from(new Set(schedule.map(x => x.subject.split('_')[0]))).map(k => (
+            <span key={k} style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
+              <i style={{ width: '9px', height: '9px', borderRadius: '3px', background: accentOf(k), display: 'inline-block' }} />
+              {k}
+            </span>
+          ))}
+        </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(0, 1fr))', gap: '2px', fontSize: '0.6875rem' }}>
           {WD.map((d, i) => (
             <div key={d} style={{ textAlign: 'center', fontWeight: 700, color: i === 0 ? '#DC2626' : i === 6 ? '#2563EB' : 'var(--sub-text)', padding: '2px 0' }}>
@@ -239,15 +244,16 @@ export default function MySchedule({
                   padding: '3px',
                   borderRadius: '4px',
                   opacity: inMonth ? 1 : 0.35,
-                  backgroundColor: it ? COLORS[it.subject] || '#E5E7EB' : free ? '#F3F4F6' : '#FFFFFF',
+                  backgroundColor: it ? tint(accentOf(it.subject), 16) : free ? tint('#8a8f98', 10) : 'var(--white)',
                   border: s === today ? '2px solid var(--primary)' : '1px solid var(--border)',
+                  ...(it && s !== today ? { borderTop: `3px solid ${accentOf(it.subject)}` } : {}),
                   overflow: 'hidden',
                 }}
               >
                 <div style={{ fontWeight: 700 }}>{d.getDate()}</div>
                 {hasNote && <span style={{ position: 'absolute', top: '3px', right: '5px', color: 'var(--primary)', fontSize: '0.75rem', lineHeight: 1 }}>●</span>}
                 {it && (
-                  <div style={{ fontSize: '0.625rem', lineHeight: 1.25, wordBreak: 'keep-all' }}>
+                  <div style={{ fontSize: '0.625rem', lineHeight: 1.25, wordBreak: 'keep-all', color: 'var(--text)' }}>
                     {it.ward}
                     {it.shift && <div style={{ fontWeight: 700 }}>{it.shift === 'Eve' ? 'Eve' : 'Day'}</div>}
                   </div>
