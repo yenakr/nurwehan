@@ -599,6 +599,7 @@ export default function EhrEditor({
         </button>
       </div>
 
+      <p className="pvn">실제 환자 정보(이름, 등록번호, 생년월일, 병실 등)는 쓰지 마세요. 가상 정보로 바꿔서 연습하세요.</p>
       {locked && <div className="lkb">{info.reviewed ? '교수님이 확인했어요' : '제출했어요. 교수님 확인 전에는 제출 취소로 고칠 수 있어요'}</div>}
       {info.comment && <div className="cmt"><b>교수님 의견</b><p>{info.comment}</p></div>}
       {fb && <div className="cmt ai"><b>AI 피드백</b><button type="button" className="cx" aria-label="닫기" onClick={() => setFb('')}>&times;</button><p>{fb}</p></div>}
@@ -872,6 +873,7 @@ export default function EhrEditor({
         .ehr .aib { border: 1px solid var(--primary); border-radius: 999px; background: none; color: var(--primary); font: inherit; font-size: 0.75rem; font-weight: 700; padding: 5px 12px; cursor: pointer; white-space: nowrap; }
         .ehr .aib:disabled { opacity: .6; }
         .ehr .aisw { display: flex; align-items: center; gap: 4px; font-size: 0.75rem; color: var(--sub-text); cursor: pointer; }
+        .ehr .pvn { margin: 0 0 8px; font-size: 0.75rem; color: #b45309; font-weight: 700; }
         .ehr .lkb { margin-bottom: 8px; padding: 8px 12px; border-radius: 8px; background: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--primary); font-size: 0.8125rem; font-weight: 700; }
         .ehr .cmt { position: relative; margin-bottom: 8px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--primary); background: var(--white); }
         .ehr .cmt.ai { border-color: var(--line); background: color-mix(in srgb, var(--primary) 6%, transparent); }
