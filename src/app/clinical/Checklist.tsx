@@ -676,6 +676,7 @@ tr { break-inside: avoid; }
         </section>
       )}
 
+      <div className="gl">
       {!sum && visible.map(({ g, items }) => {
         const gd = g.items.filter(i => (prog[i.id] || []).length > 0).length;
         return (
@@ -719,6 +720,7 @@ tr { break-inside: avoid; }
           </section>
         );
       })}
+      </div>
 
       {!sum && (
         <div className="foot">
@@ -868,9 +870,9 @@ tr { break-inside: avoid; }
             )}
 
             <input className="rmi" value={remarks[sheet.id] || ''} onChange={e => setRemark(sheet.id, e.target.value)} placeholder="비고" maxLength={200} />
-            <div className="dsc">
+            <div className={`dsc ${descOpen ? 'open' : ''}`}>
               <p className={`desc ${descOpen ? '' : 'clamp'}`}>{DETAIL[sheet.id]?.s ?? sheet.d}</p>
-              {descOpen && DETAIL[sheet.id] && (
+              {DETAIL[sheet.id] && (
                 <ul className="kp">
                   {DETAIL[sheet.id].k.map(([a, b]) => (
                     <li key={a}><b>{a}</b><span>{b}</span></li>
@@ -998,7 +1000,16 @@ tr { break-inside: avoid; }
         .pc .kp span { min-width: 0; font-size: 13px; line-height: 1.55; color: var(--text); }
         .pc .dsc { margin-top: 14px; }
         .pc .dtog { display: flex; align-items: center; gap: 4px; margin-top: 0; border: 0; background: none; padding: 4px 0; font: inherit; font-size: 13px; font-weight: 700; color: var(--sub-text); cursor: pointer; }
-        .pc .desc.clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+        @media (max-width: 899px) {
+          .pc .desc.clamp { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+          .pc .dsc:not(.open) .kp { display: none; }
+        }
+        @media (min-width: 900px) {
+          .pc .dtog { display: none; }
+          .pc .gl { column-count: 2; column-gap: 36px; }
+          .pc .gl .grp { break-inside: avoid; }
+          .pc .sheet { max-width: 720px; }
+        }
         .pc .desc { margin: 4px 0 6px; font-size: 13px; line-height: 1.65; color: var(--sub-text); }
         .pc .quick { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
         .pc .q { border: 0; border-radius: 10px; padding: 10px 0; font: inherit; font-size: 14.5px; font-weight: 700; cursor: pointer; }
