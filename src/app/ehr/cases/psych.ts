@@ -1,0 +1,121 @@
+import type { Sample } from '../types';
+import { dt, md, full, sec, memo, od, vit, morse, braden, consent, mar } from './h';
+
+export const psych: Sample = {
+  key: 'psych',
+  subject: '정신',
+  title: '정신 · 조현병 급성기',
+  data: {
+    info: {
+      sampleKey: 'psych', bed: '1004-2', ptNo: '00000004', name: '한도윤', ageSex: '27/M', ward: '101병동', dept: 'PSY', doctor: '박정신', admit: dt(-5), orderDate: dt(0),
+      allergy: '무', dx: 'Schizophrenia, acute exacerbation', height: '176', weight: '82.0', iso: '없음', npo: '0', surg: '0',
+      cc: '환청, 피해망상, 수면 감소', onset: dt(-30),
+      hpi: '5년 전 조현병 진단 후 외래 치료 중이었으나 한 달 전부터 약을 임의로 중단함. 2주 전부터 "누가 나를 감시하고 욕한다"며 방문을 잠그고 3일간 거의 잠을 자지 않아 가족의 설득으로 내원하여 보호자 동의 입원함.',
+      pmh: '고혈압(무), 당뇨(무), 간염(무), 약물 알레르기(무)', fh: '숙부) 조현병', social: '무직, 부모와 거주, 대학 중퇴', drink: '가끔', smoke: '유 1갑/일',
+      pe: '혈압 128/82 (mmHg)  맥박 94 (/min)  호흡 18 (/min)  체온 36.6 (℃)\nMental status: 단정하지 않음, 눈 맞춤 회피, 환청(+), 피해망상(+), 병식 없음. 자·타해 위험 평가: 타해 위험 중등도(언어적 위협), 자해 위험 낮음.',
+      plan: '- 항정신병약물 조정(risperidone), 필요 시 진정제\n- 환청·망상 증상 관찰, 안전 점검 q15min\n- 약물 순응 교육, 가족 교육, 사회기술 훈련',
+      route: '외래', method: '보호자 동반 보행', informant: '어머니', job: '무직', religion: '무교', marital: '미혼', lang: '한국어', purpose: 'treatment', insight: '무',
+      bedsore: '', fall: '', pain: 'NRS 0',
+      disDate: dt(9), disMethod: '보행', disPlace: '자택', disGuardian: '어머니', disTarget: '환자, 어머니', dcEdu: '',
+    },
+    progress: [
+      { time: full(0, '09:40'), dept: 'PSY', text: 'S) "아직도 가끔 들리는데 어제보단 작아요." 밤에 5시간 잠.\nO) 환청 빈도 감소(하루 2~3회), 피해망상 부분 유지, 사고 와해 약간. 식사 양호, 약 복용함. 정좌불능 없음, EPS 없음. BP 124/78, HR 82.\nA) 조현병 급성기, 약물 치료 반응 시작\nP) Risperidone 4mg 유지, 낮 시간 프로그램 참여 격려, 부작용 모니터링.', author: '박정신' },
+      { time: full(-2, '10:00'), dept: 'PSY', text: 'S) "약 먹으면 안 돼요. 독이 들었어요."\nO) 약 복용 거부 1회 후 설득으로 복용. 환청과 피해망상 지속, 언어적 위협 없음.\nA) 병식 없음, 약물 순응 문제\nP) 약 복용 확인(구강 확인), 약물 교육, 가족 면담.', author: '박정신' },
+      { time: full(-5, '15:30'), dept: 'PSY', text: '입원 시 평가: 환청, 피해망상, 수면 감소. 병식 없음. 보호입원(보호의무자 동의). 항정신병약물 재투여 시작.', author: '마음숙' },
+    ],
+    orders: [
+      sec('▶ 기본처방 ◀'),
+      od('Check V/S q [8] hrs', '', '', '', '', '', [], '1'),
+      od('안전 점검 q 15min (위험 물품 점검, 자·타해 관찰)', '', '', '', '', '집계완료', [], '1'),
+      od('폐쇄병동 규칙, 외출 제한', '', '', '', '', '집계완료'),
+      od('체중, 허리둘레 weekly', '', '', '', '', '', [], '1'),
+      sec('▶ 식사 처방 ◀'),
+      od('일반식', '', '', '', '', '집계완료'),
+      sec('▶ 먹는약 ◀'),
+      od('Risperidone 2mg (리스페달)', '2', 'mg', '2회', 'PO', '집계완료', ['09:00/박', '21:00/'], '1'),
+      memo('※ 복용 후 구강 확인 (삼킴 확인)'),
+      od('Benztropine 1mg (벤즈트로핀)', '1', 'mg', '2회', 'PO', '집계완료', ['09:00/박', '21:00/'], '1'),
+      od('Zolpidem 10mg (스틸녹스)', '10', 'mg', '1회', 'PO', '집계완료', ['21:00/'], '1'),
+      sec('▶ 약주사 PRN ◀'),
+      od('Haloperidol 5mg/mL (할로페리돌)', '5', 'mg', '1회', 'IM', '', [], '', 'PRN'),
+      memo('※ 격앙·공격적 행동으로 안전이 위협될 때. 투여 전 의사 지시 확인, 투여 후 30분 관찰.'),
+      od('Lorazepam 1mg (아티반)', '1', 'mg', '1회', 'PO', '', [], '', 'PRN'),
+      memo('※ 불안·초조 시. 하루 최대 3회. 마약류 이중확인'),
+      od('Olanzapine 5mg', '5', 'mg', '1회', 'PO', '', [], '', 'D/C'),
+      memo('※ 대사 위험으로 risperidone으로 변경하며 D/C'),
+      sec('▶ 검 사 ◀'),
+      od('Prolactin, glucose, lipid profile, LFT', '', '', '', '', '집계완료', [], '1'),
+      od('12-lead ECG (QTc)', '', '', '', '', '집계완료', [], '1'),
+    ],
+    mar: [
+      mar(full(0, '09:05'), 'Risperidone 2mg (리스페달)', '2mg', 'PO', '09:00', '박간호', { note: '복용 후 구강 확인함' }),
+      mar(full(0, '09:08'), 'Benztropine 1mg (벤즈트로핀)', '1mg', 'PO', '09:00', '박간호'),
+      mar(full(-2, '21:10'), 'Risperidone 2mg (리스페달)', '2mg', 'PO', '21:00', '김간호', { st: '미수행', note: '환자 거부 / "독이 들었다"며 거부, 20분 후 재시도하여 복용함' }),
+      mar(full(-3, '22:20'), 'Lorazepam 1mg (아티반)', '1mg', 'PO', 'PRN', '김간호', { dbl: '이간호', note: '초조하고 서성임, 투여 40분 후 안정' }),
+    ],
+    vitals: [
+      vit(md(-5, '16:00'), '128/82', '94', '18', '36.6', '98', '0'),
+      vit(md(-4, '08:00'), '126/80', '90', '18', '36.5', '98', '0'),
+      vit(md(-3, '22:20'), '134/86', '104', '20', '36.7', '98', '0'),
+      vit(md(-2, '08:00'), '126/80', '88', '18', '36.6', '98', '0'),
+      vit(md(-1, '08:00'), '124/78', '84', '18', '36.5', '98', '0'),
+      vit(md(0, '08:00'), '124/78', '82', '18', '36.6', '98', '0'),
+    ],
+    io: [],
+    labs: [
+      { name: 'Prolactin', value: '32', unit: 'ng/mL', min: '4', max: '15', sample: 'Blood', time: md(-4, '06:30') },
+      { name: 'Glucose', value: '92', unit: 'mg/dL', min: '70', max: '110', sample: 'Blood', time: md(-4, '06:30') },
+      { name: 'T-Chol', value: '212', unit: 'mg/dL', min: '0', max: '200', sample: 'Blood', time: md(-4, '06:30') },
+      { name: 'AST', value: '28', unit: 'U/L', min: '0', max: '40', sample: 'Blood', time: md(-4, '06:30') },
+      { name: 'ALT', value: '34', unit: 'U/L', min: '0', max: '40', sample: 'Blood', time: md(-4, '06:30') },
+      { name: 'QTc (ECG)', value: '418', unit: 'ms', min: '350', max: '450', sample: 'ECG', time: md(-4, '09:00') },
+    ],
+    notes: [
+      { time: md(0, '10:10'), focus: '환청', text: 'S)\n"아직도 가끔 들리는데 어제보다 작아요."\n\nO)\n하루 2~3회 환청 호소, 표정 평온함. 낮 프로그램(미술) 참여, 식사 전량. 눈 맞춤 약간 회복.\n\nA)\n약물 치료 후 환청 빈도와 강도가 감소함.\n\nI)\n환청이 들리면 간호사에게 말하도록 격려, 환청 내용에 동조하거나 논쟁하지 않고 현실을 부드럽게 알려줌, 기분 전환 활동(산책, 음악) 제안함.\n\nE)\n환자가 "들리면 말씀드릴게요"라고 대답함.', author: '박간호', shift: 'D' },
+      { time: md(-2, '21:30'), focus: '약물 거부', text: 'D)\n21:10 약을 건네자 "독이 들었다"며 입을 다물고 거부함. 흥분 없이 방으로 돌아가려 함.\n\nA)\n강요하지 않고 20분 후 다시 접근하여 약이 의사 처방이며 간호사가 함께 확인한 약임을 설명, 알약을 함께 확인 후 복용 유도함. 삼킨 후 구강 확인함. 의사에게 보고함.\n\nR)\n21:35 복용함, 이후 안정적으로 취침. 약물 교육 계획에 반영함.', author: '김간호', shift: 'E' },
+      { time: md(-3, '22:30'), focus: '초조', text: 'D)\n22:00 복도를 서성이며 "누가 쫓아와"라고 말함, 주먹을 쥐고 목소리가 커짐. BP 134/86, HR 104.\n\nA)\n조용한 휴게실로 안내하여 자극을 줄이고 차분하게 대화함. 위협 시 개입 기준 확인, PRN lorazepam 1mg 투여함(이중 확인).\n\nR)\n23:00 호흡·표정 안정, 방으로 이동 후 취침함. 안전 점검 q15min 지속.', author: '김간호', shift: 'E' },
+    ],
+    care: [
+      { dx: '감각지각 장애', data: '환청(+) 하루 5~6회, 방문 잠금, 수면 3시간', goal: '2주 내 환청이 들려도 일상 활동 가능', plan: '증상 사정, 환청 내용 평가(명령 환청 여부), 현실 감각 유지, 약물 투여, 수면 위생', eval: '진행 중. 환청 하루 2~3회로 감소.' },
+      { dx: '사고과정 장애', data: '피해망상, 사고 와해, 병식 없음', goal: '2주 내 피해망상으로 인한 행동이 줄어듦', plan: '신뢰 관계 형성, 망상 논쟁 금지, 현실 지남력 제공, 약물 효과 관찰', eval: '진행 중.' },
+      { dx: '타인에 대한 폭력 위험성', data: '언어적 위협, 초조와 서성임, 피해망상', goal: '입원 중 타해 행동 없음', plan: '안전 점검 q15min, 위험 물품 점검, 초조 징후 조기 개입, 자극 최소화, PRN 투여', eval: '진행 중. 위협 행동 없음.' },
+      { dx: '비순응', data: '한 달간 약 임의 중단, 약에 독이 있다고 말함', goal: '퇴원 전 약 복용 이유와 부작용 대처를 설명', plan: '약물 교육, 장기지속형 주사 안내, 가족 교육, 복약 확인', eval: '' },
+    ],
+    edu: [
+      { time: md(0, '14:00'), topic: '항정신병약물의 효과와 부작용(손 떨림, 체중 증가, 졸림)', target: '환자', method: '구두', under: '보통', by: '박간호' },
+      { time: md(-1, '15:00'), topic: '증상 악화 신호와 대처, 약물 중단 시 재발 위험', target: '보호자', method: '유인물', under: '충분', by: '정간호' },
+    ],
+    specimen: [
+      { time: md(-4, '06:30'), test: '대사 검사 (glucose, lipid, LFT), prolactin', tube: 'SST', st: '결과', by: '최간호' },
+    ],
+    transport: [],
+    moves: [],
+    forms: {
+      morse: [morse(md(-4, '10:00'), [0, 0, 0, 0, 0, 1])],
+      braden: [braden(md(-4, '10:00'), [3, 3, 3, 3, 2, 2])],
+    },
+    handover: [
+      { time: md(0, '07:00'), s: '야간 안정적, 5시간 수면. 환청 1회 호소', b: '조현병 급성기 입원 6일차, 보호입원, 약물 거부 이력', a: '안전 점검 q15min 유지, 위협 행동 없음, 아침 약 복용 확인 필요', r: '복용 후 구강 확인, 낮 프로그램 참여 유도, 증상 변화 시 notify', author: '최간호' },
+    ],
+    memos: [
+      { time: md(0, '09:50'), type: '진료메모', text: 'Risperidone 증량 없이 유지. 다음 주 퇴원 계획 수립을 위해 가족 면담(수요일).', author: '박정신', shift: 'D' },
+      { time: md(-3, '23:00'), type: '인수인계', text: '22시 초조 시 PRN lorazepam 투여. 이후 안정. 구강 확인 필수.', author: '김간호', shift: 'E', imp: '1' },
+    ],
+    consent: [
+      consent('입원 동의서', dt(-5), '마음숙', '법정대리인', '한영숙', '모(보호의무자)'),
+      consent('개인정보 수집·이용 동의서', dt(-5), '마음숙', '법정대리인', '한영숙', '모(보호의무자)'),
+      { name: '신체보호대 사용 동의서', date: dt(-3), st: '작성', doctor: '박정신', note: '격앙 시 사용 가능성 설명, 사용 안 함 (서명 대기)' },
+    ],
+    imaging: [],
+    nutrition: [
+      { time: full(-4, '11:00'), text: '항정신병약물 복용으로 체중·혈당 증가 위험. 규칙적인 식사, 단 음료와 야식 줄이기, 걷기 운동 권고.', author: '영양사' },
+    ],
+    appts: [
+      { date: dt(23), time: '14:00', dept: 'PSY', doc: '박정신', purpose: '퇴원 후 외래', st: '예약' },
+    ],
+    history: [
+      { dept: 'PSY', date: dt(-400), dx: 'Schizophrenia', code: 'F20.9', kind: '입원' },
+      { dept: 'PSY', date: dt(-65), dx: 'Schizophrenia', code: 'F20.9', kind: '외래' },
+    ],
+  },
+};

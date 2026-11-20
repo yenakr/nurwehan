@@ -150,6 +150,53 @@ export const NANDA: { domain: string; items: [string, string][] }[] = [
 영아의 비조직적 행위 위험성|Risk for disorganized infant behavior
 두개 내압 조절력 감소|Decreased intracranial adaptive capacity
 영아의 조직적 행위 향상 가능성|Readiness for enhanced organized infant behavior`) },
+  { domain: '삶의 원칙', items: P(`
+영적 안녕 향상 가능성|Readiness for enhanced spiritual well-being
+영적 고뇌|Spiritual distress
+영적 고뇌 위험성|Risk for spiritual distress
+도덕적 고뇌|Moral distress
+결정갈등|Decisional conflict
+비순응|Noncompliance
+종교성 장애|Impaired religiosity`) },
+  { domain: '안전/보호', items: P(`
+감염 위험성|Risk for infection
+비효율적 기도청결|Ineffective airway clearance
+흡인 위험성|Risk for aspiration
+비효율적 체온조절|Ineffective thermoregulation
+체온상승|Hyperthermia
+체온하강|Hypothermia
+체온불균형 위험성|Risk for imbalanced body temperature
+낙상 위험성|Risk for falls
+손상 위험성|Risk for injury
+외상 위험성|Risk for trauma
+질식 위험성|Risk for suffocation
+중독 위험성|Risk for poisoning
+피부통합성 장애|Impaired skin integrity
+피부통합성 장애 위험성|Risk for impaired skin integrity
+조직통합성 장애|Impaired tissue integrity
+구강점막 손상|Impaired oral mucous membrane
+치아 손상|Impaired dentition
+말초신경혈관 기능장애 위험성|Risk for peripheral neurovascular dysfunction
+라텍스 알레르기 반응|Latex allergy response
+라텍스 알레르기 반응 위험성|Risk for latex allergy response
+자해|Self-mutilation
+자해 위험성|Risk for self-mutilation
+자살 위험성|Risk for suicide
+자신에 대한 폭력 위험성|Risk for self-directed violence
+타인에 대한 폭력 위험성|Risk for other-directed violence
+방어 비효율|Ineffective protection
+배회|Wandering`) },
+  { domain: '안위', items: P(`
+급성 통증|Acute pain
+만성 통증|Chronic pain
+오심|Nausea
+사회적 고립|Social isolation
+안위 향상 가능성|Readiness for enhanced comfort`) },
+  { domain: '성장/발달', items: P(`
+성장 장애|Delayed growth and development
+성장불균형 위험성|Risk for disproportionate growth
+발달 지연 위험성|Risk for delayed development
+성인 성장장애|Adult failure to thrive`) },
 ];
 
 // 간호진단 진술 오류 점검 (법적·의학적 문제, 가치판단, 두 가지 문제 동시 진술)
