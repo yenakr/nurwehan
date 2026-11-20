@@ -10,7 +10,7 @@ import { ALLERGIES, DEPTS, DOCTORS, WARD_OPTIONS, bedOptions } from '../director
 import { confirmDialog, notify } from '@/components/Dialog';
 import { VitalsExtra, VitalsBulk, IoBulk, LabSets, IoTotals, printChart, useDictation } from './EhrExtras';
 import AiMark from '@/components/AiMark';
-import { NANDA } from '../nanda';
+import { NANDA, dxIssues } from '../nanda';
 import MarPanel from './EhrMar';
 import MemoPanel from './EhrMemo';
 import FormPanel, { FORMS, FORM_CSS, type FormKey } from './EhrForms';
@@ -255,10 +255,11 @@ const nowStamp = () => {
 };
 
 // 간호기록 작성: 형식(Focus DAR, SOAPIE, 서술)을 고르고, DAR은 상용구를 눌러 채운 뒤 직접 수정해서 기록한다
-type NFmt = 'DAR' | 'SOAPIE' | 'NARR';
+type NFmt = 'DAR' | 'SOAPIE' | 'SOAPIER' | 'NARR';
 const NFMT: Record<NFmt, { label: string; fields: { k: string; label: string }[] }> = {
   DAR: { label: 'Focus DAR', fields: [{ k: 'D', label: 'D (자료)' }, { k: 'A', label: 'A (중재)' }, { k: 'R', label: 'R (반응)' }] },
   SOAPIE: { label: 'SOAPIE', fields: [{ k: 'S', label: 'S (주관적 자료)' }, { k: 'O', label: 'O (객관적 자료)' }, { k: 'A', label: 'A (사정)' }, { k: 'P', label: 'P (계획)' }, { k: 'I', label: 'I (중재)' }, { k: 'E', label: 'E (평가)' }] },
+  SOAPIER: { label: 'SOAPIER', fields: [{ k: 'S', label: 'S (주관적 자료)' }, { k: 'O', label: 'O (객관적 자료)' }, { k: 'A', label: 'A (사정)' }, { k: 'P', label: 'P (계획)' }, { k: 'I', label: 'I (중재)' }, { k: 'E', label: 'E (평가)' }, { k: 'R', label: 'R (수정)' }] },
   NARR: { label: '서술', fields: [{ k: 'N', label: '서술 기록' }] },
 };
 
@@ -373,6 +374,7 @@ function CareComposer({ onAdd }: { onAdd: (r: Row) => void }) {
           <input value={dx} placeholder="직접 입력 또는 아래에서 선택" onChange={e => setDx(e.target.value)} />
         </label>
       </div>
+      {dxIssues(dx).length > 0 && <ul style={{ margin: '0 0 6px', paddingLeft: 18, fontSize: 12.5, color: '#b45309', fontWeight: 700 }}>{dxIssues(dx).map(m => <li key={m}>{m}</li>)}</ul>}
       <div className="chips">
         {CARE_DX.map(c => (
           <button key={c.dx} type="button" className={dx === c.dx ? 'on' : ''} onClick={() => setDx(c.dx)}>{c.dx}</button>
@@ -856,6 +858,13 @@ export default function EhrEditor({
             {tab === 'notes' && (
               <>
                 <NoteComposer author={userName || ''} onAdd={n => setData(d => ({ ...d, notes: [n, ...d.notes] }))} />
+                {data.notes.some(n => n.fb) && (
+                  <div className="pfb">
+                    <style>{`.pfb { border: 1px solid var(--border); border-left: 4px solid var(--primary); border-radius: 8px; padding: 10px 12px; margin: 8px 0; font-size: 13.5px; line-height: 1.6; } .pfb p { margin: 2px 0 6px; white-space: pre-wrap; } .pfb small { color: var(--sub-text); }`}</style>
+                    <b>교수님 코멘트</b>
+                    {data.notes.filter(n => n.fb).map((n, i) => <div key={i}><small>{n.time} {n.focus}</small><p>{n.fb}</p></div>)}
+                  </div>
+                )}
                 {tbl('notes')}
               </>
             )}

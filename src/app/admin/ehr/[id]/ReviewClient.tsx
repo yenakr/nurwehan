@@ -42,6 +42,22 @@ function Table({ rows, cols }: { rows: Row[]; cols: { key: string; label: string
 export default function ReviewClient({ id, data }: { id: string; data: ChartData }) {
   const [text, setText] = useState(data.info.comment || '');
   const [busy, setBusy] = useState(false);
+  const [from, setFrom] = useState('');
+  const [to, setTo] = useState('');
+  const [showFb, setShowFb] = useState(true);
+  const [fbs, setFbs] = useState<Record<number, string>>(() => Object.fromEntries(data.notes.map((n, i) => [i, n.fb || ''])));
+  const [saved, setSaved] = useState<Record<number, boolean>>({});
+  const md = (t: string | undefined) => (t || '').match(/^(?:\d{4}-)?(\d{2}-\d{2})/)?.[1] || '';
+  const inRange = (t: string | undefined) => {
+    const d = md(t);
+    if (!d) return true;
+    return (!from || d >= from.slice(5)) && (!to || d <= to.slice(5));
+  };
+  const saveFb = async (i: number) => {
+    const r = await fetch(`/api/admin/ehr/${id}/note`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ index: i, text: fbs[i] || '' }) });
+    if (r.ok) setSaved(s => ({ ...s, [i]: true }));
+    else notify('저장하지 못했어요.');
+  };
   const info = data.info;
 
   const save = async () => {
@@ -60,7 +76,31 @@ export default function ReviewClient({ id, data }: { id: string; data: ChartData
         {info.cc && <div>주호소: {info.cc}</div>}
         {info.pmh && <div>과거력: {info.pmh}</div>}
       </div>
-      {SECTIONS.filter(s => (data[s.key as keyof ChartData] as Row[]).length > 0 || ['notes', 'vitals', 'io', 'labs'].includes(s.key)).map(s => (
+      <div className="card" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
+        <style>{`@media print { .noprint { display: none !important; } }`}</style>
+        <div className="noprint" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', fontSize: 13 }}>
+          <b style={{ fontSize: 14, marginRight: 'auto' }}>간호기록</b>
+          <input type="date" value={from} onChange={e => setFrom(e.target.value)} aria-label="시작일" />
+          <span>~</span>
+          <input type="date" value={to} onChange={e => setTo(e.target.value)} aria-label="종료일" />
+          <label style={{ display: 'flex', alignItems: 'center', gap: 4 }}><input type="checkbox" checked={showFb} onChange={e => setShowFb(e.target.checked)} />코멘트 표시</label>
+          <button type="button" onClick={() => window.print()} style={{ border: '1px solid var(--border)', borderRadius: 999, padding: '6px 14px', background: 'transparent', color: 'inherit', font: 'inherit', cursor: 'pointer' }}>인쇄</button>
+        </div>
+        {data.notes.length === 0 && <p style={{ margin: 0, fontSize: 13, color: 'var(--sub-text)' }}>입력한 내용이 없어요.</p>}
+        {data.notes.map((n, i) => !inRange(n.time) ? null : (
+          <div key={i} style={{ borderBottom: '1px solid var(--border)', paddingBottom: 8, fontSize: 13.5, lineHeight: 1.6 }}>
+            <div style={{ color: 'var(--sub-text)', fontSize: 12 }}>{n.time} · {n.focus} · {n.author}</div>
+            <div style={{ whiteSpace: 'pre-wrap' }}>{n.text}</div>
+            {showFb && (
+              <div className="noprint" style={{ display: 'flex', gap: 6, marginTop: 6 }}>
+                <input value={fbs[i] || ''} onChange={e => { setFbs(f => ({ ...f, [i]: e.target.value })); setSaved(s => ({ ...s, [i]: false })); }} placeholder="코멘트" maxLength={600} style={{ flex: 1, border: '1px solid var(--border)', borderRadius: 8, padding: '7px 9px', font: 'inherit', background: 'transparent', color: 'inherit' }} />
+                <button type="button" onClick={() => saveFb(i)} style={{ border: 0, borderRadius: 8, padding: '0 14px', background: saved[i] ? '#2f7a46' : 'var(--primary)', color: '#fff', font: 'inherit', fontWeight: 700, cursor: 'pointer' }}>{saved[i] ? '등록됨' : '등록'}</button>
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+      {SECTIONS.filter(s => s.key !== 'notes').filter(s => (data[s.key as keyof ChartData] as Row[]).length > 0 || ['vitals', 'io', 'labs'].includes(s.key)).map(s => (
         <div key={s.key} className="card" style={{ padding: 16 }}>
           <h3 style={{ margin: '0 0 8px', fontSize: 14, fontWeight: 800 }}>{s.label}</h3>
           <Table rows={data[s.key as keyof ChartData] as Row[]} cols={COLS[s.key]} />

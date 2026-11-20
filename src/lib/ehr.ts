@@ -142,3 +142,20 @@ export async function appendVitals(userId: string, items: { id: string; row: Rec
   }
   return done;
 }
+
+// 교수 코멘트: 제출된 차트의 간호기록 한 줄에 붙인다
+export async function setNoteFeedback(id: string, index: number, text: string): Promise<boolean> {
+  if (!Number.isInteger(index) || index < 0 || index > 999) return false;
+  try {
+    const n = text
+      ? await prisma.$executeRaw`
+          UPDATE "EhrCase" SET "data" = jsonb_set("data", ARRAY['notes', ${String(index)}, 'fb']::text[], to_jsonb(${text}::text), true)
+          WHERE "id" = ${id} AND "data"->'info'->>'submitted' IS NOT NULL AND jsonb_array_length(COALESCE("data"->'notes', '[]'::jsonb)) > ${index}`
+      : await prisma.$executeRaw`
+          UPDATE "EhrCase" SET "data" = "data" #- ARRAY['notes', ${String(index)}, 'fb']::text[]
+          WHERE "id" = ${id} AND "data"->'info'->>'submitted' IS NOT NULL`;
+    return n > 0;
+  } catch {
+    return false;
+  }
+}
