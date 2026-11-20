@@ -43,6 +43,9 @@ export const emptyChart = (): ChartData => {
 
 export type Sample = { key: string; subject: string; title: string; data: Partial<ChartData> & { info: Record<string, string> } };
 
+// 미래 일정을 담는 항목은 기준일 계산에서 뺀다
+const FUTURE = new Set(['appts', 'chg', 'disDate']);
+
 // 샘플 차트의 날짜를 오늘 기준으로 옮긴다 (가장 늦은 날짜가 오늘이 되도록)
 export function shiftChart(src: ChartData): ChartData {
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -55,7 +58,7 @@ export function shiftChart(src: ChartData): ChartData {
       const mm = v.match(MD);
       if (mm) max = Math.max(max, Date.UTC(2026, +mm[1] - 1, +mm[2]));
     } else if (Array.isArray(v)) v.forEach(scan);
-    else if (v && typeof v === 'object') Object.entries(v).forEach(([k, x]) => k !== 'appts' && scan(x));
+    else if (v && typeof v === 'object') Object.entries(v).forEach(([k, x]) => !FUTURE.has(k) && scan(x));
   };
   scan(src);
   if (!max) return src;

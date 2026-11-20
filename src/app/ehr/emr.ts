@@ -10,13 +10,16 @@ const num = (v: string | undefined) => {
 export function criticalFlags(d: ChartData): string[] {
   const out: string[] = [];
   const v: Row | undefined = [...d.vitals].reverse().find(r => r.bp || r.hr || r.rr || r.bt || r.spo2);
+  // 영유아(개월 표기) 또는 12세 이하는 소아 기준을 쓴다
+  const ageTxt = d.info.ageSex || '';
+  const child = /^\d+M\b/.test(ageTxt) || (parseInt(ageTxt, 10) <= 12 && /^\d+\//.test(ageTxt));
   if (v) {
     const sbp = num((v.bp || '').split('/')[0]);
     const hr = num(v.hr), rr = num(v.rr), bt = num(v.bt), sp = num(v.spo2);
-    if (sbp !== null && (sbp < 90 || sbp > 180)) out.push(`수축기혈압 ${sbp}`);
-    if (hr !== null && (hr < 50 || hr > 120)) out.push(`맥박 ${hr}`);
-    if (rr !== null && (rr < 10 || rr > 28)) out.push(`호흡 ${rr}`);
-    if (bt !== null && (bt >= 38.5 || bt < 35)) out.push(`체온 ${bt}`);
+    if (sbp !== null && (child ? sbp < 70 || sbp > 140 : sbp < 90 || sbp > 180)) out.push(`수축기혈압 ${sbp}`);
+    if (hr !== null && (child ? hr < 70 || hr > 190 : hr < 50 || hr > 120)) out.push(`맥박 ${hr}`);
+    if (rr !== null && (child ? rr < 15 || rr > 65 : rr < 10 || rr > 28)) out.push(`호흡 ${rr}`);
+    if (bt !== null && (child ? bt >= 39.5 || bt < 35.5 : bt >= 38.5 || bt < 35)) out.push(`체온 ${bt}`);
     if (sp !== null && sp < 90) out.push(`SpO₂ ${sp}`);
   }
   const last = new Map<string, Row>();
