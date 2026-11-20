@@ -27,7 +27,7 @@ const lateMin = (slot: string) => {
   return d.getHours() * 60 + d.getMinutes() - (Number(m[1]) % 24) * 60 - Number(m[2]);
 };
 
-const RIGHTS = ['정확한 환자', '정확한 약물', '정확한 용량', '정확한 경로', '정확한 시간'] as const;
+const RIGHTS = ['환자', '약물', '용량', '경로', '시간'] as const;
 
 type Med = { i: number; r: Row };
 
@@ -50,7 +50,7 @@ export default function MarPanel({ data, author, onChange }: { data: ChartData; 
   const give = (med: Med, slot: string, k: number) => {
     const hm = nowHM();
     const row: Row = { time: `${today} ${hm}`, name: med.r.name || '', dose: `${med.r.dose || ''}${med.r.unit || ''}`, route: med.r.route || '', slot, by: author, wb: '확인', ...(dbl.trim() ? { dbl: dbl.trim() } : {}), ...(note.trim() ? { note: note.trim() } : {}) };
-    const orders = data.orders.map((o, i) => (i === med.i ? { ...o, [`t${k + 1}`]: hm, ck: '1' } : o));
+    const orders = data.orders.map((o, i) => (i === med.i ? { ...o, [`t${k + 1}`]: `${hm}/${(author || '').slice(0, 1)}`, ck: '1' } : o));
     onChange(orders, [row, ...data.mar]);
     close();
   };
@@ -107,11 +107,11 @@ export default function MarPanel({ data, author, onChange }: { data: ChartData; 
               const ready = need.every(n => ck[n]) && wbOk && (!high || dbl.trim().length > 0);
               return (
                 <div key={key} className="fv">
-                  <label>정확한 환자: 팔찌 등록번호 입력 ({data.info.name || '-'})<input className="wbi" value={wb} onChange={e => setWb(e.target.value)} placeholder="바코드 / 등록번호" aria-label="팔찌 등록번호" />{wb && !wbOk && <span className="wn">불일치</span>}{wbOk && <span>일치</span>}</label>
-                  <label><input type="checkbox" checked={!!ck.r1} onChange={e => setCk(c => ({ ...c, r1: e.target.checked }))} />정확한 약물: {name}</label>
-                  <label><input type="checkbox" checked={!!ck.r2} onChange={e => setCk(c => ({ ...c, r2: e.target.checked }))} />정확한 용량: {med.r.dose}{med.r.unit}</label>
-                  <label><input type="checkbox" checked={!!ck.r3} onChange={e => setCk(c => ({ ...c, r3: e.target.checked }))} />정확한 경로: {med.r.route || '-'}</label>
-                  <label><input type="checkbox" checked={!!ck.r4} onChange={e => setCk(c => ({ ...c, r4: e.target.checked }))} />정확한 시간: {s} 전후 30분 이내</label>
+                  <label>환자: 팔찌 등록번호 입력 ({data.info.name || '-'})<input className="wbi" value={wb} onChange={e => setWb(e.target.value)} placeholder="바코드 / 등록번호" aria-label="팔찌 등록번호" />{wb && !wbOk && <span className="wn">불일치</span>}{wbOk && <span>일치</span>}</label>
+                  <label><input type="checkbox" checked={!!ck.r1} onChange={e => setCk(c => ({ ...c, r1: e.target.checked }))} />약물: {name}</label>
+                  <label><input type="checkbox" checked={!!ck.r2} onChange={e => setCk(c => ({ ...c, r2: e.target.checked }))} />용량: {med.r.dose}{med.r.unit}</label>
+                  <label><input type="checkbox" checked={!!ck.r3} onChange={e => setCk(c => ({ ...c, r3: e.target.checked }))} />경로: {med.r.route || '-'}</label>
+                  <label><input type="checkbox" checked={!!ck.r4} onChange={e => setCk(c => ({ ...c, r4: e.target.checked }))} />시간: {s} 전후 30분 이내</label>
                   {high && <label className="wn"><input type="checkbox" checked={!!ck.hi} onChange={e => setCk(c => ({ ...c, hi: e.target.checked }))} />고위험 약물: 용량·농도·펌프 설정을 둘이서 확인<input className="wbi" value={dbl} onChange={e => setDbl(e.target.value)} placeholder="이중확인자 이름" aria-label="이중확인자" /></label>}
                   {warn && <label className="wn"><input type="checkbox" checked={!!ck.al} onChange={e => setCk(c => ({ ...c, al: e.target.checked }))} />알레르기 주의: {data.info.allergy}. 처방의에게 확인했나요?</label>}
                   <textarea rows={2} value={note} onChange={e => setNote(e.target.value)} placeholder="특이사항 (선택)" aria-label="특이사항" />

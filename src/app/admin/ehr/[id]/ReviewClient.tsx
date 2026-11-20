@@ -29,6 +29,7 @@ const SECTIONS = ([
   { key: 'transport', label: '이송 의뢰' },
   { key: 'moves', label: '전동·전과·외출' },
   { key: 'cpr', label: 'CPR 기록지' },
+  { key: 'anes', label: '마취기록' },
 ]).filter(s => !!(COLS as Record<string, unknown>)[s.key]) as { key: keyof typeof COLS; label: string }[];
 
 const th: CSSProperties = { textAlign: 'left', padding: '6px 8px', borderBottom: '1px solid var(--border)', color: 'var(--sub-text)', fontWeight: 600, whiteSpace: 'nowrap' };
