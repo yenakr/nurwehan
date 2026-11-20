@@ -51,7 +51,7 @@ const TOP: { label: string; idx: number[] }[] = (() => {
   return out;
 })();
 
-export default function EhrHome({ cases, initialView }: { cases: Item[]; initialView?: string }) {
+export default function EhrHome({ cases, initialView, ai }: { cases: Item[]; initialView?: string; ai?: boolean }) {
   const router = useRouter();
   const [vi, setVi] = useState(() => Math.max(0, VIEWS.findIndex(v => v.name === initialView)));
   const [openG, setOpenG] = useState<string | null>(null);
@@ -133,6 +133,23 @@ export default function EhrHome({ cases, initialView }: { cases: Item[]; initial
     data: { ...emptyChart(), info: { ward: wardName, ptNo: newPtNo(), admit: today(), visitTime: nowHM(), vstatus: view.kind === 'er' ? '대기' : '접수', ...(view.kind === 'er' ? { ktas: '3', zone: '응급', dept: 'ER' } : {}) } },
   }));
 
+  const aiPatient = async () => {
+    if (busy || view.kind === 'dc') return;
+    const free = view.kind === 'ward' ? entries.find(e => !e.p) : undefined;
+    if (view.kind === 'ward' && !free) { setErr('빈 병상이 없어요'); return; }
+    setBusy('ai');
+    setErr('');
+    try {
+      const res = await fetch('/api/ehr/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: view.kind, ward: wardName, bed: free?.label }) });
+      const j = await res.json().catch(() => ({}));
+      if (!res.ok || !j.id) { setErr(res.status === 429 ? '오늘 횟수를 다 썼어요' : '만들지 못했어요'); setBusy(null); return; }
+      router.push(`/ehr/${j.id}`);
+    } catch {
+      setErr('만들지 못했어요');
+      setBusy(null);
+    }
+  };
+
   return (
     <div className="ehrWard">
       <div className="shell">
@@ -168,6 +185,7 @@ export default function EhrHome({ cases, initialView }: { cases: Item[]; initial
               );
             })}
           </nav>
+          {ai && view.kind !== 'dc' && <button type="button" className="aipt" onClick={aiPatient} disabled={!!busy}>{busy === 'ai' ? '만드는 중' : 'AI 가상 환자'}</button>}
         </div>
         <div className="tw">
           <table>
@@ -271,6 +289,8 @@ export default function EhrHome({ cases, initialView }: { cases: Item[]; initial
         .ehrWard .k4 { background: #16a34a; } .ehrWard .k5 { background: #64748b; }
         .ehrWard .sbd { margin-left: 6px; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 4px; background: #e8f0fb; color: #1d4e89; }
         .ehrWard .sbd.rv { background: #e3f3e8; color: #2f7a46; }
+        .ehrWard .aipt { margin: 0 10px 0 auto; align-self: center; border: 1px solid #e8c97a; background: transparent; color: #e8c97a; border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 0.8125rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
+        .ehrWard .aipt:disabled { opacity: 0.5; }
         .ehrWard .err { color: #b91c1c; font-size: 0.8125rem; margin-top: 10px; }
       `}</style>
     </div>

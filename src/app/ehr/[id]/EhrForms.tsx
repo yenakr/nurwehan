@@ -60,6 +60,19 @@ const stamp = () => {
   return `${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 };
 
+// 교수 열람 화면용 한 줄 요약
+export function formLine(kind: FormKey, r: Row): string {
+  if (kind === 'morse' || kind === 'braden') {
+    const items = kind === 'morse' ? MORSE : BRADEN;
+    if (!done(items, r)) return '미완료';
+    const n = sum(items, r);
+    return `${n}점 ${(kind === 'morse' ? morseLevel(n) : bradenLevel(n)).t}`;
+  }
+  if (kind === 'pain') return [r.nrs ? `NRS ${r.nrs}` : '', r.site, r.quality].filter(Boolean).join(' · ');
+  const yes = PREOP.filter((_, i) => r[`p${i}`] === '예').length;
+  return `확인 ${yes}/${PREOP.length}${r.memo ? ` · ${r.memo}` : ''}`;
+}
+
 export default function FormPanel({ kind, rows, onChange }: { kind: FormKey; rows: Row[]; onChange: (rows: Row[]) => void }) {
   const meta = FORMS.find(f => f.key === kind)!;
   const items = kind === 'morse' ? MORSE : kind === 'braden' ? BRADEN : [];

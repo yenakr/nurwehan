@@ -6,6 +6,7 @@ import { aiConfigured, askModel } from '@/lib/ai';
 import { takeAiQuota, refundAiQuota } from '@/lib/practicum-ai';
 import { getCase } from '@/lib/ehr';
 import { migrate } from '@/app/ehr/types';
+import { findPhi } from '@/app/ehr/phi';
 
 const FB = `너는 간호학과 학생이 연습용 EHR에 쓴 차트를 보는 튜터다. 한국어로 피드백한다. 전체 8문장 이내, 항목 나열 없이 자연스러운 말투.
 볼 것: 이상 수치나 위험 징후를 간호기록에 담았는지, 주관적 표현보다 시간과 수치가 있는 객관적 기록인지, Focus와 내용이 맞는지, 간호과정에서 진단-목표-중재-평가가 이어지는지, 처방과 투약·I/O 기록에서 빠진 것이 없는지.
@@ -24,6 +25,7 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
   if (!row) return NextResponse.json({ error: 'not found' }, { status: 404 });
   const d = migrate(row.data);
   if (d.notes.length === 0 && d.care.length === 0) return NextResponse.json({ error: 'empty' }, { status: 400 });
+  if (findPhi(d).length) return NextResponse.json({ error: 'phi' }, { status: 422 });
   if (!(await takeAiQuota(user.id, '#ehrfb', 10))) return NextResponse.json({ error: 'limit' }, { status: 429 });
   const i = d.info;
   const text = [
@@ -35,6 +37,9 @@ export async function POST(_req: Request, { params }: { params: Promise<{ id: st
     `처방:\n${rows(d.orders)}`,
     `간호기록:\n${rows(d.notes, 20)}`,
     `간호과정:\n${rows(d.care, 6)}`,
+    `위험도평가:\n${rows(d.risk, 6)}`,
+    `통증사정:\n${rows(d.forms?.pain || [], 6)}`,
+    `인계(SBAR):\n${rows(d.handover, 4)}`,
   ].join('\n').slice(0, 9000);
   const out = await askModel(FB, [{ role: 'user', content: text }], 700);
   if (!out) {
