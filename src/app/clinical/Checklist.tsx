@@ -738,8 +738,8 @@ tr { break-inside: avoid; }
       {selMode && (
         <div className="bar2">
           <div className="bt2">
-            <span>{sel.size ? `${sel.size}개 선택` : '항목을 선택하세요'}{outside && <Warn />}</span>
-            {dateStep()}
+            <span>{sel.size ? `${sel.size}개 선택` : '항목을 선택하세요'}</span>
+            <div className="wl">{dateStep()}{outside && <Warn />}</div>
           </div>
           <div className="quick">
             {LEVELS.map(l => (
@@ -764,8 +764,7 @@ tr { break-inside: avoid; }
             </div>
 
             <div className="when">
-              {dateStep()}
-              {outside && <Warn />}
+              <div className="wl">{dateStep()}{outside && <Warn />}</div>
               <button type="button" className={`lnk ${showMemo || memo ? 'on' : ''}`} onClick={() => setShowMemo(m => !m)}>메모</button>
             </div>
             {showMemo && (
@@ -1067,6 +1066,8 @@ tr { break-inside: avoid; }
         .pc .acts button.dng { background: none; color: #DC2626; padding-left: 0; }
         .pc .warn { display: inline-flex; align-items: center; gap: 6px; color: #D97706; margin-left: 8px; font-size: 12px; font-weight: 600; }
         .pc .warn em { font-style: normal; }
+        .pc .wl { display: flex; align-items: center; gap: 2px; }
+        .pc .wl .warn { margin-left: 2px; }
         .pc .warnb { border: 0; background: none; color: inherit; padding: 4px; display: inline-flex; cursor: pointer; }
         .pc.selecting { padding-bottom: 150px; }
         .pc .ck { width: 20px; height: 20px; border-radius: 50%; border: 2px solid var(--sub-text); flex-shrink: 0; align-self: center; position: relative; }
