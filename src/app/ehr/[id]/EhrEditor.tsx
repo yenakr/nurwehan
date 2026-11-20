@@ -889,7 +889,7 @@ export default function EhrEditor({
         .ehr .dd button:hover { background: #eef6ff; }
         .ehr .dd button.on { color: #0e4a84; font-weight: 800; }
 
-        .ehr .body { display: grid; grid-template-columns: 188px minmax(0, 1fr); min-height: 560px; }
+        .ehr .body { display: grid; grid-template-columns: 188px minmax(0, 1fr); min-height: calc(100vh - 250px); }
         .ehr .side { background: var(--nv1); color: #fff; padding: 12px 12px 18px; display: flex; flex-direction: column; gap: 8px; }
         .ehr .brand { text-align: center; font-weight: 800; letter-spacing: 1px; color: #e8c97a; padding: 4px 0 10px; border-bottom: 1px solid rgba(255,255,255,0.15); }
         .ehr .sd em { display: block; font-size: 10.5px; font-style: normal; color: #8fb0d2; margin-bottom: 1px; }

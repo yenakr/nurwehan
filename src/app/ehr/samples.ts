@@ -436,7 +436,7 @@ export const SAMPLES: Sample[] = [
 
 // 가상의 10층 종합병원: 층마다 병동 1개, 병실(1·2·4·6인실)과 병상
 export type Ward = { name: string; floor: number; dept: string; group: '내과' | '외과' | null; rooms: number[] };
-const R = [1, 2, 2, 4, 4, 6]; // 병실별 병상 수 (총 19병상)
+const R = [1, 2, 2, 4, 2]; // 병실별 병상 수 (총 11병상)
 export const WARDS: Ward[] = [
   { name: '41병동', floor: 4, dept: '산부인과', group: null, rooms: R },
   { name: '51병동', floor: 5, dept: '소아청소년과', group: null, rooms: R },
