@@ -121,6 +121,14 @@ ${sec('검사결과', ['검사명', '결과', '단위', 'Min', 'Max', '검사일
 ${sec('동의서', ['동의서', '일자', '상태', '설명 의사', '서명자', '간호 확인'], ['name', 'date', 'st', 'doctor', 'signer', 'chk'], d.consent)}
 ${sec('투약 수행', ['수행일시', '약물', '용량', '경로', '수행자', '특이사항'], ['time', 'name', 'dose', 'route', 'by', 'note'], d.mar)}
 ${sec('메모·인수인계', ['일시', '구분', '내용', '작성자'], ['time', 'type', 'text', 'author'], d.memos)}
+${sec('튜브·라인', ['종류', '부위', '삽입일', '교체일', '배액', '상태'], ['kind', 'site', 'ins', 'chg', 'out', 'st'], d.lines)}
+${sec('IV 수액', ['시간', '수액', '속도', '잔량', '상태'], ['time', 'fluid', 'rate', 'remain', 'st'], d.iv)}
+${sec('상처·드레싱', ['시간', '부위', '유형', '크기', '양상', '드레싱'], ['time', 'site', 'kind', 'size', 'look', 'dress'], d.wounds)}
+${sec('환자 교육', ['일시', '내용', '대상', '방법', '이해도'], ['time', 'topic', 'target', 'method', 'under'], d.edu)}
+${sec('검체 채취', ['일시', '검사', '용기', '상태'], ['time', 'test', 'tube', 'st'], d.specimen)}
+${sec('이송 의뢰', ['일시', '출발', '도착', '수단', '상태'], ['time', 'from', 'to', 'mode', 'st'], d.transport)}
+${sec('전동·전과·외출', ['일시', '구분', '이전', '이후', '사유'], ['time', 'type', 'from', 'to', 'reason'], d.moves)}
+${sec('CPR 기록지', ['시각', '사건', '내용'], ['time', 'ev', 'detail'], d.cpr)}
 ${sec('인계(SBAR)', ['일시', 'S', 'B', 'A', 'R', '작성자'], ['time', 's', 'b', 'a', 'r', 'author'], d.handover)}
 ${sec('위험도평가', ['평가일시', '평가', '점수', '위험도', '중재'], ['time', 'kind', 'score', 'level', 'plan'], d.risk)}
 ${sec('평가도구', ['평가도구', '평가일시', '결과'], ['form', 'time', 'sum'], FORMS.flatMap(f => (d.forms?.[f.key] || []).map(r => ({ form: f.label, time: r.time || '', sum: formLine(f.key, r) }))))}

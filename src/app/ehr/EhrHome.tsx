@@ -12,7 +12,7 @@ type Item = {
   id: string; ward: string | null; bed: string | null; sampleKey: string | null;
   ptNo: string | null; name: string | null; ageSex: string | null; dx: string | null; doctor: string | null; admit: string | null;
   dept: string | null; visitTime: string | null; vstatus: string | null; ktas: string | null; zone: string | null; cc: string | null; discharged: string | null;
-  submitted?: string | null; reviewed?: string | null;
+  submitted?: string | null; reviewed?: string | null; badges?: string | null;
 };
 type P = Partial<Omit<Item, 'id'>>;
 
@@ -231,25 +231,25 @@ export default function EhrHome({ cases, initialView, ai, aiLeft, extra }: { cas
                     {view.kind === 'ward' && (
                       <>
                         {roomCell}
-                        <td className="bed">{e.label}</td><td>{p.ptNo}</td><td className="nm">{nm}</td><td>{p.ageSex}</td><td>{p.dept}</td>
+                        <td className="bed">{e.label}</td><td>{p.ptNo}</td><td className="nm">{nm}{p.badges && p.badges.split(',').map(b => <i key={b} className={`bdg b_${b}`}>{b}</i>)}</td><td>{p.ageSex}</td><td>{p.dept}</td>
                         <td className="dx">{p.dx}</td><td>{p.doctor}</td><td>{p.admit}</td><td>{stay(p.admit)}</td>
                       </>
                     )}
                     {view.kind === 'dc' && (
                       <>
-                        <td className="bed">{p.discharged}</td><td>{p.ptNo}</td><td className="nm">{nm}</td><td>{p.ageSex}</td>
+                        <td className="bed">{p.discharged}</td><td>{p.ptNo}</td><td className="nm">{nm}{p.badges && p.badges.split(',').map(b => <i key={b} className={`bdg b_${b}`}>{b}</i>)}</td><td>{p.ageSex}</td>
                         <td>{p.ward} {p.bed}</td><td>{p.dept}</td><td className="dx">{p.dx}</td><td>{p.doctor}</td>
                       </>
                     )}
                     {view.kind === 'op' && (
                       <>
-                        <td className="bed">{p.visitTime}</td><td>{p.ptNo}</td><td className="nm">{nm}</td><td>{p.ageSex}</td>
+                        <td className="bed">{p.visitTime}</td><td>{p.ptNo}</td><td className="nm">{nm}{p.badges && p.badges.split(',').map(b => <i key={b} className={`bdg b_${b}`}>{b}</i>)}</td><td>{p.ageSex}</td>
                         <td>{p.dept}</td><td>{p.doctor}</td><td className="dx">{p.cc}</td><td><span className="stt">{p.vstatus}</span></td>
                       </>
                     )}
                     {view.kind === 'er' && (
                       <>
-                        <td className="bed">{p.visitTime}</td><td><span className={`kt k${p.ktas}`}>{p.ktas}</span></td><td className="nm">{nm}</td><td>{p.ageSex}</td>
+                        <td className="bed">{p.visitTime}</td><td><span className={`kt k${p.ktas}`}>{p.ktas}</span></td><td className="nm">{nm}{p.badges && p.badges.split(',').map(b => <i key={b} className={`bdg b_${b}`}>{b}</i>)}</td><td>{p.ageSex}</td>
                         <td className="dx">{p.cc}</td><td>{p.zone}</td><td>{p.doctor}</td><td><span className="stt">{p.vstatus}</span></td>
                       </>
                     )}
@@ -293,6 +293,11 @@ export default function EhrHome({ cases, initialView, ai, aiLeft, extra }: { cas
         .ehrWard td.plus { color: #cbd5e1; font-size: 16px; padding: 6px 8px; }
         .ehrWard tr.empty:hover td.plus { color: #1d4e89; }
         .ehrWard td.bed { background: #f6f7f9; font-weight: 700; color: #334155; width: 70px; }
+        .ehrWard .bdg { font-style: normal; font-size: 10.5px; font-weight: 700; margin-left: 4px; padding: 1px 5px; border-radius: 4px; color: #fff; background: #64748b; white-space: nowrap; }
+        .ehrWard .b_낙상, .ehrWard .b_욕창 { background: #d97706; }
+        .ehrWard .b_격리 { background: #7c3aed; }
+        .ehrWard .b_금식 { background: #0e4a84; }
+        .ehrWard .b_알레르기 { background: #dc2626; }
         .ehrWard td.nm { font-weight: 800; color: #0e4a84; }
         .ehrWard tr.empty td { color: #94a3b8; }
         .ehrWard .stt { background: #e8f0fb; color: #1d4e89; border-radius: 4px; padding: 2px 8px; font-size: 12px; font-weight: 700; }

@@ -16,11 +16,13 @@ import VisitStrip from './EhrVisit';
 import RegisterCard from './EhrRegister';
 import MarPanel from './EhrMar';
 import MemoPanel from './EhrMemo';
+import { criticalFlags, badgesOf, BMI, DC_EDU, ISO } from '../emr';
 import FormPanel, { FORMS, FORM_CSS, type FormKey } from './EhrForms';
 
 type ListKey =
   | 'progress' | 'vitals' | 'io' | 'labs' | 'notes' | 'care'
-  | 'transfusion' | 'nutrition' | 'consult' | 'consent' | 'surgery' | 'appts' | 'handover' | 'risk' | 'history' | 'imaging' | 'memos' | 'mar';
+  | 'transfusion' | 'nutrition' | 'consult' | 'consent' | 'surgery' | 'appts' | 'handover' | 'risk' | 'history' | 'imaging' | 'memos' | 'mar'
+  | 'lines' | 'iv' | 'wounds' | 'edu' | 'specimen' | 'transport' | 'moves' | 'cpr';
 type FormTab = 'f_morse' | 'f_braden' | 'f_pain' | 'f_preop';
 type TabId = ListKey | 'orders' | 'admission' | 'nurseinfo' | 'discharge' | FormTab;
 const isForm = (t: TabId): t is FormTab => t.startsWith('f_');
@@ -32,17 +34,19 @@ const MENU: MenuNode[] = [
   { label: '의사처방', items: [{ id: 'orders', label: '의사처방' }, { id: 'mar', label: '투약' }] },
   { label: '입원기록', items: [{ id: 'admission', label: '입원기록' }, { id: 'nurseinfo', label: '간호정보조사지' }, { id: 'history', label: '상병이력' }] },
   { label: '임상관찰', items: [{ id: 'vitals', label: '임상관찰' }] },
-  { label: '치료/검사', items: [{ id: 'labs', label: '검사결과' }, { id: 'imaging', label: '영상검사' }, { id: 'transfusion', label: '수혈기록' }] },
+  { label: '치료/검사', items: [{ id: 'labs', label: '검사결과' }, { id: 'imaging', label: '영상검사' }, { id: 'transfusion', label: '수혈기록' }, { id: 'specimen', label: '검체 채취' }, { id: 'transport', label: '이송 의뢰' }] },
+  { label: '간호관리', items: [{ id: 'lines', label: '튜브·라인' }, { id: 'iv', label: 'IV 수액' }, { id: 'wounds', label: '상처·드레싱' }, { id: 'edu', label: '환자 교육' }] },
+  { label: '응급', items: [{ id: 'cpr', label: 'CPR 기록지' }] },
   { label: '영양기록', items: [{ id: 'nutrition', label: '영양기록' }] },
   { label: '평가도구', items: FORMS.map(f => ({ id: f.tab as TabId, label: f.label })) },
   { label: '간호기록', items: [{ id: 'notes', label: '간호기록' }, { id: 'risk', label: '위험도평가' }, { id: 'handover', label: '인계(SBAR)' }, { id: 'memos', label: '메모·인수인계' }] },
   { label: '간호과정', items: [{ id: 'care', label: '간호과정' }] },
   { label: '동의서', items: [{ id: 'consent', label: '동의서' }] },
   { label: '외래예약', items: [{ id: 'appts', label: '외래예약' }] },
-  { label: '퇴원', items: [{ id: 'discharge', label: '퇴원계획' }] },
+  { label: '퇴원', items: [{ id: 'discharge', label: '퇴원계획' }, { id: 'moves', label: '전동·전과·외출' }] },
 ];
 
-type Col = { key: string; label: string; w: number; type?: 'area' | 'select'; opts?: string[]; ph?: string };
+type Col = { key: string; label: string; w: number; type?: 'area' | 'select' | 'ro'; opts?: string[]; ph?: string };
 
 export const COLS: Record<ListKey, Col[]> = {
   progress: [
@@ -80,6 +84,7 @@ export const COLS: Record<ListKey, Col[]> = {
     { key: 'focus', label: 'Focus', w: 110 },
     { key: 'text', label: '간호기록', w: 560, type: 'area' },
     { key: 'author', label: '작성자', w: 80 },
+    { key: 'mod', label: '수정 이력', w: 90, type: 'ro' },
   ],
   transfusion: [
     { key: 'time', label: '일시', w: 130 },
@@ -137,6 +142,69 @@ export const COLS: Record<ListKey, Col[]> = {
     { key: 'route', label: '경로', w: 70 },
     { key: 'by', label: '수행자', w: 80 },
     { key: 'note', label: '특이사항', w: 200 },
+  ],
+  lines: [
+    { key: 'kind', label: '종류', w: 100, type: 'select', opts: ['', 'IV catheter', 'Foley catheter', 'L-tube', 'Chest tube', 'JP drain', 'Hemovac', 'T-tube', 'Central line', '기타'] },
+    { key: 'site', label: '부위·크기', w: 130, ph: '우측 전완 22G' },
+    { key: 'ins', label: '삽입일', w: 100, ph: '11-10' },
+    { key: 'chg', label: '교체 예정일', w: 100, ph: '11-13' },
+    { key: 'out', label: '배액량 / 양상', w: 140 },
+    { key: 'st', label: '상태', w: 90, type: 'select', opts: ['유지', '교체', '제거'] },
+    { key: 'note', label: '비고', w: 200 },
+  ],
+  iv: [
+    { key: 'time', label: '시간', w: 90, ph: '10:00' },
+    { key: 'fluid', label: '수액', w: 180, ph: 'N/S 1L' },
+    { key: 'rate', label: '속도 (mL/hr)', w: 100 },
+    { key: 'remain', label: '잔량 (mL)', w: 90 },
+    { key: 'site', label: '부위', w: 110 },
+    { key: 'st', label: '상태', w: 100, type: 'select', opts: ['주입 중', '교체', '중단', '완료'] },
+    { key: 'by', label: '확인자', w: 80 },
+  ],
+  wounds: [
+    { key: 'time', label: '시간', w: 110, ph: '11-10 10:00' },
+    { key: 'site', label: '부위', w: 110 },
+    { key: 'kind', label: '유형', w: 100, type: 'select', opts: ['', '수술 상처', '욕창', '열상', '화상', '삽입부위', '기타'] },
+    { key: 'size', label: '크기 (cm)', w: 90 },
+    { key: 'look', label: '양상·삼출물', w: 200, type: 'area' },
+    { key: 'dress', label: '드레싱', w: 150 },
+    { key: 'by', label: '수행자', w: 80 },
+  ],
+  edu: [
+    { key: 'time', label: '일시', w: 110, ph: '11-10 10:00' },
+    { key: 'topic', label: '교육 내용', w: 240 },
+    { key: 'target', label: '대상', w: 90, type: 'select', opts: ['환자', '보호자', '환자·보호자'] },
+    { key: 'method', label: '방법', w: 90, type: 'select', opts: ['구두', '시범', '유인물', '영상'] },
+    { key: 'under', label: '이해도', w: 100, type: 'select', opts: ['', '충분', '보통', '재교육 필요'] },
+    { key: 'by', label: '교육자', w: 80 },
+  ],
+  specimen: [
+    { key: 'time', label: '채취일시', w: 110, ph: '11-10 06:00' },
+    { key: 'test', label: '검사명', w: 180 },
+    { key: 'tube', label: '용기', w: 110, type: 'select', opts: ['', 'EDTA', 'SST', 'Citrate', 'Heparin', 'Blood culture', '소변컵', '객담컵', '기타'] },
+    { key: 'st', label: '상태', w: 90, type: 'select', opts: ['접수', '채취', '이송', '결과'] },
+    { key: 'by', label: '채취자', w: 80 },
+  ],
+  transport: [
+    { key: 'time', label: '일시', w: 110, ph: '11-10 10:00' },
+    { key: 'from', label: '출발', w: 100 },
+    { key: 'to', label: '도착 (검사·부서)', w: 150 },
+    { key: 'mode', label: '이송 수단', w: 100, type: 'select', opts: ['도보', '휠체어', '침대', '이동식 침대+산소'] },
+    { key: 'escort', label: '동반자', w: 100 },
+    { key: 'st', label: '상태', w: 90, type: 'select', opts: ['의뢰', '이송 중', '도착', '복귀'] },
+  ],
+  moves: [
+    { key: 'time', label: '일시', w: 110, ph: '11-10 10:00' },
+    { key: 'type', label: '구분', w: 90, type: 'select', opts: ['전동', '전과', '외출', '외박', '복귀'] },
+    { key: 'from', label: '이전', w: 110 },
+    { key: 'to', label: '이후', w: 110 },
+    { key: 'reason', label: '사유', w: 240 },
+  ],
+  cpr: [
+    { key: 'time', label: '시각 (초 단위)', w: 110, ph: '10:03:20' },
+    { key: 'ev', label: '사건', w: 140, type: 'select', opts: ['', '의식·호흡 없음 확인', 'CPR 시작', '제세동', 'Epinephrine 1mg', 'Amiodarone', '기관 삽관', 'ROSC', '사망 선언', '기타'] },
+    { key: 'detail', label: '내용', w: 260, type: 'area' },
+    { key: 'by', label: '기록자', w: 80 },
   ],
   memos: [
     { key: 'time', label: '일시', w: 110 },
@@ -226,6 +294,9 @@ const DIS: { key: string; label: string; rows?: number }[] = [
   { key: 'disPlace', label: '퇴원 후 갈 곳', rows: 1 },
   { key: 'disGuardian', label: '퇴원 후 주 보호자', rows: 1 },
   { key: 'disTarget', label: '교육 대상', rows: 1 },
+  { key: 'dsSummary', label: '입원 경과 요약', rows: 4 },
+  { key: 'dsCond', label: '퇴원 시 상태', rows: 2 },
+  { key: 'dsMeds', label: '퇴원 약 처방', rows: 3 },
   { key: 'disEdu', label: '퇴원 교육 내용', rows: 5 },
   { key: 'disFu', label: '외래 추적관찰', rows: 3 },
 ];
@@ -546,7 +617,15 @@ export default function EhrEditor({
   const setInfo = (k: string, v: string) => setData(d => ({ ...d, info: { ...d.info, [k]: v } }));
   type AnyList = ListKey | 'orders';
   const setCell = (lk: AnyList, i: number, k: string, v: string) =>
-    setData(d => ({ ...d, [lk]: d[lk].map((r, j) => (j === i ? { ...r, [k]: v } : r)) }));
+    setData(d => ({ ...d, [lk]: d[lk].map((r, j) => {
+      if (j !== i) return r;
+      const n = { ...r, [k]: v };
+      if (lk === 'notes' && k === 'text' && r.text && r.text !== v) {
+        const t = new Date(); const p = (x: number) => String(x).padStart(2, '0');
+        n.mod = `${p(t.getMonth() + 1)}-${p(t.getDate())} ${p(t.getHours())}:${p(t.getMinutes())}`;
+      }
+      return n;
+    }) }));
   const addRow = (lk: AnyList, init: Row = {}) => setData(d => ({ ...d, [lk]: [...d[lk], { ...init }] }));
   const delRow = (lk: AnyList, i: number) => setData(d => ({ ...d, [lk]: d[lk].filter((_, j) => j !== i) }));
 
@@ -565,6 +644,12 @@ export default function EhrEditor({
       setStatus('error');
     }
   };
+
+  const crit = criticalFlags(data);
+  const bd = badgesOf(data);
+  useEffect(() => {
+    if ((data.info.badges || '') !== bd && !data.info.submitted) setData(d => ({ ...d, info: { ...d.info, badges: bd } }));
+  }, [bd]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const hasAllergy = !!info.allergy && !/^(없음|무|none|-)$/i.test(info.allergy.trim());
 
@@ -631,7 +716,9 @@ export default function EhrEditor({
                     return (
                       <td key={c.key}>
                         {lk === 'labs' && c.key === 'value' && flag && <span className={`mk ${cls}`}>{flag === 'H' ? '▲' : '▼'}</span>}
-                        {c.type === 'area' ? (
+                        {c.type === 'ro' ? (
+                          <span className="ro">{v}</span>
+                        ) : c.type === 'area' ? (
                           <textarea rows={['notes', 'progress', 'nutrition', 'imaging'].includes(lk) ? 5 : 3} value={v} onChange={e => setCell(lk, i, c.key, e.target.value)} />
                         ) : c.type === 'select' ? (
                           <select value={v} onChange={e => setCell(lk, i, c.key, e.target.value)}>
@@ -720,7 +807,7 @@ export default function EhrEditor({
             )}
           </div>
           <div className="nav" ref={navRef} role="tablist">
-            {MENU.map(g => {
+            {MENU.filter(g => g.label !== '응급' || info.ward === '응급실').map(g => {
               const active = g.items.some(i => i.id === tab);
               const multi = g.items.length > 1;
               return (
@@ -775,12 +862,18 @@ export default function EhrEditor({
             )}
             {side('dx', '진단명')}
             {sel('allergy', '알레르기', ALLERGIES.map(a => ({ v: a, l: a })))}
+            {side('height', '키 (cm)')}
+            {side('weight', '체중 (kg)')}
+            {BMI(info.height, info.weight) && <div className="sd"><em>BMI</em><span className="v">{BMI(info.height, info.weight)}</span></div>}
+            {sel('iso', '격리', ISO.map(v => ({ v, l: v })))}
+            {sel('npo', '금식', [{ v: '1', l: '금식' }, { v: '0', l: '해당 없음' }])}
             {hasAllergy && <div className="alg">알레르기 있음</div>}
             {info.discharged && <div className="dcb">퇴원 {info.discharged}</div>}
             <button type="button" className="ed" onClick={() => setEditInfo(v => !v)}>{editInfo ? '완료' : '수정'}</button>
           </aside>
 
           <section className="main">
+            {crit.length > 0 && <div className="cw" role="alert">위험 수치: {crit.join(' · ')}</div>}
             {(info.ward === '외래' || info.ward === '응급실') && <VisitStrip info={info} set={setInfo} />}
             {!locked && !info.name?.trim() && (
               <RegisterCard
@@ -808,17 +901,18 @@ export default function EhrEditor({
                       <th style={{ minWidth: 54 }}>횟수</th>
                       <th style={{ minWidth: 56 }}>경로</th>
                       <th style={{ minWidth: 78 }}>진행상태</th>
+                      <th style={{ minWidth: 64 }}>구분</th>
                       {[1, 2, 3, 4, 5, 6].map(n => <th key={n} style={{ minWidth: 64 }}>{n}회</th>)}
                       <th className="x" />
                     </tr>
                   </thead>
                   <tbody>
-                    {orders.length === 0 && <tr><td colSpan={15} className="none">처방이 없어요</td></tr>}
+                    {orders.length === 0 && <tr><td colSpan={16} className="none">처방이 없어요</td></tr>}
                     {orders.map((r, i) => {
                       if (r.kind === 'sec') {
                         return (
                           <tr key={i} className="sec">
-                            <td colSpan={14}>
+                            <td colSpan={15}>
                               <input value={r.name || ''} onChange={e => setCell('orders', i, 'name', e.target.value)} />
                             </td>
                             <td className="x"><button type="button" aria-label="행 삭제" onClick={() => delRow('orders', i)}>×</button></td>
@@ -830,7 +924,7 @@ export default function EhrEditor({
                           <tr key={i} className="memo">
                             <td className="ck" />
                             <td />
-                            <td colSpan={12}>
+                            <td colSpan={13}>
                               <input value={r.name || ''} onChange={e => setCell('orders', i, 'name', e.target.value)} />
                             </td>
                             <td className="x"><button type="button" aria-label="행 삭제" onClick={() => delRow('orders', i)}>×</button></td>
@@ -839,7 +933,7 @@ export default function EhrEditor({
                       }
                       seq += 1;
                       return (
-                        <tr key={i}>
+                        <tr key={i} className={r.pri === 'D/C' ? 'dcr' : ''}>
                           <td className="ck">
                             <button type="button" className={r.ck ? 'on' : ''} aria-pressed={!!r.ck} aria-label="수행 확인" onClick={() => setCell('orders', i, 'ck', r.ck ? '' : '1')}>✓</button>
                           </td>
@@ -856,6 +950,11 @@ export default function EhrEditor({
                           <td>
                             <select value={r.st || ''} className={r.st === '집계완료' ? 'done' : ''} onChange={e => setCell('orders', i, 'st', e.target.value)}>
                               {(ORDER_STATUS.includes(r.st || '') ? ORDER_STATUS : [...ORDER_STATUS, r.st]).map(o => <option key={o} value={o}>{o}</option>)}
+                            </select>
+                          </td>
+                          <td>
+                            <select value={r.pri || ''} onChange={e => setCell('orders', i, 'pri', e.target.value)}>
+                              {['', 'PRN', 'STAT', 'D/C'].map(o => <option key={o} value={o}>{o}</option>)}
                             </select>
                           </td>
                           {[1, 2, 3, 4, 5, 6].map(n => (
@@ -909,6 +1008,23 @@ export default function EhrEditor({
                     )}
                   </div>
                 ))}
+                {tab === 'discharge' && (
+                  <div className="ds">
+                    <h4>■ 퇴원 교육 체크리스트</h4>
+                    <div className="chk">
+                      {DC_EDU.map((t, n) => {
+                        const set = (info.dcEdu || '').split(',').filter(Boolean);
+                        const on = set.includes(String(n));
+                        return (
+                          <label key={t}>
+                            <input type="checkbox" checked={on} onChange={() => setInfo('dcEdu', (on ? set.filter(x => x !== String(n)) : [...set, String(n)]).join(','))} />
+                            {t}
+                          </label>
+                        );
+                      })}
+                    </div>
+                  </div>
+                )}
               </div>
             )}
 
@@ -1063,6 +1179,11 @@ export default function EhrEditor({
         .ehr .ord .ck button { border: 0; background: transparent; color: #d4dae1; font-size: 13px; font-weight: 900; cursor: pointer; padding: 4px; }
         .ehr .ord .ck button.on { color: #16a34a; }
         .ehr .ord .seq { text-align: center; color: #64748b; padding-top: 6px; }
+        .ehr .ord tr.dcr input { text-decoration: line-through; color: #94a3b8; }
+        .ehr .ro { font-size: 12px; color: #b45309; padding: 4px; display: block; }
+        .ehr .cw { background: #7f1d1d; color: #fee2e2; font-weight: 700; font-size: 13px; padding: 8px 12px; border-radius: 8px; margin-bottom: 8px; }
+        .ehr .chk { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; font-size: 14px; }
+        .ehr .chk label { display: flex; gap: 8px; align-items: center; }
         .ehr .ord tr.sec td { background: var(--tl); }
         .ehr .ord tr.sec td.x { background: #fff; }
         .ehr .ord tr.sec input { font-weight: 800; color: #12303a; }
