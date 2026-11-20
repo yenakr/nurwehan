@@ -7,11 +7,15 @@ import { PHRASES, CARE_DX } from '../phrases';
 import { VIEW_LIST } from '../samples';
 import { ALLERGIES, DEPTS, DOCTORS, WARD_OPTIONS, bedOptions } from '../directory';
 import { confirmDialog, notify } from '@/components/Dialog';
+import { VitalsExtra, IoTotals, printChart, useDictation } from './EhrExtras';
+import FormPanel, { FORMS, FORM_CSS, type FormKey } from './EhrForms';
 
 type ListKey =
   | 'progress' | 'vitals' | 'io' | 'labs' | 'notes' | 'care'
   | 'transfusion' | 'nutrition' | 'consult' | 'consent' | 'surgery' | 'appts' | 'handover' | 'risk' | 'history' | 'imaging';
-type TabId = ListKey | 'orders' | 'admission' | 'nurseinfo' | 'discharge';
+type FormTab = 'f_morse' | 'f_braden' | 'f_pain' | 'f_preop';
+type TabId = ListKey | 'orders' | 'admission' | 'nurseinfo' | 'discharge' | FormTab;
+const isForm = (t: TabId): t is FormTab => t.startsWith('f_');
 
 type MenuItem = { id: TabId; label: string };
 type MenuNode = { label: string; items: MenuItem[] };
@@ -22,6 +26,7 @@ const MENU: MenuNode[] = [
   { label: '임상관찰', items: [{ id: 'vitals', label: '임상관찰' }] },
   { label: '치료/검사', items: [{ id: 'labs', label: '검사결과' }, { id: 'imaging', label: '영상검사' }, { id: 'transfusion', label: '수혈기록' }] },
   { label: '영양기록', items: [{ id: 'nutrition', label: '영양기록' }] },
+  { label: '평가도구', items: FORMS.map(f => ({ id: f.tab as TabId, label: f.label })) },
   { label: '간호기록', items: [{ id: 'notes', label: '간호기록' }, { id: 'risk', label: '위험도평가' }, { id: 'handover', label: '인계(SBAR)' }] },
   { label: '간호과정', items: [{ id: 'care', label: '간호과정' }] },
   { label: '동의서', items: [{ id: 'consent', label: '동의서' }] },
@@ -230,30 +235,38 @@ const nowStamp = () => {
   return `${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 };
 
-// 간호기록 작성: Focus를 고르고 상용구를 눌러 D/A/R에 채운 뒤 직접 수정해서 기록한다
-function NoteComposer({ onAdd, author }: { onAdd: (n: Row) => void; author: string }) {
-  const [focus, setFocus] = useState('');
-  const [txt, setTxt] = useState<{ d: string; a: string; r: string }>({ d: '', a: '', r: '' });
-  const [time, setTime] = useState('');
-  const ph = PHRASES.find(p => p.focus === focus);
+// 간호기록 작성: 형식(Focus DAR, SOAPIE, 서술)을 고르고, DAR은 상용구를 눌러 채운 뒤 직접 수정해서 기록한다
+type NFmt = 'DAR' | 'SOAPIE' | 'NARR';
+const NFMT: Record<NFmt, { label: string; fields: { k: string; label: string }[] }> = {
+  DAR: { label: 'Focus DAR', fields: [{ k: 'D', label: 'D (자료)' }, { k: 'A', label: 'A (중재)' }, { k: 'R', label: 'R (반응)' }] },
+  SOAPIE: { label: 'SOAPIE', fields: [{ k: 'S', label: 'S (주관적 자료)' }, { k: 'O', label: 'O (객관적 자료)' }, { k: 'A', label: 'A (사정)' }, { k: 'P', label: 'P (계획)' }, { k: 'I', label: 'I (중재)' }, { k: 'E', label: 'E (평가)' }] },
+  NARR: { label: '서술', fields: [{ k: 'N', label: '서술 기록' }] },
+};
 
-  const push = (k: 'd' | 'a' | 'r', phrase: string) =>
-    setTxt(t => ({ ...t, [k]: t[k] ? `${t[k]}\n${phrase}` : phrase }));
-  const empty = !txt.d.trim() && !txt.a.trim() && !txt.r.trim();
+function NoteComposer({ onAdd, author }: { onAdd: (n: Row) => void; author: string }) {
+  const [fmt, setFmt] = useState<NFmt>('DAR');
+  const [focus, setFocus] = useState('');
+  const [txt, setTxt] = useState<Record<string, string>>({});
+  const [time, setTime] = useState('');
+  const [act, setAct] = useState('');
+  const ph = PHRASES.find(p => p.focus === focus);
+  const fields = NFMT[fmt].fields;
+
+  const append = (k: string, t: string) => setTxt(v => ({ ...v, [k]: v[k] ? `${v[k]}${v[k].endsWith('\n') ? '' : ' '}${t}` : t }));
+  const dict = useDictation(t => append(act || fields[0].k, t));
+  const push = (k: string, phrase: string) => setTxt(t => ({ ...t, [k]: t[k] ? `${t[k]}\n${phrase}` : phrase }));
+  const empty = fields.every(f => !(txt[f.k] || '').trim());
 
   const add = () => {
     if (empty) return;
-    const body = [txt.d.trim() && `D)\n${txt.d.trim()}`, txt.a.trim() && `A)\n${txt.a.trim()}`, txt.r.trim() && `R)\n${txt.r.trim()}`].filter(Boolean).join('\n\n');
+    const body = fmt === 'NARR'
+      ? (txt.N || '').trim()
+      : fields.map(f => (txt[f.k] || '').trim() && `${f.k})\n${txt[f.k].trim()}`).filter(Boolean).join('\n\n');
     onAdd({ time: time || nowStamp(), focus, text: body, author });
-    setTxt({ d: '', a: '', r: '' });
+    setTxt({});
     setTime('');
+    if (dict.on) dict.stop();
   };
-
-  const cols: { k: 'd' | 'a' | 'r'; label: string }[] = [
-    { k: 'd', label: 'D (자료)' },
-    { k: 'a', label: 'A (중재)' },
-    { k: 'r', label: 'R (반응)' },
-  ];
 
   return (
     <div className="nc">
@@ -268,26 +281,41 @@ function NoteComposer({ onAdd, author }: { onAdd: (n: Row) => void; author: stri
           <input value={focus} placeholder="직접 입력 또는 아래에서 선택" onChange={e => setFocus(e.target.value)} />
         </label>
       </div>
-      <div className="chips">
-        {PHRASES.map(p => (
-          <button key={p.focus} type="button" className={focus === p.focus ? 'on' : ''} onClick={() => setFocus(p.focus)}>{p.focus}</button>
+      <div className="fmts">
+        {(Object.keys(NFMT) as NFmt[]).map(k => (
+          <button key={k} type="button" className={fmt === k ? 'on' : ''} onClick={() => { setFmt(k); setAct(''); }}>{NFMT[k].label}</button>
         ))}
+        {dict.supported && (
+          <button type="button" className={`mic ${dict.on ? 'on' : ''}`} onClick={dict.on ? dict.stop : dict.start}>
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><rect x="9" y="3" width="6" height="11" rx="3" /><path d="M5 11a7 7 0 0014 0M12 18v3" /></svg>
+            {dict.on ? '듣는 중 (누르면 멈춤)' : '음성 입력'}
+          </button>
+        )}
       </div>
-      <div className="ncGrid">
-        {cols.map(c => (
-          <div key={c.k} className="ncCol">
-            <div className="lbl">{c.label}</div>
-            <div className="phs">
-              {ph ? ph[c.k].map(t => (
-                <button key={t} type="button" onClick={() => push(c.k, t)}>{t}</button>
-              )) : <span className="hint">Focus를 선택하세요</span>}
-            </div>
-            <textarea rows={5} value={txt[c.k]} onChange={e => setTxt(t => ({ ...t, [c.k]: e.target.value }))} />
+      {fmt === 'DAR' && (
+        <div className="chips">
+          {PHRASES.map(p => (
+            <button key={p.focus} type="button" className={focus === p.focus ? 'on' : ''} onClick={() => setFocus(p.focus)}>{p.focus}</button>
+          ))}
+        </div>
+      )}
+      <div className={`ncGrid ${fields.length === 6 ? 'six' : fields.length === 1 ? 'one' : ''}`}>
+        {fields.map(f => (
+          <div key={f.k} className="ncCol">
+            <div className="lbl">{f.label}</div>
+            {fmt === 'DAR' && (
+              <div className="phs">
+                {ph ? (ph[f.k.toLowerCase() as 'd' | 'a' | 'r'] || []).map(t => (
+                  <button key={t} type="button" onClick={() => push(f.k, t)}>{t}</button>
+                )) : <span className="hint">Focus를 선택하세요</span>}
+              </div>
+            )}
+            <textarea rows={fmt === 'NARR' ? 8 : 4} value={txt[f.k] || ''} onFocus={() => setAct(f.k)} onChange={e => setTxt(t => ({ ...t, [f.k]: e.target.value }))} />
           </div>
         ))}
       </div>
       <div className="ncFoot">
-        <button type="button" className="clr" onClick={() => setTxt({ d: '', a: '', r: '' })}>지우기</button>
+        <button type="button" className="clr" onClick={() => setTxt({})}>지우기</button>
         <button type="button" className="sv" disabled={empty} onClick={add}>기록 저장</button>
       </div>
     </div>
@@ -583,6 +611,7 @@ export default function EhrEditor({
         {locked
           ? (!info.reviewed && <button type="button" className="dis" onClick={unsubmit}>제출 취소</button>)
           : <button type="button" className="subm" onClick={submit}>제출</button>}
+        <button type="button" className="dis" onClick={() => { if (!printChart(title, data, userName || '')) notify('팝업을 허용해 주세요.'); }}>인쇄</button>
         <button type="button" className="dis" onClick={toggleDischarge} disabled={locked}>
           {info.discharged ? '퇴원 취소' : '퇴원'}
         </button>
@@ -818,17 +847,25 @@ export default function EhrEditor({
               <>
                 <h4 className="ph">활력징후</h4>
                 {tbl('vitals')}
+                <VitalsExtra rows={data.vitals} />
                 <h4 className="ph">섭취/배설 (I&amp;O)</h4>
                 {tbl('io')}
+                <IoTotals rows={data.io} />
               </>
             )}
 
-            {tab !== 'notes' && tab !== 'care' && tab !== 'orders' && tab !== 'admission' && tab !== 'discharge' && tab !== 'nurseinfo' && tab !== 'vitals' && tbl(tab)}
+            {isForm(tab) && (() => {
+              const f = FORMS.find(x => x.tab === tab)!;
+              return <FormPanel kind={f.key as FormKey} rows={data.forms?.[f.key] || []} onChange={rows => setData(d => ({ ...d, forms: { ...(d.forms || {}), [f.key]: rows } }))} />;
+            })()}
+
+            {!isForm(tab) && tab !== 'notes' && tab !== 'care' && tab !== 'orders' && tab !== 'admission' && tab !== 'discharge' && tab !== 'nurseinfo' && tab !== 'vitals' && tbl(tab)}
           </section>
         </div>
       </div>
       </fieldset>
 
+      <style>{FORM_CSS}</style>
       <style jsx global>{`
         .ehr { --nv1: #1c2f4b; --nv2: #13233a; --tl: #cfe5e6; --ln: #cfd5dc; }
         .ehr .bar { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
@@ -873,6 +910,23 @@ export default function EhrEditor({
         .ehr .aib { border: 1px solid var(--primary); border-radius: 999px; background: none; color: var(--primary); font: inherit; font-size: 0.75rem; font-weight: 700; padding: 5px 12px; cursor: pointer; white-space: nowrap; }
         .ehr .aib:disabled { opacity: .6; }
         .ehr .aisw { display: flex; align-items: center; gap: 4px; font-size: 0.75rem; color: var(--sub-text); cursor: pointer; }
+        .ehr .spk { display: flex; flex-direction: column; gap: 2px; font-size: 11.5px; color: #475569; }
+        .ehr .spk b { font-size: 13px; color: #1e293b; }
+        .ehr .sparks { display: flex; flex-wrap: wrap; gap: 8px 22px; padding: 10px 4px; }
+        .ehr .news { display: flex; flex-wrap: wrap; align-items: center; gap: 6px 8px; padding: 0 4px 10px; font-size: 12.5px; }
+        .ehr .news i { flex-basis: 100%; font-style: normal; font-size: 11.5px; color: #64748b; }
+        .ehr .nw { padding: 2px 9px; border-radius: 999px; background: #e8f0fb; color: #1d4e89; font-weight: 700; }
+        .ehr .nw.md { background: #fde9c8; color: #9a5b00; }
+        .ehr .nw.hi { background: #fbd5d5; color: #b91c1c; }
+        .ehr .iot { display: flex; flex-wrap: wrap; gap: 6px 18px; padding: 8px 4px; font-size: 13px; color: #475569; }
+        .ehr .iot b { color: #1e293b; }
+        .ehr .fmts { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 8px; }
+        .ehr .fmts button { border: 1px solid var(--ln); background: #fff; padding: 5px 12px; font: inherit; font-size: 12.5px; font-weight: 700; color: #475569; cursor: pointer; }
+        .ehr .fmts button.on { background: #1d4e89; border-color: #1d4e89; color: #fff; }
+        .ehr .fmts .mic { margin-left: auto; display: inline-flex; align-items: center; gap: 6px; border-radius: 999px; color: #1d4e89; }
+        .ehr .fmts .mic.on { background: #dc2626; border-color: #dc2626; color: #fff; }
+        .ehr .ncGrid.six { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+        .ehr .ncGrid.one { grid-template-columns: 1fr; }
         .ehr .pvn { margin: 0 0 8px; font-size: 0.75rem; color: #b45309; font-weight: 700; }
         .ehr .lkb { margin-bottom: 8px; padding: 8px 12px; border-radius: 8px; background: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--primary); font-size: 0.8125rem; font-weight: 700; }
         .ehr .cmt { position: relative; margin-bottom: 8px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--primary); background: var(--white); }
