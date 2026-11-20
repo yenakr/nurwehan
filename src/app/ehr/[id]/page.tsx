@@ -8,7 +8,7 @@ import { aiQuotaLeft } from '@/lib/practicum-ai';
 import { aiConfigured } from '@/lib/ai';
 
 export const dynamic = 'force-dynamic';
-export const metadata = { title: 'EHR 연습' };
+export const metadata = { title: 'EHR' };
 
 export default async function EhrCasePage({ params }: { params: Promise<{ id: string }> }) {
   const { id } = await params;

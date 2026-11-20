@@ -1108,7 +1108,12 @@ export default function EhrEditor({
         .ehr .ncFoot .sv:disabled { opacity: 0.4; cursor: default; }
         @media (max-width: 1100px) { .ehr .ncGrid.four { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
         @media (max-width: 860px) { .ehr .ncGrid, .ehr .ncGrid.four { grid-template-columns: 1fr; } }
+        .ehr .mi > button, .ehr .wardSel > button { white-space: nowrap; }
         @media (max-width: 860px) {
+          .ehr .bar { flex-wrap: wrap; }
+          .ehr .bar .ttl { order: 1; flex: 1 1 100%; }
+          .ehr .top { flex-wrap: wrap; }
+          .ehr .nav { flex: 1 1 100%; }
           .ehr .body { grid-template-columns: 1fr; }
           .ehr .side { display: grid; grid-template-columns: repeat(2, 1fr); gap: 6px 12px; }
           .ehr .brand { grid-column: 1 / -1; padding-bottom: 6px; }

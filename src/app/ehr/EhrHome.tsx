@@ -304,6 +304,15 @@ export default function EhrHome({ cases, initialView, ai, aiLeft, extra }: { cas
         .ehrWard .aipt { display: inline-flex; align-items: center; gap: 5px; margin: 0 0 0 8px; align-self: center; border: 1px solid #e8c97a; background: transparent; color: #e8c97a; border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 0.8125rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
         .ehrWard .top .aipt:last-child { margin-right: 10px; }
         .ehrWard .aipt:disabled { opacity: 0.5; }
+        .ehrWard .top nav .mi > button, .ehrWard .aipt, .ehrWard .logo { white-space: nowrap; }
+        .ehrWard table { min-width: 720px; }
+        @media (max-width: 860px) {
+          .ehrWard .top { flex-wrap: wrap; }
+          .ehrWard .logo { flex: 1 1 100%; padding: 8px 14px; border-right: 0; border-bottom: 1px solid rgba(255,255,255,0.15); }
+          .ehrWard .top nav { flex: 1 1 100%; flex-wrap: nowrap; overflow-x: auto; }
+          .ehrWard .top nav .mi > button { padding: 10px 13px; }
+          .ehrWard .top .aipt { margin-top: 6px; margin-bottom: 6px; }
+        }
         .ehrWard .err { color: #b91c1c; font-size: 0.8125rem; margin-top: 10px; }
       `}</style>
     </div>
