@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { SAMPLES, WARDS, bedLabel, roomNo } from './samples';
-import { emptyChart, migrate } from './types';
+import { emptyChart, migrate, shiftChart } from './types';
 import { newPtNo } from './directory';
 
 type Item = {
@@ -21,11 +21,16 @@ const stay = (admit: string | null | undefined) => {
   const n = Math.floor((Date.now() - d.getTime()) / 86400000) + 1;
   return n > 0 ? `${n}일째` : '';
 };
-const today = () => new Date().toISOString().slice(0, 10);
+const today = () => {
+  const d = new Date();
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+};
 const nowHM = () => {
   const d = new Date();
   return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 };
+
+const infoOf = (d: unknown) => shiftChart(migrate(d)).info;
 
 type View = { kind: 'ward' | 'op' | 'er' | 'dc'; name: string; group: string | null };
 const VIEWS: View[] = [
@@ -92,12 +97,18 @@ export default function EhrHome({ cases, initialView }: { cases: Item[]; initial
           label: bed,
           room: { no: roomNo(w, ri + 1), size, first: b === 1 },
           saved,
-          p: saved ?? (sample && !dcSample ? sample.data.info : null),
+          p: saved ?? (sample && !dcSample ? infoOf(sample.data) : null),
           make: () => sample && !dcSample
-            ? { title: sample.title, subject: sample.subject, data: migrate(sample.data) }
+            ? { title: sample.title, subject: sample.subject, data: shiftChart(migrate(sample.data)) }
             : { title: '새 환자', subject: w.name, data: { ...emptyChart(), info: { ward: w.name, bed, ptNo: newPtNo(), admit: today() } } },
         });
       }
+    });
+    // 병상 구성에서 빠진 병상에 저장된 차트도 목록에서 사라지지 않게 남긴다
+    const known = new Set(entries.map(e => e.label));
+    active.filter(c => c.ward === w.name && c.bed && !known.has(c.bed)).forEach(c => {
+      const rn = Number(String(c.bed).split('-')[0]) || 0;
+      entries.push({ key: `x:${c.id}`, label: c.bed || '', room: { no: rn, size: 1, first: true }, saved: c, p: c, make: () => ({ title: '', subject: null, data: {} }) });
     });
   } else if (view.kind === 'dc') {
     cases.filter(c => c.discharged).sort((a, b) => (b.discharged || '').localeCompare(a.discharged || '')).forEach(c => entries.push({ key: c.id, label: '', saved: c, p: c, make: () => ({ title: '', subject: null, data: {} }) }));
@@ -110,7 +121,7 @@ export default function EhrHome({ cases, initialView }: { cases: Item[]; initial
       if (savedAll.some(c => c.sampleKey === s.key && c.discharged)) return; // 퇴원한 샘플은 목록에서 제외
       const saved = savedHere.find(c => c.sampleKey === s.key);
       if (saved) used.add(saved.id);
-      entries.push({ key: s.key, label: '', saved, p: saved ?? s.data.info, make: () => ({ title: s.title, subject: s.subject, data: migrate(s.data) }) });
+      entries.push({ key: s.key, label: '', saved, p: saved ?? infoOf(s.data), make: () => ({ title: s.title, subject: s.subject, data: shiftChart(migrate(s.data)) }) });
     });
     savedHere.filter(c => !used.has(c.id)).forEach(c => entries.push({ key: c.id, label: '', saved: c, p: c, make: () => ({ title: '', subject: null, data: {} }) }));
     entries.sort((a, b) => (a.p?.visitTime || '').localeCompare(b.p?.visitTime || ''));
@@ -239,7 +250,7 @@ export default function EhrHome({ cases, initialView }: { cases: Item[]; initial
         .ehrWard .dd button.on { color: #0e4a84; font-weight: 800; }
         .ehrWard .top nav .mi > button.sp { color: #f5d98b; }
         .ehrWard .top nav .mi > button.on { color: #38d6ff; box-shadow: inset 0 -3px 0 #38d6ff; }
-        .ehrWard .tw { overflow-x: auto; }
+        .ehrWard .tw { overflow-x: auto; min-height: calc(100vh - 220px); }
         .ehrWard table { width: 100%; border-collapse: collapse; }
         .ehrWard th { background: #e9edf1; border: 1px solid #cfd5dc; padding: 7px 8px; font-size: 12px; font-weight: 700; white-space: nowrap; }
         .ehrWard td { border: 1px solid #e1e5ea; padding: 8px; white-space: nowrap; }

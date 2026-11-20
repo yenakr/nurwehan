@@ -32,6 +32,44 @@ export const emptyChart = (): ChartData => {
 
 export type Sample = { key: string; subject: string; title: string; data: Partial<ChartData> & { info: Record<string, string> } };
 
+// 샘플 차트의 날짜를 오늘 기준으로 옮긴다 (가장 늦은 날짜가 오늘이 되도록)
+export function shiftChart(src: ChartData): ChartData {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const FULL = /\b(\d{4})-(\d{2})-(\d{2})\b/g;
+  const MD = /^(\d{2})-(\d{2})( \d{2}:\d{2})/;
+  let max = 0;
+  const scan = (v: unknown) => {
+    if (typeof v === 'string') {
+      for (const m of v.matchAll(FULL)) max = Math.max(max, Date.UTC(+m[1], +m[2] - 1, +m[3]));
+      const mm = v.match(MD);
+      if (mm) max = Math.max(max, Date.UTC(2026, +mm[1] - 1, +mm[2]));
+    } else if (Array.isArray(v)) v.forEach(scan);
+    else if (v && typeof v === 'object') Object.entries(v).forEach(([k, x]) => k !== 'appts' && scan(x));
+  };
+  scan(src);
+  if (!max) return src;
+  const now = new Date();
+  const delta = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) - max;
+  if (delta === 0) return src;
+  const shift = (v: unknown): unknown => {
+    if (typeof v === 'string') {
+      let out = v.replace(FULL, (_, y, mo, d) => {
+        const t = new Date(Date.UTC(+y, +mo - 1, +d) + delta);
+        return `${t.getUTCFullYear()}-${pad(t.getUTCMonth() + 1)}-${pad(t.getUTCDate())}`;
+      });
+      out = out.replace(MD, (_, mo, d, rest) => {
+        const t = new Date(Date.UTC(2026, +mo - 1, +d) + delta);
+        return `${pad(t.getUTCMonth() + 1)}-${pad(t.getUTCDate())}${rest}`;
+      });
+      return out;
+    }
+    if (Array.isArray(v)) return v.map(shift);
+    if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, shift(x)]));
+    return v;
+  };
+  return shift(src) as ChartData;
+}
+
 // 예전 형식으로 저장된 차트도 열리도록 변환
 export function migrate(raw: unknown): ChartData {
   const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
