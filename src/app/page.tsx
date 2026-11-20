@@ -37,6 +37,8 @@ export default async function Home() {
             placements={placements}
             tiles={tiles}
           />
+
+          <AdminQuickStats linkOnly />
         </div>
       </main>
 

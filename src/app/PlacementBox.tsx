@@ -39,7 +39,7 @@ export default function PlacementBox({ placements }: { placements: Placement[] }
     pick.kind === 'current' ? '이번 주 실습' : pick.kind === 'upcoming' ? '다음 실습' : '이번 주는 자율실습';
 
   return (
-    <div style={{ marginTop: '20px', backgroundColor: 'rgba(255, 255, 255, 0.15)', padding: '14px 16px', borderRadius: '8px' }}>
+    <div style={{ marginTop: '12px', backgroundColor: 'rgba(255, 255, 255, 0.15)', padding: '12px 14px', borderRadius: '8px' }}>
       <div style={{ fontSize: '0.75rem', fontWeight: 700, opacity: 0.85, marginBottom: '8px' }}>
         {title}
         {pick.kind !== 'free' && pick.items[0] && (
