@@ -1,5 +1,6 @@
 'use client';
 
+import { findPhi } from '../phi';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import type { ChartData, Row } from '../types';
@@ -472,10 +473,12 @@ export default function EhrEditor({
       const r = await fetch(`/api/ehr/${id}/feedback`, { method: 'POST' });
       const j = await r.json().catch(() => ({}));
       if (r.ok) setFb(j.text);
-      else notify(r.status === 400 ? '간호기록이나 간호과정을 먼저 써 주세요.' : r.status === 429 ? '오늘 피드백 횟수를 다 썼어요.' : '피드백을 받지 못했어요.');
+      else notify(r.status === 400 ? '간호기록이나 간호과정을 먼저 써 주세요.' : r.status === 422 ? '실제 정보로 보이는 번호가 있어요. 가상 정보로 바꿔 주세요.' : r.status === 429 ? '오늘 피드백 횟수를 다 썼어요.' : '피드백을 받지 못했어요.');
     } finally { setFbBusy(false); }
   };
   const submit = async () => {
+    const phi = findPhi(data);
+    if (phi.length) { notify(`${phi.join(', ')}으로 보이는 내용이 있어요. 가상 정보로 바꾼 뒤 제출하세요.`); return; }
     if (!(await confirmDialog('제출하면 교수님이 볼 수 있고, 확인 전까지만 취소할 수 있어요. 제출할까요?'))) return;
     const sv = await fetch(`/api/ehr/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, subject, data }) });
     const r = sv.ok ? await fetch(`/api/ehr/${id}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ on: true }) }) : sv;

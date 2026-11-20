@@ -3,9 +3,10 @@
 import { useState, type CSSProperties } from 'react';
 import { COLS } from '@/app/ehr/[id]/EhrEditor';
 import type { ChartData, Row } from '@/app/ehr/types';
+import { FORMS, formLine } from '@/app/ehr/[id]/EhrForms';
 import { notify } from '@/components/Dialog';
 
-const SECTIONS: { key: keyof typeof COLS; label: string }[] = [
+const SECTIONS = ([
   { key: 'notes', label: '간호기록' },
   { key: 'vitals', label: '임상관찰' },
   { key: 'io', label: '섭취/배설' },
@@ -13,7 +14,12 @@ const SECTIONS: { key: keyof typeof COLS; label: string }[] = [
   { key: 'progress', label: '경과기록' },
   { key: 'risk', label: '위험도평가' },
   { key: 'handover', label: '인계(SBAR)' },
-];
+  { key: 'transfusion', label: '수혈기록' },
+  { key: 'nutrition', label: '영양기록' },
+  { key: 'consult', label: '협진기록' },
+  { key: 'consent', label: '동의서' },
+  { key: 'surgery', label: '수술기록' },
+]).filter(s => !!(COLS as Record<string, unknown>)[s.key]) as { key: keyof typeof COLS; label: string }[];
 
 const th: CSSProperties = { textAlign: 'left', padding: '6px 8px', borderBottom: '1px solid var(--border)', color: 'var(--sub-text)', fontWeight: 600, whiteSpace: 'nowrap' };
 const td: CSSProperties = { padding: '6px 8px', borderBottom: '1px solid var(--border)', verticalAlign: 'top', whiteSpace: 'pre-wrap' };
@@ -52,12 +58,23 @@ export default function ReviewClient({ id, data }: { id: string; data: ChartData
         {info.cc && <div>주호소: {info.cc}</div>}
         {info.pmh && <div>과거력: {info.pmh}</div>}
       </div>
-      {SECTIONS.map(s => (
+      {SECTIONS.filter(s => (data[s.key as keyof ChartData] as Row[]).length > 0 || ['notes', 'vitals', 'io', 'labs'].includes(s.key)).map(s => (
         <div key={s.key} className="card" style={{ padding: 16 }}>
           <h3 style={{ margin: '0 0 8px', fontSize: 14, fontWeight: 800 }}>{s.label}</h3>
           <Table rows={data[s.key as keyof ChartData] as Row[]} cols={COLS[s.key]} />
         </div>
       ))}
+      {FORMS.some(f => (data.forms?.[f.key] || []).length > 0) && (
+        <div className="card" style={{ padding: 16 }}>
+          <h3 style={{ margin: '0 0 8px', fontSize: 14, fontWeight: 800 }}>평가도구</h3>
+          {FORMS.map(f => (data.forms?.[f.key] || []).length > 0 && (
+            <div key={f.key} style={{ fontSize: 13, lineHeight: 1.7, marginBottom: 6 }}>
+              <b>{f.label}</b>
+              {(data.forms[f.key] || []).map((r, i) => <div key={i} style={{ color: 'var(--sub-text)' }}>{r.time} · {formLine(f.key, r)}</div>)}
+            </div>
+          ))}
+        </div>
+      )}
       <div className="card" style={{ padding: 16 }}>
         <h3 style={{ margin: '0 0 8px', fontSize: 14, fontWeight: 800 }}>간호과정</h3>
         <Table rows={data.care} cols={Array.from(new Set(data.care.flatMap(r => Object.keys(r)))).filter(k => k !== 'kind').map(k => ({ key: k, label: k }))} />
