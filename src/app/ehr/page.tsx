@@ -1,6 +1,7 @@
 import { getCurrentUser } from '@/lib/auth';
 import { listCases } from '@/lib/ehr';
-import { studentVirtuals } from '@/lib/ehr-class';
+import { listVirtuals, studentVirtuals } from '@/lib/ehr-class';
+import { isAdminRole } from '@/lib/auth-core';
 import type { Sample } from './types';
 import { notFound, redirect } from 'next/navigation';
 import EhrHome from './EhrHome';
@@ -17,7 +18,7 @@ export default async function EhrPage({ searchParams }: { searchParams: Promise<
   if (!user) redirect('/login?redirect=/ehr');
   if (!(await hasEhrAccess(user))) notFound();
   const cases = await listCases(user.id);
-  const extra: Sample[] = (await studentVirtuals(user.id)).map(v => {
+  const extra: Sample[] = (isAdminRole(user.role) ? (await listVirtuals()).filter(v => v.published) : await studentVirtuals(user.id)).map(v => {
     const d = v.data as Sample['data'];
     const key = `v:${v.id}`;
     return { key, subject: d.info?.ward || '', title: `${d.info?.name || '가상환자'} · ${d.info?.dx || ''}`, data: { ...d, info: { ...d.info, sampleKey: key } } };

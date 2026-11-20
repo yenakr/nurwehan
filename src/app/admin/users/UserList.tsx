@@ -27,6 +27,7 @@ interface User {
   tier?: number;
   checklist?: boolean;
   ehr?: boolean;
+  prof?: boolean;
   role?: string;
   createdAt: string;
   restrictions: Restriction[];
@@ -41,6 +42,8 @@ export default function UserList({ initialUsers, superAdmin = false }: { initial
   const [searchTerm, setSearchTerm] = useState('');
   const [tmpPw, setTmpPw] = useState<{ id: string; pw: string } | null>(null);
   const [resetId, setResetId] = useState<string | null>(null);
+  const [openId, setOpenId] = useState<string | null>(null);
+  const [group, setGroup] = useState<'student' | 'staff'>('student');
   const [activeTab, setActiveTab] = useState<'PENDING' | 'ALL' | 'RESTRICTED'>(
     initialUsers.some(u => u.approvalStatus === 'PENDING') ? 'PENDING' : 'ALL'
   );
@@ -174,7 +177,7 @@ export default function UserList({ initialUsers, superAdmin = false }: { initial
   };
 
   const filteredUsers = useMemo(() => {
-    let filtered = users;
+    let filtered = users.filter(u => (group === 'staff') === !(u.role === 'STUDENT' || !u.role));
     if (searchTerm) {
       const lowerSearch = searchTerm.toLowerCase();
       filtered = filtered.filter(u => 
@@ -183,7 +186,7 @@ export default function UserList({ initialUsers, superAdmin = false }: { initial
       );
     }
     return filtered;
-  }, [users, searchTerm]);
+  }, [users, searchTerm, group]);
 
   const pendingUsers = filteredUsers.filter(u => u.approvalStatus === 'PENDING');
   const restrictedUsers = filteredUsers.filter(u => u.restrictions.length > 0);
@@ -207,9 +210,14 @@ export default function UserList({ initialUsers, superAdmin = false }: { initial
     <div className="um">
       <div className="head">
         <div className="tabs">
-          <button className={activeTab === 'ALL' ? 'on' : ''} onClick={() => setActiveTab('ALL')}>
-            전체 {users.length}
+          <button className={activeTab === 'ALL' && group === 'student' ? 'on' : ''} onClick={() => { setActiveTab('ALL'); setGroup('student'); }}>
+            학생 {users.filter(u => u.role === 'STUDENT' || !u.role).length}
           </button>
+          {users.some(u => u.role && u.role !== 'STUDENT') && (
+            <button className={activeTab === 'ALL' && group === 'staff' ? 'on' : ''} onClick={() => { setActiveTab('ALL'); setGroup('staff'); }}>
+              교수·관리 {users.filter(u => u.role && u.role !== 'STUDENT').length}
+            </button>
+          )}
           <button className={activeTab === 'PENDING' ? 'on' : ''} onClick={() => setActiveTab('PENDING')}>
             가입 대기 {pendingCount > 0 && <span className="dot">{pendingCount}</span>}
           </button>
@@ -268,8 +276,13 @@ export default function UserList({ initialUsers, superAdmin = false }: { initial
                     <span className="name">{user.name}</span>
                     <span className="sid">{user.studentId}</span>
                     <span className={`st ${user.approvalStatus.toLowerCase()}`}>{statusLabel(user.approvalStatus)}</span>
+                    {user.prof && (user.role === 'STUDENT' || !user.role) && <span className="bd pf">교수 신청</span>}
+                    {user.checklist && <span className="bd">체크</span>}
+                    {user.ehr && <span className="bd">EHR</span>}
+                    {user.tier === 1 && <span className="bd">일부공개</span>}
                   </div>
-                  <div className="ctl">
+                  <button type="button" className="rst" onClick={() => setOpenId(openId === user.id ? null : user.id)}>{openId === user.id ? '닫기' : '설정'}</button>
+                  {openId === user.id && <div className="ctl">
                   {superAdmin && (
                     <select
                       value={user.role === 'STUDENT' || !user.role ? 'STUDENT' : 'ADMIN'}
@@ -278,7 +291,7 @@ export default function UserList({ initialUsers, superAdmin = false }: { initial
                       aria-label="권한"
                     >
                       <option value="STUDENT">학생</option>
-                      <option value="ADMIN">관리자</option>
+                      <option value="ADMIN">교수·관리자</option>
                     </select>
                   )}
                   {superAdmin && user.approvalStatus === 'APPROVED' && (
@@ -333,7 +346,7 @@ export default function UserList({ initialUsers, superAdmin = false }: { initial
                       <button type="button" className="rst" onClick={() => setResetId(user.id)} disabled={loading === user.id}>비번</button>
                     )
                   )}
-                  </div>
+                  </div>}
                   {tmpPw && tmpPw.id === user.id && (
                     <div className="tmp">
                       <span>임시 비밀번호</span>
@@ -366,6 +379,7 @@ export default function UserList({ initialUsers, superAdmin = false }: { initial
         .top .sid { font-size: 0.8125rem; color: #94a3b8; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
         .top .st { align-self: center; flex: 0 0 auto; }
         .ctl { display: flex; flex-wrap: wrap; gap: 6px; flex: 0 0 auto; }
+        .ctl { flex: 1 1 100%; padding-top: 4px; }
         .ctl select { min-width: 0; }
         .row:not(.pending) { flex-wrap: wrap; }
         .rst { padding: 5px 9px; border: 1px solid #e2e8f0; border-radius: 8px; background: #fff; font-size: 0.8125rem; font-weight: 700; color: #475569; cursor: pointer; white-space: nowrap; }
@@ -380,6 +394,9 @@ export default function UserList({ initialUsers, superAdmin = false }: { initial
                 .name { font-weight: 800; color: #1e293b; display: flex; align-items: center; gap: 6px; }
         .sub { font-size: 0.8125rem; color: #94a3b8; margin-top: 2px; word-break: break-all; }
         .st { font-size: 0.6875rem; font-weight: 800; padding: 2px 8px; border-radius: 999px; }
+        .bd { font-size: 0.6875rem; font-weight: 700; padding: 2px 7px; border-radius: 999px; background: #eef2f7; color: #475569; white-space: nowrap; }
+        .bd.pf { background: #ede9fe; color: #6d28d9; }
+        .top { flex-wrap: wrap; }
         .st.approved { background: #dcfce7; color: #15803d; }
         .st.pending { background: #fef9c3; color: #a16207; }
         .st.rejected { background: #fee2e2; color: #b91c1c; }

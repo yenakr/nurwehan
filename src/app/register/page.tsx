@@ -10,6 +10,7 @@ export default function RegisterPage() {
     studentId: '',
     name: '',
     grade: '1',
+    kind: 'STUDENT',
     email: '',
     password: '',
     confirmPassword: '',
@@ -36,6 +37,7 @@ export default function RegisterPage() {
           studentId: formData.studentId,
           name: formData.name,
           grade: parseInt(formData.grade),
+          kind: formData.kind,
           email: formData.email,
           password: formData.password,
         }),
@@ -71,6 +73,11 @@ export default function RegisterPage() {
           )}
 
           <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+            <div style={{ display: 'flex', gap: 8 }}>
+              {[['STUDENT', '학생'], ['PROF', '교수·조교']].map(([k, l]) => (
+                <button key={k} type="button" onClick={() => setFormData({ ...formData, kind: k })} style={{ flex: 1, padding: '10px', borderRadius: 10, border: '1px solid var(--border)', background: formData.kind === k ? 'var(--primary)' : 'transparent', color: formData.kind === k ? '#fff' : 'inherit', fontWeight: 700, cursor: 'pointer' }}>{l}</button>
+              ))}
+            </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: '600', marginBottom: '6px' }}>학번</label>
