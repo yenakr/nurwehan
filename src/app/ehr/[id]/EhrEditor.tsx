@@ -8,7 +8,7 @@ import { PHRASES, CARE_DX } from '../phrases';
 import { VIEW_LIST } from '../samples';
 import { ALLERGIES, DEPTS, DOCTORS, WARD_OPTIONS, bedOptions } from '../directory';
 import { confirmDialog, notify } from '@/components/Dialog';
-import { VitalsExtra, VitalsBulk, IoTotals, printChart, useDictation } from './EhrExtras';
+import { VitalsExtra, VitalsBulk, IoBulk, LabSets, IoTotals, printChart, useDictation } from './EhrExtras';
 import FormPanel, { FORMS, FORM_CSS, type FormKey } from './EhrForms';
 
 type ListKey =
@@ -853,6 +853,7 @@ export default function EhrEditor({
                 {tbl('vitals')}
                 <VitalsExtra rows={data.vitals} />
                 <h4 className="ph">섭취/배설 (I&amp;O)</h4>
+                <IoBulk onApply={rs => setData(d => ({ ...d, io: [...d.io, ...rs] }))} />
                 {tbl('io')}
                 <IoTotals rows={data.io} />
               </>
@@ -863,6 +864,7 @@ export default function EhrEditor({
               return <FormPanel kind={f.key as FormKey} rows={data.forms?.[f.key] || []} onChange={rows => setData(d => ({ ...d, forms: { ...(d.forms || {}), [f.key]: rows } }))} />;
             })()}
 
+            {tab === 'labs' && <LabSets onApply={rs => setData(d => ({ ...d, labs: [...d.labs, ...rs] }))} />}
             {!isForm(tab) && tab !== 'notes' && tab !== 'care' && tab !== 'orders' && tab !== 'admission' && tab !== 'discharge' && tab !== 'nurseinfo' && tab !== 'vitals' && tbl(tab)}
           </section>
         </div>
