@@ -168,7 +168,6 @@ export default function Checklist({
   const minD = courseSch.length ? courseSch.map(x => x.startDate).sort()[0] : undefined;
   const maxD = courseSch.length ? courseSch.map(x => x.endDate).sort().slice(-1)[0] : undefined;
   const prog: Progress = all[key]?.r || {};
-  const remarks = all[key]?.n || {};
 
   const [dirty, setDirty] = useState<string | null>(null);
   const [status, setStatus] = useState<'' | 'saving' | 'saved' | 'error'>('');
@@ -269,10 +268,6 @@ export default function Checklist({
 
   const mutate = (fn: (r: Progress) => Progress) => {
     setAll(a => ({ ...a, [key]: { r: fn(a[key]?.r || {}), n: a[key]?.n || {} } }));
-    setDirty(key);
-  };
-  const setRemark = (id: string, v: string) => {
-    setAll(a => ({ ...a, [key]: { r: a[key]?.r || {}, n: { ...(a[key]?.n || {}), [id]: v.slice(0, 200) } } }));
     setDirty(key);
   };
 
@@ -506,19 +501,17 @@ export default function Checklist({
       sub.groups.forEach(g => {
         g.items.forEach((it, idx) => {
           const recs = st?.r?.[it.id] || [];
-          const notes = [st?.n?.[it.id], ...chrono(recs).filter(r => r.m).map(r => `${md(r.d)} ${r.m}`)].filter(Boolean) as string[];
           body += '<tr>' +
             (idx === 0 ? `<td class="g" rowspan="${g.items.length}">${esc(g.name)}</td>` : '') +
             `<td class="t">${esc(it.t)}</td>` +
-            `<td class="d">${esc(datesOf(recs, 'O'))}</td><td class="d">${esc(datesOf(recs, 'P'))}</td><td class="d">${esc(datesOf(recs, 'D'))}</td>` +
-            `<td class="n">${notes.map(esc).join('<br>')}</td></tr>`;
+            `<td class="d">${esc(datesOf(recs, 'O'))}</td><td class="d">${esc(datesOf(recs, 'P'))}</td><td class="d">${esc(datesOf(recs, 'D'))}</td></tr>`;
         });
       });
       return `<section${last ? '' : ' class="brk"'}>
 <h1>${esc(courseLabel)} 실습내용 체크리스트 (${esc(sub.sub)})</h1>
 <table class="info"><tr><th>학번</th><td>${esc(studentId || '')}</td><th>실습기간</th><td>${esc(period)}</td></tr><tr><th>이름</th><td>${esc(userName || '')}</td><th>실습부서</th><td>${esc(depts)}</td></tr></table>
 <div class="meta">관찰 및 수행한 날짜를 기록 (예: 12/3)</div>
-<table><thead><tr><th>분류</th><th>실습 내용</th><th>관찰</th><th>부분수행</th><th>수행</th><th>비고</th></tr></thead><tbody>${body}</tbody></table>
+<table><thead><tr><th>분류</th><th>실습 내용</th><th>관찰</th><th>부분수행</th><th>수행</th></tr></thead><tbody>${body}</tbody></table>
 <div class="sign"><div>임상현장지도자 확인 (서명)<span></span></div><div>실습담당교수 확인 (서명)<span></span></div></div>
 </section>`;
     };
@@ -535,9 +528,8 @@ th { background: #e5e5e5; font-size: 10.5px; }
 table.info th { width: 12%; }
 table.info td { width: 38%; }
 td.g { width: 11%; text-align: center; font-weight: 700; background: #f5f5f5; }
-td.t { width: 40%; }
+td.t { width: 56%; }
 td.d { width: 11%; text-align: center; font-size: 10px; word-break: keep-all; }
-td.n { width: 16%; font-size: 9.5px; }
 tr { break-inside: avoid; }
 .brk { break-after: page; }
 .sign { display: flex; justify-content: flex-end; gap: 28px; margin-top: 14px; font-size: 11px; }
@@ -881,7 +873,6 @@ tr { break-inside: avoid; }
               </div>
             )}
 
-            <input className="rmi" value={remarks[sheet.id] || ''} onChange={e => setRemark(sheet.id, e.target.value)} placeholder="비고" maxLength={200} />
             <div className={`dsc ${descOpen ? 'open' : ''}`}>
               <p className={`desc ${descOpen ? '' : 'clamp'}`}>{DETAIL[sheet.id]?.s ?? sheet.d}</p>
               {DETAIL[sheet.id] && (
