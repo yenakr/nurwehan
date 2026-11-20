@@ -1,7 +1,8 @@
 'use client';
 
 import Link from 'next/link';
-import PlacementBox, { pickPlacement, type Placement } from './PlacementBox';
+import PlacementBox from './PlacementBox';
+import { pickPlacement, type Placement } from '@/lib/placement-pick';
 import HomeTiles, { type HomeTilesData } from './HomeTiles';
 
 interface HomeDashboardClientProps {
