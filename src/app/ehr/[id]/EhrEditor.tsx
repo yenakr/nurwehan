@@ -1244,6 +1244,7 @@ export default function EhrEditor({
           .ehr .alg, .ehr .dcb, .ehr .ed { grid-column: 1 / -1; }
           .ehr .nl { grid-template-columns: 1fr; }
           .ehr .doc { padding: 12px; }
+          .ehr .main { padding-bottom: calc(var(--bnav-h, 0px) + 24px); }
         }
       `}</style>
     </div>

@@ -159,3 +159,22 @@ export async function setNoteFeedback(id: string, index: number, text: string): 
     return false;
   }
 }
+
+// 같은 병상(또는 같은 샘플)에 이미 입원 중인 차트가 있으면 그 id
+export async function findActiveDuplicate(userId: string, info: Record<string, unknown> | undefined): Promise<string | null> {
+  const ward = typeof info?.ward === 'string' ? info.ward : '';
+  const bed = typeof info?.bed === 'string' ? info.bed : '';
+  const key = typeof info?.sampleKey === 'string' ? info.sampleKey : '';
+  if (!(ward && bed) && !key) return null;
+  try {
+    const rows = await prisma.$queryRaw<Array<{ id: string }>>`
+      SELECT "id" FROM "EhrCase"
+      WHERE "userId" = ${userId} AND COALESCE("data"->'info'->>'discharged', '') = ''
+        AND ((${ward} <> '' AND ${bed} <> '' AND "data"->'info'->>'ward' = ${ward} AND "data"->'info'->>'bed' = ${bed})
+          OR (${key} <> '' AND "data"->'info'->>'sampleKey' = ${key}))
+      ORDER BY "updatedAt" DESC LIMIT 1`;
+    return rows[0]?.id ?? null;
+  } catch {
+    return null;
+  }
+}
