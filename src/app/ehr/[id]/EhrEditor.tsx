@@ -9,6 +9,7 @@ import { VIEW_LIST } from '../samples';
 import { ALLERGIES, DEPTS, DOCTORS, WARD_OPTIONS, bedOptions } from '../directory';
 import { confirmDialog, notify } from '@/components/Dialog';
 import { VitalsExtra, VitalsBulk, IoBulk, LabSets, IoTotals, printChart, useDictation } from './EhrExtras';
+import { NANDA } from '../nanda';
 import MemoPanel from './EhrMemo';
 import FormPanel, { FORMS, FORM_CSS, type FormKey } from './EhrForms';
 
@@ -335,6 +336,10 @@ function CareComposer({ onAdd }: { onAdd: (r: Row) => void }) {
   const [dx, setDx] = useState('');
   const [txt, setTxt] = useState<{ data: string; goal: string; plan: string; eval: string }>({ data: '', goal: '', plan: '', eval: '' });
   const lib = CARE_DX.find(c => c.dx === dx);
+  const [nd, setNd] = useState(false);
+  const [dom, setDom] = useState(0);
+  const q = dx.trim().toLowerCase();
+  const found = nd && q ? NANDA.flatMap(g => g.items).filter(([ko, en]) => ko.toLowerCase().includes(q) || en.toLowerCase().includes(q)) : NANDA[dom].items;
   const push = (k: 'data' | 'goal' | 'plan' | 'eval', v: string) => setTxt(t => ({ ...t, [k]: t[k] ? `${t[k]}\n${v}` : v }));
   const empty = !dx.trim() && !txt.data.trim() && !txt.goal.trim() && !txt.plan.trim() && !txt.eval.trim();
   const cols: { k: 'data' | 'goal' | 'plan' | 'eval'; label: string; src: string[] }[] = [
@@ -363,6 +368,25 @@ function CareComposer({ onAdd }: { onAdd: (r: Row) => void }) {
           <button key={c.dx} type="button" className={dx === c.dx ? 'on' : ''} onClick={() => setDx(c.dx)}>{c.dx}</button>
         ))}
       </div>
+      <button type="button" className="clr" style={{ alignSelf: 'flex-start' }} onClick={() => setNd(v => !v)}>{nd ? 'NANDA 목록 닫기' : 'NANDA 진단 목록'}</button>
+      {nd && (
+        <div className="ndp">
+          <style>{`
+            .ndp { border: 1px solid var(--border); border-radius: 10px; padding: 8px; display: flex; flex-direction: column; gap: 8px; }
+            .ndp .dm { display: flex; flex-wrap: wrap; gap: 5px; }
+            .ndp .dm button, .ndp .ls button { border: 1px solid var(--border); background: transparent; color: inherit; border-radius: 999px; padding: 5px 11px; font: inherit; font-size: 12.5px; cursor: pointer; }
+            .ndp .dm button.on { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 700; }
+            .ndp .ls { display: flex; flex-wrap: wrap; gap: 5px; max-height: 190px; overflow-y: auto; }
+            .ndp .ls button { border-radius: 8px; text-align: left; }
+            .ndp .ls button i { display: block; font-style: normal; font-size: 11px; color: var(--sub-text); }
+          `}</style>
+          {!q && <div className="dm">{NANDA.map((g, i) => <button key={g.domain} type="button" className={dom === i ? 'on' : ''} onClick={() => setDom(i)}>{g.domain}</button>)}</div>}
+          <div className="ls">
+            {found.length === 0 && <span className="hint">일치하는 진단이 없어요</span>}
+            {found.slice(0, 60).map(([ko, en]) => <button key={ko} type="button" onClick={() => { setDx(ko); setNd(false); }}>{ko}<i>{en}</i></button>)}
+          </div>
+        </div>
+      )}
       <div className="ncGrid four">
         {cols.map(c => (
           <div key={c.k} className="ncCol">
