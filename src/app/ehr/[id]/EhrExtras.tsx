@@ -176,6 +176,18 @@ const VCOLS: { key: string; label: string; ph: string }[] = [
 const SLOTS = ['08:00', '12:00', '16:00', '20:00'];
 const NORMAL: Row = { bp: '120/80', hr: '72', rr: '18', bt: '36.5', spo2: '98', pain: '0' };
 
+const BULK_CSS = `
+        .vbp { border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin: 6px 0 10px; display: flex; flex-direction: column; gap: 8px; }
+        .vbp .sc { overflow-x: auto; }
+        .vbp table { border-collapse: collapse; width: 100%; font-size: 13px; }
+        .vbp th { text-align: left; padding: 4px 6px; color: var(--sub-text); font-weight: 600; white-space: nowrap; }
+        .vbp td { padding: 2px 3px; }
+        .vbp input { width: 100%; min-width: 64px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; padding: 7px 8px; font: inherit; background: transparent; color: inherit; }
+        .vbp .bar { display: flex; flex-wrap: wrap; gap: 6px; }
+        .vbp .bar button { border: 1px solid var(--border); background: transparent; color: inherit; border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 12.5px; cursor: pointer; }
+        .vbp .bar .ok { margin-left: auto; background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 700; }
+`;
+
 export function VitalsBulk({ onApply }: { onApply: (rows: Row[]) => void }) {
   const [open, setOpen] = useState(false);
   const fresh = (): Row[] => SLOTS.map(t => ({ time: t }));
@@ -191,17 +203,7 @@ export function VitalsBulk({ onApply }: { onApply: (rows: Row[]) => void }) {
   if (!open) return <button type="button" className="add vbk" onClick={() => setOpen(true)}>일괄 입력</button>;
   return (
     <div className="vbp">
-      <style>{`
-        .vbp { border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin: 6px 0 10px; display: flex; flex-direction: column; gap: 8px; }
-        .vbp .sc { overflow-x: auto; }
-        .vbp table { border-collapse: collapse; width: 100%; font-size: 13px; }
-        .vbp th { text-align: left; padding: 4px 6px; color: var(--sub-text); font-weight: 600; white-space: nowrap; }
-        .vbp td { padding: 2px 3px; }
-        .vbp input { width: 100%; min-width: 64px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; padding: 7px 8px; font: inherit; background: transparent; color: inherit; }
-        .vbp .bar { display: flex; flex-wrap: wrap; gap: 6px; }
-        .vbp .bar button { border: 1px solid var(--border); background: transparent; color: inherit; border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 12.5px; cursor: pointer; }
-        .vbp .bar .ok { margin-left: auto; background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 700; }
-      `}</style>
+      <style>{BULK_CSS}</style>
       <div className="sc">
         <table>
           <thead><tr><th>시간</th>{VCOLS.map(c => <th key={c.key}>{c.label}</th>)}<th /></tr></thead>
@@ -222,6 +224,74 @@ export function VitalsBulk({ onApply }: { onApply: (rows: Row[]) => void }) {
         <button type="button" onClick={() => setRows(rs => rs.map(r => ({ ...r, ...NORMAL })))}>정상값</button>
         <button type="button" onClick={() => setOpen(false)}>닫기</button>
         <button type="button" className="ok" onClick={apply}>추가</button>
+      </div>
+    </div>
+  );
+}
+
+// 섭취/배설 일괄 입력: 근무조별 합계를 한 번에
+export function IoBulk({ onApply }: { onApply: (rows: Row[]) => void }) {
+  const [open, setOpen] = useState(false);
+  const fresh = (): Row[] => ['07-15', '15-23', '23-07'].map(t => ({ time: t }));
+  const [rows, setRows] = useState<Row[]>(fresh);
+  const set = (i: number, k: string, v: string) => setRows(rs => rs.map((r, j) => (j === i ? { ...r, [k]: v } : r)));
+  const apply = () => {
+    const out = rows.filter(r => r.intake || r.output || r.note);
+    if (out.length === 0) return;
+    onApply(out);
+    setRows(fresh());
+    setOpen(false);
+  };
+  if (!open) return <button type="button" className="add vbk" onClick={() => setOpen(true)}>일괄 입력</button>;
+  return (
+    <div className="vbp">
+      <style>{BULK_CSS}</style>
+      <div className="sc">
+        <table>
+          <thead><tr><th>시간</th><th>섭취 (mL)</th><th>배설 (mL)</th><th>비고</th><th /></tr></thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={i}>
+                <td><input value={r.time || ''} onChange={e => set(i, 'time', e.target.value)} aria-label="시간" /></td>
+                <td><input value={r.intake || ''} inputMode="decimal" onChange={e => set(i, 'intake', e.target.value)} aria-label="섭취" /></td>
+                <td><input value={r.output || ''} inputMode="decimal" onChange={e => set(i, 'output', e.target.value)} aria-label="배설" /></td>
+                <td><input value={r.note || ''} onChange={e => set(i, 'note', e.target.value)} aria-label="비고" /></td>
+                <td><button type="button" aria-label="삭제" onClick={() => setRows(rs => rs.filter((_, j) => j !== i))} style={{ border: 0, background: 'transparent', color: 'inherit', fontSize: 18, cursor: 'pointer' }}>×</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="bar">
+        <button type="button" onClick={() => setRows(rs => [...rs, { time: '' }])}>+ 시간</button>
+        <button type="button" onClick={() => setOpen(false)}>닫기</button>
+        <button type="button" className="ok" onClick={apply}>추가</button>
+      </div>
+    </div>
+  );
+}
+
+// 검사 세트: 검사명, 단위, 참고치를 채워 두고 결과값만 입력하게 한다
+const L = (name: string, unit: string, min: string, max: string, sample = 'Blood'): Row => ({ name, value: '', unit, min, max, sample });
+const LAB_SETS: { label: string; rows: Row[] }[] = [
+  { label: 'CBC', rows: [L('WBC', '10^3/uL', '4', '10'), L('Hb (Hemoglobin)', 'g/dL', '12.0', '16.0'), L('Hct', '%', '36', '48'), L('Platelet', '10^3/uL', '150', '400')] },
+  { label: '전해질', rows: [L('Na', 'mmol/L', '135', '145'), L('K', 'mmol/L', '3.5', '5.1'), L('Cl', 'mmol/L', '98', '107'), L('Ca', 'mg/dL', '8.6', '10.2')] },
+  { label: '신기능', rows: [L('BUN', 'mg/dL', '8', '23'), L('Creatinine', 'mg/dL', '0.5', '1.2'), L('eGFR', 'mL/min', '90', '')] },
+  { label: '간기능', rows: [L('AST', 'U/L', '0', '40'), L('ALT', 'U/L', '0', '40'), L('T.bilirubin', 'mg/dL', '0.2', '1.2'), L('Albumin', 'g/dL', '3.5', '5.2')] },
+  { label: '응고', rows: [L('PT (INR)', '', '0.8', '1.2'), L('aPTT', 'sec', '25', '40')] },
+  { label: '심장표지자', rows: [L('Troponin I', 'ng/mL', '0', '0.04'), L('CK-MB', 'ng/mL', '0', '5'), L('NT-proBNP', 'pg/mL', '0', '125')] },
+  { label: '당·염증', rows: [L('Glucose (Fasting)', 'mg/dL', '70', '100'), L('HbA1c', '%', '4', '5.6'), L('CRP', 'mg/dL', '0', '0.5')] },
+  { label: '소변', rows: [L('U/A pH', '', '5', '8', 'Urine'), L('U/A Protein', '', 'neg', 'neg', 'Urine'), L('U/A Glucose', '', 'neg', 'neg', 'Urine'), L('U/A WBC', '/HPF', '0', '5', 'Urine')] },
+];
+
+export function LabSets({ onApply }: { onApply: (rows: Row[]) => void }) {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  const stamp = () => { const d = new Date(); return `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+  return (
+    <div className="vbp" style={{ gap: 6 }}>
+      <style>{BULK_CSS}</style>
+      <div className="bar">
+        {LAB_SETS.map(s => <button key={s.label} type="button" onClick={() => onApply(s.rows.map(r => ({ ...r, time: stamp() })))}>+ {s.label}</button>)}
       </div>
     </div>
   );
