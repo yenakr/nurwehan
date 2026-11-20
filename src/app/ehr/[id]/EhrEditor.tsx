@@ -863,6 +863,13 @@ export default function EhrEditor({
                 <span className="v">{info.admit || '-'}</span>
               </div>
             )}
+            {info.admit && !editInfo && (() => {
+              const day = (v: string) => { const t = new Date(`${v.slice(0, 10)}T00:00:00`).getTime(); return Number.isFinite(t) ? Math.floor((Date.now() - t) / 86400000) : null; };
+              const hd = day(info.admit);
+              const ops = data.surgery.map(r => day(r.date || '')).filter((n): n is number => n !== null && n >= 0);
+              const pod = ops.length ? Math.min(...ops) : null;
+              return hd !== null && hd >= 0 ? <div className="sd"><em>HD / POD</em><span className="v">HD {hd + 1}{pod !== null ? ` · POD ${pod}` : ''}</span></div> : null;
+            })()}
             {side('dx', '진단명')}
             {sel('allergy', '알레르기', ALLERGIES.map(a => ({ v: a, l: a })))}
             {side('height', '키 (cm)')}
@@ -1067,7 +1074,16 @@ export default function EhrEditor({
             {tab === 'mar' && <MarPanel data={data} author={userName || ''} onChange={(orders, mar) => setData(d => ({ ...d, orders, mar }))} />}
             {tab === 'memos' && <MemoPanel rows={data.memos} author={userName || ''} onChange={rs => setData(d => ({ ...d, memos: rs }))} />}
             {tab === 'labs' && <LabSets onApply={rs => setData(d => ({ ...d, labs: [...d.labs, ...rs] }))} />}
-            {!isForm(tab) && tab !== 'notes' && tab !== 'care' && tab !== 'orders' && tab !== 'admission' && tab !== 'discharge' && tab !== 'nurseinfo' && tab !== 'vitals' && tab !== 'memos' && tab !== 'mar' && tab !== 'consent' && tbl(tab)}
+            {!isForm(tab) && tab !== 'notes' && tab !== 'care' && tab !== 'orders' && tab !== 'admission' && tab !== 'discharge' && tab !== 'nurseinfo' && tab !== 'vitals' && tab !== 'memos' && tab !== 'mar' && tab !== 'consent' && (
+              <>
+                {tab === 'progress' && (
+                  <div className="adds" style={{ marginBottom: 6 }}>
+                    <button type="button" className="add" onClick={() => { const t = new Date(); const p = (x: number) => String(x).padStart(2, '0'); addRow('progress', { time: `${t.getFullYear()}-${p(t.getMonth() + 1)}-${p(t.getDate())} ${p(t.getHours())}:${p(t.getMinutes())}`, text: '주관적 소견 (S)\n\n객관적 소견 (O)\n\n평가 (A)\n\n치료계획 (P)\n', author: userName || '' }); }}>+ SOAP 양식</button>
+                  </div>
+                )}
+                {tbl(tab)}
+              </>
+            )}
           </section>
         </div>
       </div>

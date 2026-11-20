@@ -50,7 +50,7 @@ export default function MarPanel({ data, author, onChange }: { data: ChartData; 
   const give = (med: Med, slot: string, k: number) => {
     const hm = nowHM();
     const row: Row = { time: `${today} ${hm}`, name: med.r.name || '', dose: `${med.r.dose || ''}${med.r.unit || ''}`, route: med.r.route || '', slot, by: author, wb: '확인', ...(dbl.trim() ? { dbl: dbl.trim() } : {}), ...(note.trim() ? { note: note.trim() } : {}) };
-    const orders = data.orders.map((o, i) => (i === med.i ? { ...o, [`t${k + 1}`]: hm, ck: '1' } : o));
+    const orders = data.orders.map((o, i) => (i === med.i ? { ...o, [`t${k + 1}`]: `${hm}/${(author || '').slice(0, 1)}`, ck: '1' } : o));
     onChange(orders, [row, ...data.mar]);
     close();
   };
