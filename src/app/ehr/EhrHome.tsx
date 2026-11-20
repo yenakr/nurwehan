@@ -36,16 +36,17 @@ const infoOf = (d: unknown) => shiftChart(migrate(d)).info;
 
 type View = { kind: 'ward' | 'op' | 'er' | 'dc'; name: string; group: string | null };
 const VIEWS: View[] = [
-  ...WARDS.map(w => ({ kind: 'ward' as const, name: w.name, group: w.group })),
+  ...WARDS.map(w => ({ kind: 'ward' as const, name: w.name, group: null })),
   { kind: 'op', name: '외래', group: null },
   { kind: 'er', name: '응급', group: null },
   { kind: 'dc', name: '퇴원', group: null },
 ];
-// 상단 탭: 내과 ▾ / 외과 ▾ 는 묶음, 나머지는 단독
+// 상단 탭: 병동은 층별로 하나씩, 나머지는 단독
 const TOP: { label: string; idx: number[] }[] = (() => {
   const out: { label: string; idx: number[] }[] = [];
   VIEWS.forEach((v, i) => {
-    const label = v.group || v.name;
+    const w = v.kind === 'ward' ? WARDS.find(x => x.name === v.name) : undefined;
+    const label = w ? `${w.floor}층` : v.name;
     const g = out.find(o => o.label === label);
     if (g) g.idx.push(i);
     else out.push({ label, idx: [i] });
@@ -175,7 +176,7 @@ export default function EhrHome({ cases, initialView, ai, aiLeft, extra }: { cas
                       else { setVi(t.idx[0]); setOpenG(null); }
                     }}
                   >
-                    {multi && active ? `${view.name} ${WARDS.find(w => w.name === view.name)?.dept}` : t.label}{multi ? ' ▾' : ''}
+                    {active && view.kind === 'ward' ? `${t.label} ${WARDS.find(w => w.name === view.name)?.dept}` : t.label}{multi ? ' ▾' : ''}
                   </button>
                   {multi && openG === t.label && (
                     <div className="dd">
