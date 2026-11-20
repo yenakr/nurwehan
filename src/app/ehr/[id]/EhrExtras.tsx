@@ -163,3 +163,66 @@ export function useDictation(onFinal: (t: string) => void) {
   const stop = () => { try { rec.current?.stop(); } catch {} setOn(false); };
   return { supported, on, start, stop };
 }
+
+// 활력징후 일괄 입력: 여러 시간대를 표로 한 번에 넣는다
+const VCOLS: { key: string; label: string; ph: string }[] = [
+  { key: 'bp', label: '혈압', ph: '120/80' },
+  { key: 'hr', label: '맥박', ph: '72' },
+  { key: 'rr', label: '호흡', ph: '18' },
+  { key: 'bt', label: '체온', ph: '36.5' },
+  { key: 'spo2', label: 'SpO₂', ph: '98' },
+  { key: 'pain', label: '통증', ph: '0' },
+];
+const SLOTS = ['08:00', '12:00', '16:00', '20:00'];
+const NORMAL: Row = { bp: '120/80', hr: '72', rr: '18', bt: '36.5', spo2: '98', pain: '0' };
+
+export function VitalsBulk({ onApply }: { onApply: (rows: Row[]) => void }) {
+  const [open, setOpen] = useState(false);
+  const fresh = (): Row[] => SLOTS.map(t => ({ time: t }));
+  const [rows, setRows] = useState<Row[]>(fresh);
+  const set = (i: number, k: string, v: string) => setRows(rs => rs.map((r, j) => (j === i ? { ...r, [k]: v } : r)));
+  const apply = () => {
+    const out = rows.filter(r => VCOLS.some(c => r[c.key]));
+    if (out.length === 0) return;
+    onApply(out);
+    setRows(fresh());
+    setOpen(false);
+  };
+  if (!open) return <button type="button" className="add vbk" onClick={() => setOpen(true)}>일괄 입력</button>;
+  return (
+    <div className="vbp">
+      <style>{`
+        .vbp { border: 1px solid var(--border); border-radius: 10px; padding: 10px; margin: 6px 0 10px; display: flex; flex-direction: column; gap: 8px; }
+        .vbp .sc { overflow-x: auto; }
+        .vbp table { border-collapse: collapse; width: 100%; font-size: 13px; }
+        .vbp th { text-align: left; padding: 4px 6px; color: var(--sub-text); font-weight: 600; white-space: nowrap; }
+        .vbp td { padding: 2px 3px; }
+        .vbp input { width: 100%; min-width: 64px; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; padding: 7px 8px; font: inherit; background: transparent; color: inherit; }
+        .vbp .bar { display: flex; flex-wrap: wrap; gap: 6px; }
+        .vbp .bar button { border: 1px solid var(--border); background: transparent; color: inherit; border-radius: 999px; padding: 6px 12px; font: inherit; font-size: 12.5px; cursor: pointer; }
+        .vbp .bar .ok { margin-left: auto; background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 700; }
+      `}</style>
+      <div className="sc">
+        <table>
+          <thead><tr><th>시간</th>{VCOLS.map(c => <th key={c.key}>{c.label}</th>)}<th /></tr></thead>
+          <tbody>
+            {rows.map((r, i) => (
+              <tr key={i}>
+                <td><input value={r.time || ''} onChange={e => set(i, 'time', e.target.value)} aria-label="시간" /></td>
+                {VCOLS.map(c => <td key={c.key}><input value={r[c.key] || ''} placeholder={c.ph} inputMode={c.key === 'bp' ? 'text' : 'decimal'} onChange={e => set(i, c.key, e.target.value)} aria-label={c.label} /></td>)}
+                <td><button type="button" aria-label="삭제" onClick={() => setRows(rs => rs.filter((_, j) => j !== i))} style={{ border: 0, background: 'transparent', color: 'inherit', fontSize: 18, cursor: 'pointer' }}>×</button></td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <div className="bar">
+        <button type="button" onClick={() => setRows(rs => [...rs, { time: '' }])}>+ 시간</button>
+        <button type="button" onClick={() => setRows(rs => rs.map((r, i) => (i === 0 ? r : { ...r, ...Object.fromEntries(VCOLS.map(c => [c.key, rs[0][c.key] || ''])) })))}>첫 행 복사</button>
+        <button type="button" onClick={() => setRows(rs => rs.map(r => ({ ...r, ...NORMAL })))}>정상값</button>
+        <button type="button" onClick={() => setOpen(false)}>닫기</button>
+        <button type="button" className="ok" onClick={apply}>추가</button>
+      </div>
+    </div>
+  );
+}
