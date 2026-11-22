@@ -198,8 +198,9 @@
 .rsActions > * { flex: 1 1 140px; }
 .rsBarRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .rsList { display: flex; flex-direction: column; gap: 10px; }
-.rsItem { display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; background: var(--q-surface); border: 1px solid var(--q-border); border-radius: 12px; }
-.rsHead { display: flex; align-items: center; justify-content: space-between; }
+.rsItem { display: flex; flex-direction: column; gap: 3px; padding: 10px 14px; background: var(--q-surface); border: 1px solid var(--q-border); border-radius: 12px; }
+.rsHead { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.rsTitle { flex: 1; min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; }
 .rsNum { display: inline-flex; align-items: center; gap: 8px; }
 .rsIdx { font-style: normal; font-size: 0.75rem; font-weight: 700; color: var(--q-muted); font-variant-numeric: tabular-nums; }
 .rsBadge { font-style: normal; font-size: 0.6875rem; font-weight: 800; padding: 2px 8px; border-radius: 999px; }
@@ -210,7 +211,7 @@
 .rsTerm span { font-size: 0.8125rem; font-weight: 500; color: var(--q-muted); }
 .rsAns { font-size: 0.9375rem; font-weight: 700; color: var(--q-primary); }
 .rsDef { font-size: 0.875rem; color: var(--q-text-2); line-height: 1.55; white-space: pre-wrap; }
-.rsMine { display: flex; gap: 8px; margin-top: 2px; padding: 8px 10px; border-radius: 8px; background: rgba(239, 68, 68, 0.08); font-size: 0.8125rem; color: var(--q-text-2); }
+.rsMine { display: flex; gap: 8px; margin-top: 2px; padding: 5px 10px; border-radius: 8px; background: rgba(239, 68, 68, 0.08); font-size: 0.8125rem; color: var(--q-text-2); }
 .rsMine span { flex: 0 0 auto; font-weight: 700; color: #dc2626; }
 
 .hintBtn { border: 0; background: transparent; padding: 4px 10px; font-size: 0.8125rem; color: var(--q-muted); text-decoration: underline; font-family: inherit; }

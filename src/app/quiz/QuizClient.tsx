@@ -2930,10 +2930,14 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
                     return (
                       <article key={res.term.id ?? idx} className={`${s.rsItem} ${finalCorrect ? s.rsOk : s.rsNo}`}>
                         <div className={s.rsHead}>
-                          <span className={s.rsNum}>
+                          <div className={s.rsTitle}>
                             <i className={s.rsIdx}>{idx + 1}</i>
                             <em className={s.rsBadge}>{res.hinted && checkAnswerCorrectness(res.userAns || '', res.term) && <span className={s.hintMark}>▲</span>}{finalCorrect ? '정답' : '오답'}</em>
-                          </span>
+                            <span className={s.rsTerm}>
+                              {res.term.term}
+                              {res.term.englishTerm && <span> {res.term.englishTerm}</span>}
+                            </span>
+                          </div>
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
                             <button type="button" className={s.rsToggle} onClick={() => handleToggleSelfCorrection(idx)}>
                               {finalCorrect ? '오답 처리' : '정답 처리'}
@@ -2949,10 +2953,6 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
                               {favIds.has(res.term.id) ? '★' : '☆'}
                             </button>
                           </span>
-                        </div>
-                        <div className={s.rsTerm}>
-                          {res.term.term}
-                          {res.term.englishTerm && <span> {res.term.englishTerm}</span>}
                         </div>
                         {ans && ans !== res.term.term && <div className={s.rsAns}>{ans}</div>}
                         <div className={s.rsDef}>{res.term.definition}</div>
