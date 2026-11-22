@@ -17,31 +17,9 @@ export default async function AdminPage() {
   await purgeExpiredAssignments();
   const needsUpdate = await assignmentNeedsUpdate();
 
-  const [
-    skills,
-    allApplications,
-    pendingUsersCount
-  ] = await Promise.all([
-    // 1. Skills and supplies
-    prisma.skill.findMany({
-      include: { supplies: true },
-      orderBy: { name: 'asc' }
-    }),
-    // 2. All applications for application management
-    prisma.application.findMany({
-      include: {
-        representativeUser: true,
-        slot: true,
-        skills: { include: { skill: true } },
-        participants: true
-      },
-      orderBy: { createdAt: 'desc' }
-    }),
-    // 3. Count of users pending approval
-    prisma.user.count({
-      where: { approvalStatus: 'PENDING' }
-    })
-  ]);
+  const pendingUsersCount = await prisma.user.count({
+    where: { approvalStatus: 'PENDING' },
+  });
 
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '40px 0' }}>
@@ -50,14 +28,9 @@ export default async function AdminPage() {
           관리자
         </h1>
 
-        <AdminDashboardClient 
-          initialUsers={[]}
-          initialParticipants={[]}
-          initialSkills={skills}
-          initialApplications={allApplications as any}
+        <AdminDashboardClient
           pendingUsersCount={pendingUsersCount}
           assignmentNeedsUpdate={needsUpdate}
-          selectedDate={new Date().toISOString().split('T')[0]}
         />
       </div>
     </main>

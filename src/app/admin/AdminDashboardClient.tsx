@@ -6,27 +6,14 @@ import ApplicationListClient from './applications/ApplicationListClient';
 import { confirmDialog } from '@/components/Dialog';
 
 interface Props {
-  initialUsers: any[];
-  initialParticipants: any[];
-  initialSkills: any[];
-  initialApplications: any[];
   pendingUsersCount?: number;
   assignmentNeedsUpdate?: boolean;
-  selectedDate: string;
 }
 
 export default function AdminDashboardClient({
-  initialUsers,
-  initialParticipants,
-  initialSkills,
-  initialApplications,
   pendingUsersCount = 0,
   assignmentNeedsUpdate = false,
-  selectedDate
 }: Props) {
-  const [activeTab, setActiveTab] = useState('schedules');
-  const [skills, setSkills] = useState(initialSkills);
-  
   const router = useRouter();
 
   const groups: { title: string; items: { label: string; desc: string; href: string; badge?: number }[] }[] = [
@@ -61,6 +48,7 @@ export default function AdminDashboardClient({
       title: 'OPEN LAB',
       items: [
         { label: '신청서 내역', desc: '생성된 신청서 보기', href: '/admin/applications' },
+        { label: '운영 설정', desc: '시간표·술기·준비물', href: '/admin/open-lab' },
       ],
     },
   ];
@@ -103,26 +91,6 @@ export default function AdminDashboardClient({
         </section>
       ))}
 
-      <section>
-        <h2 className="groupTitle">OPEN LAB 설정</h2>
-        <div className="seg">
-          <button className={activeTab === 'schedules' ? 'on' : ''} onClick={() => setActiveTab('schedules')}>
-            시간표
-          </button>
-          <button className={activeTab === 'skills' ? 'on' : ''} onClick={() => setActiveTab('skills')}>
-            술기·준비물
-          </button>
-        </div>
-        <div style={{ marginTop: '16px' }}>
-          {activeTab === 'schedules' && (
-            <div className="dashboard-section">
-              <ScheduleManagement />
-            </div>
-          )}
-          {activeTab === 'skills' && <SkillManagement initialSkills={skills} />}
-        </div>
-      </section>
-
       <style jsx>{`
         .dashboard-container { display: flex; flex-direction: column; gap: 22px; }
         .todo { display: flex; flex-direction: column; gap: 8px; }
@@ -150,6 +118,39 @@ export default function AdminDashboardClient({
         .seg button.on { background: var(--primary); color: #fff; font-weight: 800; }
         .dashboard-section {
           background: white; padding: 24px; border-radius: 16px; border: 1px solid var(--border);
+          box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+        }
+      `}</style>
+    </div>
+  );
+}
+
+export function OpenLabSettings({ initialSkills }: { initialSkills: any[] }) {
+  const [activeTab, setActiveTab] = useState('schedules');
+  return (
+    <div>
+      <div className="seg">
+        <button className={activeTab === 'schedules' ? 'on' : ''} onClick={() => setActiveTab('schedules')}>
+          시간표
+        </button>
+        <button className={activeTab === 'skills' ? 'on' : ''} onClick={() => setActiveTab('skills')}>
+          술기·준비물
+        </button>
+      </div>
+      <div style={{ marginTop: '16px' }}>
+        {activeTab === 'schedules' && (
+          <div className="dashboard-section">
+            <ScheduleManagement />
+          </div>
+        )}
+        {activeTab === 'skills' && <SkillManagement initialSkills={initialSkills} />}
+      </div>
+      <style jsx>{`
+        .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
+        .seg button { padding: 8px 18px; border: none; background: var(--background); cursor: pointer; font-weight: 600; color: var(--text); }
+        .seg button.on { background: var(--primary); color: #fff; font-weight: 800; }
+        .dashboard-section {
+          background: var(--background); padding: 24px; border-radius: 16px; border: 1px solid var(--border);
           box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
         }
       `}</style>
