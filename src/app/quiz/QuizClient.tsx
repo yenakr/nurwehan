@@ -1,5 +1,6 @@
 'use client';
 
+import { setLeaveGuard } from '@/lib/leaveGuard';
 import { useState, useMemo, useEffect, useCallback, useRef, type ReactNode, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { isAdminRole } from '@/lib/auth-core';
@@ -234,6 +235,12 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
   const [retryPool, setRetryPool] = useState<NursingTerm[] | null>(null);
   const [reviewIndex, setReviewIndex] = useState<number | null>(null);
   const [activeTab, setActiveTab] = useState<'study' | 'quiz_setup' | 'quiz_play' | 'quiz_result' | 'my_history'>('study');
+
+  // 풀이 중에 하단 메뉴를 누르면 확인을 받는다
+  useEffect(() => {
+    setLeaveGuard(activeTab === 'quiz_play' ? '풀이를 그만하고 나갈까요?' : null);
+    return () => setLeaveGuard(null);
+  }, [activeTab]);
   const [myAttempts, setMyAttempts] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState<boolean>(false);
   const [selectedHistoryAttempt, setSelectedHistoryAttempt] = useState<any | null>(null);
@@ -2500,8 +2507,8 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
                         <div key={row.label} className={`${s.fbRow} ${row.ok ? s.fbOk : s.fbNo}`}>
                           <span className={s.fbMark} role="img" aria-label={row.ok ? '정답' : '오답'}>{row.ok ? 'O' : 'X'}</span>
                           <div className={s.fbBody}>
-                            <div className={s.fbAns}>{row.answer}</div>
                             {!row.ok && <div className={s.fbMine}>{row.mine.trim() || '미입력'}</div>}
+                            <div className={s.fbAns}>{row.answer}</div>
                           </div>
                         </div>
                       ))}
