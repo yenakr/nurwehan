@@ -42,7 +42,7 @@ export default function ContextBar({
         label="퀴즈"
         value={quiz}
         onChange={onQuiz}
-        options={[{ value: 'all', label: '전체', count: total }, ...quizzes.map(q => ({ value: q.name, label: q.name, count: q.count }))]}
+        options={[{ value: 'all', label: '전체', count: total }, ...quizzes.map(q => ({ value: q.name, label: q.name.replace(/\s*약어$/, ''), count: q.count }))]}
       />
     </div>
   );
