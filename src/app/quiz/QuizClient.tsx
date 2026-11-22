@@ -166,8 +166,8 @@ function TypingRow({
   penOn?: boolean;
 }) {
   return (
-    <div style={{ marginBottom: '14px' }}>
-      <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+    <div style={{ marginBottom: '12px', padding: '10px 12px 12px', border: '1px solid var(--border)', borderRadius: '10px' }}>
+      <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
         <button
           type="button"
           onClick={onSpeak}
@@ -182,10 +182,10 @@ function TypingRow({
       </div>
       {extra}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'flex-start' }}>
-        <div style={{ flex: '1 1 200px', minWidth: 0 }}>{input}</div>
+        <div style={{ flex: '1 1 200px', minWidth: 0, alignSelf: 'stretch' }}>{input}</div>
         {penOn && (
           <div style={{ flex: '2.4 1 340px', minWidth: 0 }}>
-            <PenPad key={resetKey} height={76} />
+            <PenPad key={resetKey} height={84} />
           </div>
         )}
       </div>
