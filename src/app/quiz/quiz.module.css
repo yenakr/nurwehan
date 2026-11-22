@@ -332,3 +332,9 @@
 .ttsBtn { width: 36px; }
 .searchInput { height: 38px; border-color: transparent; background: var(--q-primary-soft); border-radius: 10px; }
 .pressable { user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+
+.resume { display: flex; align-items: center; gap: 8px; padding: 10px 12px; background: var(--q-primary-soft); border: 1px solid var(--q-border); border-radius: 12px; }
+.resumeText { flex: 1; min-width: 0; font-size: 0.875rem; font-weight: 700; color: var(--q-text); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rsConf { display: flex; flex-wrap: wrap; align-items: center; gap: 4px 6px; margin-top: 2px; font-size: 0.8125rem; }
+.rsConf span { font-weight: 700; color: var(--q-muted); }
+.rsConf i { font-style: normal; padding: 2px 8px; border-radius: 999px; background: var(--q-primary-soft); color: var(--q-text-2); }
