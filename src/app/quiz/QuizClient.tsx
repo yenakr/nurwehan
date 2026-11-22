@@ -1826,6 +1826,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
             </div>
           </div>
 
+          <div className={s.tabsRow}>
           <nav aria-label="모드" className={s.tabs}>
             {tabLabels.map(t => (
               <button
@@ -1839,11 +1840,18 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
               </button>
             ))}
           </nav>
+            <Segmented<QuizKind>
+              label="문제 유형"
+              value={quizKind}
+              onChange={handleSelectKind}
+              options={[
+                { value: 'TERM', label: '용어', disabled: subjectKindCounts.TERM === 0 },
+                { value: 'MULTIPLE_CHOICE', label: '문제', disabled: subjectKindCounts.MULTIPLE_CHOICE === 0 },
+              ]}
+            />
+          </div>
 
           <ContextBar
-            kind={quizKind}
-            kindCounts={subjectKindCounts}
-            onKind={handleSelectKind}
             quizzes={quizOptions}
             total={subjectKindCounts[quizKind]}
             quiz={studyCategory}

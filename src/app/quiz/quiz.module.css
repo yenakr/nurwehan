@@ -30,6 +30,10 @@
 .headRow { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
 
 .tabs { display: flex; gap: 28px; border-bottom: 1px solid var(--q-border); }
+.tabsRow { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; border-bottom: 1px solid var(--q-border); }
+.tabsRow .tabs { border-bottom: 0; }
+.tabsRow .seg { margin-bottom: 6px; }
+.tabsRow .segBtn { height: 28px; padding: 0 12px; }
 .tab { padding: 10px 2px; margin-bottom: -1px; border: 0; border-bottom: 2px solid transparent; background: none; font-size: 0.9375rem; font-weight: 600; color: var(--q-muted); }
 .tabActive { font-weight: 800; color: var(--q-primary); border-bottom-color: var(--q-primary); }
 
