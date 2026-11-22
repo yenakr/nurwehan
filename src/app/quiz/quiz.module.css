@@ -110,10 +110,19 @@
 .divider::after { content: ''; flex: 1; height: 1px; background: var(--q-border-strong); }
 .groupTitle { margin: 8px 0 -4px; font-size: 0.875rem; font-weight: 800; color: var(--q-muted); }
 
-.stats { display: flex; flex-wrap: wrap; gap: 16px; }
-.stat { flex: 1 1 200px; min-width: 0; box-sizing: border-box; padding: 20px; background: var(--q-surface); border: 1px solid var(--q-border); border-radius: 12px; }
-.statLabel { font-size: 0.8125rem; color: var(--q-muted); }
-.statValue { font-size: 1.75rem; font-weight: 800; color: var(--q-primary); line-height: 1.3; }
+.stats { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.stat { min-width: 0; box-sizing: border-box; padding: 10px 12px; background: var(--q-surface); border: 1px solid var(--q-border); border-radius: 12px; }
+.statLabel { font-size: 0.75rem; color: var(--q-muted); }
+.statValue { font-size: 1.25rem; font-weight: 800; color: var(--q-primary); line-height: 1.3; }
+.freqRow { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; font-size: 0.875rem; }
+.freqRow span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.freqRow b { flex: 0 0 auto; color: #dc2626; font-variant-numeric: tabular-nums; }
+.freqList { display: flex; flex-direction: column; gap: 6px; }
+.stepRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; font-size: 0.875rem; }
+.stepper { display: inline-flex; align-items: center; gap: 4px; }
+.stepper button { width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--q-border-strong, var(--q-border)); background: var(--q-surface); color: var(--q-text); font-size: 1rem; font-family: inherit; }
+.stepper button:disabled { opacity: 0.4; }
+.stepper b { min-width: 52px; text-align: center; font-variant-numeric: tabular-nums; }
 .cols { display: flex; flex-wrap: wrap; gap: 16px; align-items: flex-start; }
 .colMain { flex: 2 1 480px; min-width: 0; }
 .colSide { flex: 1 1 280px; min-width: 0; display: flex; flex-direction: column; gap: 16px; }
@@ -129,7 +138,7 @@
 .pillGood { background: #dcfce7; color: #166534; }
 .pillMid { background: #fef3c7; color: #92400e; }
 .pillBad { background: #fee2e2; color: #991b1b; }
-.sideCard { box-sizing: border-box; padding: 24px; background: var(--q-surface); border: 1px solid var(--q-border); border-radius: 12px; display: flex; flex-direction: column; gap: 16px; }
+.sideCard { box-sizing: border-box; padding: 16px; background: var(--q-surface); border: 1px solid var(--q-border); border-radius: 12px; display: flex; flex-direction: column; gap: 12px; }
 .sideTitle { font-size: 1.0625rem; font-weight: 800; }
 .meterRow { display: flex; flex-direction: column; gap: 6px; }
 .meterHead { display: flex; justify-content: space-between; font-size: 0.875rem; color: var(--q-text-2); }

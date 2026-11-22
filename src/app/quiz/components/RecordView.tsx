@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo } from 'react';
+import { useMemo, useState } from 'react';
 import s from '../quiz.module.css';
 import { kindOf, type NursingTerm, type QuizKind } from '@/lib/quiz/taxonomy';
 
@@ -88,6 +88,30 @@ export default function RecordView({
     return terms.filter(t => ids.has(t.id));
   }, [rows, terms]);
 
+  // 문항별 누적 오답 횟수
+  const wrongCounts = useMemo(() => {
+    const m = new Map<string, number>();
+    for (const a of rows) {
+      if (!Array.isArray(a.details)) continue;
+      for (const d of a.details) {
+        if (d?.termId && !d.isCorrect) m.set(d.termId, (m.get(d.termId) || 0) + 1);
+      }
+    }
+    return m;
+  }, [rows]);
+
+  const [minWrong, setMinWrong] = useState(3);
+  const frequent = useMemo(
+    () =>
+      terms
+        .map(t => ({ t, n: wrongCounts.get(t.id) || 0 }))
+        .filter(x => x.n > 0)
+        .sort((a, b) => b.n - a.n),
+    [terms, wrongCounts]
+  );
+  const overMin = useMemo(() => frequent.filter(x => x.n >= minWrong).map(x => x.t), [frequent, minWrong]);
+  const maxWrong = frequent.length ? frequent[0].n : 1;
+
   const perQuiz = useMemo(() => {
     const m = new Map<string, number[]>();
     for (const a of rows) {
@@ -139,10 +163,33 @@ export default function RecordView({
 
         <div className={s.colSide}>
           <section aria-label="오답노트" className={s.sideCard}>
-            <div className={s.sideTitle}>오답노트</div>
-            <div style={{ fontSize: '0.875rem' }}>다시 풀어볼 문제 <b style={{ color: 'var(--q-primary)' }}>{wrongTerms.length}개</b></div>
-            <button type="button" className={`${s.btn} ${s.btnPrimary}`} style={{ height: 44 }} disabled={wrongTerms.length === 0} onClick={() => onRetryWrong(wrongTerms)}>
-              틀린 문제만 다시 풀기
+            <div className={s.sideTitle}>자주 틀린 단어</div>
+            {frequent.length === 0 ? (
+              <div style={{ fontSize: '0.875rem', color: 'var(--q-muted)' }}>틀린 문제가 없어요</div>
+            ) : (
+              <div className={s.freqList}>
+                {frequent.slice(0, 5).map(x => (
+                  <div key={x.t.id} className={s.freqRow}><span>{x.t.term}</span><b>{x.n}회</b></div>
+                ))}
+              </div>
+            )}
+            {frequent.length > 0 && (
+              <>
+                <div className={s.stepRow}>
+                  <span>틀린 횟수</span>
+                  <span className={s.stepper}>
+                    <button type="button" aria-label="줄이기" disabled={minWrong <= 1} onClick={() => setMinWrong(v => Math.max(1, v - 1))}>-</button>
+                    <b>{minWrong}회 이상</b>
+                    <button type="button" aria-label="늘리기" disabled={minWrong >= maxWrong} onClick={() => setMinWrong(v => Math.min(maxWrong, v + 1))}>+</button>
+                  </span>
+                </div>
+                <button type="button" className={`${s.btn} ${s.btnPrimary}`} style={{ height: 44 }} disabled={overMin.length === 0} onClick={() => onRetryWrong(overMin)}>
+                  {minWrong}회 이상 틀린 {overMin.length}개 풀기
+                </button>
+              </>
+            )}
+            <button type="button" className={s.btn} style={{ height: 40 }} disabled={wrongTerms.length === 0} onClick={() => onRetryWrong(wrongTerms)}>
+              마지막에 틀린 {wrongTerms.length}개 풀기
             </button>
           </section>
           <section aria-label="퀴즈별 정답률" className={s.sideCard}>
