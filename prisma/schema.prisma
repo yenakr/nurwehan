@@ -35,8 +35,6 @@ model User {
   warnings            CleanupWarning[]
   personalEvents      PersonalCalendarEvent[]
   roadmapProgresses   UserRoadmapProgress[]
-  healthRecords       StudentHealthRecord[]
-  healthReadinesses   StudentHealthReadiness[]
   quizAttempts        QuizAttempt[]
 }
 
@@ -320,73 +318,6 @@ model UserRoadmapProgress {
   @@unique([userId, roadmapItemId])
 }
 
-model HealthRequirement {
-  id                  String            @id @default(cuid())
-  name                String            // 예: A형 간염, 결핵검사 등
-  category            String            // VACCINATION, LAB_TEST, DOCUMENT
-  applicableGrades    Int[]
-  applicableSemesters Int[]
-  description         String?
-  studentDisplayText  String?
-  isRequired          Boolean           @default(true)
-  status              PublicationStatus @default(PUBLISHED)
-  createdAt           DateTime          @default(now())
-  updatedAt           DateTime          @updatedAt
-
-  rules               HealthRequirementRule[]
-  records             StudentHealthRecord[]
-  readinesses         StudentHealthReadiness[]
-}
-
-model HealthRequirementRule {
-  id                      String            @id @default(cuid())
-  requirementId           String
-  requirement             HealthRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
-  inputType               String            // DATE, DOSE, TEST_RESULT
-  conditionType           String            // EQUAL, GREATER_THAN, POSITIVE, NEGATIVE
-  conditionValue          String?
-  resultStatus            ReadinessStatus
-  nextActionPrompt        String?           // "2차 접종 필요", "추가 검사 권장" 등
-  minIntervalDays         Int?
-  recommendedIntervalDays Int?
-  priority                Int               @default(0)
-  active                  Boolean           @default(true)
-  createdAt               DateTime          @default(now())
-  updatedAt               DateTime          @updatedAt
-}
-
-model StudentHealthRecord {
-  id              String            @id @default(cuid())
-  userId          String
-  user            User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  requirementId   String
-  requirement     HealthRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
-  testDate        DateTime?
-  resultType      String?           // POSITIVE, NEGATIVE, NUMERIC, TEXT
-  resultValue     String?
-  vaccinationDate DateTime?
-  doseNumber      Int?
-  documentStatus  String?           // HELD, SUBMITTED, NOT_HELD
-  memo            String?
-  createdAt       DateTime          @default(now())
-  updatedAt       DateTime          @updatedAt
-}
-
-model StudentHealthReadiness {
-  id            String            @id @default(cuid())
-  userId        String
-  user          User              @relation(fields: [userId], references: [id], onDelete: Cascade)
-  requirementId String
-  requirement   HealthRequirement @relation(fields: [requirementId], references: [id], onDelete: Cascade)
-  status        ReadinessStatus   @default(PREPARING)
-  nextAction    String?
-  nextDueDate   DateTime?
-  calculatedAt  DateTime          @default(now())
-  adminMemo     String?
-
-  @@unique([userId, requirementId])
-}
-
 model CareerInfo {
   id            String            @id @default(cuid())
   title         String
@@ -462,14 +393,6 @@ enum EventCategory {
   PERSONAL
   OFFICIAL
   STUDENT_COUNCIL
-}
-
-enum ReadinessStatus {
-  SATISFIED
-  IN_PROGRESS
-  ATTENTION_REQUIRED
-  INCOMPLETE
-  PREPARING
 }
 
 model NursingTerm {
