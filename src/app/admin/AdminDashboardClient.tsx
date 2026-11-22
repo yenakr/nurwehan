@@ -47,7 +47,6 @@ export default function AdminDashboardClient({
       title: '실습 · EHR',
       items: [
         { label: '실습 배정표', desc: '학기별 배정 올리기', href: '/admin/clinical-assignments', badge: assignmentNeedsUpdate ? 1 : 0 },
-        { label: '건강요건 규칙', desc: '임상실습 요건 설정', href: '/admin/clinical' },
         { label: 'EHR', desc: '학생 제출 차트 보기', href: '/admin/ehr' },
       ],
     },
