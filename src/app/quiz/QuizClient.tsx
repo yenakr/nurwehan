@@ -2410,11 +2410,36 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
                 <div style={{ backgroundColor: '#F8FAFC', border: '1px solid #E2E8F0', padding: '16px 18px', borderRadius: '10px' }}>
                   <h3 style={{ fontSize: '1.125rem', fontWeight: 800, color: '#1E293B', lineHeight: 1.6, margin: 0 }}>{promptText}</h3>
                 </div>
+                {quizType === 'abbr_both' ? (() => {
+                  const raw = res.userAns || '';
+                  const cut = raw.indexOf(' / ');
+                  const clean = (v: string) => (v.trim() === '(미입력)' ? '' : v.trim());
+                  const a1 = clean(cut >= 0 ? raw.slice(0, cut) : raw);
+                  const a2 = clean(cut >= 0 ? raw.slice(cut + 3) : '');
+                  const r = checkBoth(a1, a2, q);
+                  return (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                      {[
+                        { label: FIELD_LABEL[bothLabels[0]], ok: r.full, answer: q.englishTerm, mine: a1 },
+                        { label: FIELD_LABEL[bothLabels[1]], ok: r.meaning, answer: q.definition, mine: a2 },
+                      ].map(row => (
+                        <div key={row.label} className={`${s.fbRow} ${row.ok ? s.fbOk : s.fbNo}`}>
+                          <span className={s.fbMark} role="img" aria-label={row.ok ? '정답' : '오답'}>{row.ok ? 'O' : 'X'}</span>
+                          <div className={s.fbBody}>
+                            {!row.ok && <div className={s.fbMine}>{row.mine || '미입력'}</div>}
+                            <div className={s.fbAns}>{row.answer}</div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  );
+                })() : (<>
                 <div className={s.rvMine}><span>내 답안</span>{res.userAns?.trim() ? res.userAns : '미입력'}</div>
                 <div className={`${s.fb} ${hintOnly ? s.fbHint : ok ? s.fbOk : s.fbNo}`}>
                   <div className={s.fbTitle}>{hintOnly ? '▲ ' : ''}{ok ? '정답' : '오답'}{hintOnly ? ' · 힌트 사용' : ''}</div>
                   <div className={s.fbAns}>{ans}</div>
                 </div>
+                </>)}
                 <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
                   <button type="button" onClick={() => handleToggleSelfCorrection(reviewIndex)} className={s.selfToggle}>
                     {ok ? '오답 처리' : '정답 처리'}
