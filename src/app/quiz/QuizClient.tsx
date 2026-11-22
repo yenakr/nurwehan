@@ -168,18 +168,19 @@ function TypingRow({
 }) {
   return (
     <div style={{ marginBottom: '12px', padding: '10px 12px 12px', border: '1px solid var(--border)', borderRadius: '10px' }}>
-      <div style={{ display: 'flex', justifyContent: 'flex-start', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
+        <div style={{ flex: 1, minWidth: 0, fontSize: '1.0625rem', fontWeight: 800, color: '#0E4A84', lineHeight: 1.4 }}>{text}</div>
         <button
           type="button"
           onClick={onSpeak}
           tabIndex={-1}
           className="btn-outline"
-          style={{ fontSize: '0.75rem', padding: '3px 8px', borderRadius: '6px', flex: '0 0 auto' }}
+          style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 32, height: 32, padding: 0, borderRadius: '8px', flex: '0 0 auto' }}
           title="음성으로 들려주기"
+          aria-label="듣기"
         >
-          듣기
+          <Icon d={ICON_VOLUME} size={16} />
         </button>
-        <div style={{ flex: 1, fontSize: '1.0625rem', fontWeight: 800, color: '#0E4A84', lineHeight: 1.4 }}>{text}</div>
       </div>
       {extra}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px', alignItems: 'flex-start' }}>
