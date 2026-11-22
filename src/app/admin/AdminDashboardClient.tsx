@@ -29,29 +29,38 @@ export default function AdminDashboardClient({
   
   const router = useRouter();
 
-  const groups: { title: string; items: { icon: string; label: string; desc: string; href: string; badge?: number }[] }[] = [
+  const groups: { title: string; items: { label: string; desc: string; href: string; badge?: number }[] }[] = [
     {
-      title: '학생 · 학습',
+      title: '회원',
       items: [
-        { icon: '👥', label: '학생 관리', desc: '가입 승인, 정보 수정', href: '/admin/users', badge: pendingUsersCount },
-        { icon: '📊', label: '퀴즈 학습 현황', desc: '학생별 학습·정답률', href: '/admin/quiz-stats' },
-        { icon: '🧠', label: '퀴즈 콘텐츠', desc: '과목·용어 추가·수정', href: '/quiz' },
+        { label: '학생 관리', desc: '가입 승인, 정보 수정', href: '/admin/users', badge: pendingUsersCount },
+      ],
+    },
+    {
+      title: '퀴즈',
+      items: [
+        { label: '퀴즈 콘텐츠', desc: '과목·용어 추가·수정', href: '/quiz' },
+        { label: '학습 현황', desc: '학생별 학습·정답률', href: '/admin/quiz-stats' },
+      ],
+    },
+    {
+      title: '실습 · EHR',
+      items: [
+        { label: '실습 배정표', desc: '학기별 배정 올리기', href: '/admin/clinical-assignments', badge: assignmentNeedsUpdate ? 1 : 0 },
+        { label: 'EHR', desc: '학생 제출 차트 보기', href: '/admin/ehr' },
+      ],
+    },
+    {
+      title: '공지 · 일정',
+      items: [
+        { label: '공지사항', desc: '공지 작성·고정', href: '/admin/notices' },
+        { label: '캘린더', desc: '공식 일정 관리', href: '/admin/calendar' },
       ],
     },
     {
       title: 'OPEN LAB',
       items: [
-        { icon: '', label: '신청서 내역', desc: '생성된 신청서 보기', href: '/admin/applications' },
-      ],
-    },
-    {
-      title: '콘텐츠',
-      items: [
-        { icon: '📅', label: '캘린더', desc: '공식 일정 관리', href: '/admin/calendar' },
-        { icon: '📢', label: '공지사항', desc: '공지 작성·고정', href: '/admin/notices' },
-        { icon: '🏥', label: '실습 배정표', desc: '학기별 배정 올리기', href: '/admin/clinical-assignments', badge: assignmentNeedsUpdate ? 1 : 0 },
-        { icon: '', label: 'EHR', desc: '학생이 제출한 차트 보기', href: '/admin/ehr' },
-        { icon: '🩺', label: '건강요건 규칙', desc: '임상실습 요건 설정', href: '/admin/clinical' },
+        { label: '신청서 내역', desc: '생성된 신청서 보기', href: '/admin/applications' },
       ],
     },
   ];
@@ -115,7 +124,7 @@ export default function AdminDashboardClient({
       </section>
 
       <style jsx>{`
-        .dashboard-container { display: flex; flex-direction: column; gap: 28px; }
+        .dashboard-container { display: flex; flex-direction: column; gap: 22px; }
         .todo { display: flex; flex-direction: column; gap: 8px; }
         .todoItem {
           display: flex; justify-content: space-between; align-items: center; gap: 12px;
@@ -123,18 +132,18 @@ export default function AdminDashboardClient({
           background: #FEF2F2; color: #991B1B; cursor: pointer; font-size: 0.9375rem; text-align: left;
         }
         .todoItem span { font-weight: 700; white-space: nowrap; }
-        .groupTitle { font-size: 0.8125rem; font-weight: 800; color: var(--sub-text); margin-bottom: 10px; letter-spacing: 0.02em; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 10px; }
+        .groupTitle { font-size: 0.8125rem; font-weight: 800; color: var(--sub-text); margin: 0 0 8px; letter-spacing: 0.02em; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 8px; }
         .tile {
-          display: flex; align-items: center; gap: 12px; padding: 16px; text-align: left;
-          background: #fff; border: 1px solid var(--border); border-radius: 12px; cursor: pointer;
+          display: flex; align-items: center; gap: 12px; padding: 12px 14px; text-align: left;
+          background: var(--background); border: 1px solid var(--border); border-radius: 12px; cursor: pointer;
           transition: border-color 0.15s, box-shadow 0.15s;
         }
         .tile:hover { border-color: var(--primary); box-shadow: 0 2px 8px rgba(14, 74, 132, 0.1); }
         .tileIcon { font-size: 1.5rem; }
         .tileText { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
         .tileLabel { font-weight: 800; color: var(--text); display: flex; align-items: center; gap: 6px; }
-        .tileDesc { font-size: 0.8125rem; color: var(--sub-text); }
+        .tileDesc { font-size: 0.75rem; color: var(--sub-text); }
         .badge { background: #EF4444; color: #fff; border-radius: 999px; padding: 1px 8px; font-size: 0.75rem; font-weight: 800; }
         .seg { display: inline-flex; border: 1px solid var(--border); border-radius: 8px; overflow: hidden; }
         .seg button { padding: 8px 18px; border: none; background: #fff; cursor: pointer; font-weight: 600; color: var(--text); }
