@@ -14,9 +14,10 @@ interface Props {
     approvalStatus: string;
     rejectedReason?: string | null;
   };
+  notice?: string | null;
 }
 
-export default function ProfileForm({ user }: Props) {
+export default function ProfileForm({ user, notice }: Props) {
   const [isEditing, setIsEditing] = useState(false);
   const [formData, setFormData] = useState({
     name: user.name,
@@ -64,57 +65,69 @@ export default function ProfileForm({ user }: Props) {
 
   return (
     <section className="mp-card">
-      <div className="mp-head">
-        <div className="mp-who">
-          <h2>{user.name}</h2>
-          <span className={`mp-pill ${status.c}`}>{status.t}</span>
-        </div>
-        {!isEditing ? (
-          <button className="mp-btn ghost" onClick={() => setIsEditing(true)}>수정</button>
-        ) : (
-          <div style={{ display: 'flex', gap: 6 }}>
-            <button className="mp-btn" onClick={handleSave} disabled={loading}>{isRejected ? '저장 · 재신청' : '저장'}</button>
-            <button className="mp-btn ghost" onClick={() => setIsEditing(false)} disabled={loading}>취소</button>
+      <div className="mp-hero">
+        <div className="mp-av" aria-hidden="true">{user.name.slice(0, 1)}</div>
+        <div className="mp-id">
+          <div className="mp-who">
+            <h2>{user.name}</h2>
+            <span className={`mp-pill ${status.c}`}>{status.t}</span>
           </div>
-        )}
+          <div className="mp-sub">{user.studentId} · {user.grade ?? '-'}학년</div>
+        </div>
+        {!isEditing && <button className="mp-btn ghost" onClick={() => setIsEditing(true)}>수정</button>}
       </div>
 
+      {notice && <div className="mp-note warn">{notice}</div>}
       {isRejected && !isEditing && (
-        <div className="mp-note">
-          거절 사유: {user.rejectedReason || '없음'} · 정보를 수정해 저장하면 재확인을 요청해요.
+        <div className="mp-note warn">거절 사유: {user.rejectedReason || '없음'}</div>
+      )}
+
+      <dl className="mp-rows">
+        {lockedId && <div className="mp-row"><dt>이름</dt><dd>{input('name')}</dd></div>}
+        {lockedId && <div className="mp-row"><dt>학번</dt><dd>{input('studentId')}</dd></div>}
+        {isEditing && (
+          <div className="mp-row"><dt>학년</dt><dd>
+            <select value={formData.grade} onChange={(e) => setFormData({ ...formData, grade: parseInt(e.target.value) })}>
+              {[1, 2, 3, 4].map(g => <option key={g} value={g}>{g}학년</option>)}
+            </select>
+          </dd></div>
+        )}
+        <div className="mp-row"><dt>연락처</dt><dd>{isEditing ? input('phone', '010-0000-0000') : (user.phone || '-')}</dd></div>
+        <div className="mp-row"><dt>이메일</dt><dd>{isEditing ? input('email', 'example@hanyang.ac.kr', 'email') : (user.email || '-')}</dd></div>
+      </dl>
+
+      {isEditing && (
+        <div className="mp-acts">
+          <button className="mp-btn" onClick={handleSave} disabled={loading}>{isRejected ? '저장 · 재신청' : '저장'}</button>
+          <button className="mp-btn ghost" onClick={() => setIsEditing(false)} disabled={loading}>취소</button>
         </div>
       )}
 
-      <dl className="mp-grid">
-        <div><dt>이름</dt><dd>{lockedId ? input('name') : user.name}</dd></div>
-        <div><dt>학번</dt><dd>{lockedId ? input('studentId') : user.studentId}</dd></div>
-        <div><dt>학년</dt><dd>{isEditing ? (
-          <select value={formData.grade} onChange={(e) => setFormData({ ...formData, grade: parseInt(e.target.value) })}>
-            {[1, 2, 3, 4].map(g => <option key={g} value={g}>{g}학년</option>)}
-          </select>
-        ) : `${user.grade ?? '-'}학년`}</dd></div>
-        <div><dt>연락처</dt><dd>{isEditing ? input('phone', '010-0000-0000') : (user.phone || '-')}</dd></div>
-        <div className="wide"><dt>이메일</dt><dd>{isEditing ? input('email', 'example@hanyang.ac.kr', 'email') : (user.email || '-')}</dd></div>
-      </dl>
-
       <style>{`
-        .mp-card{background:#fff;border:1px solid var(--border);border-radius:12px;padding:14px 16px}
-        .mp-head{display:flex;justify-content:space-between;align-items:center;gap:8px;margin-bottom:8px}
-        .mp-head h2{font-size:1rem;font-weight:700;margin:0}
+        .mp-card{background:var(--background);border:1px solid var(--border);border-radius:14px;padding:16px}
+        .mp-head{display:flex;justify-content:space-between;align-items:center;gap:8px}
+        .mp-head h2{font-size:.9375rem;font-weight:700;margin:0}
+        .mp-hero{display:flex;align-items:center;gap:12px}
+        .mp-av{flex:0 0 auto;width:48px;height:48px;border-radius:50%;background:var(--primary);color:#fff;display:grid;place-items:center;font-size:1.25rem;font-weight:800}
+        .mp-id{flex:1;min-width:0}
         .mp-who{display:flex;align-items:center;gap:8px}
-        .mp-pill{font-size:.6875rem;font-weight:600;padding:2px 8px;border-radius:999px}
-        .mp-pill.ok{background:#e8eefb;color:var(--primary)}
-        .mp-pill.no{background:#fdecec;color:#c0392b}
-        .mp-pill.wait{background:#fff4e0;color:#b9770e}
-        .mp-btn{padding:6px 12px;font-size:.8125rem;font-weight:600;border-radius:8px;border:1px solid var(--primary);background:var(--primary);color:#fff;cursor:pointer}
-        .mp-btn.ghost{background:#fff;color:var(--primary)}
+        .mp-who h2{font-size:1.0625rem;font-weight:800;margin:0}
+        .mp-sub{font-size:.8125rem;color:var(--sub-text);margin-top:2px}
+        .mp-pill{font-size:.6875rem;font-weight:700;padding:2px 8px;border-radius:999px}
+        .mp-pill.ok{background:rgba(16,185,129,.14);color:#059669}
+        .mp-pill.no{background:rgba(239,68,68,.14);color:#dc2626}
+        .mp-pill.wait{background:rgba(245,158,11,.16);color:#b9770e}
+        .mp-btn{padding:6px 12px;font-size:.8125rem;font-weight:600;border-radius:8px;border:1px solid var(--primary);background:var(--primary);color:#fff;cursor:pointer;font-family:inherit}
+        .mp-btn.ghost{background:transparent;color:var(--primary)}
         .mp-btn:disabled{opacity:.5}
-        .mp-note{font-size:.8125rem;color:var(--sub-text);border-left:3px solid #e0a43a;padding:2px 0 2px 10px;margin:4px 0 10px;line-height:1.45}
-        .mp-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px 16px;margin:0}
-        .mp-grid .wide{grid-column:1/-1}
-        .mp-grid dt{font-size:.75rem;color:var(--sub-text);margin-bottom:2px}
-        .mp-grid dd{margin:0;font-size:.9375rem;font-weight:600;word-break:break-all}
-        .mp-grid input,.mp-grid select{width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:.875rem;background:#fff}
+        .mp-note{font-size:.8125rem;line-height:1.45;padding:8px 10px;border-radius:8px;margin-top:12px;background:rgba(245,158,11,.12);color:var(--text)}
+        .mp-rows{margin:12px 0 0;padding-top:4px;border-top:1px solid var(--border)}
+        .mp-row{display:flex;align-items:center;gap:12px;padding:11px 0;border-top:1px solid var(--border)}
+        .mp-row:first-child{border-top:0}
+        .mp-row dt{flex:0 0 52px;font-size:.8125rem;color:var(--sub-text)}
+        .mp-row dd{flex:1;min-width:0;margin:0;font-size:.9375rem;font-weight:600;word-break:break-all;text-align:right}
+        .mp-row input,.mp-row select{width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:.875rem;background:var(--background);color:var(--text);text-align:left;font-family:inherit}
+        .mp-acts{display:flex;gap:6px;justify-content:flex-end;margin-top:6px}
       `}</style>
     </section>
   );

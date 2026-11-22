@@ -2357,7 +2357,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
               <ElapsedClock startRef={quizStartRef} />
             </span>
             <span style={{ fontSize: '0.8125rem', color: 'var(--sub-text)', textAlign: 'right', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span>{currentQuestion.subject}{currentQuestion.category && currentQuestion.category !== 'all' ? ` · ${currentQuestion.category}` : ''}</span>
+              <span>{currentQuestion.subject}{currentQuestion.category && currentQuestion.category !== 'all' ? ` · ${currentQuestion.category.replace(/\s*약어$/, '')}` : ''}</span>
               {(() => {
                 const fq = reviewIndex !== null && quizResults[reviewIndex] ? quizResults[reviewIndex].term : currentQuestion;
                 const on = favIds.has(fq.id);
@@ -2810,30 +2810,34 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
             return (
               <>
                 <section className={s.rs} aria-label="결과">
-                  <div className={s.rsTop}>
-                    <div className={`${s.rsScore} ${scorePercent >= 70 ? s.rsGood : s.rsBad}`}>{scorePercent}<small>점</small></div>
-                    <div className={s.rsCount}>{correctCount} / {totalQuizCount}</div>
-                  </div>
-                  <div className={s.rsBar} aria-hidden="true"><div style={{ width: `${scorePercent}%` }} /></div>
                   {(() => {
                     const timed = quizResults.filter(r => typeof r.sec === 'number');
-                    if (timed.length === 0) return null;
                     const total = timed.reduce((a, r) => a + (r.sec || 0), 0);
                     const slow = [...timed].sort((a, b) => (b.sec || 0) - (a.sec || 0)).slice(0, 5);
                     return (
-                      <div className={s.rsTime}>
-                        <div className={s.rsTimeHead}>
-                          <span>총 {fmtSec(total)}</span>
-                          <span>문제당 평균 {Math.round(total / timed.length)}초</span>
-                        </div>
-                        <div className={s.rsSlowTitle}>오래 걸린 순</div>
-                        {slow.map((r, i) => (
-                          <div key={i} className={s.rsSlow}>
-                            <span>{r.term.term}</span>
-                            <b>{r.sec}초</b>
+                      <>
+                        <div className={s.rsTop}>
+                          <div
+                            className={`${s.rsRing} ${scorePercent >= 70 ? s.rsGood : s.rsBad}`}
+                            style={{ ['--p' as string]: scorePercent } as CSSProperties}
+                          >
+                            <b>{scorePercent}<small>점</small></b>
                           </div>
-                        ))}
-                      </div>
+                          <div className={s.rsStats}>
+                            <div><b className={s.rsStatOk}>{correctCount}</b><span>정답</span></div>
+                            <div><b className={s.rsStatNo}>{Math.max(totalQuizCount - correctCount, 0)}</b><span>오답</span></div>
+                            {timed.length > 0 && <div><b>{fmtSec(total)}</b><span>평균 {Math.round(total / timed.length)}초</span></div>}
+                          </div>
+                        </div>
+                        {slow.length > 0 && (
+                          <div className={s.rsSlowRow}>
+                            <span className={s.rsSlowTitle}>오래 걸린 순</span>
+                            {slow.map((r, i) => (
+                              <span key={i} className={s.rsChip}>{r.term.term}<b>{r.sec}초</b></span>
+                            ))}
+                          </div>
+                        )}
+                      </>
                     );
                   })()}
                   <div className={s.rsActions}>
@@ -2867,7 +2871,10 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
                     return (
                       <article key={res.term.id ?? idx} className={`${s.rsItem} ${finalCorrect ? s.rsOk : s.rsNo}`}>
                         <div className={s.rsHead}>
-                          <span className={s.rsNum}>#{idx + 1} {res.hinted && checkAnswerCorrectness(res.userAns || '', res.term) && <span className={s.hintMark}>▲</span>}{finalCorrect ? '정답' : '오답'}</span>
+                          <span className={s.rsNum}>
+                            <i className={s.rsIdx}>{idx + 1}</i>
+                            <em className={s.rsBadge}>{res.hinted && checkAnswerCorrectness(res.userAns || '', res.term) && <span className={s.hintMark}>▲</span>}{finalCorrect ? '정답' : '오답'}</em>
+                          </span>
                           <span style={{ display: 'inline-flex', alignItems: 'center', gap: 10 }}>
                             <button type="button" className={s.rsToggle} onClick={() => handleToggleSelfCorrection(idx)}>
                               {finalCorrect ? '오답 처리' : '정답 처리'}
@@ -2890,7 +2897,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
                         </div>
                         {ans && ans !== res.term.term && <div className={s.rsAns}>{ans}</div>}
                         <div className={s.rsDef}>{res.term.definition}</div>
-                        <div className={s.rsMine}>내 답안 · {res.userAns || '미입력'}</div>
+                        {!finalCorrect && <div className={s.rsMine}><span>내 답안</span>{res.userAns || '미입력'}</div>}
                       </article>
                     );
                   })}
@@ -2953,7 +2960,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
                   </div>
                   <div className={s.rsTerm}>{item.questionText}</div>
                   <div className={s.rsAns}>{item.correctAnswer}</div>
-                  <div className={s.rsMine}>내 답안 · {item.userAnswer || '미입력'}</div>
+                  {!item.isCorrect && <div className={s.rsMine}><span>내 답안</span>{item.userAnswer || '미입력'}</div>}
                 </article>
               ))}
             </div>
