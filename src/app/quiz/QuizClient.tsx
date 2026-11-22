@@ -2456,6 +2456,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
               const canSubmit = !!userAnswer.trim() || !!userAnswer2.trim();
               return (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  {!isAnswerSubmitted && (<>
                   <input
                     ref={answerInputRef}
                     aria-label={FIELD_LABEL[bothLabels[0]]}
@@ -2488,16 +2489,18 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
                     }}
                     style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
                   />
+                  </>)}
 
                   {isAnswerSubmitted && (
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                       {[
-                        { label: FIELD_LABEL[bothLabels[0]], ok: r.full, answer: currentQuestion.englishTerm },
-                        { label: FIELD_LABEL[bothLabels[1]], ok: r.meaning, answer: currentQuestion.definition },
+                        { label: FIELD_LABEL[bothLabels[0]], ok: r.full, answer: currentQuestion.englishTerm, mine: userAnswer },
+                        { label: FIELD_LABEL[bothLabels[1]], ok: r.meaning, answer: currentQuestion.definition, mine: userAnswer2 },
                       ].map(row => (
                         <div key={row.label} className={`${s.fb} ${row.ok ? s.fbOk : s.fbNo}`}>
                           <div className={s.fbTitle}>{row.label} {row.ok ? '정답' : '오답'}</div>
                           <div className={s.fbAns}>{row.answer}</div>
+                          {!row.ok && <div className={s.rsMine} style={{ marginTop: 6 }}><span>내 답안</span>{row.mine.trim() || '미입력'}</div>}
                         </div>
                       ))}
                       <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px' }}>
