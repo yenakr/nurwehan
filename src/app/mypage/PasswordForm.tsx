@@ -54,7 +54,7 @@ export default function PasswordForm() {
       )}
       <style>{`
         .pw-box{display:flex;flex-direction:column;gap:8px}
-        .pw-box input{width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:.875rem;background:#fff}
+        .pw-box input{width:100%;padding:8px;border:1px solid var(--border);border-radius:8px;font-size:.875rem;background:var(--background);color:var(--text);font-family:inherit}
         .pw-msg{margin:0;font-size:.8125rem;color:#c0392b}
         .pw-acts{display:flex;gap:6px}
       `}</style>
