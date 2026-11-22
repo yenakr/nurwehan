@@ -209,6 +209,17 @@ function ElapsedClock({ startRef }: { startRef: { current: number } }) {
   return <span style={{ fontSize: '0.8125rem', color: 'var(--sub-text)', fontVariantNumeric: 'tabular-nums' }}>{fmtSec(sec)}</span>;
 }
 
+// 끝말(법·증·술·증후군·질환)이 빠지거나 더 붙은 한글 답을 같은 답으로 본다 (본체 3글자 이상일 때만)
+const KO_TAILS = ['증후군', '질환', '증', '법', '술'];
+const softEq = (a: string, b: string) => {
+  if (a === b) return true;
+  for (const tl of KO_TAILS) {
+    if (b.endsWith(tl) && b.length - tl.length >= 3 && a === b.slice(0, -tl.length)) return true;
+    if (a.endsWith(tl) && a.length - tl.length >= 3 && b === a.slice(0, -tl.length)) return true;
+  }
+  return false;
+};
+
 export default function QuizClient({ initialTerms, user, initialSubject, initialQuery, subjectLevels, guest, superAdmin }: QuizClientProps) {
   const isAdmin = isAdminRole(user?.role);
   const router = useRouter();
@@ -1142,6 +1153,60 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
     setActiveTab('quiz_play');
   };
 
+  // 풀던 퀴즈 이어하기: 풀이 중 상태를 이 기기에 저장해 두고, 나갔다 와도 이어서 푼다
+  const RESUME_KEY = `quizResume:${user?.id ?? 'guest'}`;
+  const [resume, setResume] = useState<{ subject: string; index: number; total: number } | null>(null);
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(RESUME_KEY);
+      if (!raw) return;
+      const d = JSON.parse(raw);
+      if (d?.v === 1 && Array.isArray(d.questions) && d.questions.length > 0) {
+        setResume({ subject: d.subject, index: Math.min(d.results?.length ?? d.index ?? 0, d.questions.length), total: d.questions.length });
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+  useEffect(() => {
+    try {
+      if (activeTab === 'quiz_play' && quizQuestions.length > 0) {
+        localStorage.setItem(RESUME_KEY, JSON.stringify({
+          v: 1, subject: quizSubject, category: quizCategory, type: quizType, kind: quizKind, format: quizFormat,
+          full: quizFull, prompt: quizPrompt, targets: quizTargets, reverse: quizReverse,
+          questions: quizQuestions, mc: mcOptionsMap, index: currentIndex, results: quizResults,
+          ws1: worksheetAnswers, ws2: worksheetAnswers2,
+        }));
+        setResume(null);
+      } else if (activeTab === 'quiz_result') {
+        localStorage.removeItem(RESUME_KEY);
+        setResume(null);
+      }
+    } catch {}
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, quizQuestions, currentIndex, quizResults, worksheetAnswers, worksheetAnswers2]);
+  const continueQuiz = () => {
+    try {
+      const d = JSON.parse(localStorage.getItem(RESUME_KEY) || 'null');
+      if (!d) return;
+      setStudySubject(d.subject); setQuizSubject(d.subject); setQuizCategory(d.category); setStudyCategory(d.category);
+      setQuizType(d.type); setQuizKind(d.kind); setContentTypeFilter(d.kind); setQuizFormat(d.format);
+      setQuizFull(!!d.full); setQuizPrompt(d.prompt); setQuizTargets(d.targets); setQuizReverse(!!d.reverse);
+      setQuizQuestions(d.questions); setMcOptionsMap(d.mc || {}); setQuizResults(d.results || []);
+      setWorksheetAnswers(d.ws1 || {}); setWorksheetAnswers2(d.ws2 || {});
+      const done = (d.results || []).length;
+      const single = d.format !== 'worksheet';
+      if (single && done >= d.questions.length) { setCurrentIndex(d.questions.length - 1); setIsAnswerSubmitted(true); }
+      else { setCurrentIndex(single ? Math.min(done, d.questions.length - 1) : (d.index || 0)); setIsAnswerSubmitted(false); }
+      setUserAnswer(''); setUserAnswer2(''); setSelectedChoiceIndex(null); setShowHint(false); setReviewIndex(null);
+      setView('subject');
+      setActiveTab('quiz_play');
+    } catch {}
+  };
+  const dropResume = () => {
+    try { localStorage.removeItem(RESUME_KEY); } catch {}
+    setResume(null);
+  };
+
   const currentQuestion = quizQuestions[currentIndex];
 
   const checkAnswerCorrectness = (input: string, term: NursingTerm) => {
@@ -1158,13 +1223,13 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
     if (!cleanInput) return false;
 
     if (quizFull && quizType === 'def_to_term' && term.answer) {
-      return variantsOf(term.answer).has(looseNorm(input));
+      { const li = looseNorm(input); return Array.from(variantsOf(term.answer)).some(v => softEq(li, v)); }
     }
 
     if (term.answer) {
       const answers = term.answer.split(/[/,]/);
       for (const ans of answers) {
-        if (cleanInput === normalize(ans)) return true;
+        if (softEq(cleanInput, normalize(ans))) return true;
       }
     }
 
@@ -1172,7 +1237,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
     const cleanEng = term.englishTerm ? normalize(term.englishTerm) : '';
 
     if (quizType === 'def_to_term' || quizType === 'multiple_choice' || term.itemType === 'MULTIPLE_CHOICE' || term.itemType === 'SHORT_ANSWER') {
-      return cleanInput === cleanKorean || (cleanEng !== '' && cleanInput === cleanEng);
+      return softEq(cleanInput, cleanKorean) || (cleanEng !== '' && cleanInput === cleanEng);
     } else {
       const keywords = term.term.split(' ');
       return cleanInput.length > 1 && keywords.some(k => cleanInput.includes(normalize(k)));
@@ -1202,9 +1267,43 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
     const m = looseNorm(meaning);
     return {
       full: !!f && variantsOf(term.englishTerm || '').has(f),
-      meaning: !!m && variantsOf(term.definition || '').has(m),
+      meaning: !!m && Array.from(variantsOf(term.definition || '')).some(v => softEq(m, v)),
     };
   };
+
+  // 오답마다 헷갈렸을 만한 용어: 내 답이 다른 용어의 답이거나, 약어가 한 글자만 다른 경우
+  const confuseMap = useMemo(() => {
+    const out: Record<string, NursingTerm[]> = {};
+    if (activeTab !== 'quiz_result') return out;
+    const lev1 = (a: string, b: string) => {
+      if (a === b || Math.abs(a.length - b.length) > 1) return false;
+      let i = 0;
+      while (i < a.length && i < b.length && a[i] === b[i]) i++;
+      if (a.length === b.length) return a.slice(i + 1) === b.slice(i + 1);
+      return a.length > b.length ? a.slice(i + 1) === b.slice(i) : a.slice(i) === b.slice(i + 1);
+    };
+    for (const r of quizResults) {
+      const ok = r.overrideCorrect !== undefined ? r.overrideCorrect : r.isCorrect;
+      if (ok || !r.term.id) continue;
+      const orig = termsList.find(x => x.id === r.term.id);
+      if (!orig) continue;
+      const pool = termsList.filter(x => x.id !== orig.id && x.subject === orig.subject && kindOf(x) === 'TERM');
+      const mine = (r.userAns || '').split(' / ').map(looseNorm).filter(x => x.length >= 2 && x !== '(미입력)');
+      const hits: NursingTerm[] = [];
+      for (const x of pool) {
+        const vs = new Set<string>();
+        [x.term, x.englishTerm || '', x.definition, x.answer || ''].forEach(f => variantsOf(f).forEach(v => vs.add(v)));
+        if (mine.some(m => vs.has(m))) hits.push(x);
+      }
+      const ab = looseNorm(orig.term);
+      if (/^[a-z0-9]{2,8}$/.test(ab)) {
+        for (const x of pool) if (!hits.includes(x) && lev1(ab, looseNorm(x.term))) hits.push(x);
+      }
+      if (hits.length) out[orig.id] = hits.slice(0, 3);
+    }
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab, quizResults, termsList]);
 
   useEffect(() => {
     if (activeTab === 'quiz_play') quizStartRef.current = Date.now();
@@ -1804,6 +1903,13 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
 
   return (
     <div className={s.root}>
+      {resume && activeTab !== 'quiz_play' && activeTab !== 'quiz_result' && (
+        <div className={s.resume} role="status">
+          <span className={s.resumeText}>풀던 퀴즈 · {resume.subject} {resume.index}/{resume.total}</span>
+          <button type="button" className={`${s.btn} ${s.btnSm} ${s.btnPrimary}`} onClick={continueQuiz}>이어하기</button>
+          <button type="button" className={`${s.btn} ${s.btnSm}`} onClick={dropResume}>버리기</button>
+        </div>
+      )}
       {view === 'hub' && (
         <HubView
           subjects={subjectEntries}
@@ -2966,6 +3072,14 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
                         {ans && ans !== res.term.term && <div className={s.rsAns}>{ans}</div>}
                         <div className={s.rsDef}>{res.term.definition}</div>
                         {!finalCorrect && <div className={s.rsMine}><span>내 답안</span>{res.userAns || '미입력'}</div>}
+                        {!finalCorrect && confuseMap[res.term.id]?.length > 0 && (
+                          <div className={s.rsConf}>
+                            <span>헷갈린 용어</span>
+                            {confuseMap[res.term.id].map(c => (
+                              <i key={c.id}>{c.term}{c.englishTerm ? ` ${c.englishTerm}` : ''}</i>
+                            ))}
+                          </div>
+                        )}
                       </article>
                     );
                   })}
