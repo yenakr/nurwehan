@@ -1,7 +1,9 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
+import { getLeaveGuard } from '@/lib/leaveGuard';
+import { confirmDialog } from '@/components/Dialog';
 
 const HIDE = ['/login', '/register', '/find-pw'];
 
@@ -21,13 +23,25 @@ const ITEMS = [
 
 export default function BottomNav() {
   const path = usePathname() || '/';
+  const router = useRouter();
   if (HIDE.some(h => path.startsWith(h))) return null;
   const on = (h: string) => (h === '/' ? path === '/' : path.startsWith(h));
   return (
     <>
       <nav className="bnav" aria-label="하단 메뉴">
         {ITEMS.map(it => (
-          <Link key={it.href} href={it.href} className={on(it.href) ? 'on' : ''} aria-current={on(it.href) ? 'page' : undefined}>
+          <Link
+            key={it.href}
+            href={it.href}
+            className={on(it.href) ? 'on' : ''}
+            aria-current={on(it.href) ? 'page' : undefined}
+            onClick={e => {
+              const g = getLeaveGuard();
+              if (!g || on(it.href)) return;
+              e.preventDefault();
+              confirmDialog(g).then(ok => { if (ok) router.push(it.href); });
+            }}
+          >
             {it.icon}
             <span>{it.label}</span>
           </Link>
