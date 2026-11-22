@@ -1,6 +1,7 @@
 'use client';
 
 import { setLeaveGuard } from '@/lib/leaveGuard';
+import { confirmDialog } from '@/components/Dialog';
 import { useState, useMemo, useEffect, useCallback, useRef, type ReactNode, type CSSProperties } from 'react';
 import { useRouter } from 'next/navigation';
 import { isAdminRole } from '@/lib/auth-core';
@@ -238,8 +239,30 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
 
   // 풀이 중에 하단 메뉴를 누르면 확인을 받는다
   useEffect(() => {
-    setLeaveGuard(activeTab === 'quiz_play' ? '풀이를 그만하고 나갈까요?' : null);
+    setLeaveGuard(activeTab === 'quiz_play' ? '정말 나가시겠어요?' : null);
     return () => setLeaveGuard(null);
+  }, [activeTab]);
+
+  // 풀이 중 뒤로가기도 확인을 받는다
+  useEffect(() => {
+    if (activeTab !== 'quiz_play') return;
+    window.history.pushState({ quizGuard: 1 }, '');
+    let asking = false;
+    const onPop = () => {
+      if (asking) return;
+      asking = true;
+      confirmDialog('정말 나가시겠어요?').then(ok => {
+        asking = false;
+        if (ok) {
+          window.removeEventListener('popstate', onPop);
+          window.history.back();
+        } else {
+          window.history.pushState({ quizGuard: 1 }, '');
+        }
+      });
+    };
+    window.addEventListener('popstate', onPop);
+    return () => window.removeEventListener('popstate', onPop);
   }, [activeTab]);
   const [myAttempts, setMyAttempts] = useState<any[]>([]);
   const [loadingHistory, setLoadingHistory] = useState<boolean>(false);
