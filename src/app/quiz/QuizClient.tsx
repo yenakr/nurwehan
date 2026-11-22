@@ -2914,6 +2914,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
                       </button>
                     )}
                     <button type="button" className={s.btn} onClick={() => { setRetryPool(null); setActiveTab('quiz_setup'); }}>새 테스트</button>
+                    <button type="button" className={s.btn} onClick={() => { setRetryPool(null); setActiveTab('study'); }}>용어 보기</button>
                   </div>
                 </section>
 
