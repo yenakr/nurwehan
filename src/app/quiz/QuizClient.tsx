@@ -1966,7 +1966,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
             trailing={activeTab === 'study' && studyViewMode === 'grid' ? (
               <div className={s.search}>
                 <span className={s.searchIcon}><Icon d={ICON_SEARCH} size={16} /></span>
-                <input
+                <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
                   type="search"
                   aria-label="검색"
                   placeholder="검색"
@@ -2296,7 +2296,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
                     text={currentTypingTerm.answer || currentTypingTerm.term}
                     onSpeak={() => speakText(termSpeech(currentTypingTerm))}
                     input={
-                      <input
+                      <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
                         type="text"
                         autoFocus
                         value={typingInput}
@@ -2320,7 +2320,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
                       text={<span style={{ fontWeight: 400 }}>{boldInitials(currentTypingTerm.englishTerm, currentTypingTerm.answer || currentTypingTerm.term)}</span>}
                       onSpeak={() => speakText(currentTypingTerm.englishTerm || '')}
                       input={
-                        <input
+                        <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
                           id="typing-full"
                           type="text"
                           value={typingFullInput}
@@ -2355,7 +2355,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
                       ) : null
                     }
                     input={
-                      <textarea
+                      <textarea autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
                         id="typing-def"
                         rows={2}
                         value={typingDefInput}
@@ -2626,7 +2626,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
               return (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                   {!isAnswerSubmitted && (<>
-                  <input
+                  <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
                     ref={answerInputRef}
                     aria-label={FIELD_LABEL[bothLabels[0]]}
                     type="text"
@@ -2642,7 +2642,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
                     }}
                     style={{ width: '100%', padding: '12px', fontSize: '1rem' }}
                   />
-                  <input
+                  <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
                     ref={answerInput2Ref}
                     aria-label={FIELD_LABEL[bothLabels[1]]}
                     type="text"
@@ -2780,7 +2780,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
             /* SUBJECTIVE MODE VIEW */
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div className={s.hintWrap}>
-                <input
+                <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
                   ref={answerInputRef}
                   aria-label="정답 입력"
                   type="text"
@@ -2908,7 +2908,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
                         ))}
                       </div>
                     ) : (
-                      <input
+                      <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
                         type="text"
                         aria-label={`${idx + 1}번 답`}
                         placeholder="답"
@@ -2944,7 +2944,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
                 <div key={q.id ?? idx} className={s.sheetRow}>
                   <span className={s.sheetNo}>{idx + 1}</span>
                   <span className={s.sheetAbbr}>{q.term}</span>
-                  <input
+                  <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
                     aria-label={`${q.term} ${FIELD_LABEL[bothLabels[0]]}`}
                     type="text"
                     placeholder={FIELD_LABEL[bothLabels[0]]}
@@ -2952,7 +2952,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
                     onChange={e => setWorksheetAnswers(prev => ({ ...prev, [idx]: e.target.value }))}
                     className={s.sheetInput}
                   />
-                  <input
+                  <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
                     aria-label={`${q.term} ${FIELD_LABEL[bothLabels[1]]}`}
                     type="text"
                     placeholder={FIELD_LABEL[bothLabels[1]]}
@@ -3215,7 +3215,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div>
                   <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>과목명 *</label>
-                  <input
+                  <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
                     type="text"
                     required
                     list="subject-names"
@@ -3228,7 +3228,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
                 <div>
                   <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>퀴즈</label>
                   <datalist id="quiz-names">{Array.from(new Set(termsList.filter(t => t.subject === formSubject.trim()).map(t => t.category).filter(Boolean) as string[])).map(c => <option key={c} value={c} />)}</datalist>
-                  <input
+                  <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
                     type="text"
                     list="quiz-names"
                     value={formCategory}
@@ -3254,7 +3254,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
                 <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
                   {formItemType === 'MULTIPLE_CHOICE' ? '문제 질문 (발문) *' : '약어 *'}
                 </label>
-                <textarea
+                <textarea autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
                   rows={formItemType === 'MULTIPLE_CHOICE' ? 2 : 1}
                   required
                   value={formTerm}
@@ -3297,7 +3297,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
                         <span style={{ fontSize: '0.875rem', fontWeight: 800, color: '#334155', minWidth: '24px' }}>
                           {circleNum}
                         </span>
-                        <input
+                        <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
                           type="text"
                           value={opt}
                           onChange={e => {
@@ -3329,7 +3329,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
               {formItemType === 'TERM' && (
                 <div>
                   <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>영문 풀네임</label>
-                  <input
+                  <input autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
                     type="text"
                     value={formEngTerm}
                     onChange={e => setFormEngTerm(e.target.value)}
@@ -3344,7 +3344,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
                 <label style={{ fontSize: '0.8125rem', fontWeight: 700, display: 'block', marginBottom: '4px' }}>
                   {formItemType === 'MULTIPLE_CHOICE' ? '문제 해설 및 정답 설명 *' : '국문 *'}
                 </label>
-                <textarea
+                <textarea autoComplete="off" autoCorrect="off" autoCapitalize="off" spellCheck={false}
                   rows={3}
                   required
                   value={formDefinition}
