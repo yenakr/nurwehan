@@ -208,7 +208,7 @@
 .rsChip { display: inline-flex; align-items: center; gap: 6px; padding: 4px 10px; border-radius: 999px; background: var(--q-primary-soft); color: var(--q-text-2); font-size: 0.8125rem; font-weight: 600; }
 .rsChip b { color: var(--q-primary); font-variant-numeric: tabular-nums; }
 .rsActions { display: flex; gap: 8px; flex-wrap: wrap; }
-.rsActions > * { flex: 1 1 140px; }
+.rsActions > * { flex: 1 1 140px; white-space: nowrap; }
 .rsBarRow { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
 .rsList { display: flex; flex-direction: column; gap: 10px; }
 .rsItem { display: flex; flex-direction: column; gap: 3px; padding: 10px 14px; background: var(--q-surface); border: 1px solid var(--q-border); border-radius: 12px; }

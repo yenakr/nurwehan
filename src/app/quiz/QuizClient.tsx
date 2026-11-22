@@ -2910,7 +2910,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
                   <div className={s.rsActions}>
                     {wrongResults.length > 0 && (
                       <button type="button" className={`${s.btn} ${s.btnPrimary}`} onClick={() => startRetry(wrongResults.map(w => w.term))}>
-                        오답 {wrongResults.length}개 다시 풀기
+                        오답 다시 풀기 ({wrongResults.length})
                       </button>
                     )}
                     <button type="button" className={s.btn} onClick={() => { setRetryPool(null); setActiveTab('quiz_setup'); }}>새 테스트</button>
