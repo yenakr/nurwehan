@@ -2357,7 +2357,7 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
               <ElapsedClock startRef={quizStartRef} />
             </span>
             <span style={{ fontSize: '0.8125rem', color: 'var(--sub-text)', textAlign: 'right', display: 'flex', alignItems: 'center', gap: 8 }}>
-              <span>{currentQuestion.subject}{currentQuestion.category && currentQuestion.category !== 'all' ? ` · ${currentQuestion.category}` : ''}</span>
+              <span>{currentQuestion.subject}{currentQuestion.category && currentQuestion.category !== 'all' ? ` · ${currentQuestion.category.replace(/\s*약어$/, '')}` : ''}</span>
               {(() => {
                 const fq = reviewIndex !== null && quizResults[reviewIndex] ? quizResults[reviewIndex].term : currentQuestion;
                 const on = favIds.has(fq.id);
