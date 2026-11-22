@@ -250,7 +250,7 @@
 .fbOk .fbMark { background: #10b981; }
 .fbNo .fbMark { background: #ef4444; }
 .fbBody { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.fbMine { font-size: 1rem; color: var(--q-muted); text-decoration: line-through; text-decoration-color: #ef4444; }
+.fbMine { font-size: 0.875rem; color: var(--q-muted); }
 .fbRow .fbAns { font-size: 1rem; }
 .fbNote { font-size: 0.875rem; color: var(--q-muted); line-height: 1.6; }
 .selfToggle { border: 0; background: transparent; padding: 2px 0; font-size: 0.8125rem; color: var(--q-muted); text-decoration: underline; font-family: inherit; cursor: pointer; }
