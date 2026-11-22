@@ -2507,8 +2507,8 @@ export default function QuizClient({ initialTerms, user, initialSubject, initial
                         <div key={row.label} className={`${s.fbRow} ${row.ok ? s.fbOk : s.fbNo}`}>
                           <span className={s.fbMark} role="img" aria-label={row.ok ? '정답' : '오답'}>{row.ok ? 'O' : 'X'}</span>
                           <div className={s.fbBody}>
-                            <div className={s.fbAns}>{row.answer}</div>
                             {!row.ok && <div className={s.fbMine}>{row.mine.trim() || '미입력'}</div>}
+                            <div className={s.fbAns}>{row.answer}</div>
                           </div>
                         </div>
                       ))}

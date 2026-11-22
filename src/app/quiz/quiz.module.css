@@ -243,14 +243,15 @@
 .fbOk .fbTitle { color: #059669; }
 .fbNo .fbTitle { color: #dc2626; }
 .fbAns { font-size: 1.0625rem; font-weight: 800; color: var(--q-text); line-height: 1.5; }
-.fbRow { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 12px; border: 1px solid var(--q-border); background: var(--q-surface); }
+.fbRow { display: flex; align-items: center; gap: 12px; min-height: 52px; padding: 10px 14px; border-radius: 12px; border: 1px solid var(--q-border); background: var(--q-surface); }
 .fbRow.fbOk { border-color: rgba(16, 185, 129, 0.45); background: rgba(16, 185, 129, 0.08); }
 .fbRow.fbNo { border-color: rgba(239, 68, 68, 0.45); background: rgba(239, 68, 68, 0.08); }
 .fbMark { flex: 0 0 auto; width: 28px; height: 28px; border-radius: 50%; display: grid; place-items: center; font-size: 0.875rem; font-weight: 800; color: #fff; }
 .fbOk .fbMark { background: #10b981; }
 .fbNo .fbMark { background: #ef4444; }
 .fbBody { min-width: 0; display: flex; flex-direction: column; gap: 2px; }
-.fbMine { font-size: 0.8125rem; color: #dc2626; text-decoration: line-through; }
+.fbMine { font-size: 1rem; color: var(--q-muted); text-decoration: line-through; text-decoration-color: #ef4444; }
+.fbRow .fbAns { font-size: 1rem; }
 .fbNote { font-size: 0.875rem; color: var(--q-muted); line-height: 1.6; }
 .selfToggle { border: 0; background: transparent; padding: 2px 0; font-size: 0.8125rem; color: var(--q-muted); text-decoration: underline; font-family: inherit; cursor: pointer; }
 .rvMine { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: 10px; background: var(--q-primary-soft); font-size: 1rem; font-weight: 700; color: var(--q-text); }
