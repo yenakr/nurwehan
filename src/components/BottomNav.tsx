@@ -51,7 +51,7 @@ export default function BottomNav() {
         .bnav { display: none; }
         @media (max-width: 991px) {
           :root { --bnav-h: calc(58px + env(safe-area-inset-bottom, 0px)); }
-          body { padding-bottom: var(--bnav-h); }
+          body { height: auto; min-height: 100%; padding-bottom: var(--bnav-h); }
           .bnav { position: fixed; left: 0; right: 0; bottom: 0; z-index: 1100; height: var(--bnav-h); padding-bottom: env(safe-area-inset-bottom, 0px); display: flex; background: var(--white); border-top: 1px solid var(--border); }
           .bnav a { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; color: var(--sub-text); font-size: 11px; font-weight: 600; text-decoration: none; }
           .bnav a.on { color: var(--primary); }
