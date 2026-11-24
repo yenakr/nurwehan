@@ -16,7 +16,7 @@ import { enrich } from './enrich';
 export const SAMPLES: Sample[] = [adult, child, women, psych, gi, pul, gs, os, op1, op2, er1, er2].map(enrich);
 
 export type Ward = { name: string; floor: number; dept: string; group: '내과' | '외과' | null; rooms: number[] };
-const R = [1, 2, 2, 4, 2]; // 병실별 병상 수 (총 11병상)
+const R = [4, 2, 2, 1, 2]; // 병실별 병상 수 (총 11병상)
 export const WARDS: Ward[] = [
   { name: '41병동', floor: 4, dept: '산부인과', group: null, rooms: R },
   { name: '51병동', floor: 5, dept: '소아청소년과', group: null, rooms: R },
