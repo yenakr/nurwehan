@@ -1116,46 +1116,48 @@ export default function EhrEditor({
     <div className="ehr">
       <div className="bar">
         <Link href="/" className="home" aria-label="홈">NUR위한</Link>
-        <button type="button" className="back" onClick={() => router.push(`/ehr?view=${encodeURIComponent(info.ward === '응급실' ? '응급' : info.ward || '')}`)}>&larr; {info.ward === '응급실' ? '응급' : info.ward || '목록'}</button>
-        <button type="button" className="back" onClick={() => { setWin(null); setScreen(screen === 'main' ? 'chart' : 'main'); }}>{screen === 'main' ? '전체 차트' : '간호 화면'}</button>
         <span className="ttl" />
-        <span className={`st ${status}`}>{status === 'saved' ? '저장됨' : status === 'saving' ? '저장 중…' : '저장 실패'}</span>
-        {ai && !locked && aiOn && <button type="button" className="aib" onClick={askFb} disabled={fbBusy || fbLeft <= 0}><AiMark size={14} />{fbBusy ? '살펴보는 중' : `AI 피드백 ${fbLeft}회`}</button>}
-        {locked
-          ? (!info.reviewed && <button type="button" className="subm out" onClick={unsubmit}>제출 취소</button>)
-          : <button type="button" className="subm" onClick={submit}>제출</button>}
-        <div className="more">
-          <button type="button" className="mbtn" aria-label="더보기" onClick={() => setMoreOpen(o => !o)}>&middot;&middot;&middot;</button>
-          {moreOpen && (
-            <>
-              <button type="button" className="mbk" aria-label="닫기" onClick={() => setMoreOpen(false)} />
-              <div className="mm">
-                <button type="button" onClick={() => { setMoreOpen(false); printNameTag(info); }}>네임지 출력</button>
-                {(['투약', '주사', '수액'] as const).map(k => <button key={k} type="button" onClick={() => { setMoreOpen(false); printTickets(data, k as TicketKind); }}>{k} 티켓 출력</button>)}
-                <button type="button" onClick={() => { setMoreOpen(false); if (!printChart(title, data, userName || '')) notify('팝업을 허용해 주세요.'); }}>인쇄</button>
-                <button type="button" disabled={locked} onClick={() => { setMoreOpen(false); toggleDischarge(); }}>{info.discharged ? '퇴원 취소' : '퇴원'}</button>
-                {ai && !locked && <button type="button" onClick={() => { toggleAi(); setMoreOpen(false); }}>AI 피드백 {aiOn ? '끄기' : '켜기'}</button>}
-                <button
-                  type="button"
-                  className="del"
-                  onClick={async () => {
-                    setMoreOpen(false);
-                    if (!(await confirmDialog('이 차트를 삭제할까요? 모든 기록이 사라지고 되돌릴 수 없어요.'))) return;
-                    const res = await fetch(`/api/ehr/${id}`, { method: 'DELETE' });
-                    if (res.ok) router.push('/ehr');
-                  }}
-                >
-                  삭제
-                </button>
-              </div>
-            </>
-          )}
-        </div>
         <span className="who">{userName}</span>
         <LogoutButton />
       </div>
 
       <p className="pvn">실제 환자 정보(이름, 환자번호, 생년월일, 병실 등)는 쓰지 마세요. 가상 정보로 바꿔서 연습하세요.</p>
+      <div className="etool">
+        <button type="button" className="back" onClick={() => router.push(`/ehr?view=${encodeURIComponent(info.ward === '응급실' ? '응급' : info.ward || '')}`)}>&larr; {info.ward === '응급실' ? '응급' : info.ward || '목록'}</button>
+          <button type="button" className="back" onClick={() => { setWin(null); setScreen(screen === 'main' ? 'chart' : 'main'); }}>{screen === 'main' ? '전체 차트' : '간호 화면'}</button>
+          <span className={`st ${status}`}>{status === 'saved' ? '저장됨' : status === 'saving' ? '저장 중…' : '저장 실패'}</span>
+          {ai && !locked && aiOn && <button type="button" className="aib" onClick={askFb} disabled={fbBusy || fbLeft <= 0}><AiMark size={14} />{fbBusy ? '살펴보는 중' : `AI 피드백 ${fbLeft}회`}</button>}
+          {locked
+            ? (!info.reviewed && <button type="button" className="subm out" onClick={unsubmit}>제출 취소</button>)
+            : <button type="button" className="subm" onClick={submit}>제출</button>}
+          <div className="more">
+            <button type="button" className="mbtn" aria-label="더보기" onClick={() => setMoreOpen(o => !o)}>&middot;&middot;&middot;</button>
+            {moreOpen && (
+              <>
+                <button type="button" className="mbk" aria-label="닫기" onClick={() => setMoreOpen(false)} />
+                <div className="mm">
+                  <button type="button" onClick={() => { setMoreOpen(false); printNameTag(info); }}>네임지 출력</button>
+                  {(['투약', '주사', '수액'] as const).map(k => <button key={k} type="button" onClick={() => { setMoreOpen(false); printTickets(data, k as TicketKind); }}>{k} 티켓 출력</button>)}
+                  <button type="button" onClick={() => { setMoreOpen(false); if (!printChart(title, data, userName || '')) notify('팝업을 허용해 주세요.'); }}>인쇄</button>
+                  <button type="button" disabled={locked} onClick={() => { setMoreOpen(false); toggleDischarge(); }}>{info.discharged ? '퇴원 취소' : '퇴원'}</button>
+                  {ai && !locked && <button type="button" onClick={() => { toggleAi(); setMoreOpen(false); }}>AI 피드백 {aiOn ? '끄기' : '켜기'}</button>}
+                  <button
+                    type="button"
+                    className="del"
+                    onClick={async () => {
+                      setMoreOpen(false);
+                      if (!(await confirmDialog('이 차트를 삭제할까요? 모든 기록이 사라지고 되돌릴 수 없어요.'))) return;
+                      const res = await fetch(`/api/ehr/${id}`, { method: 'DELETE' });
+                      if (res.ok) router.push('/ehr');
+                    }}
+                  >
+                    삭제
+                  </button>
+                </div>
+              </>
+            )}
+          </div>
+      </div>
       {locked && <div className="lkb">{info.reviewed ? '교수님이 확인했어요' : '제출했어요. 교수님 확인 전에는 제출 취소로 고칠 수 있어요'}</div>}
       {info.comment && <div className="cmt"><b>교수님 의견</b><p>{info.comment}</p></div>}
       {fb && <div className="cmt ai"><b style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><AiMark size={14} />AI 피드백</b><button type="button" className="cx" aria-label="닫기" onClick={() => setFb('')}>&times;</button><p>{fb}</p></div>}
@@ -1325,6 +1327,8 @@ export default function EhrEditor({
       <style>{FORM_CSS}</style>
       <style jsx global>{`
         .ehr { --nv1: #1c2f4b; --nv2: #13233a; --tl: #cfe5e6; --ln: #cfd5dc; }
+        .ehr .etool { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 8px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--muted-background); }
+        .ehr .etool .st { margin-left: auto; }
         .ehr .bar { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
         .ehr .back { border: 1px solid var(--border); background: transparent; color: var(--text); border-radius: 999px; padding: 5px 12px; font: inherit; font-size: 0.8125rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
         .ehr .home { font-weight: 800; color: var(--primary); text-decoration: none; letter-spacing: -0.5px; padding-right: 4px; }
