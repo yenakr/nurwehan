@@ -11,8 +11,9 @@ import { gs } from './cases/gs';
 import { os } from './cases/os';
 import { op1, op2 } from './cases/op';
 import { er1, er2 } from './cases/er';
+import { enrich } from './enrich';
 
-export const SAMPLES: Sample[] = [adult, child, women, psych, gi, pul, gs, os, op1, op2, er1, er2];
+export const SAMPLES: Sample[] = [adult, child, women, psych, gi, pul, gs, os, op1, op2, er1, er2].map(enrich);
 
 export type Ward = { name: string; floor: number; dept: string; group: '내과' | '외과' | null; rooms: number[] };
 const R = [1, 2, 2, 4, 2]; // 병실별 병상 수 (총 11병상)
