@@ -139,7 +139,7 @@ export const adult: Sample = {
     memos: [
       { time: md(0, '09:50'), type: '진료메모', text: '내일 퇴원 예정. 퇴원약(furosemide PO, carvedilol, enalapril, spironolactone) 처방 확인 요청.', author: '이순환', shift: 'D' },
       { time: md(0, '07:00'), type: '인수인계', text: '야간 호흡곤란 1회(03:30). 낙상 고위험 — 침상 난간 및 호출벨 확인.', author: '최간호', shift: 'N', imp: '1' },
-      { time: md(0, '08:10'), type: '간호의사소통', text: '야간 호흡곤란 1회 있었고 furosemide 20mg IV 투여 후 호전됨을 보고함. 퇴원약 처방 요청함.', author: '박간호', shift: 'D' },
+      { time: md(0, '08:10'), type: '간호의사소통', text: '야간 호흡곤란 1회로 furosemide IV 투여함. 오늘 K 재검 결과 나오면 spironolactone 재투여 여부 확인 필요. 내일 조영술 전 금식 안내 부탁함.', author: '박간호', shift: 'D' },
       { time: md(-1, '15:00'), type: '간호메모', text: 'Spironolactone 보류 (K 5.4). 내일 K 재검 결과 확인 후 재투여 여부 주치의 확인.', author: '김간호', shift: 'E' },
     ],
     nact: [

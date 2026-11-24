@@ -32,6 +32,8 @@ const pad = (n: number) => String(n).padStart(2, '0');
 const hm = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 const dutyNow = () => { const h = new Date().getHours(); return h >= 6 && h < 14 ? 'D' : h >= 14 && h < 22 ? 'E' : 'N'; };
 const HIGH = /(insulin|인슐린|heparin|헤파린|potassium|kcl|칼륨|morphine|모르핀|fentanyl|펜타닐|midazolam|미다졸람|항암|digoxin|디곡신|warfarin|와파린|propofol|ketamine|마약)/i;
+// 병실 기준 담당 팀: 1~3호실 1팀, 4호실 이후 2팀
+const teamOf = (bed: string | null) => ((Number((bed || '').split('-')[0]) || 0) % 100 <= 3 ? '1팀' : '2팀');
 const isMed = (r: Row) => (r.dose || r.route) && !/^check/i.test(r.name || '');
 
 type Item = { i: number; r: Row; notes: string[] };
@@ -85,7 +87,8 @@ export default function EhrNurse({
   const i = data.info;
   const [date, setDate] = useState(() => { const t = new Date(); return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`; });
   const [ward, setWard] = useState(i.ward || '');
-  const [team, setTeam] = useState('');
+  const [team, setTeam] = useState(() => teamOf(i.bed || ''));
+  const [dmsg, setDmsg] = useState('');
   const [duty, setDuty] = useState(dutyNow());
   const [q, setQ] = useState('');
   const [qMsg, setQMsg] = useState('');
@@ -98,7 +101,7 @@ export default function EhrNurse({
   const [dbl, setDbl] = useState('');
   const g = useMemo(() => group(data.orders), [data.orders]);
   const wards = Array.from(new Set(roster.map(r => r.ward).filter((w): w is string => !!w)));
-  const list = roster.filter(r => r.ward === ward).sort((a, b) => (a.bed || '').localeCompare(b.bed || '', 'ko', { numeric: true }));
+  const list = roster.filter(r => r.ward === ward && (team === '전체' || teamOf(r.bed) === team)).sort((a, b) => (a.bed || '').localeCompare(b.bed || '', 'ko', { numeric: true }));
   const flags = Array.from(new Set([...data.acu.map(r => r.risk), ...data.risk.filter(r => /고위험/.test(r.level || '')).map(r => (r.kind || '').split('(')[0])].filter(Boolean)));
   const bulkPts: BulkPt[] = list.map(r => ({ key: r.id, bed: r.bed || '', name: r.name || '', ageSex: r.ageSex || '', id: r.id, make: () => ({ title: '', subject: null, data: {} }) }));
   const dxMain = data.dxcode.find(r => r.kind === '주상병' && r.name);
@@ -128,12 +131,14 @@ export default function EhrNurse({
     const row: Row = { type: '간호메모', text, time: `${date} ${hm()}`, author: userName, shift: duty };
     return { ...d, memos: k >= 0 ? d.memos.map((m, j) => (j === k ? { ...m, ...row } : m)) : [...d.memos, row] };
   });
-  const sendMsg = () => {
-    const t = msg.trim();
-    if (!t) return;
-    setData(d => ({ ...d, memos: [...d.memos, { type: '간호의사소통', text: t, time: `${date} ${hm()}`, author: userName, shift: duty }] }));
-    setMsg('');
+  const addMemo = (type: string, t: string, done: () => void) => {
+    const text = t.trim();
+    if (!text) return;
+    setData(d => ({ ...d, memos: [...d.memos, { type, text, time: `${date} ${hm()}`, author: userName, shift: duty }] }));
+    done();
   };
+  const sendMsg = () => addMemo('간호의사소통', msg, () => setMsg(''));
+  const sendDoc = () => addMemo('진료메모', dmsg, () => setDmsg(''));
   const ck = (label: string) => (i[`ck:${label}`] === '1') || (label === '금식' && i.npo === '1' && i['ck:금식'] !== '0');
   const toggle = (label: string) => setData(d => ({ ...d, info: { ...d.info, [`ck:${label}`]: ck(label) ? '0' : '1' } }));
   const find = () => {
@@ -208,8 +213,12 @@ export default function EhrNurse({
           </div>
           <div className="ns-nbox">
             <h4>진료메모</h4>
-            {memoOf('진료메모').slice(-3).reverse().map((m, k) => <p key={k}>{m.text}</p>)}
+            {memoOf('진료메모').slice(-3).reverse().map((m, k) => <p key={k}>{m.text}<i>{(m.time || '').slice(-5)} {m.author}</i></p>)}
             {memoOf('진료메모').length === 0 && <p className="ns-nnone">없음</p>}
+            <div className="ns-nsr">
+              <input value={dmsg} onChange={e => setDmsg(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendDoc()} placeholder="의사에게 남길 메모" aria-label="진료메모" />
+              <button type="button" onClick={sendDoc} disabled={!dmsg.trim()}>등록</button>
+            </div>
           </div>
           <div className="ns-nbox">
             <h4>간호의사소통</h4>
@@ -224,7 +233,9 @@ export default function EhrNurse({
               <select value={ward} onChange={e => setWard(e.target.value)} aria-label="병동">
                 {(wards.length ? wards : [i.ward || '']).map(w => <option key={w} value={w}>{w}</option>)}
               </select>
-              <input value={team} onChange={e => setTeam(e.target.value)} aria-label="팀" />
+              <select value={team} onChange={e => setTeam(e.target.value)} aria-label="팀">
+                {['전체', '1팀', '2팀'].map(t => <option key={t} value={t}>{t}</option>)}
+              </select>
               <select value={duty} onChange={e => setDuty(e.target.value)} aria-label="듀티">
                 {['D', 'E', 'N'].map(d => <option key={d} value={d}>{d}</option>)}
               </select>
@@ -388,7 +399,7 @@ export default function EhrNurse({
         .ns-nnone { color: var(--sub-text); margin: 4px 0; font-size: 12.5px; }
         .ns-nd3 { display: flex; gap: 4px; margin-bottom: 6px; }
         .ns-nd3 select, .ns-nd3 input { min-width: 0; border: 1px solid var(--border); border-radius: 6px; padding: 6px; font: inherit; background: var(--background); color: var(--text); }
-        .ns-nd3 select:first-child { flex: 1.4; } .ns-nd3 input { flex: 1; } .ns-nd3 select:last-child { width: 52px; }
+        .ns-nd3 select { flex: 1; } .ns-nd3 select:last-child { flex: 0 0 56px; }
         .ns-nlist { width: 100%; min-width: 0; table-layout: fixed; border-collapse: collapse; font-size: 12.5px; }
         .ns-nlist td, .ns-nlist th { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .ns-nlist th { text-align: left; color: var(--sub-text); font-weight: 600; padding: 4px; border-bottom: 1px solid var(--border); }
