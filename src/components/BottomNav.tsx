@@ -5,7 +5,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import { getLeaveGuard } from '@/lib/leaveGuard';
 import { confirmDialog } from '@/components/Dialog';
 
-const HIDE = ['/login', '/register', '/find-pw'];
+const HIDE = ['/login', '/register', '/find-pw', '/ehr/'];
 
 const I = (d: string) => (
   <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">

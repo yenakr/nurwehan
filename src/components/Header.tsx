@@ -62,6 +62,7 @@ export default function Header() {
   }, []);
 
   const isLoggedIn = !!user;
+  if (pathname?.startsWith('/ehr/')) return null; // EHR 차트 화면은 전체 화면으로 쓴다
   const isAdmin = isAdminRole(user?.role);
   const userName = user?.name || '';
 

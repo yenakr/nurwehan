@@ -140,30 +140,30 @@ export default function EhrNurse({
   };
 
   const sec = (label: string, items: Item[], kind: 'med' | 'base' | 'prn' | 'lab') => (
-    <section className="nsec">
+    <section className="ns-nsec">
       <h3>{label}</h3>
-      {items.length === 0 && <p className="nnone">처방이 없어요.</p>}
+      {items.length === 0 && <p className="ns-nnone">처방이 없어요.</p>}
       {items.map(it => {
         const r = it.r;
         const stop = r.pri === 'D/C' || r.st === '취소';
         const done = slots(r);
         return (
-          <div key={it.i} className={`nrow ${stop ? 'x' : ''}`}>
-            <div className="nm">
+          <div key={it.i} className={`ns-nrow ${stop ? 'ns-x' : ''}`}>
+            <div className="ns-nm">
               <b>{r.name}</b>
               {(r.dose || r.route || r.cnt) && <span>{[r.dose && `${r.dose}${r.unit || ''}`, r.route, r.cnt, r.pri && r.pri !== 'D/C' ? r.pri : ''].filter(Boolean).join(' · ')}</span>}
               {kind === 'lab' && r.st && <span>{r.st}</span>}
               {it.notes.map((n, k) => <em key={k}>{n}</em>)}
             </div>
-            <div className="nd">
-              {done.map(k => <span key={k} className="chip">{r[k]}</span>)}
+            <div className="ns-nd">
+              {done.map(k => <span key={k} className="ns-chip">{r[k]}</span>)}
               {!stop && (
                 <>
-                  <button type="button" className="go" onClick={() => ask(it)}>수행</button>
+                  <button type="button" className="ns-go" onClick={() => ask(it)}>수행</button>
                   {(done.length > 0 || r.ck) && <button type="button" onClick={() => undo(it)}>취소</button>}
                 </>
               )}
-              {stop && <span className="chip x">{r.pri === 'D/C' ? 'D/C' : '취소'}</span>}
+              {stop && <span className="ns-chip ns-x">{r.pri === 'D/C' ? 'D/C' : '취소'}</span>}
             </div>
           </div>
         );
@@ -176,46 +176,46 @@ export default function EhrNurse({
   const all = [...g.base, ...g.med, ...g.prn, ...g.lab];
 
   return (
-    <div className={`nu ${win ? 'hasw' : ''}`}>
-      <div className="nmenu">
+    <div className={`ns-nu ${win ? 'ns-hasw' : ''}`}>
+      <div className="ns-nmenu">
         <b>홈</b>
-        {MENUS.map(m => <button key={m.id} type="button" className={win === m.id ? 'on' : ''} onClick={() => onOpen(m.id)}>{m.label}</button>)}
-        <button type="button" className="ch" onClick={onChart}>전체 차트</button>
+        {MENUS.map(m => <button key={m.id} type="button" className={win === m.id ? 'ns-on' : ''} onClick={() => onOpen(m.id)}>{m.label}</button>)}
+        <button type="button" className="ns-ch" onClick={onChart}>전체 차트</button>
       </div>
 
-      <div className="ngrid">
-        <aside className="nl">
-          <div className="nsr">
+      <div className="ns-ngrid">
+        <aside className="ns-nl">
+          <div className="ns-nsr">
             <input value={q} onChange={e => { setQ(e.target.value); setQMsg(''); }} onKeyDown={e => e.key === 'Enter' && find()} placeholder="환자등록번호 검색" aria-label="환자등록번호 검색" />
             <button type="button" onClick={find}>검색</button>
           </div>
-          {qMsg && <p className="nerr">{qMsg}</p>}
-          <div className="npt">
+          {qMsg && <p className="ns-nerr">{qMsg}</p>}
+          <div className="ns-npt">
             <b>{i.name || '이름 없음'} 님</b>
             <span>{[i.ageSex, i.ptNo].filter(Boolean).join(' · ')}</span>
             {dxMain || i.dx ? <span>{dxMain ? dxMain.name : i.dx}</span> : null}
-            <div className="nflags">
+            <div className="ns-nflags">
               {flags.map(f => <em key={f}>{f}</em>)}
-              {i.allergy && !/^(없음|무|none|-)$/i.test(i.allergy.trim()) && <em className="al">알러지 {i.allergy}</em>}
+              {i.allergy && !/^(없음|무|none|-)$/i.test(i.allergy.trim()) && <em className="ns-al">알러지 {i.allergy}</em>}
               {i.iso && i.iso !== '해당 없음' && i.iso !== '없음' && <em>{i.iso}</em>}
               {i.npo === '1' && <em>금식</em>}
             </div>
           </div>
-          <div className="nbox">
+          <div className="ns-nbox">
             <h4>진료메모</h4>
             {memoOf('진료메모').slice(-3).reverse().map((m, k) => <p key={k}>{m.text}</p>)}
-            {memoOf('진료메모').length === 0 && <p className="nnone">없음</p>}
+            {memoOf('진료메모').length === 0 && <p className="ns-nnone">없음</p>}
           </div>
-          <div className="nbox">
+          <div className="ns-nbox">
             <h4>간호의사소통</h4>
             {memoOf('간호의사소통').slice(-3).reverse().map((m, k) => <p key={k}>{m.text}<i>{(m.time || '').slice(-5)} {m.author}</i></p>)}
-            <div className="nsr">
+            <div className="ns-nsr">
               <input value={msg} onChange={e => setMsg(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMsg()} placeholder="의사에게 전달할 내용" aria-label="간호의사소통" />
               <button type="button" onClick={sendMsg} disabled={!msg.trim()}>등록</button>
             </div>
           </div>
-          <div className="nbox duty">
-            <div className="nd3">
+          <div className="ns-nbox ns-duty">
+            <div className="ns-nd3">
               <select value={ward} onChange={e => setWard(e.target.value)} aria-label="병동">
                 {(wards.length ? wards : [i.ward || '']).map(w => <option key={w} value={w}>{w}</option>)}
               </select>
@@ -224,59 +224,59 @@ export default function EhrNurse({
                 {['D', 'E', 'N'].map(d => <option key={d} value={d}>{d}</option>)}
               </select>
             </div>
-            <table className="nlist">
+            <table className="ns-nlist">
               <thead><tr><th>병실</th><th>환자명</th><th>등록번호</th><th>주치의</th></tr></thead>
               <tbody>
                 {list.map(r => (
-                  <tr key={r.id} className={r.name === i.name && r.ptNo === i.ptNo ? 'on' : ''} onClick={() => router.push(`/ehr/${r.id}`)}>
+                  <tr key={r.id} className={r.name === i.name && r.ptNo === i.ptNo ? 'ns-on' : ''} onClick={() => router.push(`/ehr/${r.id}`)}>
                     <td>{r.bed}</td><td>{r.name}</td><td>{r.ptNo}</td><td>{r.doctor}</td>
                   </tr>
                 ))}
-                {list.length === 0 && <tr><td colSpan={4} className="nnone">열어 둔 환자가 없어요</td></tr>}
+                {list.length === 0 && <tr><td colSpan={4} className="ns-nnone">열어 둔 환자가 없어요</td></tr>}
               </tbody>
             </table>
           </div>
         </aside>
 
-        <main className="nc">
-          <div className="nhd">
+        <main className="ns-nc">
+          <div className="ns-nhd">
             <span>처방조회</span>
             <input type="date" value={date} onChange={e => setDate(e.target.value)} aria-label="처방조회일" />
-            <button type="button" className="cmp" onClick={() => setCmp(true)}>전일처방비교</button>
+            <button type="button" className="ns-cmp" onClick={() => setCmp(true)}>전일처방비교</button>
           </div>
           {sec('기본처방', g.base, 'base')}
           {sec('투약', g.med, 'med')}
           {sec('투약 PRN 처방', g.prn, 'prn')}
           {sec('진단검사', g.lab, 'lab')}
-          <div className="nft"><button type="button" onClick={onLabel}>투약라벨 출력</button></div>
+          <div className="ns-nft"><button type="button" onClick={onLabel}>투약라벨 출력</button></div>
         </main>
 
-        <aside className="nr">
-          <div className="nbox">
+        <aside className="ns-nr">
+          <div className="ns-nbox">
             <h4>체크리스트</h4>
             {cl.map(l => (
-              <label key={l} className="ncb"><input type="checkbox" checked={ck(l)} onChange={() => toggle(l)} />{l}</label>
+              <label key={l} className="ns-ncb"><input type="checkbox" checked={ck(l)} onChange={() => toggle(l)} />{l}</label>
             ))}
           </div>
-          <div className="nbox">
+          <div className="ns-nbox">
             <h4>간호메모</h4>
-            <textarea className="nsticky" rows={9} value={sticky >= 0 ? data.memos[sticky].text || '' : ''} onChange={e => setSticky(e.target.value)} aria-label="간호메모" />
+            <textarea className="ns-nsticky" rows={9} value={sticky >= 0 ? data.memos[sticky].text || '' : ''} onChange={e => setSticky(e.target.value)} aria-label="간호메모" />
           </div>
         </aside>
       </div>
 
       {cmp && (
-        <div className="nmd" role="dialog" aria-label="전일처방비교">
-          <button type="button" className="nmk" aria-label="닫기" onClick={() => setCmp(false)} />
-          <div className="nmb">
+        <div className="ns-nmd" role="dialog" aria-label="전일처방비교">
+          <button type="button" className="ns-nmk" aria-label="닫기" onClick={() => setCmp(false)} />
+          <div className="ns-nmb">
             <header><b>전일처방비교</b><button type="button" onClick={() => setCmp(false)}>닫기</button></header>
-            <div className="nmc">
+            <div className="ns-nmc">
               {(['신규', '중지', '유지'] as const).map(s => {
                 const rows = all.filter(it => stat(it) === s);
                 return (
                   <div key={s}>
                     <h4>{s} ({rows.length})</h4>
-                    {rows.length === 0 ? <p className="nnone">없음</p> : rows.map(it => <p key={it.i}>{it.r.name}</p>)}
+                    {rows.length === 0 ? <p className="ns-nnone">없음</p> : rows.map(it => <p key={it.i}>{it.r.name}</p>)}
                   </div>
                 );
               })}
@@ -292,28 +292,28 @@ export default function EhrNurse({
         const high = HIGH.test(r.name || '');
         const need = ['p', 'd', 'q', 'r', 't', ...(warn ? ['a'] : [])];
         const ok = need.every(k => c5[k]) && (!high || dbl.trim().length > 0);
-        const row = (k: string, label: string) => <label className="ncb"><input type="checkbox" checked={!!c5[k]} onChange={e => setC5(c => ({ ...c, [k]: e.target.checked }))} />{label}</label>;
+        const row = (k: string, label: string) => <label className="ns-ncb"><input type="checkbox" checked={!!c5[k]} onChange={e => setC5(c => ({ ...c, [k]: e.target.checked }))} />{label}</label>;
         return (
-          <div className="nmd" role="dialog" aria-label="투약 확인">
-            <button type="button" className="nmk" aria-label="닫기" onClick={() => setChk(null)} />
-            <div className="nmb">
+          <div className="ns-nmd" role="dialog" aria-label="투약 확인">
+            <button type="button" className="ns-nmk" aria-label="닫기" onClick={() => setChk(null)} />
+            <div className="ns-nmb">
               <header><b>투약 확인</b><button type="button" onClick={() => setChk(null)}>닫기</button></header>
-              <div className="nmc">
+              <div className="ns-nmc">
                 {row('p', `환자: ${i.name || ''} (${i.ptNo || ''})`)}
                 {row('d', `약물: ${r.name}`)}
                 {row('q', `용량: ${r.dose || ''}${r.unit || ''}`)}
                 {row('r', `경로: ${r.route || '-'}`)}
                 {row('t', `시간: ${hm()} (처방 시간 전후 30분 이내)`)}
-                {warn && <div className="nwarn">{row('a', `알러지 주의: ${i.allergy}. 처방의에게 확인했나요?`)}</div>}
+                {warn && <div className="ns-nwarn">{row('a', `알러지 주의: ${i.allergy}. 처방의에게 확인했나요?`)}</div>}
                 {high && (
-                  <div className="nwarn">
+                  <div className="ns-nwarn">
                     <p>고위험 약물: 용량, 농도, 펌프 설정을 둘이서 확인하세요.</p>
-                    <input className="ndq" value={dbl} onChange={e => setDbl(e.target.value)} placeholder="이중확인자 이름" aria-label="이중확인자" />
+                    <input className="ns-ndq" value={dbl} onChange={e => setDbl(e.target.value)} placeholder="이중확인자 이름" aria-label="이중확인자" />
                   </div>
                 )}
-                <div className="nfa">
+                <div className="ns-nfa">
                   <button type="button" onClick={() => setChk(null)}>취소</button>
-                  <button type="button" className="go" disabled={!ok} onClick={() => { perform(chk); setChk(null); }}>투약 완료</button>
+                  <button type="button" className="ns-go" disabled={!ok} onClick={() => { perform(chk); setChk(null); }}>투약 완료</button>
                 </div>
               </div>
             </div>
@@ -322,16 +322,16 @@ export default function EhrNurse({
       })()}
 
       {win && (
-        <div className="nwin" role="dialog" aria-label={win}>
+        <div className="ns-nwin" role="dialog" aria-label={win}>
           <header>
             <b>{MENUS.find(m => m.id === win)?.label}</b>
             <button type="button" onClick={onClose}>닫기</button>
           </header>
-          <div className="nwb">
+          <div className="ns-nwb">
             {win === 'dir' ? (
               <>
-                <input className="ndq" value={dq} onChange={e => setDq(e.target.value)} placeholder="부서 검색" aria-label="부서 검색" />
-                <table className="nlist">
+                <input className="ns-ndq" value={dq} onChange={e => setDq(e.target.value)} placeholder="부서 검색" aria-label="부서 검색" />
+                <table className="ns-nlist">
                   <tbody>
                     {DIR.filter(([n]) => n.includes(dq.trim())).map(([n, t]) => <tr key={n}><td>{n}</td><td>{t}</td></tr>)}
                   </tbody>
@@ -343,79 +343,79 @@ export default function EhrNurse({
       )}
 
       <style>{`
-        .nu { border: 1px solid #94a3b8; background: var(--background, #fff); color: var(--text); border-radius: 6px; overflow: hidden; font-size: 13px; position: relative; }
-        .nmenu { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 0 8px; background: linear-gradient(#233a5c, #17283f); }
-        .nmenu b { color: #e8c97a; padding: 0 12px 0 6px; }
-        .nmenu button { border: 0; background: transparent; color: #e5ebf3; padding: 11px 12px; font: inherit; font-weight: 600; cursor: pointer; }
-        .nmenu button.on { color: #38d6ff; box-shadow: inset 0 -3px 0 #38d6ff; }
-        .nmenu .ch { margin-left: auto; color: #e8c97a; }
-        .ngrid { display: grid; grid-template-columns: 240px minmax(0, 1fr) 240px; min-height: 70vh; }
-        .nl { border-right: 1px solid var(--border); padding: 10px; display: flex; flex-direction: column; gap: 10px; }
-        .nr { border-left: 1px solid var(--border); padding: 10px; display: flex; flex-direction: column; gap: 10px; }
-        .nc { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
-        .nsr { display: flex; gap: 4px; }
-        .nsr input { flex: 1; min-width: 0; border: 1px solid var(--border); border-radius: 6px; padding: 7px 8px; font: inherit; background: var(--background); color: var(--text); }
-        .nsr button, .nd3 + * button { border: 1px solid var(--primary); background: var(--primary); color: #fff; border-radius: 6px; padding: 6px 10px; font: inherit; font-weight: 700; cursor: pointer; white-space: nowrap; }
-        .nsr button:disabled { opacity: .4; }
-        .nerr { margin: 0; color: #dc2626; font-size: 12px; }
-        .npt { background: var(--muted-background); border: 1px solid var(--border); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 3px; }
-        .npt b { font-size: 20px; }
-        .npt span { color: var(--sub-text); }
-        .nflags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
-        .nflags em { font-style: normal; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(245,158,11,.18); color: #b9770e; }
-        .nflags em.al { background: rgba(239,68,68,.14); color: #dc2626; }
-        .nbox h4 { margin: 0 0 6px; font-size: 13px; color: var(--sub-text); }
-        .nbox p { margin: 0 0 6px; line-height: 1.4; white-space: pre-wrap; }
-        .nbox p i { display: block; font-size: 11px; color: var(--sub-text); font-style: normal; }
-        .nnone { color: var(--sub-text); margin: 4px 0; font-size: 12.5px; }
-        .nd3 { display: flex; gap: 4px; margin-bottom: 6px; }
-        .nd3 select, .nd3 input { min-width: 0; border: 1px solid var(--border); border-radius: 6px; padding: 6px; font: inherit; background: var(--background); color: var(--text); }
-        .nd3 select:first-child { flex: 1.4; } .nd3 input { flex: 1; } .nd3 select:last-child { width: 52px; }
-        .nlist { width: 100%; min-width: 0; table-layout: fixed; border-collapse: collapse; font-size: 12.5px; }
-        .nlist td, .nlist th { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .nlist th { text-align: left; color: var(--sub-text); font-weight: 600; padding: 4px; border-bottom: 1px solid var(--border); }
-        .nlist td { padding: 5px 4px; border-bottom: 1px solid var(--border); }
-        .nlist tbody tr { cursor: pointer; }
-        .nlist tr.on { background: rgba(14,74,132,.12); font-weight: 700; }
-        .nhd { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
-        .nhd span { font-weight: 700; }
-        .nhd input { border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font: inherit; background: var(--background); color: var(--text); }
-        .nhd .cmp { margin-left: auto; border: 1px solid var(--border); background: transparent; color: inherit; border-radius: 6px; padding: 6px 12px; font: inherit; cursor: pointer; }
-        .nsec h3 { margin: 0; padding: 6px 10px; background: #ececec; color: #111; text-align: center; font-size: 14px; border: 1px solid #aaa; }
-        .nrow { display: flex; gap: 10px; justify-content: space-between; align-items: flex-start; padding: 8px 6px; border-bottom: 1px solid var(--border); }
-        .nrow.x .nm b { text-decoration: line-through; opacity: .6; }
-        .nm { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
-        .nm span { color: var(--sub-text); font-size: 12px; }
-        .nm em { font-style: normal; font-size: 12px; color: #b9770e; }
-        .nd { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 4px; max-width: 55%; }
-        .nd button { border: 1px solid var(--border); background: transparent; color: inherit; border-radius: 6px; padding: 5px 10px; font: inherit; font-size: 12.5px; cursor: pointer; }
-        .nd .go { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 700; }
-        .chip { font-size: 12px; padding: 3px 8px; border-radius: 999px; background: rgba(16,185,129,.14); color: #047857; font-weight: 700; white-space: nowrap; }
-        .chip.x { background: rgba(100,116,139,.2); color: #475569; }
-        .nft { display: flex; justify-content: flex-end; border-top: 1px solid var(--border); padding-top: 8px; margin-top: auto; }
-        .nft button { border: 1px solid #aaa; background: #ececec; color: #111; border-radius: 6px; padding: 8px 16px; font: inherit; font-weight: 600; cursor: pointer; }
-        .ncb { display: flex; align-items: center; gap: 8px; padding: 5px 2px; cursor: pointer; }
-        .ncb input { width: 16px; height: 16px; }
-        .nsticky { width: 100%; box-sizing: border-box; border: 1px solid #e6d9a3; border-radius: 6px; padding: 10px; font: inherit; background: #fcf1d0; color: #3b3320; resize: vertical; }
-        .nmd { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 12px; }
-        .nmk { position: absolute; inset: 0; border: 0; background: rgba(15,23,42,.45); }
-        .nmb { position: relative; width: min(460px, 100%); max-height: 80vh; overflow: auto; background: var(--background, #fff); color: var(--text); border-radius: 12px; }
-        .nmb header, .nwin header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); }
-        .nmb header button, .nwin header button { border: 0; background: transparent; color: var(--sub-text); font: inherit; cursor: pointer; }
-        .nmc { padding: 12px 16px 16px; } .nmc h4 { margin: 10px 0 4px; } .nmc p { margin: 0 0 4px; }
-        .nwarn { background: rgba(239,68,68,.1); border-radius: 8px; padding: 6px 10px; margin-top: 6px; }
-        .nwarn p { margin: 4px 0; font-size: 12.5px; color: #dc2626; font-weight: 700; }
-        .nfa { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
-        .nfa button { border: 1px solid var(--border); background: transparent; color: inherit; border-radius: 8px; padding: 8px 18px; font: inherit; font-weight: 600; cursor: pointer; }
-        .nfa .go { background: var(--primary); border-color: var(--primary); color: #fff; }
-        .nfa .go:disabled { opacity: .4; }
-        @media (min-width: 1200px) { .nu.hasw { margin-right: 440px; } }
-        .nwin { position: fixed; z-index: 55; top: 0; right: 0; bottom: 0; width: min(440px, 100%); background: var(--background, #fff); color: var(--text); border-left: 1px solid #94a3b8; box-shadow: -6px 0 24px rgba(0,0,0,.22); display: flex; flex-direction: column; }
-        .nwb { padding: 12px 14px 24px; overflow: auto; flex: 1; }
-        .ndq { width: 100%; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; padding: 8px; font: inherit; margin-bottom: 8px; background: var(--background); color: var(--text); }
+        .ns-nu { border: 1px solid #94a3b8; background: var(--background, #fff); color: var(--text); border-radius: 6px; overflow: hidden; font-size: 13px; position: relative; }
+        .ns-nmenu { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 0 8px; background: linear-gradient(#233a5c, #17283f); }
+        .ns-nmenu b { color: #e8c97a; padding: 0 12px 0 6px; }
+        .ns-nmenu button { border: 0; background: transparent; color: #e5ebf3; padding: 11px 12px; font: inherit; font-weight: 600; cursor: pointer; }
+        .ns-nmenu button.ns-on { color: #38d6ff; box-shadow: inset 0 -3px 0 #38d6ff; }
+        .ns-nmenu .ns-ch { margin-left: auto; color: #e8c97a; }
+        .ns-ngrid { display: grid; grid-template-columns: 240px minmax(0, 1fr) 240px; min-height: 70vh; }
+        .ns-nl { border-right: 1px solid var(--border); padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+        .ns-nr { border-left: 1px solid var(--border); padding: 10px; display: flex; flex-direction: column; gap: 10px; }
+        .ns-nc { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+        .ns-nsr { display: flex; gap: 4px; }
+        .ns-nsr input { flex: 1; min-width: 0; border: 1px solid var(--border); border-radius: 6px; padding: 7px 8px; font: inherit; background: var(--background); color: var(--text); }
+        .ns-nsr button, .ns-nd3 + * button { border: 1px solid var(--primary); background: var(--primary); color: #fff; border-radius: 6px; padding: 6px 10px; font: inherit; font-weight: 700; cursor: pointer; white-space: nowrap; }
+        .ns-nsr button:disabled { opacity: .4; }
+        .ns-nerr { margin: 0; color: #dc2626; font-size: 12px; }
+        .ns-npt { background: var(--muted-background); border: 1px solid var(--border); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 3px; }
+        .ns-npt b { font-size: 20px; }
+        .ns-npt span { color: var(--sub-text); }
+        .ns-nflags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
+        .ns-nflags em { font-style: normal; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(245,158,11,.18); color: #b9770e; }
+        .ns-nflags em.ns-al { background: rgba(239,68,68,.14); color: #dc2626; }
+        .ns-nbox h4 { margin: 0 0 6px; font-size: 13px; color: var(--sub-text); }
+        .ns-nbox p { margin: 0 0 6px; line-height: 1.4; white-space: pre-wrap; }
+        .ns-nbox p i { display: block; font-size: 11px; color: var(--sub-text); font-style: normal; }
+        .ns-nnone { color: var(--sub-text); margin: 4px 0; font-size: 12.5px; }
+        .ns-nd3 { display: flex; gap: 4px; margin-bottom: 6px; }
+        .ns-nd3 select, .ns-nd3 input { min-width: 0; border: 1px solid var(--border); border-radius: 6px; padding: 6px; font: inherit; background: var(--background); color: var(--text); }
+        .ns-nd3 select:first-child { flex: 1.4; } .ns-nd3 input { flex: 1; } .ns-nd3 select:last-child { width: 52px; }
+        .ns-nlist { width: 100%; min-width: 0; table-layout: fixed; border-collapse: collapse; font-size: 12.5px; }
+        .ns-nlist td, .ns-nlist th { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .ns-nlist th { text-align: left; color: var(--sub-text); font-weight: 600; padding: 4px; border-bottom: 1px solid var(--border); }
+        .ns-nlist td { padding: 5px 4px; border-bottom: 1px solid var(--border); }
+        .ns-nlist tbody tr { cursor: pointer; }
+        .ns-nlist tr.ns-on { background: rgba(14,74,132,.12); font-weight: 700; }
+        .ns-nhd { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+        .ns-nhd span { font-weight: 700; }
+        .ns-nhd input { border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font: inherit; background: var(--background); color: var(--text); }
+        .ns-nhd .ns-cmp { margin-left: auto; border: 1px solid var(--border); background: transparent; color: inherit; border-radius: 6px; padding: 6px 12px; font: inherit; cursor: pointer; }
+        .ns-nsec h3 { margin: 0; padding: 6px 10px; background: #ececec; color: #111; text-align: center; font-size: 14px; border: 1px solid #aaa; }
+        .ns-nrow { display: flex; gap: 10px; justify-content: space-between; align-items: flex-start; padding: 8px 6px; border-bottom: 1px solid var(--border); }
+        .ns-nrow.ns-x .ns-nm b { text-decoration: line-through; opacity: .6; }
+        .ns-nm { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+        .ns-nm span { color: var(--sub-text); font-size: 12px; }
+        .ns-nm em { font-style: normal; font-size: 12px; color: #b9770e; }
+        .ns-nd { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 4px; max-width: 55%; }
+        .ns-nd button { border: 1px solid var(--border); background: transparent; color: inherit; border-radius: 6px; padding: 5px 10px; font: inherit; font-size: 12.5px; cursor: pointer; }
+        .ns-nd .ns-go { background: var(--primary); border-color: var(--primary); color: #fff; font-weight: 700; }
+        .ns-chip { font-size: 12px; padding: 3px 8px; border-radius: 999px; background: rgba(16,185,129,.14); color: #047857; font-weight: 700; white-space: nowrap; }
+        .ns-chip.ns-x { background: rgba(100,116,139,.2); color: #475569; }
+        .ns-nft { display: flex; justify-content: flex-end; border-top: 1px solid var(--border); padding-top: 8px; margin-top: auto; }
+        .ns-nft button { border: 1px solid #aaa; background: #ececec; color: #111; border-radius: 6px; padding: 8px 16px; font: inherit; font-weight: 600; cursor: pointer; }
+        .ns-ncb { display: flex; align-items: center; gap: 8px; padding: 5px 2px; cursor: pointer; }
+        .ns-ncb input { width: 16px; height: 16px; }
+        .ns-nsticky { width: 100%; box-sizing: border-box; border: 1px solid #e6d9a3; border-radius: 6px; padding: 10px; font: inherit; background: #fcf1d0; color: #3b3320; resize: vertical; }
+        .ns-nmd { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 12px; }
+        .ns-nmk { position: absolute; inset: 0; border: 0; background: rgba(15,23,42,.45); }
+        .ns-nmb { position: relative; width: min(460px, 100%); max-height: 80vh; overflow: auto; background: var(--background, #fff); color: var(--text); border-radius: 12px; }
+        .ns-nmb header, .ns-nwin header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+        .ns-nmb header button, .ns-nwin header button { border: 0; background: transparent; color: var(--sub-text); font: inherit; cursor: pointer; }
+        .ns-nmc { padding: 12px 16px 16px; } .ns-nmc h4 { margin: 10px 0 4px; } .ns-nmc p { margin: 0 0 4px; }
+        .ns-nwarn { background: rgba(239,68,68,.1); border-radius: 8px; padding: 6px 10px; margin-top: 6px; }
+        .ns-nwarn p { margin: 4px 0; font-size: 12.5px; color: #dc2626; font-weight: 700; }
+        .ns-nfa { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+        .ns-nfa button { border: 1px solid var(--border); background: transparent; color: inherit; border-radius: 8px; padding: 8px 18px; font: inherit; font-weight: 600; cursor: pointer; }
+        .ns-nfa .ns-go { background: var(--primary); border-color: var(--primary); color: #fff; }
+        .ns-nfa .ns-go:disabled { opacity: .4; }
+        @media (min-width: 1500px) { .ns-nu.ns-hasw { margin-right: 440px; } }
+        .ns-nwin { position: fixed; z-index: 55; top: 0; right: 0; bottom: 0; width: min(440px, 100%); background: var(--background, #fff); color: var(--text); border-left: 1px solid #94a3b8; box-shadow: -6px 0 24px rgba(0,0,0,.22); display: flex; flex-direction: column; }
+        .ns-nwb { padding: 12px 14px 24px; overflow: auto; flex: 1; }
+        .ns-ndq { width: 100%; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; padding: 8px; font: inherit; margin-bottom: 8px; background: var(--background); color: var(--text); }
         @media (max-width: 980px) {
-          .ngrid { grid-template-columns: 1fr; }
-          .nl, .nr { border: 0; border-bottom: 1px solid var(--border); }
+          .ns-ngrid { grid-template-columns: 1fr; }
+          .ns-nl, .ns-nr { border: 0; border-bottom: 1px solid var(--border); }
         }
       `}</style>
     </div>
