@@ -2,6 +2,7 @@
 
 import { SAMPLES } from '../samples';
 import { MATS, matsFor } from '../codes';
+import NurseForm from './NurseForms';
 import { useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
 import { useRouter } from 'next/navigation';
 import type { ChartData, Row } from '../types';
@@ -449,6 +450,8 @@ export default function EhrNurse({
               </>
             ) : win === 'bulk' ? (
               <WardBulk pts={bulkPts} onClose={onClose} />
+            ) : (win === 'vitals' || win === 'bst' || win === 'mat' || win === 'nact') ? (
+              <NurseForm kind={win} data={data} setData={setData} userName={userName} />
             ) : drawer}
           </div>
         </div>
