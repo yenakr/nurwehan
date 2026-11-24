@@ -5,7 +5,7 @@ import { MATS, matsFor } from '../codes';
 import NurseForm from './NurseForms';
 import { useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
 import { useRouter } from 'next/navigation';
-import type { ChartData, Row } from '../types';
+import { migrate, shiftChart, type ChartData, type Row } from '../types';
 import WardBulk, { type BulkPt } from '../WardBulk';
 
 export type Roster = { id: string; ward: string | null; bed: string | null; name: string | null; ageSex: string | null; ptNo: string | null; doctor: string | null; admit?: string | null; disDate?: string | null; orders?: Row[] };
@@ -168,7 +168,13 @@ export default function EhrNurse({
   const wards = Array.from(new Set(roster.map(r => r.ward).filter((w): w is string => !!w)));
   const list = roster.filter(r => r.ward === ward && (team === '전체' || teamOf(r.bed) === team)).sort((a, b) => (a.bed || '').localeCompare(b.bed || '', 'ko', { numeric: true }));
   const flags = Array.from(new Set([...data.acu.map(r => r.risk), ...data.risk.filter(r => /고위험/.test(r.level || '')).map(r => (r.kind || '').split('(')[0])].filter(Boolean)));
-  const bulkPts: BulkPt[] = list.map(r => ({ key: r.id, bed: r.bed || '', name: r.name || '', ageSex: r.ageSex || '', id: r.id, make: () => ({ title: '', subject: null, data: {} }) }));
+  const bulkPts: BulkPt[] = [
+    ...list.map(r => ({ self: r.ptNo === i.ptNo, key: r.id, bed: r.bed || '', name: r.name || '', ageSex: r.ageSex || '', id: r.id, make: () => ({ title: '', subject: null, data: {} }) })),
+    ...SAMPLES.filter(sp => {
+      const x = sp.data.info;
+      return x.ward === ward && !roster.some(r => r.ptNo === x.ptNo) && (team === '전체' || teamOf(x.bed || '') === team);
+    }).map(sp => ({ key: sp.key, bed: sp.data.info.bed || '', name: sp.data.info.name || '', ageSex: sp.data.info.ageSex || '', make: () => ({ title: sp.title, subject: sp.subject, data: shiftChart(migrate(sp.data)) }) })),
+  ].sort((a, b) => a.bed.localeCompare(b.bed, 'ko', { numeric: true }));
   const shift = (n: number) => {
     const [y, m, d0] = date.split('-').map(Number);
     if (!y) return;
@@ -575,7 +581,7 @@ export default function EhrNurse({
                 </table>
               </>
             ) : win === 'bulk' ? (
-              <WardBulk pts={bulkPts} onClose={onClose} />
+              <WardBulk pts={bulkPts} onClose={onClose} onSelf={row => setData(d => ({ ...d, vitals: [...d.vitals, row] }))} />
             ) : (win === 'vitals' || win === 'bst' || win === 'mat' || win === 'nact') ? (
               <NurseForm kind={win} data={data} setData={setData} userName={userName} />
             ) : drawer}

@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { notify } from '@/components/Dialog';
 import type { ChartData, Row } from './types';
 
-export type BulkPt = { key: string; bed: string; name: string; ageSex: string; id?: string; make: () => { title: string; subject: string | null; data: unknown } };
+export type BulkPt = { self?: boolean; key: string; bed: string; name: string; ageSex: string; id?: string; make: () => { title: string; subject: string | null; data: unknown } };
 
 const COLS: { key: string; label: string; ph: string }[] = [
   { key: 'bp', label: '혈압', ph: '120/80' },
@@ -17,7 +17,7 @@ const COLS: { key: string; label: string; ph: string }[] = [
 ];
 const nowHM = () => { const d = new Date(); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
 
-export default function WardBulk({ pts, onClose }: { pts: BulkPt[]; onClose: () => void }) {
+export default function WardBulk({ pts, onClose, onSelf }: { pts: BulkPt[]; onClose: () => void; onSelf?: (row: Row) => void }) {
   const router = useRouter();
   const [time, setTime] = useState(nowHM);
   const [vals, setVals] = useState<Record<string, Row>>({});
@@ -30,14 +30,15 @@ export default function WardBulk({ pts, onClose }: { pts: BulkPt[]; onClose: () 
     if (todo.length === 0) return;
     setBusy(true);
     try {
-      const saved = todo.filter(p => p.id).map(p => ({ id: p.id as string, row: { time, ...vals[p.key] } }));
       let n = 0;
+      todo.filter(p => p.self).forEach(p => { onSelf?.({ time, ...vals[p.key] }); n++; });
+      const saved = todo.filter(p => p.id && !p.self).map(p => ({ id: p.id as string, row: { time, ...vals[p.key] } }));
       if (saved.length) {
         const r = await fetch('/api/ehr/bulk-vitals', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: saved }) });
         const j = await r.json().catch(() => ({}));
         n += r.ok ? Number(j.n) || 0 : 0;
       }
-      for (const p of todo.filter(p => !p.id)) {
+      for (const p of todo.filter(p => !p.id && !p.self)) {
         const m = p.make();
         const d = m.data as ChartData;
         const r = await fetch('/api/ehr', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...m, data: { ...d, vitals: [...(d.vitals || []), { time, ...vals[p.key] }] } }) });
