@@ -7,7 +7,7 @@ export const women: Sample = {
   title: '모성 · 제왕절개 산후 1일',
   data: {
     info: {
-      sampleKey: 'women', bed: '402-1', ptNo: '00000003', name: '정미경', ageSex: '33/F', ward: '41병동', dept: 'OB', doctor: '최산부', admit: dt(-2), orderDate: dt(0),
+      sampleKey: 'women', bed: '401-1', ptNo: '00000003', name: '정미경', ageSex: '33/F', ward: '41병동', dept: 'OB', doctor: '최산부', admit: dt(-2), orderDate: dt(0),
       allergy: '무', dx: 'Term pregnancy, s/p repeat low transverse cesarean section (G2P2)', height: '162', weight: '71.0', iso: '없음', npo: '0', surg: '1',
       cc: '예정 제왕절개 분만', onset: dt(-2),
       hpi: '임신 39주 2일, 첫째 아이를 제왕절개로 분만한 과거력이 있어 예정 제왕절개를 위해 입원함. 산전 검사에서 특이 소견 없음.',

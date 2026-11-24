@@ -7,7 +7,7 @@ export const gs: Sample = {
   title: '일반외과 · 복강경 충수절제술 후 1일',
   data: {
     info: {
-      sampleKey: 'gs', bed: '804-1', ptNo: '00000007', name: '이준호', ageSex: '29/M', ward: '81병동', dept: 'GS', doctor: '장일반', admit: dt(-1), orderDate: dt(0),
+      sampleKey: 'gs', bed: '801-1', ptNo: '00000007', name: '이준호', ageSex: '29/M', ward: '81병동', dept: 'GS', doctor: '장일반', admit: dt(-1), orderDate: dt(0),
       allergy: '무', dx: 'Acute appendicitis, s/p laparoscopic appendectomy', height: '175', weight: '72.0', iso: '없음', npo: '0', surg: '1',
       cc: '우하복부 통증, 발열', onset: dt(-2),
       hpi: '2일 전 명치 부위 통증으로 시작해 우하복부로 이동하였고 구역과 미열이 동반됨. 응급실에서 복부 CT상 급성 충수염 소견으로 수술 후 입원함.',

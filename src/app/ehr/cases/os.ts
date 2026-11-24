@@ -7,7 +7,7 @@ export const os: Sample = {
   title: '정형외과 · 슬관절 전치환술 후 1일',
   data: {
     info: {
-      sampleKey: 'os', bed: '905-2', ptNo: '00000008', name: '박정애', ageSex: '69/F', ward: '91병동', dept: 'OS', doctor: '하정형', admit: dt(-2), orderDate: dt(0),
+      sampleKey: 'os', bed: '901-1', ptNo: '00000008', name: '박정애', ageSex: '69/F', ward: '91병동', dept: 'OS', doctor: '하정형', admit: dt(-2), orderDate: dt(0),
       allergy: '아스피린/NSAIDs', dx: 'Primary osteoarthritis of right knee, s/p TKA (Rt)', height: '152', weight: '66.0', iso: '없음', npo: '0', surg: '1',
       cc: '우측 무릎 통증, 보행 장애', onset: dt(-1100),
       hpi: '3년 전부터 우측 무릎 통증이 심해져 계단 이용과 보행이 어렵고 보존 치료에 반응이 없어 우측 슬관절 전치환술을 위해 입원함.',

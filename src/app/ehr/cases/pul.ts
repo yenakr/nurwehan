@@ -7,7 +7,7 @@ export const pul: Sample = {
   title: '호흡기 · 폐렴 (인플루엔자 동반)',
   data: {
     info: {
-      sampleKey: 'pul', bed: '605-1', ptNo: '00000006', name: '최영철', ageSex: '81/M', ward: '61병동', dept: 'PUL', doctor: '최호흡', admit: dt(-3), orderDate: dt(0),
+      sampleKey: 'pul', bed: '601-2', ptNo: '00000006', name: '최영철', ageSex: '81/M', ward: '61병동', dept: 'PUL', doctor: '최호흡', admit: dt(-3), orderDate: dt(0),
       allergy: '무', dx: 'Community-acquired pneumonia, Influenza A', height: '167', weight: '54.0', iso: '비말', npo: '0', surg: '0',
       cc: '발열, 기침, 가래, 호흡곤란', onset: dt(-6),
       hpi: '6일 전부터 기침과 누런 가래, 38도대 발열이 있었고 이틀 전부터 식사량이 줄고 숨이 차 내원함. 응급실에서 흉부 X선상 우하엽 폐렴 소견, 인플루엔자 A 양성으로 입원함.',
