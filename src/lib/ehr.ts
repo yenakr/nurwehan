@@ -14,7 +14,7 @@ export async function listCases(userId: string): Promise<EhrListRow[]> {
     return await prisma.$queryRaw<EhrListRow[]>`
       SELECT "id", "title", "subject", "updatedAt",
         "data"->'info'->>'ward' AS "ward", "data"->'info'->>'bed' AS "bed", "data"->'info'->>'sampleKey' AS "sampleKey",
-        "data"->'info'->>'ptNo' AS "ptNo", "data"->'info'->>'name' AS "name", "data"->'info'->>'ageSex' AS "ageSex",
+        RIGHT("data"->'info'->>'ptNo', 4) AS "ptNo", "data"->'info'->>'name' AS "name", "data"->'info'->>'ageSex' AS "ageSex",
         "data"->'info'->>'dx' AS "dx", "data"->'info'->>'doctor' AS "doctor", "data"->'info'->>'admit' AS "admit",
         "data"->'info'->>'dept' AS "dept", "data"->'info'->>'visitTime' AS "visitTime", "data"->'info'->>'vstatus' AS "vstatus",
         "data"->'info'->>'ktas' AS "ktas", "data"->'info'->>'zone' AS "zone", "data"->'info'->>'cc' AS "cc",
