@@ -18,6 +18,7 @@ import MarPanel from './EhrMar';
 import MemoPanel from './EhrMemo';
 import { shiftOf, criticalFlags, badgesOf, BMI, DC_EDU, ISO } from '../emr';
 import RxPanel from './EhrRx';
+import EhrNurse, { type Roster } from './EhrNurse';
 import { printNameTag, printTickets, type TicketKind } from '../print';
 import { DX, ACTS, MATS, DIETS, FORMS2, RET_KINDS, dxName, dxCode } from '../codes';
 import FormPanel, { FORMS, FORM_CSS, type FormKey } from './EhrForms';
@@ -619,8 +620,10 @@ export default function EhrEditor({
   aiLeft,
   userName,
   printKind,
+  roster,
 }: {
   printKind?: string;
+  roster?: Roster[];
   ai: boolean;
   aiLeft?: number;
   userName?: string;
@@ -633,6 +636,8 @@ export default function EhrEditor({
   const [title, setTitle] = useState(initialTitle);
   const [data, setData] = useState<ChartData>(initial);
   const [tab, setTab] = useState<TabId>('notes');
+  const [screen, setScreen] = useState<'main' | 'chart'>('main');
+  const [win, setWin] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
   const wardRef = useRef<HTMLDivElement>(null);
@@ -1111,6 +1116,7 @@ export default function EhrEditor({
     <div className="ehr">
       <div className="bar">
         <button type="button" className="back" onClick={() => router.push(`/ehr?view=${encodeURIComponent(info.ward === '응급실' ? '응급' : info.ward || '')}`)}>&larr; {info.ward === '응급실' ? '응급' : info.ward || '목록'}</button>
+        <button type="button" className="back" onClick={() => { setWin(null); setScreen(screen === 'main' ? 'chart' : 'main'); }}>{screen === 'main' ? '전체 차트' : '간호 화면'}</button>
         <input className="ttl" value={title} onChange={e => setTitle(e.target.value)} aria-label="제목" />
         <span className={`st ${status}`}>{status === 'saved' ? '저장됨' : status === 'saving' ? '저장 중…' : '저장 실패'}</span>
         {ai && !locked && aiOn && <button type="button" className="aib" onClick={askFb} disabled={fbBusy || fbLeft <= 0}><AiMark size={14} />{fbBusy ? '살펴보는 중' : `AI 피드백 ${fbLeft}회`}</button>}
@@ -1152,6 +1158,20 @@ export default function EhrEditor({
       {fb && <div className="cmt ai"><b style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><AiMark size={14} />AI 피드백</b><button type="button" className="cx" aria-label="닫기" onClick={() => setFb('')}>&times;</button><p>{fb}</p></div>}
 
       <fieldset disabled={locked} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+      {screen === 'main' ? (
+        <EhrNurse
+          data={data}
+          setData={setData}
+          userName={userName || ''}
+          roster={roster || []}
+          win={win}
+          onOpen={id => { if (id !== 'dir') setTab(id as TabId); setWin(win === id ? null : id); }}
+          onClose={() => setWin(null)}
+          drawer={tabBody}
+          onChart={() => setScreen('chart')}
+          onLabel={() => printTickets(data, '전체')}
+        />
+      ) : (
       <div className="shell">
         <div className="top">
           <div className="wardSel" ref={wardRef}>
@@ -1296,6 +1316,7 @@ export default function EhrEditor({
           </section>
         </div>
       </div>
+      )}
       </fieldset>
 
       <style>{FORM_CSS}</style>

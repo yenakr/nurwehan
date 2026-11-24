@@ -35,8 +35,8 @@ const kindOf = (r: Row): TicketKind => {
   return FLUID.test(r.name || '') ? '수액' : '주사';
 };
 
-export function printTickets(d: ChartData, kind: TicketKind) {
-  const meds = d.orders.filter(r => r.kind !== 'sec' && r.kind !== 'memo' && r.pri !== 'D/C' && r.st !== '취소' && (r.dose || r.route) && kindOf(r) === kind);
+export function printTickets(d: ChartData, kind: TicketKind | '전체') {
+  const meds = d.orders.filter(r => r.kind !== 'sec' && r.kind !== 'memo' && r.pri !== 'D/C' && r.st !== '취소' && (r.dose || r.route) && (kind === '전체' || kindOf(r) === kind));
   const i = d.info;
   const cards = meds.map(r => `<div class="tk">
 <div class="h"><b>${esc(i.name || '')}</b> ${esc(`${i.ward || ''} ${i.bed || ''}`.trim())} · ${esc(i.ptNo || '')}</div>
