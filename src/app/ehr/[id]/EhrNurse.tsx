@@ -1,6 +1,7 @@
 'use client';
 
 import { SAMPLES } from '../samples';
+import { MATS, matsFor } from '../codes';
 import { useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
 import { useRouter } from 'next/navigation';
 import type { ChartData, Row } from '../types';
@@ -162,6 +163,11 @@ export default function EhrNurse({
     const p: Row = { ck: '1', [next]: `${hm()} ${duty}/${userName}` };
     if (!isMed(it.r)) p.st = '완료';
     patch(it.i, p);
+    const used2 = matsFor(it.r);
+    if (used2.length) {
+      const act = isMed(it.r) ? '투약' : (it.r.name || '');
+      setData(d => ({ ...d, mat: [...d.mat, ...used2.map(([item, qty]): Row => ({ time: `${date.slice(5)} ${hm()}`, item, qty: String(qty), unit: MATS.find(m => m[0] === item)?.[1] || 'ea', act, by: userName }))] }));
+    }
   };
   const ask = (it: Item) => {
     if (isMed(it.r)) { setC5({}); setDbl(''); setChk(it); } else perform(it);
