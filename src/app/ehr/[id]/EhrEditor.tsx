@@ -18,6 +18,7 @@ import MarPanel from './EhrMar';
 import MemoPanel from './EhrMemo';
 import { shiftOf, criticalFlags, badgesOf, BMI, DC_EDU, ISO } from '../emr';
 import RxPanel from './EhrRx';
+import { printNameTag, printTickets, type TicketKind } from '../print';
 import { DX, ACTS, MATS, DIETS, FORMS2, RET_KINDS, dxName, dxCode } from '../codes';
 import FormPanel, { FORMS, FORM_CSS, type FormKey } from './EhrForms';
 
@@ -600,6 +601,15 @@ function CareComposer({ onAdd }: { onAdd: (r: Row) => void }) {
   );
 }
 
+function applyRules(lk: string, n: Row, k: string, v: string) {
+  if (lk === 'dxcode') {
+    if (k === 'code') { const nm = dxName(v); if (nm) n.name = nm; }
+    if (k === 'name') { const cd = dxCode(v); if (cd) n.code = cd; }
+  }
+  if (lk === 'mat' && k === 'item') { const u = MATS.find(m => m[0] === v)?.[1]; if (u) { n.unit = u; if (!n.qty) n.qty = '1'; } }
+  if (lk === 'nact' && k === 'act') { const m = ACTS.find(a => a[0] === v)?.[1]; if (m && !n.mat) n.mat = m; if (!n.st) n.st = '수행'; }
+}
+
 export default function EhrEditor({
   id,
   initialTitle,
@@ -608,7 +618,9 @@ export default function EhrEditor({
   ai,
   aiLeft,
   userName,
+  printKind,
 }: {
+  printKind?: string;
   ai: boolean;
   aiLeft?: number;
   userName?: string;
@@ -646,6 +658,9 @@ export default function EhrEditor({
     document.addEventListener('visibilitychange', vis);
     return () => { window.removeEventListener('pagehide', flush); document.removeEventListener('visibilitychange', vis); };
   }, [id]);
+  useEffect(() => {
+    if (printKind === '투약' || printKind === '주사' || printKind === '수액') printTickets(latest.current.data, printKind);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const [aiOn, setAiOn] = useState(true);
   const [fb, setFb] = useState('');
   const [fbBusy, setFbBusy] = useState(false);
@@ -729,12 +744,7 @@ export default function EhrEditor({
         const t = new Date(); const p = (x: number) => String(x).padStart(2, '0');
         n.mod = `${p(t.getMonth() + 1)}-${p(t.getDate())} ${p(t.getHours())}:${p(t.getMinutes())}`;
       }
-      if (lk === 'dxcode') {
-        if (k === 'code') { const nm = dxName(v); if (nm) n.name = nm; }
-        if (k === 'name') { const cd = dxCode(v); if (cd) n.code = cd; }
-      }
-      if (lk === 'mat' && k === 'item') { const u = MATS.find(m => m[0] === v)?.[1]; if (u) { n.unit = u; if (!n.qty) n.qty = '1'; } }
-      if (lk === 'nact' && k === 'act') { const m = ACTS.find(a => a[0] === v)?.[1]; if (m && !n.mat) n.mat = m; if (!n.st) n.st = '수행'; }
+      applyRules(lk, n, k, v);
       return n;
     }) }));
   const addRow = (lk: AnyList, init: Row = {}) => setData(d => ({ ...d, [lk]: [...d[lk], { ...init }] }));
@@ -868,155 +878,8 @@ export default function EhrEditor({
 
   const orders = data.orders;
   let seq = 0;
-
-  return (
-    <div className="ehr">
-      <div className="bar">
-        <button type="button" className="back" onClick={() => router.push(`/ehr?view=${encodeURIComponent(info.ward === '응급실' ? '응급' : info.ward || '')}`)}>&larr; {info.ward === '응급실' ? '응급' : info.ward || '목록'}</button>
-        <input className="ttl" value={title} onChange={e => setTitle(e.target.value)} aria-label="제목" />
-        <span className={`st ${status}`}>{status === 'saved' ? '저장됨' : status === 'saving' ? '저장 중…' : '저장 실패'}</span>
-        {ai && !locked && aiOn && <button type="button" className="aib" onClick={askFb} disabled={fbBusy || fbLeft <= 0}><AiMark size={14} />{fbBusy ? '살펴보는 중' : `AI 피드백 ${fbLeft}회`}</button>}
-        {locked
-          ? (!info.reviewed && <button type="button" className="subm out" onClick={unsubmit}>제출 취소</button>)
-          : <button type="button" className="subm" onClick={submit}>제출</button>}
-        <div className="more">
-          <button type="button" className="mbtn" aria-label="더보기" onClick={() => setMoreOpen(o => !o)}>&middot;&middot;&middot;</button>
-          {moreOpen && (
-            <>
-              <button type="button" className="mbk" aria-label="닫기" onClick={() => setMoreOpen(false)} />
-              <div className="mm">
-                <button type="button" onClick={() => { setMoreOpen(false); if (!printChart(title, data, userName || '')) notify('팝업을 허용해 주세요.'); }}>인쇄</button>
-                <button type="button" disabled={locked} onClick={() => { setMoreOpen(false); toggleDischarge(); }}>{info.discharged ? '퇴원 취소' : '퇴원'}</button>
-                {ai && !locked && <button type="button" onClick={() => { toggleAi(); setMoreOpen(false); }}>AI 피드백 {aiOn ? '끄기' : '켜기'}</button>}
-                <button
-                  type="button"
-                  className="del"
-                  onClick={async () => {
-                    setMoreOpen(false);
-                    if (!(await confirmDialog('이 차트를 삭제할까요? 모든 기록이 사라지고 되돌릴 수 없어요.'))) return;
-                    const res = await fetch(`/api/ehr/${id}`, { method: 'DELETE' });
-                    if (res.ok) router.push('/ehr');
-                  }}
-                >
-                  삭제
-                </button>
-              </div>
-            </>
-          )}
-        </div>
-      </div>
-
-      <p className="pvn">실제 환자 정보(이름, 등록번호, 생년월일, 병실 등)는 쓰지 마세요. 가상 정보로 바꿔서 연습하세요.</p>
-      {locked && <div className="lkb">{info.reviewed ? '교수님이 확인했어요' : '제출했어요. 교수님 확인 전에는 제출 취소로 고칠 수 있어요'}</div>}
-      {info.comment && <div className="cmt"><b>교수님 의견</b><p>{info.comment}</p></div>}
-      {fb && <div className="cmt ai"><b style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><AiMark size={14} />AI 피드백</b><button type="button" className="cx" aria-label="닫기" onClick={() => setFb('')}>&times;</button><p>{fb}</p></div>}
-
-      <fieldset disabled={locked} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
-      <div className="shell">
-        <div className="top">
-          <div className="wardSel" ref={wardRef}>
-            <button type="button" className="ward" onClick={() => setWardOpen(o => !o)}>{info.ward || '병동'} ▾</button>
-            {wardOpen && (
-              <div className="dd wd">
-                {VIEW_LIST.map(v => (
-                  <button
-                    key={v.name}
-                    type="button"
-                    className={(info.ward === '응급실' ? '응급' : info.ward) === v.name ? 'on' : ''}
-                    onClick={() => router.push(`/ehr?view=${encodeURIComponent(v.name)}`)}
-                  >
-                    {v.label}
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-          <div className="nav" ref={navRef} role="tablist">
-            {menu.map(g => {
-              const active = g.items.some(i => i.id === tab);
-              const multi = g.items.length > 1;
-              return (
-                <div key={g.label} className="mi">
-                  <button
-                    type="button"
-                    role="tab"
-                    aria-selected={active}
-                    className={active ? 'on' : ''}
-                    onClick={() => {
-                      if (multi) setMenuOpen(menuOpen === g.label ? null : g.label);
-                      else { setTab(g.items[0].id); setMenuOpen(null); }
-                    }}
-                  >
-                    {g.label}{multi ? ' ▾' : ''}
-                  </button>
-                  {multi && menuOpen === g.label && (
-                    <div className="dd">
-                      {g.items.map(it => (
-                        <button key={it.id} type="button" className={tab === it.id ? 'on' : ''} onClick={() => { setTab(it.id); setMenuOpen(null); }}>{it.label}</button>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        <div className="body">
-          <aside className="side">
-            <div className="brand">병동뷰</div>
-            {side('ptNo', '환자번호')}
-            {side('name', '이름', true)}
-            {side('ageSex', '나이/성별')}
-            {sel('ward', '병동', WARD_OPTIONS.map(w => ({ v: w, l: w })))}
-            {info.ward === '응급실'
-              ? sel('ktas', 'KTAS', ['1', '2', '3', '4', '5'].map(v => ({ v, l: v })))
-              : bedOptions(info.ward || '').length > 0 && sel('bed', '병상', bedOptions(info.ward || '').map(b => ({ v: b, l: b })))}
-            {sel('dept', '진료과', DEPTS.map(d => ({ v: d.code, l: `${d.name}` })))}
-            {sel('doctor', '주치의', docs.map(d => ({ v: d.name, l: d.name })))}
-            {editInfo ? (
-              <label className="sd">
-                <em>입원일</em>
-                <input type="date" value={info.admit || ''} onChange={e => setInfo('admit', e.target.value)} />
-              </label>
-            ) : (
-              <div className="sd">
-                <em>입원일</em>
-                <span className="v">{info.admit || '-'}</span>
-              </div>
-            )}
-            {info.admit && !editInfo && (() => {
-              const day = (v: string) => { const t = new Date(`${v.slice(0, 10)}T00:00:00`).getTime(); return Number.isFinite(t) ? Math.floor((Date.now() - t) / 86400000) : null; };
-              const hd = day(info.admit);
-              const ops = data.surgery.map(r => day(r.date || '')).filter((n): n is number => n !== null && n >= 0);
-              const pod = ops.length ? Math.min(...ops) : null;
-              return hd !== null && hd >= 0 ? <div className="sd"><em>HD / POD</em><span className="v">HD {hd + 1}{pod !== null ? ` · POD ${pod}` : ''}</span></div> : null;
-            })()}
-            {side('dx', '진단명')}
-            {sel('allergy', '알레르기', ALLERGIES.map(a => ({ v: a, l: a })))}
-            {side('height', '키 (cm)')}
-            {side('weight', '체중 (kg)')}
-            {BMI(info.height, info.weight) && <div className="sd"><em>BMI</em><span className="v">{BMI(info.height, info.weight)}</span></div>}
-            {sel('surg', '수술 여부', [{ v: '1', l: '수술 환자' }, { v: '0', l: '해당 없음' }])}
-            {sel('iso', '격리', ISO.map(v => ({ v, l: v })))}
-            {sel('npo', '금식', [{ v: '1', l: '금식' }, { v: '0', l: '해당 없음' }])}
-            {hasAllergy && <div className="alg">알레르기 있음</div>}
-            {info.discharged && <div className="dcb">퇴원 {info.discharged}</div>}
-            <button type="button" className="ed" onClick={() => setEditInfo(v => !v)}>{editInfo ? '완료' : '수정'}</button>
-          </aside>
-
-          <section className="main">
-            {crit.length > 0 && <div className="cw" role="alert">위험 수치: {crit.join(' · ')}</div>}
-            {(info.ward === '외래' || info.ward === '응급실') && <VisitStrip info={info} set={setInfo} />}
-            {!locked && !info.name?.trim() && (
-              <RegisterCard
-                info={info}
-                onRegister={patch => {
-                  setData(d => ({ ...d, info: { ...d.info, ...patch } }));
-                  setTitle(`${patch.name} · ${patch.dx}`.slice(0, 100));
-                }}
-              />
-            )}
+  const tabBody = (
+    <>
             {tab === 'orders' && (
               <div className="tw">
                 <div className="ohead">
@@ -1221,6 +1084,215 @@ export default function EhrEditor({
                 {tbl(tab)}
               </>
             )}
+    </>
+  );
+  const CUSTOM = ['vitals', 'labs', 'care', 'notes', 'consent', 'memos', 'mar', 'rx', 'orders', 'admission', 'discharge', 'nurseinfo'];
+  const tabLabel = MENU.flatMap(g => g.items).find(i => i.id === tab)?.label || '';
+  const formCols: Col[] | null = !isForm(tab) && !CUSTOM.includes(tab) && (COLS as Record<string, Col[]>)[tab] ? (COLS as Record<string, Col[]>)[tab].filter(c => c.type !== 'ro') : null;
+  const [inp, setInp] = useState(false);
+  const [draft, setDraft] = useState<Row>({});
+  const blank = (cols: Col[]): Row => {
+    const t = new Date(); const p = (x: number) => String(x).padStart(2, '0');
+    const r: Row = {};
+    cols.forEach(c => {
+      if (c.key === 'by' || c.key === 'author') r[c.key] = userName || '';
+      else if (c.key === 'time' || c.key === 'date' || c.key === 'start') {
+        const ph = c.ph || '';
+        r[c.key] = /^\d{4}-/.test(ph) ? `${t.getFullYear()}-${p(t.getMonth() + 1)}-${p(t.getDate())}` : /^\d{2}:\d{2}/.test(ph) ? `${p(t.getHours())}:${p(t.getMinutes())}` : c.key === 'time' ? `${p(t.getMonth() + 1)}-${p(t.getDate())} ${p(t.getHours())}:${p(t.getMinutes())}` : `${t.getFullYear()}-${p(t.getMonth() + 1)}-${p(t.getDate())}`;
+      } else if (c.type === 'select' && c.opts) r[c.key] = c.opts.find(o => o) && !c.opts[0] ? '' : c.opts[0] || '';
+    });
+    return r;
+  };
+  const openInput = () => { setDraft(formCols ? blank(formCols) : {}); setInp(true); };
+  const setDraftVal = (k: string, v: string) => setDraft(d => { const n = { ...d, [k]: v }; applyRules(tab, n, k, v); return n; });
+  const saveDraft = () => { addRow(tab as AnyList, draft); setInp(false); };
+
+  return (
+    <div className="ehr">
+      <div className="bar">
+        <button type="button" className="back" onClick={() => router.push(`/ehr?view=${encodeURIComponent(info.ward === '응급실' ? '응급' : info.ward || '')}`)}>&larr; {info.ward === '응급실' ? '응급' : info.ward || '목록'}</button>
+        <input className="ttl" value={title} onChange={e => setTitle(e.target.value)} aria-label="제목" />
+        <span className={`st ${status}`}>{status === 'saved' ? '저장됨' : status === 'saving' ? '저장 중…' : '저장 실패'}</span>
+        {ai && !locked && aiOn && <button type="button" className="aib" onClick={askFb} disabled={fbBusy || fbLeft <= 0}><AiMark size={14} />{fbBusy ? '살펴보는 중' : `AI 피드백 ${fbLeft}회`}</button>}
+        {locked
+          ? (!info.reviewed && <button type="button" className="subm out" onClick={unsubmit}>제출 취소</button>)
+          : <button type="button" className="subm" onClick={submit}>제출</button>}
+        <div className="more">
+          <button type="button" className="mbtn" aria-label="더보기" onClick={() => setMoreOpen(o => !o)}>&middot;&middot;&middot;</button>
+          {moreOpen && (
+            <>
+              <button type="button" className="mbk" aria-label="닫기" onClick={() => setMoreOpen(false)} />
+              <div className="mm">
+                <button type="button" onClick={() => { setMoreOpen(false); printNameTag(info); }}>네임지 출력</button>
+                {(['투약', '주사', '수액'] as const).map(k => <button key={k} type="button" onClick={() => { setMoreOpen(false); printTickets(data, k as TicketKind); }}>{k} 티켓 출력</button>)}
+                <button type="button" onClick={() => { setMoreOpen(false); if (!printChart(title, data, userName || '')) notify('팝업을 허용해 주세요.'); }}>인쇄</button>
+                <button type="button" disabled={locked} onClick={() => { setMoreOpen(false); toggleDischarge(); }}>{info.discharged ? '퇴원 취소' : '퇴원'}</button>
+                {ai && !locked && <button type="button" onClick={() => { toggleAi(); setMoreOpen(false); }}>AI 피드백 {aiOn ? '끄기' : '켜기'}</button>}
+                <button
+                  type="button"
+                  className="del"
+                  onClick={async () => {
+                    setMoreOpen(false);
+                    if (!(await confirmDialog('이 차트를 삭제할까요? 모든 기록이 사라지고 되돌릴 수 없어요.'))) return;
+                    const res = await fetch(`/api/ehr/${id}`, { method: 'DELETE' });
+                    if (res.ok) router.push('/ehr');
+                  }}
+                >
+                  삭제
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      <p className="pvn">실제 환자 정보(이름, 등록번호, 생년월일, 병실 등)는 쓰지 마세요. 가상 정보로 바꿔서 연습하세요.</p>
+      {locked && <div className="lkb">{info.reviewed ? '교수님이 확인했어요' : '제출했어요. 교수님 확인 전에는 제출 취소로 고칠 수 있어요'}</div>}
+      {info.comment && <div className="cmt"><b>교수님 의견</b><p>{info.comment}</p></div>}
+      {fb && <div className="cmt ai"><b style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><AiMark size={14} />AI 피드백</b><button type="button" className="cx" aria-label="닫기" onClick={() => setFb('')}>&times;</button><p>{fb}</p></div>}
+
+      <fieldset disabled={locked} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
+      <div className="shell">
+        <div className="top">
+          <div className="wardSel" ref={wardRef}>
+            <button type="button" className="ward" onClick={() => setWardOpen(o => !o)}>{info.ward || '병동'} ▾</button>
+            {wardOpen && (
+              <div className="dd wd">
+                {VIEW_LIST.map(v => (
+                  <button
+                    key={v.name}
+                    type="button"
+                    className={(info.ward === '응급실' ? '응급' : info.ward) === v.name ? 'on' : ''}
+                    onClick={() => router.push(`/ehr?view=${encodeURIComponent(v.name)}`)}
+                  >
+                    {v.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+          <div className="nav" ref={navRef} role="tablist">
+            {menu.map(g => {
+              const active = g.items.some(i => i.id === tab);
+              const multi = g.items.length > 1;
+              return (
+                <div key={g.label} className="mi">
+                  <button
+                    type="button"
+                    role="tab"
+                    aria-selected={active}
+                    className={active ? 'on' : ''}
+                    onClick={() => {
+                      if (multi) setMenuOpen(menuOpen === g.label ? null : g.label);
+                      else { setTab(g.items[0].id); setMenuOpen(null); }
+                    }}
+                  >
+                    {g.label}{multi ? ' ▾' : ''}
+                  </button>
+                  {multi && menuOpen === g.label && (
+                    <div className="dd">
+                      {g.items.map(it => (
+                        <button key={it.id} type="button" className={tab === it.id ? 'on' : ''} onClick={() => { setTab(it.id); setMenuOpen(null); }}>{it.label}</button>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        <div className="body">
+          <aside className="side">
+            <div className="brand">병동뷰</div>
+            {side('ptNo', '환자번호')}
+            {side('name', '이름', true)}
+            {side('ageSex', '나이/성별')}
+            {sel('ward', '병동', WARD_OPTIONS.map(w => ({ v: w, l: w })))}
+            {info.ward === '응급실'
+              ? sel('ktas', 'KTAS', ['1', '2', '3', '4', '5'].map(v => ({ v, l: v })))
+              : bedOptions(info.ward || '').length > 0 && sel('bed', '병상', bedOptions(info.ward || '').map(b => ({ v: b, l: b })))}
+            {sel('dept', '진료과', DEPTS.map(d => ({ v: d.code, l: `${d.name}` })))}
+            {sel('doctor', '주치의', docs.map(d => ({ v: d.name, l: d.name })))}
+            {editInfo ? (
+              <label className="sd">
+                <em>입원일</em>
+                <input type="date" value={info.admit || ''} onChange={e => setInfo('admit', e.target.value)} />
+              </label>
+            ) : (
+              <div className="sd">
+                <em>입원일</em>
+                <span className="v">{info.admit || '-'}</span>
+              </div>
+            )}
+            {info.admit && !editInfo && (() => {
+              const day = (v: string) => { const t = new Date(`${v.slice(0, 10)}T00:00:00`).getTime(); return Number.isFinite(t) ? Math.floor((Date.now() - t) / 86400000) : null; };
+              const hd = day(info.admit);
+              const ops = data.surgery.map(r => day(r.date || '')).filter((n): n is number => n !== null && n >= 0);
+              const pod = ops.length ? Math.min(...ops) : null;
+              return hd !== null && hd >= 0 ? <div className="sd"><em>HD / POD</em><span className="v">HD {hd + 1}{pod !== null ? ` · POD ${pod}` : ''}</span></div> : null;
+            })()}
+            {side('dx', '진단명')}
+            {sel('allergy', '알레르기', ALLERGIES.map(a => ({ v: a, l: a })))}
+            {side('height', '키 (cm)')}
+            {side('weight', '체중 (kg)')}
+            {BMI(info.height, info.weight) && <div className="sd"><em>BMI</em><span className="v">{BMI(info.height, info.weight)}</span></div>}
+            {sel('surg', '수술 여부', [{ v: '1', l: '수술 환자' }, { v: '0', l: '해당 없음' }])}
+            {sel('iso', '격리', ISO.map(v => ({ v, l: v })))}
+            {sel('npo', '금식', [{ v: '1', l: '금식' }, { v: '0', l: '해당 없음' }])}
+            {hasAllergy && <div className="alg">알레르기 있음</div>}
+            {info.discharged && <div className="dcb">퇴원 {info.discharged}</div>}
+            <button type="button" className="ed" onClick={() => setEditInfo(v => !v)}>{editInfo ? '완료' : '수정'}</button>
+          </aside>
+
+          <section className="main">
+            {crit.length > 0 && <div className="cw" role="alert">위험 수치: {crit.join(' · ')}</div>}
+            {(info.ward === '외래' || info.ward === '응급실') && <VisitStrip info={info} set={setInfo} />}
+            {!locked && !info.name?.trim() && (
+              <RegisterCard
+                info={info}
+                onRegister={patch => {
+                  setData(d => ({ ...d, info: { ...d.info, ...patch } }));
+                  setTitle(`${patch.name} · ${patch.dx}`.slice(0, 100));
+                }}
+              />
+            )}
+            <button type="button" className="inb" onClick={openInput}>+ {tabLabel} 입력</button>
+            <fieldset className="vw" disabled style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>{tabBody}</fieldset>
+            {inp && (
+              <div className="mdl" role="dialog" aria-label={`${tabLabel} 입력`}>
+                <button type="button" className="mdk" aria-label="닫기" onClick={() => setInp(false)} />
+                <div className="mdb">
+                  <header><b>{tabLabel} 입력</b><button type="button" onClick={() => setInp(false)}>닫기</button></header>
+                  <div className="mdc">
+                    {formCols ? (
+                      <>
+                        <div className="rf">
+                          {formCols.map(c => (
+                            <label key={c.key} className="rfl">
+                              <span>{c.label}</span>
+                              {c.type === 'area' ? (
+                                <textarea rows={4} value={draft[c.key] || ''} onChange={e => setDraftVal(c.key, e.target.value)} />
+                              ) : c.type === 'select' ? (
+                                <select value={draft[c.key] || ''} onChange={e => setDraftVal(c.key, e.target.value)}>
+                                  {c.opts!.map(o => <option key={o} value={o}>{o || '선택'}</option>)}
+                                </select>
+                              ) : (
+                                <input list={c.type === 'pick' ? c.list : undefined} value={draft[c.key] || ''} placeholder={c.ph} onChange={e => setDraftVal(c.key, e.target.value)} />
+                              )}
+                            </label>
+                          ))}
+                        </div>
+                        <div className="rfa">
+                          <button type="button" onClick={() => setInp(false)}>취소</button>
+                          <button type="button" className="go" disabled={!formCols.some(c => (draft[c.key] || '').trim() && c.key !== 'time' && c.key !== 'by' && c.key !== 'author')} onClick={saveDraft}>저장</button>
+                        </div>
+                      </>
+                    ) : tabBody}
+                  </div>
+                </div>
+              </div>
+            )}
           </section>
         </div>
       </div>
@@ -1247,6 +1319,24 @@ export default function EhrEditor({
         .ehr .dis { border: 0; background: transparent; color: var(--sub-text); font-size: 0.75rem; font-family: inherit; cursor: pointer; }
         .ehr .st.error { color: #b91c1c; font-weight: 700; }
 
+        .ehr .inb { align-self: flex-start; margin: 0 0 8px; border: 1px solid var(--primary); background: var(--primary); color: #fff; border-radius: 8px; padding: 7px 14px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; }
+        .ehr .vw input, .ehr .vw select, .ehr .vw textarea { opacity: 1; color: inherit; -webkit-text-fill-color: currentColor; background: transparent; border-color: transparent; appearance: none; -webkit-appearance: none; resize: none; pointer-events: none; }
+        .ehr .vw button { pointer-events: none; }
+        .ehr .vw .add, .ehr .vw .adds, .ehr .vw td.x button, .ehr .vw th.x { display: none; }
+        .ehr .mdl { position: fixed; inset: 0; z-index: 60; display: flex; align-items: flex-end; justify-content: center; }
+        .ehr .mdk { position: absolute; inset: 0; border: 0; background: rgba(15,23,42,0.45); cursor: default; }
+        .ehr .mdb { position: relative; width: min(760px, 100%); max-height: 88vh; display: flex; flex-direction: column; background: var(--background, #fff); color: var(--text); border-radius: 14px 14px 0 0; box-shadow: 0 -6px 24px rgba(0,0,0,0.25); }
+        @media (min-width: 720px) { .ehr .mdl { align-items: center; } .ehr .mdb { border-radius: 14px; } }
+        .ehr .mdb header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); }
+        .ehr .mdb header button { border: 0; background: transparent; color: var(--sub-text); font: inherit; cursor: pointer; }
+        .ehr .mdc { padding: 14px 16px 18px; overflow: auto; }
+        .ehr .rf { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+        .ehr .rfl { display: flex; flex-direction: column; gap: 3px; font-size: 12px; color: var(--sub-text); }
+        .ehr .rfl input, .ehr .rfl select, .ehr .rfl textarea { border: 1px solid var(--border); border-radius: 8px; padding: 8px; font: inherit; font-size: 14px; background: var(--background); color: var(--text); }
+        .ehr .rfa { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+        .ehr .rfa button { border: 1px solid var(--border); background: transparent; color: inherit; border-radius: 8px; padding: 8px 18px; font: inherit; font-weight: 600; cursor: pointer; }
+        .ehr .rfa .go { background: var(--primary); border-color: var(--primary); color: #fff; }
+        .ehr .rfa .go:disabled { opacity: .4; }
         .ehr .shell { border: 1px solid #94a3b8; background: #fff; border-radius: 4px; overflow: hidden; font-size: 12.5px; color: #1f2937; }
         .ehr .top { display: flex; align-items: stretch; background: linear-gradient(#233a5c, #17283f); }
         .ehr .wardSel { position: relative; flex: 0 0 auto; display: flex; }

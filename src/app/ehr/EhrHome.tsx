@@ -79,7 +79,7 @@ export default function EhrHome({ cases, initialView, ai, aiLeft, extra }: { cas
       const res = await fetch('/api/ehr', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(make()) });
       const j = await res.json().catch(() => ({}));
       if (!res.ok || !j.id) throw new Error();
-      router.push(`/ehr/${j.id}${make().title === '새 환자' ? '?edit=1' : ''}`);
+      router.push(`/ehr/${j.id}`);
     } catch {
       setErr('열 수 없어요');
       setBusy(null);
@@ -272,8 +272,7 @@ export default function EhrHome({ cases, initialView, ai, aiLeft, extra }: { cas
           <div className="ctxbg" onClick={() => setCtx(null)} onContextMenu={ev => { ev.preventDefault(); setCtx(null); }} />
           <div className="ctx" style={{ left: ctx.x, top: ctx.y }}>
             <b>{ctx.p.name}</b>
-            {ctx.saved && <button type="button" onClick={() => router.push(`/ehr/${ctx.saved!.id}`)}>차트 보기</button>}
-            {ctx.saved && <button type="button" onClick={() => router.push(`/ehr/${ctx.saved!.id}?edit=1`)}>기록 입력</button>}
+            {ctx.saved && <button type="button" onClick={() => router.push(`/ehr/${ctx.saved!.id}`)}>차트 열기</button>}
             <button type="button" onClick={() => { printNameTag(ctx.p as Record<string, string | null | undefined>); setCtx(null); }}>네임지 출력</button>
             {ctx.saved && (['투약', '주사', '수액'] as const).map(k => (
               <button key={k} type="button" onClick={() => router.push(`/ehr/${ctx.saved!.id}?print=${encodeURIComponent(k)}`)}>{k} 티켓 출력</button>
