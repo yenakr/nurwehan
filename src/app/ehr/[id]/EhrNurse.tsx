@@ -104,6 +104,19 @@ export default function EhrNurse({
   const list = roster.filter(r => r.ward === ward && (team === '전체' || teamOf(r.bed) === team)).sort((a, b) => (a.bed || '').localeCompare(b.bed || '', 'ko', { numeric: true }));
   const flags = Array.from(new Set([...data.acu.map(r => r.risk), ...data.risk.filter(r => /고위험/.test(r.level || '')).map(r => (r.kind || '').split('(')[0])].filter(Boolean)));
   const bulkPts: BulkPt[] = list.map(r => ({ key: r.id, bed: r.bed || '', name: r.name || '', ageSex: r.ageSex || '', id: r.id, make: () => ({ title: '', subject: null, data: {} }) }));
+  const shift = (n: number) => {
+    const [y, m, d0] = date.split('-').map(Number);
+    if (!y) return;
+    const t = new Date(y, m - 1, d0 + n);
+    setDate(`${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`);
+  };
+  const dd = (v?: string) => (v || '').slice(0, 10);
+  const dayN = (from?: string) => {
+    const f = dd(from);
+    if (!f) return '';
+    const n = Math.round((new Date(date).getTime() - new Date(f).getTime()) / 86400000) + 1;
+    return n > 0 ? `${n}일째` : '';
+  };
   const dxMain = data.dxcode.find(r => r.kind === '주상병' && r.name);
 
   const patch = (idx: number, p: Row) => setData(d => ({ ...d, orders: d.orders.map((o, j) => (j === idx ? { ...o, ...p } : o)) }));
@@ -203,6 +216,11 @@ export default function EhrNurse({
           <div className="ns-npt">
             <b>{i.name || '이름 없음'} 님</b>
             <span>{[i.ageSex, i.ptNo].filter(Boolean).join(' · ')}</span>
+            {dd(i.admit) && <span>입원일 {dd(i.admit)} {dayN(i.admit) && `(${dayN(i.admit)})`}</span>}
+            {dd(i.disDate) && <span>퇴원예정일 {dd(i.disDate)}</span>}
+            {data.surgery[0] && dd(data.surgery[0].date) && <span>수술일 {dd(data.surgery[0].date)}</span>}
+            {i.dept && <span>{[i.dept, i.doctor].filter(Boolean).join(' · ')}</span>}
+            {i.ward && <span>{[i.ward, i.bed].filter(Boolean).join(' ')}</span>}
             {dxMain || i.dx ? <span>{dxMain ? dxMain.name : i.dx}</span> : null}
             <div className="ns-nflags">
               {flags.map(f => <em key={f}>{f}</em>)}
@@ -257,7 +275,9 @@ export default function EhrNurse({
         <main className="ns-nc">
           <div className="ns-nhd">
             <span>처방조회</span>
+            <button type="button" className="ns-arw" onClick={() => shift(-1)} aria-label="전날">&lt;</button>
             <input type="date" value={date} onChange={e => setDate(e.target.value)} aria-label="처방조회일" />
+            <button type="button" className="ns-arw" onClick={() => shift(1)} aria-label="다음날">&gt;</button>
             <button type="button" className="ns-cmp" onClick={() => setCmp(true)}>전일처방비교</button>
           </div>
           {sec('기본처방', g.base, 'base')}
@@ -388,6 +408,7 @@ export default function EhrNurse({
         .ns-nsr button:disabled { opacity: .4; }
         .ns-nerr { margin: 0; color: #dc2626; font-size: 12px; }
         .ns-npt { background: var(--muted-background); border: 1px solid var(--border); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 3px; }
+        .ns-arw { padding: 4px 10px; border: 1px solid var(--border); background: var(--background); color: var(--primary); font-weight: 700; border-radius: 4px; }
         .ns-npt b { font-size: 20px; }
         .ns-npt span { color: var(--sub-text); }
         .ns-nflags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
