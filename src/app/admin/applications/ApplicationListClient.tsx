@@ -144,31 +144,36 @@ export default function ApplicationListClient({ initialApplications }: { initial
 
       <style jsx global>{`
         .al .bar { display: flex; align-items: center; gap: 10px; margin-bottom: 12px; }
-        .al .bar input { flex: 1; padding: 11px 14px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 0.9375rem; background: #fff; }
+        .al .bar input { flex: 1; min-width: 0; padding: 10px 14px; border: 1px solid #e2e8f0; border-radius: 12px; font-size: 0.9375rem; background: #fff; }
         .al .bar input:focus { outline: none; border-color: var(--primary); }
-        .al .bar span { font-size: 0.8125rem; color: var(--sub-text); white-space: nowrap; }
-        .al .filters { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-bottom: 14px; }
+        .al .bar span { flex: 0 0 auto; font-size: 0.8125rem; color: var(--sub-text); white-space: nowrap; }
+        .al .filters { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; margin-bottom: 12px; }
         .al .seg { display: inline-flex; background: #f1f5f9; padding: 3px; border-radius: 10px; }
         .al .seg button { padding: 5px 12px; border: none; background: transparent; border-radius: 8px; font-size: 0.8125rem; font-weight: 700; color: #64748b; cursor: pointer; }
         .al .seg button.on { background: #fff; color: var(--primary); box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
         .al .dir { padding: 6px 10px; border: 1px solid #e2e8f0; background: #fff; border-radius: 10px; font-size: 0.8125rem; font-weight: 600; color: #475569; cursor: pointer; }
-        .al .filters select { padding: 6px 8px; border: 1px solid #e2e8f0; background: #fff; border-radius: 10px; font-size: 0.8125rem; color: #475569; }
+        .al .filters select { max-width: 130px; padding: 6px 8px; border: 1px solid #e2e8f0; background: #fff; border-radius: 10px; font-size: 0.8125rem; color: #475569; }
         .al .grp { margin-bottom: 14px; }
         .al .grp h3 { margin: 0 0 6px 2px; font-size: 0.8125rem; font-weight: 800; color: #64748b; }
         .al .grp h3 span { font-weight: 600; color: #94a3b8; margin-left: 4px; }
         .al .list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
-        .al .row { display: flex; align-items: center; gap: 14px; padding: 12px 14px; background: #fff; border: 1px solid #e8edf3; border-radius: 14px; text-decoration: none; color: inherit; transition: border-color .15s, box-shadow .15s; }
+        .al .row { display: grid; grid-template-columns: 48px 1fr; align-items: center; gap: 4px 12px; padding: 10px 12px; background: #fff; border: 1px solid #e8edf3; border-radius: 14px; text-decoration: none; color: inherit; transition: border-color .15s, box-shadow .15s; }
         .al .row:hover { border-color: #c5cff0; box-shadow: 0 2px 8px rgba(35, 58, 138, 0.06); }
-        .al .date { flex: 0 0 48px; height: 48px; border-radius: 12px; background: #eef1fa; color: var(--primary); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.15; }
+        .al .date { grid-row: 1 / span 2; width: 48px; height: 48px; border-radius: 12px; background: #eef1fa; color: var(--primary); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.15; }
         .al .date b { font-size: 0.9375rem; font-weight: 800; font-variant-numeric: tabular-nums; }
         .al .date i { font-style: normal; font-size: 0.6875rem; font-weight: 600; opacity: 0.75; }
         .al .main { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
-        .al .l1 { display: flex; align-items: baseline; gap: 6px; }
+        .al .l1 { display: flex; align-items: baseline; gap: 6px; white-space: nowrap; min-width: 0; }
         .al .l1 b { font-size: 0.9375rem; font-weight: 800; color: #1e293b; }
         .al .l1 i { font-style: normal; font-size: 0.75rem; color: #94a3b8; }
         .al .l1 em { font-style: normal; font-size: 0.625rem; font-weight: 700; background: #f1f5f9; color: #64748b; padding: 1px 7px; border-radius: 999px; align-self: center; }
         .al .l2 { font-size: 0.8125rem; color: #64748b; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-        .al .side { flex: 0 0 auto; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; font-variant-numeric: tabular-nums; }
+        .al .side { grid-column: 2; display: flex; flex-wrap: wrap; align-items: baseline; gap: 2px 8px; font-variant-numeric: tabular-nums; }
+        @media (min-width: 720px) {
+          .al .row { display: flex; gap: 14px; padding: 12px 14px; }
+          .al .date { width: auto; flex: 0 0 48px; }
+          .al .side { flex-direction: column; flex-wrap: nowrap; align-items: flex-end; gap: 3px; flex: 0 0 auto; }
+        }
         .al .side b { font-size: 0.8125rem; font-weight: 700; color: #334155; }
         .al .side i { font-style: normal; font-size: 0.6875rem; color: #94a3b8; }
         .al .more { display: block; margin: 14px auto 0; padding: 9px 22px; border: 1px solid #e2e8f0; background: #fff; border-radius: 12px; font-size: 0.8125rem; font-weight: 700; color: var(--sub-text); cursor: pointer; }
