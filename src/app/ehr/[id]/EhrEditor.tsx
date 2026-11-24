@@ -20,6 +20,7 @@ import { shiftOf, criticalFlags, badgesOf, BMI, DC_EDU, ISO } from '../emr';
 import Link from 'next/link';
 import LogoutButton from '@/components/LogoutButton';
 import RxPanel from './EhrRx';
+import SearchPick, { type PickItem } from './SearchPick';
 import EhrNurse, { type Roster } from './EhrNurse';
 import { printNameTag, printTickets, type TicketKind } from '../print';
 import { DX, ACTS, MATS, DIETS, FORMS2, RET_KINDS, dxName, dxCode } from '../codes';
@@ -604,6 +605,15 @@ function CareComposer({ onAdd }: { onAdd: (r: Row) => void }) {
   );
 }
 
+const PICKS: Record<string, PickItem[]> = {
+  'dl-dxc': DX.map(d => [d[0], d[1]]),
+  'dl-dxn': DX.map(d => [d[1], d[0]]),
+  'dl-act': ACTS.map(a => [a[0], a[1]]),
+  'dl-mat': MATS.map(m => [m[0], m[1]]),
+  'dl-diet': DIETS.map(d => [d, '']),
+  'dl-doc': FORMS2.map(d => [d, '']),
+};
+
 function applyRules(lk: string, n: Row, k: string, v: string) {
   if (lk === 'dxcode') {
     if (k === 'code') { const nm = dxName(v); if (nm) n.name = nm; }
@@ -859,7 +869,7 @@ export default function EhrEditor({
                         ) : c.type === 'area' ? (
                           <textarea rows={['notes', 'progress', 'nutrition', 'imaging'].includes(lk) ? 5 : 3} value={v} onChange={e => setCell(lk, i, c.key, e.target.value)} />
                         ) : c.type === 'pick' ? (
-                          <input list={c.list} value={v} placeholder={c.ph} onChange={e => setCell(lk, i, c.key, e.target.value)} />
+                          <SearchPick items={PICKS[c.list || ''] || []} value={v} onChange={nv => setCell(lk, i, c.key, nv)} />
                         ) : c.type === 'select' ? (
                           <select value={v} onChange={e => setCell(lk, i, c.key, e.target.value)}>
                             {(c.opts!.includes(v) ? c.opts! : [...c.opts!, v]).map(o => <option key={o} value={o}>{o}</option>)}
@@ -1055,13 +1065,6 @@ export default function EhrEditor({
                 <IoTotals rows={data.io} />
               </>
             )}
-
-            <datalist id="dl-dxc">{DX.map(d => <option key={d[0]} value={d[0]}>{d[1]}</option>)}</datalist>
-            <datalist id="dl-dxn">{DX.map(d => <option key={d[0]} value={d[1]}>{d[0]}</option>)}</datalist>
-            <datalist id="dl-act">{ACTS.map(a => <option key={a[0]} value={a[0]} />)}</datalist>
-            <datalist id="dl-mat">{MATS.map(m => <option key={m[0]} value={m[0]}>{m[1]}</option>)}</datalist>
-            <datalist id="dl-diet">{DIETS.map(d => <option key={d} value={d} />)}</datalist>
-            <datalist id="dl-doc">{FORMS2.map(d => <option key={d} value={d} />)}</datalist>
             {tab === 'rx' && <RxPanel data={data} author={userName || ''} onChange={orders => setData(d => ({ ...d, orders }))} />}
             {tab === 'bst' && (
               <>
@@ -1303,7 +1306,11 @@ export default function EhrEditor({
                                   {c.opts!.map(o => <option key={o} value={o}>{o || '선택'}</option>)}
                                 </select>
                               ) : (
-                                <input list={c.type === 'pick' ? c.list : undefined} value={draft[c.key] || ''} onChange={e => setDraftVal(c.key, e.target.value)} />
+                                c.type === 'pick' ? (
+                                <SearchPick items={PICKS[c.list || ''] || []} value={draft[c.key] || ''} onChange={nv => setDraftVal(c.key, nv)} />
+                              ) : (
+                                <input value={draft[c.key] || ''} onChange={e => setDraftVal(c.key, e.target.value)} />
+                              )
                               )}
                             </label>
                           ))}
