@@ -20,7 +20,7 @@ import { shiftOf, criticalFlags, badgesOf, BMI, DC_EDU, ISO } from '../emr';
 import FormPanel, { FORMS, FORM_CSS, type FormKey } from './EhrForms';
 
 type ListKey =
-  | 'progress' | 'vitals' | 'io' | 'labs' | 'notes' | 'care'
+  | 'progress' | 'vitals' | 'io' | 'bst' | 'diet' | 'labs' | 'notes' | 'care'
   | 'transfusion' | 'nutrition' | 'consult' | 'consent' | 'surgery' | 'appts' | 'handover' | 'risk' | 'history' | 'imaging' | 'memos' | 'mar' | 'anes'
   | 'lines' | 'iv' | 'wounds' | 'edu' | 'specimen' | 'transport' | 'moves' | 'cpr';
 type FormTab = 'f_morse' | 'f_braden' | 'f_pain' | 'f_preop';
@@ -34,11 +34,11 @@ const MENU: MenuNode[] = [
   { label: '수술', items: [{ id: 'surgery', label: '수술기록' }, { id: 'anes', label: '마취기록' }, { id: 'f_preop', label: '수술 전 확인' }] },
   { label: '의사처방', items: [{ id: 'orders', label: '의사처방' }, { id: 'mar', label: '투약' }] },
   { label: '입원기록', items: [{ id: 'admission', label: '입원기록' }, { id: 'nurseinfo', label: '간호정보조사지' }, { id: 'history', label: '상병이력' }] },
-  { label: '임상관찰', items: [{ id: 'vitals', label: '임상관찰' }] },
+  { label: '임상관찰', items: [{ id: 'vitals', label: '임상관찰' }, { id: 'bst', label: '혈당·인슐린' }] },
   { label: '치료/검사', items: [{ id: 'labs', label: '검사결과' }, { id: 'imaging', label: '영상검사' }, { id: 'transfusion', label: '수혈기록' }, { id: 'specimen', label: '검체 채취' }, { id: 'transport', label: '이송 의뢰' }] },
   { label: '간호관리', items: [{ id: 'lines', label: '튜브·라인' }, { id: 'iv', label: 'IV 수액' }, { id: 'wounds', label: '상처·드레싱' }, { id: 'edu', label: '환자 교육' }] },
   { label: '응급', items: [{ id: 'cpr', label: 'CPR 기록지' }] },
-  { label: '영양기록', items: [{ id: 'nutrition', label: '영양기록' }] },
+  { label: '영양기록', items: [{ id: 'diet', label: '식이' }, { id: 'nutrition', label: '영양기록' }] },
   { label: '평가도구', items: FORMS.filter(f => f.key !== 'preop').map(f => ({ id: f.tab as TabId, label: f.label })) },
   { label: '간호기록', items: [{ id: 'notes', label: '간호기록' }, { id: 'risk', label: '위험도평가' }, { id: 'handover', label: '인계(SBAR)' }, { id: 'memos', label: '메모·인수인계' }] },
   { label: '간호과정', items: [{ id: 'care', label: '간호과정' }] },
@@ -70,6 +70,22 @@ export const COLS: Record<ListKey, Col[]> = {
     { key: 'intake', label: '섭취 (mL)', w: 200 },
     { key: 'output', label: '배설 (mL)', w: 200 },
     { key: 'note', label: '비고', w: 260 },
+  ],
+  bst: [
+    { key: 'time', label: '일시', w: 130, ph: '11-10 07:30' },
+    { key: 'meal', label: '시점', w: 90, type: 'select', opts: ['', '식전', '식후 2h', '취침 전', '새벽', '수시'] },
+    { key: 'glu', label: '혈당 (mg/dL)', w: 100 },
+    { key: 'ins', label: '인슐린', w: 130, ph: 'Humalog' },
+    { key: 'dose', label: '용량 (U)', w: 80 },
+    { key: 'site', label: '주사 부위', w: 100 },
+    { key: 'note', label: '비고', w: 220 },
+  ],
+  diet: [
+    { key: 'date', label: '일자', w: 100, ph: '2026-11-10' },
+    { key: 'meal', label: '끼니', w: 80, type: 'select', opts: ['', '아침', '점심', '저녁', '간식'] },
+    { key: 'type', label: '식이 종류', w: 150, ph: '당뇨식, 연식' },
+    { key: 'amt', label: '섭취량', w: 90, type: 'select', opts: ['', '전량', '3/4', '1/2', '1/4', '못 먹음', 'NPO'] },
+    { key: 'note', label: '비고', w: 240 },
   ],
   labs: [
     { key: 'name', label: '검사명 (· 결과)', w: 200 },
@@ -731,7 +747,7 @@ export default function EhrEditor({
                 <tr key={i}>
                   {cols.map(c => {
                     const v = row[c.key] || '';
-                    const bad = lk === 'vitals' && vitalBad(c.key, v);
+                    const bad = (lk === 'vitals' && vitalBad(c.key, v)) || (lk === 'bst' && c.key === 'glu' && (+v > 0) && (+v < 70 || +v > 250));
                     const cls = bad ? 'bad' : lk === 'labs' && (c.key === 'value') ? (flag === 'H' ? 'hi' : flag === 'L' ? 'lo' : '') : '';
                     return (
                       <td key={c.key}>
@@ -1083,6 +1099,13 @@ export default function EhrEditor({
               </>
             )}
 
+            {tab === 'bst' && (
+              <>
+                <h4 className="ph">혈당·인슐린</h4>
+                {tbl('bst')}
+              </>
+            )}
+
             {isForm(tab) && (() => {
               const f = FORMS.find(x => x.tab === tab)!;
               return <FormPanel kind={f.key as FormKey} rows={data.forms?.[f.key] || []} onChange={rows => setData(d => ({ ...d, forms: { ...(d.forms || {}), [f.key]: rows } }))} />;
@@ -1092,7 +1115,7 @@ export default function EhrEditor({
             {tab === 'mar' && <MarPanel data={data} author={userName || ''} onChange={(orders, mar) => setData(d => ({ ...d, orders, mar }))} />}
             {tab === 'memos' && <MemoPanel rows={data.memos} author={userName || ''} onChange={rs => setData(d => ({ ...d, memos: rs }))} />}
             {tab === 'labs' && <LabSets onApply={rs => setData(d => ({ ...d, labs: [...d.labs, ...rs] }))} />}
-            {!isForm(tab) && tab !== 'notes' && tab !== 'care' && tab !== 'orders' && tab !== 'admission' && tab !== 'discharge' && tab !== 'nurseinfo' && tab !== 'vitals' && tab !== 'memos' && tab !== 'mar' && tab !== 'consent' && (
+            {!isForm(tab) && tab !== 'notes' && tab !== 'care' && tab !== 'orders' && tab !== 'admission' && tab !== 'discharge' && tab !== 'nurseinfo' && tab !== 'vitals' && tab !== 'bst' && tab !== 'memos' && tab !== 'mar' && tab !== 'consent' && (
               <>
                 {tab === 'progress' && (
                   <div className="adds" style={{ marginBottom: 6 }}>
