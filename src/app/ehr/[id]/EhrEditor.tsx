@@ -1301,7 +1301,7 @@ export default function EhrEditor({
                                   {c.opts!.map(o => <option key={o} value={o}>{o || '선택'}</option>)}
                                 </select>
                               ) : (
-                                <input list={c.type === 'pick' ? c.list : undefined} value={draft[c.key] || ''} placeholder={c.ph} onChange={e => setDraftVal(c.key, e.target.value)} />
+                                <input list={c.type === 'pick' ? c.list : undefined} value={draft[c.key] || ''} onChange={e => setDraftVal(c.key, e.target.value)} />
                               )}
                             </label>
                           ))}

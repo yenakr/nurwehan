@@ -19,7 +19,7 @@ export default async function EhrCasePage({ params, searchParams }: { params: Pr
   const row = await getCase(user.id, id);
   if (!row) notFound();
   const data = migrate(row.data);
-  const roster = (await listCases(user.id)).filter(c => !c.discharged).map(c => ({ id: c.id, ward: c.ward, bed: c.bed, name: c.name, ptNo: c.ptNo, doctor: c.doctor }));
+  const roster = (await listCases(user.id)).filter(c => !c.discharged).map(c => ({ id: c.id, ward: c.ward, bed: c.bed, name: c.name, ageSex: c.ageSex, ptNo: c.ptNo, doctor: c.doctor }));
   const ai = aiConfigured();
   const aiLeft = ai ? await aiQuotaLeft(user.id, '#ehrfb', EHR_FEEDBACK_LIMIT) : 0;
   return (

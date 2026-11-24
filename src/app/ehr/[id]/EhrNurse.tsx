@@ -3,8 +3,9 @@
 import { useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
 import { useRouter } from 'next/navigation';
 import type { ChartData, Row } from '../types';
+import WardBulk, { type BulkPt } from '../WardBulk';
 
-export type Roster = { id: string; ward: string | null; bed: string | null; name: string | null; ptNo: string | null; doctor: string | null };
+export type Roster = { id: string; ward: string | null; bed: string | null; name: string | null; ageSex: string | null; ptNo: string | null; doctor: string | null };
 
 const MENUS: { id: string; label: string }[] = [
   { id: 'notes', label: '간호기록' },
@@ -17,6 +18,8 @@ const MENUS: { id: string; label: string }[] = [
   { id: 'mat', label: '처치재료' },
   { id: 'ret', label: '약·주사 반납' },
   { id: 'consult', label: '협진' },
+  { id: 'bulk', label: '활력징후 일괄' },
+  { id: 'handover', label: '인수인계지' },
   { id: 'dir', label: '원내번호조회' },
 ];
 
@@ -89,6 +92,7 @@ export default function EhrNurse({
   const [cmp, setCmp] = useState(false);
   const [msg, setMsg] = useState('');
   const [dq, setDq] = useState('');
+  const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const [chk, setChk] = useState<Item | null>(null);
   const [c5, setC5] = useState<Record<string, boolean>>({});
   const [dbl, setDbl] = useState('');
@@ -96,6 +100,7 @@ export default function EhrNurse({
   const wards = Array.from(new Set(roster.map(r => r.ward).filter((w): w is string => !!w)));
   const list = roster.filter(r => r.ward === ward).sort((a, b) => (a.bed || '').localeCompare(b.bed || '', 'ko', { numeric: true }));
   const flags = Array.from(new Set([...data.acu.map(r => r.risk), ...data.risk.filter(r => /고위험/.test(r.level || '')).map(r => (r.kind || '').split('(')[0])].filter(Boolean)));
+  const bulkPts: BulkPt[] = list.map(r => ({ key: r.id, bed: r.bed || '', name: r.name || '', ageSex: r.ageSex || '', id: r.id, make: () => ({ title: '', subject: null, data: {} }) }));
   const dxMain = data.dxcode.find(r => r.kind === '주상병' && r.name);
 
   const patch = (idx: number, p: Row) => setData(d => ({ ...d, orders: d.orders.map((o, j) => (j === idx ? { ...o, ...p } : o)) }));
@@ -179,14 +184,14 @@ export default function EhrNurse({
     <div className={`ns-nu ${win ? 'ns-hasw' : ''}`}>
       <div className="ns-nmenu">
         <b>홈</b>
-        {MENUS.map(m => <button key={m.id} type="button" className={win === m.id ? 'ns-on' : ''} onClick={() => onOpen(m.id)}>{m.label}</button>)}
+        {MENUS.map(m => <button key={m.id} type="button" className={win === m.id ? 'ns-on' : ''} onClick={() => (m.id === 'handover' ? router.push(`/ehr/handover?ward=${encodeURIComponent(ward)}`) : onOpen(m.id))}>{m.label}</button>)}
         <button type="button" className="ns-ch" onClick={onChart}>전체 차트</button>
       </div>
 
       <div className="ns-ngrid">
         <aside className="ns-nl">
           <div className="ns-nsr">
-            <input value={q} onChange={e => { setQ(e.target.value); setQMsg(''); }} onKeyDown={e => e.key === 'Enter' && find()} placeholder="환자등록번호 검색" aria-label="환자등록번호 검색" />
+            <input value={q} onChange={e => { setQ(e.target.value); setQMsg(''); }} onKeyDown={e => e.key === 'Enter' && find()} aria-label="환자등록번호 검색" />
             <button type="button" onClick={find}>검색</button>
           </div>
           {qMsg && <p className="ns-nerr">{qMsg}</p>}
@@ -210,7 +215,7 @@ export default function EhrNurse({
             <h4>간호의사소통</h4>
             {memoOf('간호의사소통').slice(-3).reverse().map((m, k) => <p key={k}>{m.text}<i>{(m.time || '').slice(-5)} {m.author}</i></p>)}
             <div className="ns-nsr">
-              <input value={msg} onChange={e => setMsg(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMsg()} placeholder="의사에게 전달할 내용" aria-label="간호의사소통" />
+              <input value={msg} onChange={e => setMsg(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMsg()} aria-label="간호의사소통" />
               <button type="button" onClick={sendMsg} disabled={!msg.trim()}>등록</button>
             </div>
           </div>
@@ -219,7 +224,7 @@ export default function EhrNurse({
               <select value={ward} onChange={e => setWard(e.target.value)} aria-label="병동">
                 {(wards.length ? wards : [i.ward || '']).map(w => <option key={w} value={w}>{w}</option>)}
               </select>
-              <input value={team} onChange={e => setTeam(e.target.value)} placeholder="팀" aria-label="팀" />
+              <input value={team} onChange={e => setTeam(e.target.value)} aria-label="팀" />
               <select value={duty} onChange={e => setDuty(e.target.value)} aria-label="듀티">
                 {['D', 'E', 'N'].map(d => <option key={d} value={d}>{d}</option>)}
               </select>
@@ -308,7 +313,7 @@ export default function EhrNurse({
                 {high && (
                   <div className="ns-nwarn">
                     <p>고위험 약물: 용량, 농도, 펌프 설정을 둘이서 확인하세요.</p>
-                    <input className="ns-ndq" value={dbl} onChange={e => setDbl(e.target.value)} placeholder="이중확인자 이름" aria-label="이중확인자" />
+                    <input className="ns-ndq" value={dbl} onChange={e => setDbl(e.target.value)} aria-label="이중확인자" />
                   </div>
                 )}
                 <div className="ns-nfa">
@@ -322,21 +327,34 @@ export default function EhrNurse({
       })()}
 
       {win && (
-        <div className="ns-nwin" role="dialog" aria-label={win}>
-          <header>
+        <div className="ns-nwin" role="dialog" aria-label={win} style={pos ? { left: pos.x, top: pos.y, right: 'auto', bottom: 'auto', margin: 0 } : undefined}>
+          <header
+            onPointerDown={e => {
+              if ((e.target as HTMLElement).closest('button')) return;
+              const box = (e.currentTarget.parentElement as HTMLElement).getBoundingClientRect();
+              const dx = e.clientX - box.left;
+              const dy = e.clientY - box.top;
+              const move = (ev: PointerEvent) => setPos({ x: Math.max(0, ev.clientX - dx), y: Math.max(0, ev.clientY - dy) });
+              const up = () => { window.removeEventListener('pointermove', move); window.removeEventListener('pointerup', up); };
+              window.addEventListener('pointermove', move);
+              window.addEventListener('pointerup', up);
+            }}
+          >
             <b>{MENUS.find(m => m.id === win)?.label}</b>
-            <button type="button" onClick={onClose}>닫기</button>
+            <button type="button" aria-label="닫기" onClick={onClose}>&times;</button>
           </header>
           <div className="ns-nwb">
             {win === 'dir' ? (
               <>
-                <input className="ns-ndq" value={dq} onChange={e => setDq(e.target.value)} placeholder="부서 검색" aria-label="부서 검색" />
+                <input className="ns-ndq" value={dq} onChange={e => setDq(e.target.value)} aria-label="부서 검색" />
                 <table className="ns-nlist">
                   <tbody>
                     {DIR.filter(([n]) => n.includes(dq.trim())).map(([n, t]) => <tr key={n}><td>{n}</td><td>{t}</td></tr>)}
                   </tbody>
                 </table>
               </>
+            ) : win === 'bulk' ? (
+              <WardBulk pts={bulkPts} onClose={onClose} />
             ) : drawer}
           </div>
         </div>
@@ -400,6 +418,7 @@ export default function EhrNurse({
         .ns-nmd { position: fixed; inset: 0; z-index: 60; display: flex; align-items: center; justify-content: center; padding: 12px; }
         .ns-nmk { position: absolute; inset: 0; border: 0; background: rgba(15,23,42,.45); }
         .ns-nmb { position: relative; width: min(460px, 100%); max-height: 80vh; overflow: auto; background: var(--background, #fff); color: var(--text); border-radius: 12px; }
+        .ns-nwin header { background: linear-gradient(#233a5c, #17283f); color: #fff; cursor: move; touch-action: none; padding: 8px 12px; border-bottom: 0; }
         .ns-nmb header, .ns-nwin header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); }
         .ns-nmb header button, .ns-nwin header button { border: 0; background: transparent; color: var(--sub-text); font: inherit; cursor: pointer; }
         .ns-nmc { padding: 12px 16px 16px; } .ns-nmc h4 { margin: 10px 0 4px; } .ns-nmc p { margin: 0 0 4px; }
@@ -409,8 +428,9 @@ export default function EhrNurse({
         .ns-nfa button { border: 1px solid var(--border); background: transparent; color: inherit; border-radius: 8px; padding: 8px 18px; font: inherit; font-weight: 600; cursor: pointer; }
         .ns-nfa .ns-go { background: var(--primary); border-color: var(--primary); color: #fff; }
         .ns-nfa .ns-go:disabled { opacity: .4; }
-        @media (min-width: 1500px) { .ns-nu.ns-hasw { margin-right: 440px; } }
-        .ns-nwin { position: fixed; z-index: 55; top: 0; right: 0; bottom: 0; width: min(440px, 100%); background: var(--background, #fff); color: var(--text); border-left: 1px solid #94a3b8; box-shadow: -6px 0 24px rgba(0,0,0,.22); display: flex; flex-direction: column; }
+        .ns-nwin { position: fixed; z-index: 55; inset: 0; margin: auto; width: min(920px, 94vw); height: min(680px, 86vh); min-width: 320px; min-height: 240px; resize: both; overflow: hidden; background: var(--background, #fff); color: var(--text); border: 1px solid #1c2f4b; box-shadow: 0 12px 40px rgba(0,0,0,.35); display: flex; flex-direction: column; border-radius: 6px; }
+        .ns-nwin header button { color: #fff; font-size: 22px; line-height: 1; padding: 0 6px; }
+        .ns-nwb .wbk { border: 0; padding: 0; margin: 0; }
         .ns-nwb { padding: 12px 14px 24px; overflow: auto; flex: 1; }
         .ns-ndq { width: 100%; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; padding: 8px; font: inherit; margin-bottom: 8px; background: var(--background); color: var(--text); }
         @media (max-width: 980px) {
