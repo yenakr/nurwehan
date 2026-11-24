@@ -17,6 +17,8 @@ import RegisterCard from './EhrRegister';
 import MarPanel from './EhrMar';
 import MemoPanel from './EhrMemo';
 import { shiftOf, criticalFlags, badgesOf, BMI, DC_EDU, ISO } from '../emr';
+import Link from 'next/link';
+import LogoutButton from '@/components/LogoutButton';
 import RxPanel from './EhrRx';
 import EhrNurse, { type Roster } from './EhrNurse';
 import { printNameTag, printTickets, type TicketKind } from '../print';
@@ -1113,9 +1115,10 @@ export default function EhrEditor({
   return (
     <div className="ehr">
       <div className="bar">
+        <Link href="/" className="home" aria-label="홈">NUR위한</Link>
         <button type="button" className="back" onClick={() => router.push(`/ehr?view=${encodeURIComponent(info.ward === '응급실' ? '응급' : info.ward || '')}`)}>&larr; {info.ward === '응급실' ? '응급' : info.ward || '목록'}</button>
         <button type="button" className="back" onClick={() => { setWin(null); setScreen(screen === 'main' ? 'chart' : 'main'); }}>{screen === 'main' ? '전체 차트' : '간호 화면'}</button>
-        <input className="ttl" value={title} onChange={e => setTitle(e.target.value)} aria-label="제목" />
+        <span className="ttl" />
         <span className={`st ${status}`}>{status === 'saved' ? '저장됨' : status === 'saving' ? '저장 중…' : '저장 실패'}</span>
         {ai && !locked && aiOn && <button type="button" className="aib" onClick={askFb} disabled={fbBusy || fbLeft <= 0}><AiMark size={14} />{fbBusy ? '살펴보는 중' : `AI 피드백 ${fbLeft}회`}</button>}
         {locked
@@ -1148,6 +1151,8 @@ export default function EhrEditor({
             </>
           )}
         </div>
+        <span className="who">{userName}</span>
+        <LogoutButton />
       </div>
 
       <p className="pvn">실제 환자 정보(이름, 등록번호, 생년월일, 병실 등)는 쓰지 마세요. 가상 정보로 바꿔서 연습하세요.</p>
@@ -1322,6 +1327,9 @@ export default function EhrEditor({
         .ehr { --nv1: #1c2f4b; --nv2: #13233a; --tl: #cfe5e6; --ln: #cfd5dc; }
         .ehr .bar { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
         .ehr .back { border: 1px solid var(--border); background: transparent; color: var(--text); border-radius: 999px; padding: 5px 12px; font: inherit; font-size: 0.8125rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
+        .ehr .home { font-weight: 800; color: var(--primary); text-decoration: none; letter-spacing: -0.5px; padding-right: 4px; }
+        .ehr .who { font-size: 0.8125rem; color: var(--sub-text); white-space: nowrap; }
+        .ehr .bar .btn-outline { padding: 4px 10px !important; }
         .ehr .more { position: relative; }
         .ehr .mbtn { border: 0; background: transparent; color: var(--sub-text); font-size: 1.25rem; line-height: 1; letter-spacing: 1px; padding: 2px 8px; cursor: pointer; }
         .ehr .mbk { position: fixed; inset: 0; background: transparent; border: 0; z-index: 30; cursor: default; }
