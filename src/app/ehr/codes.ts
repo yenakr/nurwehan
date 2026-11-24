@@ -1,5 +1,6 @@
+import { KCD } from './kcd';
 // 가상 환자 실습용 코드표 (실제 병원 코드와 다를 수 있음)
-export const DX: [string, string][] = [
+const DX0: [string, string][] = [
   ['I10', '본태성 고혈압'], ['I50.0', '울혈심부전'], ['I50.9', '상세불명의 심부전'], ['I21.9', '급성 심근경색증'], ['I20.9', '협심증'], ['I48', '심방세동 및 조동'],
   ['I63.9', '뇌경색증'], ['I61.9', '뇌내출혈'], ['I82.9', '정맥 색전증 및 혈전증'],
   ['E11.9', '제2형 당뇨병'], ['E11.65', '고혈당을 동반한 제2형 당뇨병'], ['E10.9', '제1형 당뇨병'], ['E78.5', '상세불명의 고지혈증'], ['E87.1', '저나트륨혈증'], ['E87.6', '저칼륨혈증'], ['E86', '체액량 감소'],
@@ -39,6 +40,9 @@ export const DIETS = ['일반식', '죽 (미음 포함)', '연식', '당뇨식',
 export const FORMS2 = ['입원생활안내문', '낙상예방 안내문', '욕창예방 안내문', '비급여 동의서', '안전사고 동의서', '억제대 동의서', '수혈 동의서', '개인정보 동의서', '퇴원 안내문'];
 
 export const RET_KINDS = ['DC 마약 반납', '마약 잔량 반납', 'DC 혈액 반납', 'DC 약 반납', '냉장약 반납'];
+
+const HAVE = new Set(DX0.map(d => d[0]));
+export const DX: [string, string][] = [...DX0, ...KCD.filter(d => !HAVE.has(d[0]))];
 
 export const dxName = (code: string) => DX.find(d => d[0].toLowerCase() === code.trim().toLowerCase())?.[1];
 export const dxCode = (name: string) => DX.find(d => d[1] === name.trim())?.[0];
