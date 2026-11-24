@@ -858,8 +858,6 @@ export default function EhrEditor({
                           <textarea rows={['notes', 'progress', 'nutrition', 'imaging'].includes(lk) ? 5 : 3} value={v} onChange={e => setCell(lk, i, c.key, e.target.value)} />
                         ) : c.type === 'pick' ? (
                           <input list={c.list} value={v} placeholder={c.ph} onChange={e => setCell(lk, i, c.key, e.target.value)} />
-                        ) : c.type === 'pick' ? (
-                          <input list={c.list} value={v} placeholder={c.ph} onChange={e => setCell(lk, i, c.key, e.target.value)} />
                         ) : c.type === 'select' ? (
                           <select value={v} onChange={e => setCell(lk, i, c.key, e.target.value)}>
                             {(c.opts!.includes(v) ? c.opts! : [...c.opts!, v]).map(o => <option key={o} value={o}>{o}</option>)}
