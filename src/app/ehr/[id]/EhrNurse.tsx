@@ -3,6 +3,7 @@
 import { SAMPLES } from '../samples';
 import { MATS, matsFor } from '../codes';
 import NurseForm from './NurseForms';
+import { confirmDialog } from '@/components/Dialog';
 import { useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
 import { useRouter } from 'next/navigation';
 import { migrate, shiftChart, type ChartData, type Row } from '../types';
@@ -275,36 +276,72 @@ export default function EhrNurse({
     return pts.flatMap(p => todoOf(group(p.orders), duty, isToday).filter(t => t.label !== '검사' && t.state !== '완료').map(t => ({ ...t, p })));
   })().sort((a, b) => a.time.localeCompare(b.time) || a.p.bed.localeCompare(b.p.bed, 'ko', { numeric: true }));
 
+  const nowMin = Number(hm().slice(0, 2)) * 60 + Number(hm().slice(3));
+  const unSlot = async (it: Item) => { if (await confirmDialog('마지막 수행 기록을 취소할까요?')) undo(it); };
   const sec = (label: string, items: Item[], kind: 'med' | 'base' | 'prn' | 'lab') => (
     <section className="ns-nsec">
       <h3>{label}</h3>
-      {items.length === 0 && <p className="ns-nnone">처방이 없어요.</p>}
-      {items.map(it => {
-        const r = it.r;
-        const stop = r.pri === 'D/C' || r.st === '취소';
-        const done = slots(r);
-        return (
-          <div key={it.i} className={`ns-nrow ${stop ? 'ns-x' : ''}`}>
-            <div className="ns-nm">
-              <b>{r.name}</b>
-              {(r.dose || r.route || r.cnt) && <span>{[r.dose && `${r.dose}${r.unit || ''}`, r.route, r.cnt, r.pri && r.pri !== 'D/C' ? r.pri : ''].filter(Boolean).join(' · ')}</span>}
-              {kind === 'lab' && r.st && <span>{r.st}</span>}
-              {it.notes.map((n, k) => <em key={k}>{n}</em>)}
-            </div>
-            <div className="ns-nd">
-              {done.map(k => <span key={k} className="ns-chip">{r[k]}</span>)}
-              {r.hold && <span className="ns-chip ns-hold">보류 {r.hold}</span>}
-              {!stop && (
-                <>
-                  <button type="button" className="ns-go" onClick={() => ask(it)}>수행</button>
-                  {(done.length > 0 || r.ck) && <button type="button" onClick={() => undo(it)}>취소</button>}
-                </>
-              )}
-              {stop && <span className="ns-chip ns-x">{r.pri === 'D/C' ? 'D/C' : '취소'}</span>}
-            </div>
-          </div>
-        );
-      })}
+      {items.length === 0 ? <p className="ns-nnone">처방이 없어요.</p> : (
+        <div className="ns-otw">
+          <table className="ns-ot">
+            <thead>
+              <tr>
+                <th>처방명</th>
+                {kind !== 'lab' && <><th>용량</th><th>경로</th><th>횟수</th></>}
+                <th>{kind === 'lab' ? '처리' : '수행 시간'}</th>
+                <th>상태</th>
+              </tr>
+            </thead>
+            <tbody>
+              {items.map(it => {
+                const r = it.r;
+                const stop = r.pri === 'D/C' || r.st === '취소';
+                const done = slots(r);
+                const times = kind === 'prn' || kind === 'lab' ? [] : timesFor(r, kind);
+                const n = Math.max(times.length, done.length);
+                const labDone = r.st === '완료' || r.st === '집계완료';
+                return (
+                  <tr key={it.i} className={stop ? 'ns-x' : ''}>
+                    <td className="ns-otn">
+                      <b>{r.name}</b>
+                      {r.pri && r.pri !== 'D/C' && <i>{r.pri}</i>}
+                      {it.notes.map((m, k) => <em key={k}>{m}</em>)}
+                    </td>
+                    {kind !== 'lab' && <><td>{r.dose ? `${r.dose}${r.unit || ''}` : ''}</td><td>{r.route}</td><td>{r.cnt}</td></>}
+                    <td className="ns-ots">
+                      {kind === 'lab' ? (
+                        labDone ? (
+                          <button type="button" className="ns-sl ns-sl-done" disabled={stop || r.st === '집계완료'} onClick={() => unSlot(it)}>{r.st}</button>
+                        ) : !stop && <button type="button" className="ns-sl ns-sl-next" onClick={() => perform(it)}>완료 처리</button>
+                      ) : (
+                        <>
+                          {Array.from({ length: n }, (_, k) => {
+                            if (k < done.length) {
+                              const last = k === done.length - 1;
+                              return <button key={k} type="button" className="ns-sl ns-sl-done" title={last ? '누르면 취소' : ''} disabled={stop || !last} onClick={() => unSlot(it)}>{r[done[k]]}{r[`v${done[k].slice(1)}`] ? ` (확인 ${r[`v${done[k].slice(1)}`]})` : ''}</button>;
+                            }
+                            const t = times[k] || '';
+                            const next = k === done.length;
+                            const th = Number(t.slice(0, 2));
+                            const from = duty === 'D' ? 6 : duty === 'E' ? 14 : 22;
+                            const inDuty = duty === 'N' ? (th >= 22 || th < 6) : (th >= from && th < from + 8);
+                            const late = !stop && isToday && t !== '' && inDuty && nowMin - (th * 60 + Number(t.slice(3))) > 60;
+                            return <button key={k} type="button" className={`ns-sl ${next && !stop ? (late ? 'ns-sl-late' : 'ns-sl-next') : 'ns-sl-wait'}`} disabled={stop || !next} onClick={() => ask(it)}>{t}</button>;
+                          })}
+                          {kind === 'prn' && !stop && <button type="button" className="ns-sl ns-sl-next" onClick={() => ask(it)}>+ 투약 기록</button>}
+                          {kind === 'base' && times.length === 0 && !stop && done.length === 0 && <button type="button" className="ns-sl ns-sl-next" onClick={() => ask(it)}>수행 기록</button>}
+                        </>
+                      )}
+                      {r.hold && <span className="ns-sl ns-hold" title={r.hold}>보류</span>}
+                    </td>
+                    <td className="ns-otst">{stop ? (r.pri === 'D/C' ? 'D/C' : '취소') : kind === 'lab' ? r.st : n > 0 && done.length >= n ? '완료' : ''}</td>
+                  </tr>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      )}
     </section>
   );
 
@@ -644,6 +681,23 @@ export default function EhrNurse({
         .ns-nhd span { font-weight: 700; }
         .ns-nhd input { border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font: inherit; background: var(--background); color: var(--text); }
         .ns-nhd .ns-cmp { margin-left: auto; border: 1px solid var(--border); background: transparent; color: inherit; border-radius: 6px; padding: 6px 12px; font: inherit; cursor: pointer; }
+        .ns-otw { overflow-x: auto; }
+        .ns-ot { width: 100%; min-width: 560px; table-layout: auto; border-collapse: collapse; font-size: 13px; }
+        .ns-ot th { background: var(--muted-background); border: 1px solid var(--border); padding: 5px 8px; font-size: 12px; white-space: nowrap; }
+        .ns-ot td { border: 1px solid var(--border); padding: 6px 8px; vertical-align: top; }
+        .ns-ot td.ns-otn { min-width: 180px; }
+        .ns-ot td.ns-otn b { display: block; }
+        .ns-ot td.ns-otn i { font-style: normal; font-size: 11px; font-weight: 700; color: var(--primary); }
+        .ns-ot td.ns-otn em { display: block; font-style: normal; font-size: 12px; color: #b9770e; }
+        .ns-ot td.ns-ots { min-width: 130px; }
+        .ns-ot td.ns-otst { text-align: center; white-space: nowrap; font-weight: 700; color: var(--sub-text); }
+        .ns-ot tr.ns-x b { text-decoration: line-through; opacity: .6; }
+        .ns-sl { display: inline-block; margin: 0 4px 4px 0; padding: 3px 9px; border-radius: 4px; border: 1px solid var(--border); background: transparent; color: var(--text); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+        .ns-sl:disabled { cursor: default; }
+        .ns-sl-done { background: rgba(16,185,129,.14); border-color: rgba(16,185,129,.4); color: #047857; }
+        .ns-sl-next { border-color: var(--primary); color: var(--primary); }
+        .ns-sl-late { border-color: #dc2626; color: #dc2626; background: rgba(239,68,68,.1); }
+        .ns-sl-wait { opacity: .5; }
         .ns-nsec h3 { margin: 0; padding: 6px 10px; background: #ececec; color: #111; text-align: center; font-size: 14px; border: 1px solid #aaa; }
         .ns-nrow { display: flex; gap: 10px; justify-content: space-between; align-items: flex-start; padding: 8px 6px; border-bottom: 1px solid var(--border); }
         .ns-nrow.ns-x .ns-nm b { text-decoration: line-through; opacity: .6; }
