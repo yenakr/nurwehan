@@ -80,23 +80,27 @@ function group(orders: Row[]): Groups {
 // 수술·시술·검사 예정마다 필요한 준비 항목. 해당 없으면 비어 있다.
 type CkGroup = { title: string; items: string[] };
 function checklist(d: ChartData): CkGroup[] {
+  const today = new Date();
+  const ymd = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
+  // 수술·시술·침습적 검사 "전" 준비가 필요한 것만 대상으로 한다 (이미 끝난 수술, 수술 후 관찰·간호는 제외)
+  const NOT = /수술\s*후|술\s*후|후\s|관찰|dressing|드레싱|보행|교육|POD|재료|상처|배액|조기|f\/u|추적/i;
   const src: [string, string][] = [
-    ...d.sched.map((r): [string, string] => [r.kind || '', r.name || '']),
-    ...d.surgery.filter(r => r.name).map((r): [string, string] => ['수술', r.name || '']),
-    ...d.orders.filter(r => r.kind !== 'sec' && r.kind !== 'memo' && r.pri !== 'D/C' && r.name).map((r): [string, string] => ['', r.name || '']),
+    ...d.sched.filter(r => r.st !== '완료' && r.st !== '취소').map((r): [string, string] => [r.kind || '', r.name || '']),
+    ...d.surgery.filter(r => r.name && (r.date || '').slice(0, 10) >= ymd).map((r): [string, string] => ['수술', r.name || '']),
+    ...d.orders.filter(r => r.kind !== 'sec' && r.kind !== 'memo' && r.pri !== 'D/C' && r.name && r.st !== '완료' && r.st !== '집계완료' && r.st !== '취소' && !Object.keys(r).some(k => /^t\d+$/.test(k) && r[k])).map((r): [string, string] => ['', r.name || '']),
   ];
   const out: CkGroup[] = [];
   const seen = new Set<string>();
   src.forEach(([kind, name]) => {
+    if (!name.trim() || NOT.test(name)) return;
     const t = `${kind} ${name}`;
     let items: string[] = [];
-    let label = kind || '검사';
-    if (/수술|시술|관상동맥/.test(t)) { items = ['금식', '동의서', '보호자', '수술·시술 부위 확인', '장신구·틀니 제거']; label = /시술/.test(t) && !/수술/.test(t) ? '시술' : '수술'; }
-    else if (/내시경|endoscop|colonoscop/i.test(t)) { items = ['금식', '동의서', '장 정결 확인']; label = '검사'; }
-    else if (/CT|조영/i.test(t)) { items = ['금식', '동의서', '조영제 알러지 확인']; label = '검사'; }
-    else if (/MRI/i.test(t)) { items = ['동의서', '금속 제거']; label = '검사'; }
-    else if (/수혈|transfusion|PRBC|혈액/i.test(t)) { items = ['동의서', '혈액 준비 확인']; label = '수혈'; }
-    if (!items.length || !name.trim()) return;
+    let label = '';
+    if (/수술|시술|관상동맥|PCI|angioplasty/i.test(t)) { items = ['금식', '동의서', '보호자', '수술·시술 부위 확인', '장신구·틀니 제거']; label = /시술/.test(t) && !/수술/.test(t) ? '시술' : '수술'; }
+    else if (/내시경|endoscop|colonoscop|EGD/i.test(t)) { items = ['금식', '동의서', '장 정결 확인']; label = '침습 검사'; }
+    else if (/생검|biopsy|천자|paracentesis|thoracentesis|조영술|angiograph/i.test(t)) { items = ['금식', '동의서', '조영제 알러지 확인']; label = '침습 검사'; }
+    else if (/수혈|transfusion|PRBC/i.test(t) && !/cross|matching|type/i.test(t)) { items = ['동의서', '혈액 준비 확인']; label = '수혈'; }
+    if (!items.length) return;
     const title = `${label} · ${name.trim()}`;
     if (seen.has(title)) return;
     seen.add(title);
