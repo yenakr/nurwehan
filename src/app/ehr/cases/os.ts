@@ -7,7 +7,7 @@ export const os: Sample = {
   title: '정형외과 · 슬관절 전치환술 후 1일',
   data: {
     info: {
-      sampleKey: 'os', bed: '901-1', ptNo: '00000008', name: '박정애', ageSex: '69/F', ward: '91병동', dept: 'OS', doctor: '하정형', admit: dt(-2), orderDate: dt(0),
+      sampleKey: 'os', bed: '901-1', ptNo: '0008', name: '박정애', ageSex: '69/F', ward: '91병동', dept: 'OS', doctor: '하정형', admit: dt(-2), orderDate: dt(0),
       allergy: '아스피린/NSAIDs', dx: 'Primary osteoarthritis of right knee, s/p TKA (Rt)', height: '152', weight: '66.0', iso: '없음', npo: '0', surg: '1',
       cc: '우측 무릎 통증, 보행 장애', onset: dt(-1100),
       hpi: '3년 전부터 우측 무릎 통증이 심해져 계단 이용과 보행이 어렵고 보존 치료에 반응이 없어 우측 슬관절 전치환술을 위해 입원함.',
@@ -82,7 +82,7 @@ export const os: Sample = {
       { name: 'Creatinine', value: '0.8', unit: 'mg/dL', min: '0.5', max: '1.1', sample: 'Blood', time: md(0, '05:30') },
     ],
     notes: [
-      { time: md(0, '11:00'), focus: '수혈', text: 'S)\n"수혈하고 나서 어지럽거나 가렵지는 않아요."\n\nO)\n수혈 전 BP 118/70, HR 82, BT 37.4. pRBC 1 unit 10:30 시작, 15분 후 BP 116/70, HR 84, BT 37.5, 발진·호흡곤란 없음.\n\nA)\n수혈 반응 없음. 속도 시작 후 15분간 천천히 주입함.\n\nI)\n2인 확인(환자명, 등록번호, 혈액형, 혈액번호) 후 수혈 시작, 수혈 중 활력징후 측정함.\n\nE)\n수혈 반응 증상(오한, 가려움, 호흡곤란) 있으면 즉시 알리도록 설명함.', author: '박간호', shift: 'D' },
+      { time: md(0, '11:00'), focus: '수혈', text: 'S)\n"수혈하고 나서 어지럽거나 가렵지는 않아요."\n\nO)\n수혈 전 BP 118/70, HR 82, BT 37.4. pRBC 1 unit 10:30 시작, 15분 후 BP 116/70, HR 84, BT 37.5, 발진·호흡곤란 없음.\n\nA)\n수혈 반응 없음. 속도 시작 후 15분간 천천히 주입함.\n\nI)\n2인 확인(환자명, 환자번호, 혈액형, 혈액번호) 후 수혈 시작, 수혈 중 활력징후 측정함.\n\nE)\n수혈 반응 증상(오한, 가려움, 호흡곤란) 있으면 즉시 알리도록 설명함.', author: '박간호', shift: 'D' },
       { time: md(0, '02:15'), focus: '급성 통증', text: 'D)\n수술 부위 통증 NRS 7 호소, 얼굴 찡그리고 식은땀. BP 110/66, HR 90.\n\nA)\nPRN tramadol 50mg IV 투여함. 우측 하지 거상, 냉찜질 적용함.\n\nR)\n03:15 NRS 4로 감소, 잠듦.', author: '최간호', shift: 'N' },
       { time: md(-1, '20:30'), focus: '신경혈관 사정', text: 'D)\n우측 하지: 발등 맥박 촉지됨(+), 모세혈관 재충혈 2초, 발가락 움직임·감각 정상, 발가락 온도 따뜻함. Hemovac 80mL 혈성.\n\nA)\n하지 거상 유지, 배액관 꺾임 없는지 확인, 탄력 스타킹 착용 확인함.\n\nR)\n신경혈관 이상 소견 없음.', author: '김간호', shift: 'E' },
     ],

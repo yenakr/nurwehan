@@ -78,13 +78,13 @@ export default function PatientsClient({ rows, classes, samples, mine }: { rows:
       <div className="card" style={{ padding: 0 }}>
         <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8, padding: 12, alignItems: 'center' }}>
           <b style={{ marginRight: 8 }}>총 {rows.length}명</b>
-          <input style={{ ...inp, flex: 1, minWidth: 140 }} value={q} onChange={e => setQ(e.target.value)} placeholder="ID, 등록번호, 이름 검색" aria-label="검색" />
+          <input style={{ ...inp, flex: 1, minWidth: 140 }} value={q} onChange={e => setQ(e.target.value)} placeholder="ID, 환자번호, 이름 검색" aria-label="검색" />
           <button type="button" style={ghost} disabled={sel.size === 0} onClick={() => publish([...sel], true)}>공개</button>
           <button type="button" style={ghost} disabled={sel.size === 0} onClick={() => publish([...sel], false)}>비공개</button>
         </div>
         <div style={{ overflowX: 'auto' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-            <thead><tr><th style={th} /><th style={th}>ID</th><th style={th}>등록번호</th><th style={th}>환자명</th><th style={th}>나이/성별</th><th style={th}>진료과</th><th style={th}>병동</th><th style={th}>진단</th><th style={th}>분반</th><th style={th}>공개</th><th style={th} /></tr></thead>
+            <thead><tr><th style={th} /><th style={th}>ID</th><th style={th}>환자번호</th><th style={th}>환자명</th><th style={th}>나이/성별</th><th style={th}>진료과</th><th style={th}>병동</th><th style={th}>진단</th><th style={th}>분반</th><th style={th}>공개</th><th style={th} /></tr></thead>
             <tbody>
               {shown.length === 0 && <tr><td colSpan={11} style={{ ...td, textAlign: 'center', color: 'var(--sub-text)' }}>가상환자가 없어요.</td></tr>}
               {shown.map(v => (

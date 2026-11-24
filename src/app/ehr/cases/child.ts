@@ -7,7 +7,7 @@ export const child: Sample = {
   title: '아동 · RSV 세기관지염',
   data: {
     info: {
-      sampleKey: 'child', bed: '501-1', ptNo: '00000002', name: '김서준', ageSex: '8M/M', ward: '51병동', dept: 'PD', doctor: '박소아', admit: dt(-3), orderDate: dt(0),
+      sampleKey: 'child', bed: '501-1', ptNo: '0002', name: '김서준', ageSex: '8M/M', ward: '51병동', dept: 'PD', doctor: '박소아', admit: dt(-3), orderDate: dt(0),
       allergy: '무', dx: 'Acute bronchiolitis (RSV)', height: '70', weight: '8.2', iso: '접촉', npo: '0', surg: '0',
       cc: '기침, 쌕쌕거림, 수유량 감소', onset: dt(-5),
       hpi: '5일 전부터 콧물과 기침이 있었고 3일 전부터 숨쉴 때 쌕쌕거리는 소리와 함께 분유 수유량이 평소의 절반으로 줄고 보채 응급실 내원함. RSV 항원 양성, 흉부 X선상 양측 과팽창으로 입원함. 어린이집 형이 감기 증상이 있었음.',

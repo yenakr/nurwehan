@@ -18,7 +18,7 @@ export const CONSENT_TPL: Tpl[] = [
   { name: '개인정보 수집·이용 동의서', purpose: '진료와 간호 제공을 위해 개인정보를 수집하고 이용합니다.', method: '의료법 등 관련 법령에 따라 보관하며 목적 외로 사용하지 않습니다.', risk: '동의를 거부할 수 있으나 일부 진료가 제한될 수 있습니다.', alt: '해당 없음' },
 ];
 
-const CHECKS = ['환자 본인 확인 (이름·등록번호)', '설명 내용을 환자가 이해했는지 확인', '자발적으로 동의했는지 확인', '서명·일시·설명 의사 누락 여부 확인', '시술·수술명과 부위가 일치하는지 확인'];
+const CHECKS = ['환자 본인 확인 (이름·환자번호)', '설명 내용을 환자가 이해했는지 확인', '자발적으로 동의했는지 확인', '서명·일시·설명 의사 누락 여부 확인', '시술·수술명과 부위가 일치하는지 확인'];
 const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 const ckList = (r: Row) => (r.ck || '').split(',').filter(Boolean);
 

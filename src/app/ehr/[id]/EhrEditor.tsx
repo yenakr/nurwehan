@@ -1155,7 +1155,7 @@ export default function EhrEditor({
         <LogoutButton />
       </div>
 
-      <p className="pvn">실제 환자 정보(이름, 등록번호, 생년월일, 병실 등)는 쓰지 마세요. 가상 정보로 바꿔서 연습하세요.</p>
+      <p className="pvn">실제 환자 정보(이름, 환자번호, 생년월일, 병실 등)는 쓰지 마세요. 가상 정보로 바꿔서 연습하세요.</p>
       {locked && <div className="lkb">{info.reviewed ? '교수님이 확인했어요' : '제출했어요. 교수님 확인 전에는 제출 취소로 고칠 수 있어요'}</div>}
       {info.comment && <div className="cmt"><b>교수님 의견</b><p>{info.comment}</p></div>}
       {fb && <div className="cmt ai"><b style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><AiMark size={14} />AI 피드백</b><button type="button" className="cx" aria-label="닫기" onClick={() => setFb('')}>&times;</button><p>{fb}</p></div>}

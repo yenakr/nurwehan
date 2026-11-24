@@ -7,7 +7,7 @@ export const er1: Sample = {
   title: '응급 · 흉통, 심정지 (KTAS 1)',
   data: {
     info: {
-      sampleKey: 'er1', ptNo: '00000021', name: '오창수', ageSex: '63/M', ward: '응급실', dept: 'ER', doctor: '배응급', admit: dt(0), visitTime: '14:05', vstatus: '관찰', ktas: '1', zone: '응급', orderDate: dt(0),
+      sampleKey: 'er1', ptNo: '0021', name: '오창수', ageSex: '63/M', ward: '응급실', dept: 'ER', doctor: '배응급', admit: dt(0), visitTime: '14:05', vstatus: '관찰', ktas: '1', zone: '응급', orderDate: dt(0),
       allergy: '무', dx: 'Acute inferior STEMI, ventricular fibrillation arrest, ROSC', height: '171', weight: '78.0', iso: '없음', npo: '1', surg: '0',
       cc: '가슴 답답함, 식은땀, 왼팔 방사통', onset: full(0, '13:15'),
       hpi: '1시간 전 안정 중 갑자기 가슴을 쥐어짜는 통증과 식은땀이 시작되고 왼팔로 뻗쳐 119로 내원함. 도착 후 심전도에서 II, III, aVF ST 상승 확인. 시술 준비 중 심실세동으로 심정지 발생, 제세동 2회 후 자발순환 회복(ROSC).',
@@ -134,7 +134,7 @@ export const er2: Sample = {
   title: '응급 · 발목 염좌 (KTAS 4)',
   data: {
     info: {
-      sampleKey: 'er2', ptNo: '00000022', name: '한지유', ageSex: '21/F', ward: '응급실', dept: 'ER', doctor: '구급이', admit: dt(0), visitTime: '15:10', vstatus: '진료중', ktas: '4', zone: '비응급', orderDate: dt(0),
+      sampleKey: 'er2', ptNo: '0022', name: '한지유', ageSex: '21/F', ward: '응급실', dept: 'ER', doctor: '구급이', admit: dt(0), visitTime: '15:10', vstatus: '진료중', ktas: '4', zone: '비응급', orderDate: dt(0),
       allergy: '무', dx: 'Ankle sprain, rt (grade II)', height: '165', weight: '56.0', iso: '없음', npo: '0', surg: '0',
       cc: '오른쪽 발목 통증, 부종, 체중 부하 불편', onset: full(0, '14:40'),
       hpi: '농구 중 착지하다가 오른쪽 발목을 안쪽으로 접질림. 즉시 통증과 부종이 생겼고 절뚝거리며 걸을 수 있으나 체중을 실으면 아픔. 과거 같은 부위 염좌 1회(2년 전).',

@@ -7,7 +7,7 @@ export const psych: Sample = {
   title: '정신 · 조현병 급성기',
   data: {
     info: {
-      sampleKey: 'psych', bed: '1001-1', ptNo: '00000004', name: '한도윤', ageSex: '27/M', ward: '101병동', dept: 'PSY', doctor: '박정신', admit: dt(-5), orderDate: dt(0),
+      sampleKey: 'psych', bed: '1001-1', ptNo: '0004', name: '한도윤', ageSex: '27/M', ward: '101병동', dept: 'PSY', doctor: '박정신', admit: dt(-5), orderDate: dt(0),
       allergy: '무', dx: 'Schizophrenia, acute exacerbation', height: '176', weight: '82.0', iso: '없음', npo: '0', surg: '0',
       cc: '환청, 피해망상, 수면 감소', onset: dt(-30),
       hpi: '5년 전 조현병 진단 후 외래 치료 중이었으나 한 달 전부터 약을 임의로 중단함. 2주 전부터 "누가 나를 감시하고 욕한다"며 방문을 잠그고 3일간 거의 잠을 자지 않아 가족의 설득으로 내원하여 보호자 동의 입원함.',

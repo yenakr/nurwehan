@@ -7,7 +7,7 @@ export const op1: Sample = {
   title: '외래 · 제2형 당뇨 추적관찰',
   data: {
     info: {
-      sampleKey: 'op1', ptNo: '00000011', name: '강대호', ageSex: '58/M', ward: '외래', dept: 'EN', doctor: '서내분', admit: dt(0), visitTime: '09:30', vstatus: '진료중', orderDate: dt(0),
+      sampleKey: 'op1', ptNo: '0011', name: '강대호', ageSex: '58/M', ward: '외래', dept: 'EN', doctor: '서내분', admit: dt(0), visitTime: '09:30', vstatus: '진료중', orderDate: dt(0),
       allergy: '무', dx: 'Type 2 diabetes mellitus with peripheral neuropathy', height: '170', weight: '74.0', iso: '없음', npo: '0', surg: '0',
       cc: '정기 추적, 식후 어지럼, 발 저림', onset: dt(-60),
       hpi: '당뇨 8년. 3개월마다 외래 방문 중이며 최근 2개월간 식후 2~3시간 뒤 어지럽고 손에 땀이 나는 증상이 가끔 있고 양 발끝이 저리다고 호소함. 식사량은 줄이지 않았으나 최근 저녁에 약을 먹고 식사를 거르는 날이 있음.',
@@ -86,7 +86,7 @@ export const op2: Sample = {
   title: '외래 · 담낭절제술 후 1주 경과 관찰',
   data: {
     info: {
-      sampleKey: 'op2', ptNo: '00000012', name: '문선영', ageSex: '45/F', ward: '외래', dept: 'GS', doctor: '장일반', admit: dt(0), visitTime: '10:20', vstatus: '접수', orderDate: dt(0),
+      sampleKey: 'op2', ptNo: '0012', name: '문선영', ageSex: '45/F', ward: '외래', dept: 'GS', doctor: '장일반', admit: dt(0), visitTime: '10:20', vstatus: '접수', orderDate: dt(0),
       allergy: '무', dx: 'POD#7, laparoscopic cholecystectomy (acute cholecystitis)', height: '160', weight: '58.0', iso: '없음', npo: '0', surg: '1',
       cc: '수술 후 경과 관찰, 우측 상복부 불편감', onset: dt(-8),
       hpi: '7일 전 급성 담낭염으로 복강경 담낭절제술 시행 후 퇴원함. 상처 통증은 경미하고 발열은 없으나 기름진 음식 후 우측 상복부가 더부룩하고 묽은 변을 하루 2회 봄.',

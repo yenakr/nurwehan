@@ -23,7 +23,7 @@ export function printNameTag(i: Record<string, string | null | undefined>) {
   show('네임지', `<div class="tag">
 <div class="bed">${esc(`${i.ward || ''} ${i.bed || ''}`.trim())}</div>
 <div class="nm">${esc(i.name || '')}</div>
-<table>${row('등록번호', i.ptNo)}${row('나이/성별', i.ageSex)}${row('진료과', i.dept)}${row('주치의', i.doctor)}${row('진단명', i.dx)}${row('입원일', i.admit)}${i.allergy && !/^(없음|무|none|-)$/i.test(i.allergy.trim()) ? `<tr class="al"><th>알러지</th><td>${esc(i.allergy)}</td></tr>` : ''}</table>
+<table>${row('환자번호', i.ptNo)}${row('나이/성별', i.ageSex)}${row('진료과', i.dept)}${row('주치의', i.doctor)}${row('진단명', i.dx)}${row('입원일', i.admit)}${i.allergy && !/^(없음|무|none|-)$/i.test(i.allergy.trim()) ? `<tr class="al"><th>알러지</th><td>${esc(i.allergy)}</td></tr>` : ''}</table>
 </div>`, `.tag{width:90mm;margin:10mm auto;border:2px solid #000;padding:8mm}.bed{font-size:14px;font-weight:700}.nm{font-size:30px;font-weight:800;margin:4px 0 8px}table{width:100%;border-collapse:collapse}th{width:24mm;text-align:left;padding:3px 0;font-weight:600}td{padding:3px 0}.al th,.al td{color:#c00;font-weight:700}`);
 }
 

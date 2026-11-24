@@ -7,7 +7,7 @@ export const gi: Sample = {
   title: '소화기 · 상부 위장관 출혈',
   data: {
     info: {
-      sampleKey: 'gi', bed: '701-1', ptNo: '00000005', name: '오병훈', ageSex: '47/M', ward: '71병동', dept: 'GE', doctor: '오소화', admit: dt(-2), orderDate: dt(0),
+      sampleKey: 'gi', bed: '701-1', ptNo: '0005', name: '오병훈', ageSex: '47/M', ward: '71병동', dept: 'GE', doctor: '오소화', admit: dt(-2), orderDate: dt(0),
       allergy: '무', dx: 'Upper GI bleeding, duodenal ulcer (Forrest Ib), H. pylori (+)', height: '172', weight: '68.0', iso: '없음', npo: '1', surg: '0',
       cc: '검은 변, 어지럼', onset: dt(-3),
       hpi: '3일 전부터 검은색 변을 하루 2~3회 보았고 어제부터 어지럽고 가슴이 두근거려 응급실 내원함. 최근 2주간 관절통으로 NSAIDs를 자주 복용함. 응급실에서 Hb 7.2, 응급 내시경에서 십이지장 궤양 출혈 확인 후 지혈술 시행하고 입원함.',

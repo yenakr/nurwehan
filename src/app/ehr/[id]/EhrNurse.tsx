@@ -228,7 +228,7 @@ export default function EhrNurse({
       <div className="ns-ngrid">
         <aside className="ns-nl">
           <div className="ns-nsr">
-            <input value={q} onChange={e => { setQ(e.target.value); setQMsg(''); }} onKeyDown={e => e.key === 'Enter' && find()} aria-label="환자등록번호 검색" />
+            <input value={q} onChange={e => { setQ(e.target.value); setQMsg(''); }} onKeyDown={e => e.key === 'Enter' && find()} aria-label="환자환자번호 검색" />
             <button type="button" onClick={find}>검색</button>
           </div>
           {qMsg && <p className="ns-nerr">{qMsg}</p>}
@@ -278,7 +278,7 @@ export default function EhrNurse({
               </select>
             </div>
             <table className="ns-nlist">
-              <thead><tr><th>병실</th><th>환자명</th><th>등록번호</th><th>주치의</th></tr></thead>
+              <thead><tr><th>병실</th><th>환자명</th><th>환자번호</th><th>주치의</th></tr></thead>
               <tbody>
                 {list.map(r => (
                   <tr key={r.id} className={r.name === i.name && r.ptNo === i.ptNo ? 'ns-on' : ''} onClick={() => router.push(`/ehr/${r.id}`)}>
@@ -405,7 +405,7 @@ export default function EhrNurse({
                   <div key={t}>
                     <h4>{t} ({rows.length})</h4>
                     <table className="ns-nlist">
-                      <thead><tr><th>병동</th><th>병상</th><th>환자명</th><th>등록번호</th><th>주치의</th></tr></thead>
+                      <thead><tr><th>병동</th><th>병상</th><th>환자명</th><th>환자번호</th><th>주치의</th></tr></thead>
                       <tbody>
                         {rows.map(r => <tr key={r.ptNo + t}><td>{r.ward}</td><td>{r.bed}</td><td>{r.name}</td><td>{r.ptNo}</td><td>{r.doctor}</td></tr>)}
                         {rows.length === 0 && <tr><td colSpan={5} className="ns-nnone">없음</td></tr>}
