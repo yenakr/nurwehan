@@ -77,7 +77,7 @@ export default function WardBulk({ pts, onClose }: { pts: BulkPt[]; onClose: () 
               <tr key={p.key}>
                 <td className="pt"><b>{p.bed}</b></td>
                 <td className="pt">{p.name} {p.ageSex}</td>
-                {COLS.map(c => <td key={c.key}><input value={vals[p.key]?.[c.key] || ''} placeholder={c.ph} inputMode={c.key === 'bp' ? 'text' : 'decimal'} onChange={e => set(p.key, c.key, e.target.value)} aria-label={`${p.bed} ${c.label}`} /></td>)}
+                {COLS.map(c => <td key={c.key}><input value={vals[p.key]?.[c.key] || ''} inputMode={c.key === 'bp' ? 'text' : 'decimal'} onChange={e => set(p.key, c.key, e.target.value)} aria-label={`${p.bed} ${c.label}`} /></td>)}
               </tr>
             ))}
           </tbody>

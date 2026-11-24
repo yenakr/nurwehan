@@ -7,7 +7,6 @@ import { emptyChart, migrate, shiftChart, type Sample } from './types';
 import { newPtNo } from './directory';
 import AiMark from '@/components/AiMark';
 import { printNameTag } from './print';
-import WardBulk, { type BulkPt } from './WardBulk';
 
 type Item = {
   id: string; ward: string | null; bed: string | null; sampleKey: string | null;
@@ -61,7 +60,6 @@ export default function EhrHome({ cases, initialView, ai, aiLeft, extra }: { cas
   const [openG, setOpenG] = useState<string | null>(null);
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState('');
-  const [bulk, setBulk] = useState(false);
   const [ctx, setCtx] = useState<{ x: number; y: number; saved?: Item; p: P } | null>(null);
   const view = VIEWS[vi];
   const wardName = view.kind === 'op' ? '외래' : view.kind === 'er' ? '응급실' : view.name;
@@ -191,16 +189,8 @@ export default function EhrHome({ cases, initialView, ai, aiLeft, extra }: { cas
               );
             })}
           </nav>
-          {view.kind === 'ward' && <button type="button" className="aipt" style={{ marginLeft: 'auto' }} onClick={() => setBulk(b => !b)}>활력징후 일괄</button>}
-          {view.kind === 'ward' && <button type="button" className="aipt" onClick={() => router.push(`/ehr/handover?ward=${encodeURIComponent(view.name)}`)}>인수인계지</button>}
-          {ai && view.kind !== 'dc' && <button type="button" className="aipt" style={view.kind === 'ward' ? undefined : { marginLeft: 'auto' }} onClick={aiPatient} disabled={!!busy || !aiLeft}><AiMark size={14} />{busy === 'ai' ? '만드는 중' : `AI 가상 환자 ${aiLeft ?? 0}회`}</button>}
+          {ai && view.kind !== 'dc' && <button type="button" className="aipt" style={{ marginLeft: 'auto' }} onClick={aiPatient} disabled={!!busy || !aiLeft}><AiMark size={14} />{busy === 'ai' ? '만드는 중' : `AI 가상 환자 ${aiLeft ?? 0}회`}</button>}
         </div>
-        {bulk && view.kind === 'ward' && (
-          <WardBulk
-            pts={entries.filter(e => e.p).map((e): BulkPt => ({ key: e.key, bed: e.label, name: e.p?.name || '', ageSex: e.p?.ageSex || '', id: e.saved?.id, make: e.make }))}
-            onClose={() => setBulk(false)}
-          />
-        )}
         <div className="tw">
           <table>
             <thead>
