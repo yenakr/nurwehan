@@ -216,7 +216,7 @@ export default function EhrNurse({
             {memoOf('진료메모').slice(-3).reverse().map((m, k) => <p key={k}>{m.text}<i>{(m.time || '').slice(-5)} {m.author}</i></p>)}
             {memoOf('진료메모').length === 0 && <p className="ns-nnone">없음</p>}
             <div className="ns-nsr">
-              <input value={dmsg} onChange={e => setDmsg(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendDoc()} placeholder="의사에게 남길 메모" aria-label="진료메모" />
+              <input value={dmsg} onChange={e => setDmsg(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendDoc()} aria-label="진료메모" />
               <button type="button" onClick={sendDoc} disabled={!dmsg.trim()}>등록</button>
             </div>
           </div>
