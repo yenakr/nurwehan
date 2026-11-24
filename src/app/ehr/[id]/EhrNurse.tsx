@@ -265,6 +265,16 @@ export default function EhrNurse({
           {sec('투약 PRN 처방', g.prn, 'prn')}
           {sec('진단검사', g.lab, 'lab')}
           <div className="ns-nft"><button type="button" onClick={onLabel}>투약라벨 출력</button></div>
+          <div className="ns-nnotes">
+            <div className="ns-nhd"><span>간호기록</span><button type="button" className="ns-cmp" onClick={() => onOpen('notes')}>기록 입력</button></div>
+            {[...data.notes].sort((x, y) => (y.time || '').localeCompare(x.time || '')).slice(0, 4).map((n, k) => (
+              <div key={k} className="ns-nnote">
+                <b>{(n.time || '').slice(5, 16).replace('T', ' ')} {n.focus}</b>
+                <p>{n.text}</p>
+              </div>
+            ))}
+            {data.notes.length === 0 && <p className="ns-nnone">기록 없음</p>}
+          </div>
         </main>
 
         <aside className="ns-nr">
@@ -393,6 +403,10 @@ export default function EhrNurse({
         .ns-nflags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
         .ns-nflags em { font-style: normal; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(245,158,11,.18); color: #b9770e; }
         .ns-nflags em.ns-al { background: rgba(239,68,68,.14); color: #dc2626; }
+        .ns-nnotes { margin-top: 10px; border-top: 1px solid var(--border); }
+        .ns-nnote { padding: 8px 10px; border-bottom: 1px solid var(--border); font-size: 13px; }
+        .ns-nnote b { font-size: 12px; color: var(--primary); }
+        .ns-nnote p { margin: 4px 0 0; line-height: 1.5; white-space: pre-wrap; }
         .ns-nbox h4 { margin: 0 0 6px; font-size: 13px; color: var(--sub-text); }
         .ns-nbox p { margin: 0 0 6px; line-height: 1.4; white-space: pre-wrap; }
         .ns-nbox p i { display: block; font-size: 11px; color: var(--sub-text); font-style: normal; }

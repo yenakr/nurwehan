@@ -12,10 +12,18 @@ type Item = {
   id: string; ward: string | null; bed: string | null; sampleKey: string | null;
   ptNo: string | null; name: string | null; ageSex: string | null; dx: string | null; doctor: string | null; admit: string | null;
   dept: string | null; visitTime: string | null; vstatus: string | null; ktas: string | null; zone: string | null; cc: string | null; discharged: string | null;
-  submitted?: string | null; reviewed?: string | null; badges?: string | null;
+  submitted?: string | null; reviewed?: string | null; badges?: string | null; title?: string | null;
 };
 type P = Partial<Omit<Item, 'id'>>;
 
+const BASE = new Set(SAMPLES.map(x => x.key));
+const origin = (p: P | null | undefined, e?: { saved?: Item }) => {
+  const k = p?.sampleKey || '';
+  if (k && BASE.has(k)) return '기본';
+  if (k.startsWith('v:')) return '가상';
+  if ((e?.saved?.title || p?.title || '').startsWith('AI ·')) return 'AI';
+  return '직접';
+};
 const stay = (admit: string | null | undefined) => {
   if (!admit) return '';
   const d = new Date(admit);
@@ -217,7 +225,7 @@ export default function EhrHome({ cases, initialView, ai, aiLeft, extra }: { cas
                     </tr>
                   );
                 }
-                const nm = busy === e.key ? '…' : <>{p.name}{e.saved?.submitted && <span className={`sbd ${e.saved.reviewed ? 'rv' : ''}`}>{e.saved.reviewed ? '확인' : '제출'}</span>}</>;
+                const nm = busy === e.key ? '…' : <>{p.name}<span className="org">{origin(p, e)}</span>{e.saved?.submitted && <span className={`sbd ${e.saved.reviewed ? 'rv' : ''}`}>{e.saved.reviewed ? '확인' : '제출'}</span>}</>;
                 return (
                   <tr key={e.key} onClick={() => open(e.key, e.saved, e.make)} onContextMenu={ev => { ev.preventDefault(); setCtx({ x: Math.min(ev.clientX, window.innerWidth - 190), y: Math.min(ev.clientY, window.innerHeight - 220), saved: e.saved, p }); }}>
                     {view.kind === 'ward' && (
@@ -309,6 +317,7 @@ export default function EhrHome({ cases, initialView, ai, aiLeft, extra }: { cas
         .ehrWard .kt { display: inline-block; min-width: 22px; text-align: center; border-radius: 4px; padding: 1px 6px; font-weight: 800; color: #fff; background: #94a3b8; }
         .ehrWard .k1 { background: #dc2626; } .ehrWard .k2 { background: #ea580c; } .ehrWard .k3 { background: #ca8a04; }
         .ehrWard .k4 { background: #16a34a; } .ehrWard .k5 { background: #64748b; }
+        .ehrWard .org { margin-left: 6px; font-size: 10px; font-weight: 700; padding: 1px 5px; border-radius: 4px; border: 1px solid var(--border); color: var(--sub-text); }
         .ehrWard .sbd { margin-left: 6px; font-size: 11px; font-weight: 700; padding: 1px 6px; border-radius: 4px; background: #e8f0fb; color: #1d4e89; }
         .ehrWard .sbd.rv { background: #e3f3e8; color: #2f7a46; }
         .ehrWard .aipt { display: inline-flex; align-items: center; gap: 5px; margin: 0 0 0 8px; align-self: center; border: 1px solid #e8c97a; background: transparent; color: #e8c97a; border-radius: 999px; padding: 6px 14px; font: inherit; font-size: 0.8125rem; font-weight: 700; cursor: pointer; white-space: nowrap; }

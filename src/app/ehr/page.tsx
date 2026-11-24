@@ -28,7 +28,7 @@ export default async function EhrPage({ searchParams }: { searchParams: Promise<
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '28px 0' }}>
       <div className="container" style={{ maxWidth: 'none' }}>
-        <EhrHome extra={extra} ai={ai} aiLeft={aiLeft} initialView={view} cases={cases.map(c => ({ id: c.id, ward: c.ward, bed: c.bed, sampleKey: c.sampleKey, ptNo: c.ptNo, name: c.name, ageSex: c.ageSex, dx: c.dx, doctor: c.doctor, admit: c.admit, dept: c.dept, visitTime: c.visitTime, vstatus: c.vstatus, ktas: c.ktas, zone: c.zone, cc: c.cc, discharged: c.discharged, submitted: c.submitted, reviewed: c.reviewed, badges: c.badges }))} />
+        <EhrHome extra={extra} ai={ai} aiLeft={aiLeft} initialView={view} cases={cases.map(c => ({ id: c.id, ward: c.ward, bed: c.bed, sampleKey: c.sampleKey, ptNo: c.ptNo, name: c.name, ageSex: c.ageSex, dx: c.dx, doctor: c.doctor, admit: c.admit, dept: c.dept, visitTime: c.visitTime, vstatus: c.vstatus, ktas: c.ktas, zone: c.zone, cc: c.cc, discharged: c.discharged, submitted: c.submitted, reviewed: c.reviewed, badges: c.badges, title: c.title }))} />
       </div>
     </main>
   );
