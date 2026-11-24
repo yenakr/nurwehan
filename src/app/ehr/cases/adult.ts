@@ -139,7 +139,33 @@ export const adult: Sample = {
     memos: [
       { time: md(0, '09:50'), type: '진료메모', text: '내일 퇴원 예정. 퇴원약(furosemide PO, carvedilol, enalapril, spironolactone) 처방 확인 요청.', author: '이순환', shift: 'D' },
       { time: md(0, '07:00'), type: '인수인계', text: '야간 호흡곤란 1회(03:30). 낙상 고위험 — 침상 난간 및 호출벨 확인.', author: '최간호', shift: 'N', imp: '1' },
+      { time: md(0, '08:10'), type: '간호의사소통', text: '야간 호흡곤란 1회 있었고 furosemide 20mg IV 투여 후 호전됨을 보고함. 퇴원약 처방 요청함.', author: '박간호', shift: 'D' },
       { time: md(-1, '15:00'), type: '간호메모', text: 'Spironolactone 보류 (K 5.4). 내일 K 재검 결과 확인 후 재투여 여부 주치의 확인.', author: '김간호', shift: 'E' },
+    ],
+    nact: [
+      { time: md(0, '09:20'), act: '혈액 채취', mat: '채혈 주사기', by: '최간호', st: '수행', note: 'BNP, BMP, CBC' },
+      { time: md(-1, '16:20'), act: '도뇨관 삽입 (Foley)', mat: 'Foley catheter', by: '김간호', st: '삭제', note: '제거함' },
+      { time: md(-2, '10:00'), act: '정맥 주사 (IV 라인 확보)', mat: 'IV catheter', by: '박간호', st: '수행', note: '우측 전완 22G' },
+      { time: md(-1, '10:00'), act: '욕창 드레싱', mat: '폼 드레싱', by: '박간호', st: '수행', note: '천골 예방 드레싱' },
+    ],
+    mat: [
+      { time: md(0, '09:20'), item: '채혈 주사기', qty: '1', unit: 'ea', act: '혈액 채취', by: '최간호' },
+      { time: md(0, '09:20'), item: '채혈 튜브', qty: '2', unit: 'ea', act: '혈액 채취', by: '최간호' },
+      { time: md(-2, '10:00'), item: 'IV catheter 22G', qty: '1', unit: 'ea', act: '정맥 주사 (IV 라인 확보)', by: '박간호' },
+      { time: md(-2, '10:00'), item: '투명 필름 드레싱', qty: '1', unit: 'ea', act: '정맥 주사 (IV 라인 확보)', by: '박간호' },
+      { time: md(-1, '10:00'), item: '폼 드레싱', qty: '1', unit: 'ea', act: '욕창 드레싱', by: '박간호' },
+    ],
+    ret: [
+      { time: md(-2, '09:30'), kind: 'DC 약 반납', name: 'Furosemide 20mg/2mL (라식스) 앰플', qty: '2 앰플', reason: '경구 전환 (D/C)', by: '박간호', chk: '약제부', st: '반납완료' },
+    ],
+    diet: [
+      { date: dt(0), meal: '아침', type: '저염식 (2g Na)', amt: '3/4', note: '국물은 남김' },
+      { date: dt(-1), meal: '저녁', type: '저염식 (2g Na)', amt: '1/2', note: '' },
+      { date: dt(-1), meal: '점심', type: '저염식 (2g Na)', amt: '전량', note: '' },
+    ],
+    sched: [
+      { time: '14:00', kind: '시술', name: '관상동맥조영술', prep: '금식 확인, 동의서 서명, 우측 요골동맥 Allen test', st: '예정' },
+      { time: '11:00', kind: '검사', name: 'K, BNP, Cr (f/u)', prep: '아침 공복 채혈 완료', st: '완료' },
     ],
     risk: [
       { time: md(0, '08:30'), kind: '낙상(Morse)', score: '45', level: '고위험', plan: '침상 난간, 호출벨, 보행 시 보조, 야간 배회·이뇨제 복용 후 화장실 동행', author: '박간호' },
