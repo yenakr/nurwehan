@@ -17,6 +17,8 @@ const SECTIONS = ([
   { key: 'transfusion', label: '수혈기록' },
   { key: 'nutrition', label: '영양기록' },
   { key: 'consult', label: '협진기록' },
+  { key: 'bst', label: '혈당·인슐린' },
+  { key: 'diet', label: '식이' },
   { key: 'consent', label: '동의서' },
   { key: 'surgery', label: '수술기록' },
   { key: 'memos', label: '메모·인수인계' },
