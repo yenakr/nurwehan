@@ -844,7 +844,8 @@ export default function EhrEditor({
 
   const tbl = (lk: ListKey) => {
     const cols = COLS[lk];
-    const rows = data[lk];
+    if (!cols) return null;
+    const rows = data[lk] || [];
     return (
       <div className="tw">
         <table className="tbl">
@@ -1188,7 +1189,7 @@ export default function EhrEditor({
           userName={userName || ''}
           roster={roster || []}
           win={win}
-          onOpen={id => { if (id !== 'dir') setTab(id as TabId); setWin(win === id ? null : id); }}
+          onOpen={id => { if (MENU.some(g => g.items.some(it => it.id === id))) setTab(id as TabId); setWin(win === id ? null : id); }}
           onClose={() => setWin(null)}
           drawer={tabBody}
           tools={tools}
