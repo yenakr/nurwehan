@@ -77,7 +77,7 @@ export default function EhrHome({ cases, initialView, ai, aiLeft, extra }: { cas
       const res = await fetch('/api/ehr', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(make()) });
       const j = await res.json().catch(() => ({}));
       if (!res.ok || !j.id) throw new Error();
-      router.push(`/ehr/${j.id}`);
+      router.push(`/ehr/${j.id}?edit=1`);
     } catch {
       setErr('열 수 없어요');
       setBusy(null);
@@ -147,7 +147,7 @@ export default function EhrHome({ cases, initialView, ai, aiLeft, extra }: { cas
       const res = await fetch('/api/ehr/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: view.kind, ward: wardName, bed: free?.label }) });
       const j = await res.json().catch(() => ({}));
       if (!res.ok || !j.id) { setErr(res.status === 429 ? '오늘 횟수를 다 썼어요' : '만들지 못했어요'); setBusy(null); return; }
-      router.push(`/ehr/${j.id}`);
+      router.push(`/ehr/${j.id}?edit=1`);
     } catch {
       setErr('만들지 못했어요');
       setBusy(null);
