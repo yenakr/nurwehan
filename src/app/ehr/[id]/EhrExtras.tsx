@@ -227,7 +227,7 @@ export function VitalsBulk({ onApply }: { onApply: (rows: Row[]) => void }) {
             {rows.map((r, i) => (
               <tr key={i}>
                 <td><input value={r.time || ''} onChange={e => set(i, 'time', e.target.value)} aria-label="시간" /></td>
-                {VCOLS.map(c => <td key={c.key}><input value={r[c.key] || ''} placeholder={c.ph} inputMode={c.key === 'bp' ? 'text' : 'decimal'} onChange={e => set(i, c.key, e.target.value)} aria-label={c.label} /></td>)}
+                {VCOLS.map(c => <td key={c.key}><input value={r[c.key] || ''} inputMode={c.key === 'bp' ? 'text' : 'decimal'} onChange={e => set(i, c.key, e.target.value)} aria-label={c.label} /></td>)}
                 <td><button type="button" aria-label="삭제" onClick={() => setRows(rs => rs.filter((_, j) => j !== i))} style={{ border: 0, background: 'transparent', color: 'inherit', fontSize: 18, cursor: 'pointer' }}>×</button></td>
               </tr>
             ))}

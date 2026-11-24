@@ -8,7 +8,7 @@ import { useRouter } from 'next/navigation';
 import type { ChartData, Row } from '../types';
 import WardBulk, { type BulkPt } from '../WardBulk';
 
-export type Roster = { id: string; ward: string | null; bed: string | null; name: string | null; ageSex: string | null; ptNo: string | null; doctor: string | null; admit?: string | null; disDate?: string | null };
+export type Roster = { id: string; ward: string | null; bed: string | null; name: string | null; ageSex: string | null; ptNo: string | null; doctor: string | null; admit?: string | null; disDate?: string | null; orders?: Row[] };
 
 const MENUS: { id: string; label: string }[] = [
   { id: 'todo', label: '오늘 할 일' },
@@ -43,6 +43,7 @@ const isMed = (r: Row) => (r.dose || r.route) && !/^check/i.test(r.name || '');
 
 type Item = { i: number; r: Row; notes: string[] };
 // 처방 횟수와 주기로 하루 수행 시각을 만든다
+const slotsOf = (r: Row) => Object.keys(r).filter(k => /^t\d+$/.test(k) && r[k]).sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
 const hhmm = (h: number) => `${String(h % 24).padStart(2, '0')}:00`;
 function timesFor(r: Row, kind: 'med' | 'base' | 'lab'): string[] {
   const nm = r.name || '';
@@ -100,6 +101,32 @@ function checklist(d: ChartData): CkGroup[] {
     seen.add(title);
     out.push({ title, items });
   });
+  return out;
+}
+
+export type Todo = { time: string; label: string; name: string; detail: string; state: '완료' | '지연' | '예정'; it: Item; nth: number; first: boolean };
+function todoOf(g: Groups, duty: string, isToday: boolean): Todo[] {
+  const out: Todo[] = [];
+  const add = (arr: Item[], kind: 'med' | 'base' | 'lab', label: string) => arr.forEach(it => {
+    if (it.r.pri === 'D/C' || it.r.st === '취소') return;
+    const times = timesFor(it.r, kind);
+    const nDone = kind === 'lab' ? (it.r.st === '완료' || it.r.st === '집계완료' ? times.length : 0) : slotsOf(it.r).length;
+    const h0 = Number(hm().slice(0, 2));
+    const from = duty === 'D' ? 6 : duty === 'E' ? 14 : 22;
+    times.forEach((t, k) => {
+      const done = k < nDone;
+      const th = Number(t.slice(0, 2));
+      const inDuty = duty === 'N' ? (th >= 22 || th < 6) : (th >= from && th < from + 8);
+      if (kind !== 'med' && !done && isToday && !inDuty) return;
+      void h0;
+      const late = !done && isToday && t < hm() && (Number(hm().slice(0, 2)) * 60 + Number(hm().slice(3)) - (Number(t.slice(0, 2)) * 60 + Number(t.slice(3)))) > 60;
+      out.push({ time: t, label, name: it.r.name || '', detail: [it.r.dose && `${it.r.dose}${it.r.unit || ''}`, it.r.route].filter(Boolean).join(' · '), state: done ? '완료' : late ? '지연' : '예정', it, nth: k, first: k === nDone });
+    });
+  });
+  add(g.med, 'med', '투약');
+  add(g.base, 'base', '간호');
+  add(g.lab, 'lab', '검사');
+  out.sort((a, b) => a.time.localeCompare(b.time));
   return out;
 }
 
@@ -174,7 +201,7 @@ export default function EhrNurse({
   const dxMain = data.dxcode.find(r => r.kind === '주상병' && r.name);
 
   const patch = (idx: number, p: Row) => setData(d => ({ ...d, orders: d.orders.map((o, j) => (j === idx ? { ...o, ...p } : o)) }));
-  const slots = (r: Row) => Object.keys(r).filter(k => /^t\d+$/.test(k) && r[k]).sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
+  const slots = slotsOf;
   const perform = (it: Item) => {
     const used = slots(it.r);
     const next = `t${(used.length ? Number(used[used.length - 1].slice(1)) : 0) + 1}`;
@@ -228,31 +255,18 @@ export default function EhrNurse({
   };
 
   const isToday = date === `${new Date().getFullYear()}-${pad(new Date().getMonth() + 1)}-${pad(new Date().getDate())}`;
-  const todo = (() => {
-    type T = { time: string; label: string; name: string; detail: string; state: '완료' | '지연' | '예정'; it: Item; nth: number; first: boolean };
-    const out: T[] = [];
-    const add = (arr: Item[], kind: 'med' | 'base' | 'lab', label: string) => arr.forEach(it => {
-      if (it.r.pri === 'D/C' || it.r.st === '취소') return;
-      const times = timesFor(it.r, kind);
-      const nDone = kind === 'lab' ? (it.r.st === '완료' || it.r.st === '집계완료' ? times.length : 0) : slots(it.r).length;
-      const h0 = Number(hm().slice(0, 2));
-      const from = duty === 'D' ? 6 : duty === 'E' ? 14 : 22;
-      times.forEach((t, k) => {
-        const done = k < nDone;
-        const th = Number(t.slice(0, 2));
-        const inDuty = duty === 'N' ? (th >= 22 || th < 6) : (th >= from && th < from + 8);
-        if (kind !== 'med' && !done && isToday && !inDuty) return;
-        void h0;
-        const late = !done && isToday && t < hm() && (Number(hm().slice(0, 2)) * 60 + Number(hm().slice(3)) - (Number(t.slice(0, 2)) * 60 + Number(t.slice(3)))) > 60;
-        out.push({ time: t, label, name: it.r.name || '', detail: [it.r.dose && `${it.r.dose}${it.r.unit || ''}`, it.r.route].filter(Boolean).join(' · '), state: done ? '완료' : late ? '지연' : '예정', it, nth: k, first: k === nDone });
-      });
+  const todo = todoOf(g, duty, isToday);
+  const [scope, setScope] = useState<'me' | 'ward'>('me');
+  const wardTodo = (() => {
+    const pts: { id: string; bed: string; name: string; orders: Row[] }[] = list.map(r => ({ id: r.id, bed: r.bed || '', name: r.name || '', orders: r.ptNo === i.ptNo ? data.orders : r.orders || [] }));
+    const have = new Set(roster.map(r => r.ptNo));
+    SAMPLES.forEach(sp => {
+      const x = sp.data.info;
+      if (x.ward !== ward || have.has(x.ptNo || '') || (team !== '전체' && teamOf(x.bed || '') !== team)) return;
+      pts.push({ id: '', bed: x.bed || '', name: x.name || '', orders: sp.data.orders || [] });
     });
-    add(g.med, 'med', '투약');
-    add(g.base, 'base', '간호');
-    add(g.lab, 'lab', '검사');
-    out.sort((a, b) => a.time.localeCompare(b.time));
-    return out;
-  })();
+    return pts.flatMap(p => todoOf(group(p.orders), duty, isToday).filter(t => t.label !== '검사' && t.state !== '완료').map(t => ({ ...t, p })));
+  })().sort((a, b) => a.time.localeCompare(b.time) || a.p.bed.localeCompare(b.p.bed, 'ko', { numeric: true }));
 
   const sec = (label: string, items: Item[], kind: 'med' | 'base' | 'prn' | 'lab') => (
     <section className="ns-nsec">
@@ -493,20 +507,43 @@ export default function EhrNurse({
           </header>
           <div className="ns-nwb">
             {win === 'todo' ? (
-              <table className="ns-nlist ns-todo">
-                <thead><tr><th>시간</th><th>구분</th><th>내용</th><th>상태</th><th /></tr></thead>
-                <tbody>
-                  {todo.map((t, k) => (
-                    <tr key={k} className={t.state === '지연' ? 'ns-late' : t.state === '완료' ? 'ns-fin' : ''}>
-                      <td>{t.time}</td><td>{t.label}</td>
-                      <td><b>{t.name}</b>{t.detail && <span> {t.detail}</span>}</td>
-                      <td>{isToday ? t.state : ''}</td>
-                      <td>{isToday && t.state !== '완료' && t.first && t.label !== '검사' && <button type="button" className="ns-go" onClick={() => ask(t.it)}>수행</button>}</td>
-                    </tr>
-                  ))}
-                  {todo.length === 0 && <tr><td colSpan={5} className="ns-nnone">할 일이 없어요</td></tr>}
-                </tbody>
-              </table>
+              <>
+                <div className="ns-nhd">
+                  <button type="button" className={`ns-arw ${scope === 'me' ? 'ns-sel' : ''}`} onClick={() => setScope('me')}>이 환자</button>
+                  <button type="button" className={`ns-arw ${scope === 'ward' ? 'ns-sel' : ''}`} onClick={() => setScope('ward')}>{ward} {team} 전체</button>
+                </div>
+                {scope === 'me' ? (
+                  <table className="ns-nlist ns-todo">
+                    <thead><tr><th>시간</th><th>구분</th><th>내용</th><th>상태</th><th /></tr></thead>
+                    <tbody>
+                      {todo.map((t, k) => (
+                        <tr key={k} className={t.state === '지연' ? 'ns-late' : t.state === '완료' ? 'ns-fin' : ''}>
+                          <td>{t.time}</td><td>{t.label}</td>
+                          <td><b>{t.name}</b>{t.detail && <span> {t.detail}</span>}</td>
+                          <td>{isToday ? t.state : ''}</td>
+                          <td>{isToday && t.state !== '완료' && t.first && t.label !== '검사' && <button type="button" className="ns-go" onClick={() => ask(t.it)}>수행</button>}</td>
+                        </tr>
+                      ))}
+                      {todo.length === 0 && <tr><td colSpan={5} className="ns-nnone">할 일이 없어요</td></tr>}
+                    </tbody>
+                  </table>
+                ) : (
+                  <table className="ns-nlist ns-todo">
+                    <thead><tr><th>시간</th><th>병상</th><th>환자</th><th>구분</th><th>내용</th><th>상태</th><th /></tr></thead>
+                    <tbody>
+                      {wardTodo.map((t, k) => (
+                        <tr key={k} className={t.state === '지연' ? 'ns-late' : ''}>
+                          <td>{t.time}</td><td>{t.p.bed}</td><td>{t.p.name}</td><td>{t.label}</td>
+                          <td><b>{t.name}</b>{t.detail && <span> {t.detail}</span>}</td>
+                          <td>{isToday ? t.state : ''}</td>
+                          <td>{t.p.id && t.p.name !== i.name && <button type="button" className="ns-go" onClick={() => router.push(`/ehr/${t.p.id}`)}>열기</button>}</td>
+                        </tr>
+                      ))}
+                      {wardTodo.length === 0 && <tr><td colSpan={7} className="ns-nnone">남은 할 일이 없어요</td></tr>}
+                    </tbody>
+                  </table>
+                )}
+              </>
             ) : win === 'adm' ? (
               <>
                 <div className="ns-nhd">
@@ -555,6 +592,7 @@ export default function EhrNurse({
         .ns-todo tr.ns-fin td { color: var(--sub-text); }
         .ns-todo tbody tr { cursor: default; }
         .ns-hold { background: rgba(245,158,11,.18); color: #b9770e; }
+        .ns-arw.ns-sel { background: var(--primary); color: #fff; }
         .ns-nu { border: 1px solid #94a3b8; background: var(--background, #fff); color: var(--text); border-radius: 6px; overflow: hidden; font-size: 13px; position: relative; }
         .ns-nmenu { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 0 8px; background: linear-gradient(#233a5c, #17283f); }
         .ns-nmenu b { color: #e8c97a; padding: 0 12px 0 6px; }

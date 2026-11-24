@@ -43,7 +43,7 @@ export default function RegisterCard({ info, onRegister }: { info: Record<string
       <h4>{er ? '응급 환자 등록' : info.ward === '외래' ? '외래 환자 등록' : '신환 등록'}</h4>
       <div className="gr">
         <label>이름<input value={name} onChange={e => setName(e.target.value)} maxLength={20} /></label>
-        <label>나이<input value={age} onChange={e => setAge(e.target.value)} placeholder="예: 72, 8M" maxLength={6} /></label>
+        <label>나이<input value={age} onChange={e => setAge(e.target.value)} maxLength={6} /></label>
         <label>성별<div className="sx">{(['M', 'F'] as const).map(s => <button key={s} type="button" className={sex === s ? 'on' : ''} onClick={() => setSex(s)}>{s === 'M' ? '남' : '여'}</button>)}</div></label>
         <label>진료과<select value={dept} onChange={e => { setDept(e.target.value); setDoctor(''); }}><option value="" />{DEPTS.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}</select></label>
         <label>주치의<select value={doctor} onChange={e => setDoctor(e.target.value)}><option value="" />{docs.map(d => <option key={d.name} value={d.name}>{d.name}</option>)}</select></label>

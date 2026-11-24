@@ -410,24 +410,24 @@ const DIS: { key: string; label: string; rows?: number }[] = [
 ];
 
 // 입원 시 간호정보조사지
-const NURSE: { key: string; label: string }[] = [
-  { key: 'route', label: '입 원 경 로' },
-  { key: 'method', label: '입 원 방 법' },
-  { key: 'informant', label: '정보제공자' },
+const NURSE: { key: string; label: string; opts?: string[] }[] = [
+  { key: 'route', label: '입 원 경 로', opts: ['외래', '응급실', '전원', '기타'] },
+  { key: 'method', label: '입 원 방 법', opts: ['도보', '휠체어', '침대', '안고 옴'] },
+  { key: 'informant', label: '정보제공자', opts: ['환자', '보호자', '환자, 보호자', '의무기록', '기타'] },
   { key: 'job', label: '직 업' },
-  { key: 'religion', label: '종 교' },
-  { key: 'marital', label: '결 혼' },
-  { key: 'lang', label: '언 어' },
+  { key: 'religion', label: '종 교', opts: ['무', '기독교', '천주교', '불교', '기타'] },
+  { key: 'marital', label: '결 혼', opts: ['미혼', '기혼', '사별', '이혼'] },
+  { key: 'lang', label: '언 어', opts: ['한국어', '영어', '기타'] },
   { key: 'cc', label: '주 호 소' },
-  { key: 'purpose', label: '입원목적' },
-  { key: 'insight', label: '병식(insight)' },
+  { key: 'purpose', label: '입원목적', opts: ['treatment', 'operation', 'examination', 'delivery', 'observation', 'rehabilitation'] },
+  { key: 'insight', label: '병식(insight)', opts: ['유', '부분', '무'] },
   { key: 'allergy', label: '알레르기' },
   { key: 'social', label: '사회적특수성' },
-  { key: 'drink', label: '음 주 력' },
-  { key: 'smoke', label: '흡 연 력' },
+  { key: 'drink', label: '음 주 력', opts: ['무', '월 1~2회', '주 1~2회', '주 3회 이상', '매일'] },
+  { key: 'smoke', label: '흡 연 력', opts: ['무', '과거 흡연', '현재 흡연'] },
   { key: 'bedsore', label: '욕 창 (Braden)' },
   { key: 'fall', label: '낙 상 (Morse)' },
-  { key: 'pain', label: '통 증' },
+  { key: 'pain', label: '통 증', opts: ['NRS 0', 'NRS 1', 'NRS 2', 'NRS 3', 'NRS 4', 'NRS 5', 'NRS 6', 'NRS 7', 'NRS 8', 'NRS 9', 'NRS 10'] },
 ];
 
 const ORDER_STATUS = ['', '집계완료', '접수', '추가', '완료', '취소'];
@@ -452,7 +452,7 @@ function NoteComposer({ onAdd, author }: { onAdd: (n: Row) => void; author: stri
   const [fmt, setFmt] = useState<NFmt>('DAR');
   const [focus, setFocus] = useState('');
   const [txt, setTxt] = useState<Record<string, string>>({});
-  const [time, setTime] = useState('');
+  const [time, setTime] = useState(nowStamp);
   const [act, setAct] = useState('');
   const ph = PHRASES.find(p => p.focus === focus);
   const fields = NFMT[fmt].fields;
@@ -462,14 +462,18 @@ function NoteComposer({ onAdd, author }: { onAdd: (n: Row) => void; author: stri
   const push = (k: string, phrase: string) => setTxt(t => ({ ...t, [k]: t[k] ? `${t[k]}\n${phrase}` : phrase }));
   const empty = fields.every(f => !(txt[f.k] || '').trim());
 
+  const [err, setErr] = useState('');
   const add = () => {
     if (empty) return;
+    if (fmt === 'DAR' && !focus.trim()) { setErr('Focus를 입력하거나 선택하세요'); return; }
+    if (!/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}$/.test(time.trim()) && !/^\d{2}-\d{2} \d{2}:\d{2}$/.test(time.trim())) { setErr('기록일시를 확인하세요'); return; }
     const body = fmt === 'NARR'
       ? (txt.N || '').trim()
       : fields.map(f => (txt[f.k] || '').trim() && `${f.k})\n${txt[f.k].trim()}`).filter(Boolean).join('\n\n');
     onAdd({ time: time || nowStamp(), focus, text: body, author, shift: shiftOf() });
     setTxt({});
-    setTime('');
+    setTime(nowStamp());
+    setErr('');
     if (dict.on) dict.stop();
   };
 
@@ -479,11 +483,11 @@ function NoteComposer({ onAdd, author }: { onAdd: (n: Row) => void; author: stri
         <b>간호기록 작성</b>
         <label>
           기록일시
-          <input value={time} placeholder={nowStamp()} onChange={e => setTime(e.target.value)} />
+          <input value={time} onChange={e => setTime(e.target.value)} />
         </label>
         <label>
           Focus
-          <input value={focus} placeholder="직접 입력 또는 아래에서 선택" onChange={e => setFocus(e.target.value)} />
+          <input value={focus} onChange={e => setFocus(e.target.value)} />
         </label>
       </div>
       <div className="fmts">
@@ -520,7 +524,8 @@ function NoteComposer({ onAdd, author }: { onAdd: (n: Row) => void; author: stri
         ))}
       </div>
       <div className="ncFoot">
-        <button type="button" className="clr" onClick={() => setTxt({})}>지우기</button>
+        {err && <span style={{ color: '#dc2626', fontWeight: 700, marginRight: 'auto' }}>{err}</span>}
+        <button type="button" className="clr" onClick={() => { setTxt({}); setErr(''); }}>지우기</button>
         <button type="button" className="sv" disabled={empty} onClick={add}>기록 저장</button>
       </div>
     </div>
@@ -560,7 +565,7 @@ function CareComposer({ onAdd }: { onAdd: (r: Row) => void }) {
         <b>간호과정 작성</b>
         <label>
           간호진단
-          <input value={dx} placeholder="직접 입력 또는 아래에서 선택" onChange={e => setDx(e.target.value)} />
+          <input value={dx} onChange={e => setDx(e.target.value)} />
         </label>
       </div>
       {dxIssues(dx).length > 0 && <ul style={{ margin: '0 0 6px', paddingLeft: 18, fontSize: 12.5, color: '#b45309', fontWeight: 700 }}>{dxIssues(dx).map(m => <li key={m}>{m}</li>)}</ul>}
@@ -875,7 +880,7 @@ export default function EhrEditor({
                             {(c.opts!.includes(v) ? c.opts! : [...c.opts!, v]).map(o => <option key={o} value={o}>{o}</option>)}
                           </select>
                         ) : (
-                          <input className={cls} value={v} placeholder={c.ph} onChange={e => setCell(lk, i, c.key, e.target.value)} />
+                          <input className={cls} value={v} onChange={e => setCell(lk, i, c.key, e.target.value)} />
                         )}
                       </td>
                     );
@@ -899,7 +904,7 @@ export default function EhrEditor({
               <div className="tw">
                 <div className="ohead">
                   <span>처방일자 </span>
-                  <input className="od" value={info.orderDate || ''} placeholder={info.admit || '2026-11-10'} onChange={e => setInfo('orderDate', e.target.value)} />
+                  <input className="od" value={info.orderDate || ''} onChange={e => setInfo('orderDate', e.target.value)} />
                 </div>
                 <table className="tbl ord">
                   <thead>
@@ -1046,7 +1051,13 @@ export default function EhrEditor({
                   {NURSE.map(f => (
                     <label key={f.key}>
                       <b>[ {f.label} ]</b>
-                      <input value={info[f.key] || ''} onChange={e => setInfo(f.key, e.target.value)} />
+                      {f.opts ? (
+                        <select value={info[f.key] || ''} onChange={e => setInfo(f.key, e.target.value)}>
+                          {['', ...f.opts, ...(info[f.key] && !f.opts.includes(info[f.key]) ? [info[f.key]] : [])].map(o => <option key={o} value={o}>{o}</option>)}
+                        </select>
+                      ) : (
+                        <input value={info[f.key] || ''} onChange={e => setInfo(f.key, e.target.value)} />
+                      )}
                     </label>
                   ))}
                 </div>
@@ -1486,6 +1497,7 @@ export default function EhrEditor({
         .ehr .ds input:focus, .ehr .ds textarea:focus, .ehr .nl input:focus { outline: none; background: #fffdf0; border-bottom-color: #2563eb; }
         .ehr .nl { display: grid; grid-template-columns: 1fr 1fr; gap: 2px 28px; }
         .ehr .nl label { display: flex; align-items: center; gap: 8px; }
+        .ehr .nl select { flex: 1; min-width: 0; padding: 4px; font-size: 13px; border: 0; border-bottom: 1px dashed #d5dae0; background: transparent; }
         .ehr .nl b { flex: 0 0 112px; font-size: 12px; color: #334155; font-weight: 600; white-space: nowrap; }
 
 
