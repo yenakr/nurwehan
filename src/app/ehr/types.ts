@@ -104,6 +104,7 @@ export function migrate(raw: unknown): ChartData {
     if (Array.isArray(r[k])) base[k] = r[k];
   });
   const info: Record<string, string> = { ...((r.info as Record<string, string>) || {}) };
+  if (info.ptNo && info.ptNo.length > 4) info.ptNo = info.ptNo.slice(-4); // 환자번호는 4자리
   if (info.history && !info.pmh) info.pmh = info.history;
   if (info.orders && !info.plan) info.plan = info.orders;
   const out = base as unknown as ChartData;
