@@ -107,14 +107,14 @@ export default function MarPanel({ data, author, onChange }: { data: ChartData; 
               const ready = need.every(n => ck[n]) && wbOk && (!high || dbl.trim().length > 0);
               return (
                 <div key={key} className="fv">
-                  <label>환자: 팔찌 환자번호 입력 ({data.info.name || '-'})<input className="wbi" value={wb} onChange={e => setWb(e.target.value)} placeholder="바코드 / 환자번호" aria-label="팔찌 환자번호" />{wb && !wbOk && <span className="wn">불일치</span>}{wbOk && <span>일치</span>}</label>
+                  <label>환자: 팔찌 환자번호 입력 ({data.info.name || '-'})<input className="wbi" value={wb} onChange={e => setWb(e.target.value)} aria-label="팔찌 환자번호" />{wb && !wbOk && <span className="wn">불일치</span>}{wbOk && <span>일치</span>}</label>
                   <label><input type="checkbox" checked={!!ck.r1} onChange={e => setCk(c => ({ ...c, r1: e.target.checked }))} />약물: {name}</label>
                   <label><input type="checkbox" checked={!!ck.r2} onChange={e => setCk(c => ({ ...c, r2: e.target.checked }))} />용량: {med.r.dose}{med.r.unit}</label>
                   <label><input type="checkbox" checked={!!ck.r3} onChange={e => setCk(c => ({ ...c, r3: e.target.checked }))} />경로: {med.r.route || '-'}</label>
                   <label><input type="checkbox" checked={!!ck.r4} onChange={e => setCk(c => ({ ...c, r4: e.target.checked }))} />시간: {s} 전후 30분 이내</label>
-                  {high && <label className="wn"><input type="checkbox" checked={!!ck.hi} onChange={e => setCk(c => ({ ...c, hi: e.target.checked }))} />고위험 약물: 용량·농도·펌프 설정을 둘이서 확인<input className="wbi" value={dbl} onChange={e => setDbl(e.target.value)} placeholder="이중확인자 이름" aria-label="이중확인자" /></label>}
+                  {high && <label className="wn"><input type="checkbox" checked={!!ck.hi} onChange={e => setCk(c => ({ ...c, hi: e.target.checked }))} />고위험 약물: 용량·농도·펌프 설정을 둘이서 확인<input className="wbi" value={dbl} onChange={e => setDbl(e.target.value)} aria-label="이중확인자" /></label>}
                   {warn && <label className="wn"><input type="checkbox" checked={!!ck.al} onChange={e => setCk(c => ({ ...c, al: e.target.checked }))} />알레르기 주의: {data.info.allergy}. 처방의에게 확인했나요?</label>}
-                  <textarea rows={2} value={note} onChange={e => setNote(e.target.value)} placeholder="특이사항 (선택)" aria-label="특이사항" />
+                  <textarea rows={2} value={note} onChange={e => setNote(e.target.value)} aria-label="특이사항" />
                   <div className="rs">
                     <select value={why} onChange={e => setWhy(e.target.value)} aria-label="미수행 사유">{REASONS.map(o => <option key={o}>{o}</option>)}</select>
                     <button type="button" className="sk" onClick={() => skip(med, s)}>미수행 기록</button>

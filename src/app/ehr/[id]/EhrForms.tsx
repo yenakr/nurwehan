@@ -136,7 +136,7 @@ export default function FormPanel({ kind, rows, onChange }: { kind: FormKey; row
             <div key={i} className="fc">
               {head}
               <div className="fq"><b>통증 정도 (NRS 0~10)</b>{nrs('nrs')}</div>
-              <div className="fq"><b>통증 부위</b><input value={r.site || ''} placeholder="예: 우하복부, 수술 부위" onChange={e => set(i, 'site', e.target.value)} /></div>
+              <div className="fq"><b>통증 부위</b><input value={r.site || ''} onChange={e => set(i, 'site', e.target.value)} /></div>
               <div className="fq">
                 <b>통증 양상</b>
                 <div className="fo">
@@ -161,7 +161,7 @@ export default function FormPanel({ kind, rows, onChange }: { kind: FormKey; row
               </div>
               <div className="fq"><b>악화 요인</b><input value={r.worse || ''} onChange={e => set(i, 'worse', e.target.value)} /></div>
               <div className="fq"><b>완화 요인</b><input value={r.better || ''} onChange={e => set(i, 'better', e.target.value)} /></div>
-              <div className="fq"><b>중재</b><textarea rows={2} value={r.act || ''} placeholder="예: 진통제 투여, 자세 변경, 냉찜질" onChange={e => set(i, 'act', e.target.value)} /></div>
+              <div className="fq"><b>중재</b><textarea rows={2} value={r.act || ''} onChange={e => set(i, 'act', e.target.value)} /></div>
               <div className="fq"><b>재평가 (NRS)</b>{nrs('re')}</div>
             </div>
           );
@@ -184,7 +184,7 @@ export default function FormPanel({ kind, rows, onChange }: { kind: FormKey; row
                 ))}
               </tbody>
             </table>
-            <div className="fq"><b>금식 시작 시간</b><input value={r.npo || ''} placeholder="예: 전날 22:00" onChange={e => set(i, 'npo', e.target.value)} /></div>
+            <div className="fq"><b>금식 시작 시간</b><input value={r.npo || ''} onChange={e => set(i, 'npo', e.target.value)} /></div>
             <div className="fq"><b>비고</b><textarea rows={2} value={r.memo || ''} onChange={e => set(i, 'memo', e.target.value)} /></div>
           </div>
         );

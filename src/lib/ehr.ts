@@ -178,3 +178,15 @@ export async function findActiveDuplicate(userId: string, info: Record<string, u
     return null;
   }
 }
+
+// 병동 전체 할 일 목록용: 진행 중인 차트의 처방만 가져온다
+export async function ordersByCase(userId: string): Promise<Record<string, unknown[]>> {
+  try {
+    const rows = await prisma.$queryRaw<{ id: string; orders: unknown }[]>`
+      SELECT "id", "data"->'orders' AS "orders" FROM "EhrCase"
+      WHERE "userId" = ${userId} AND COALESCE("data"->'info'->>'discharged', '') = ''`;
+    return Object.fromEntries(rows.map(r => [r.id, Array.isArray(r.orders) ? r.orders : []]));
+  } catch {
+    return {};
+  }
+}
