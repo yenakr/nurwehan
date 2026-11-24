@@ -141,7 +141,6 @@ export default function NurseForm({ kind, data, setData, userName }: Props) {
               <option value="" />
               {Array.from({ length: 11 }, (_, n) => <option key={n} value={`NRS ${n}`}>{n}</option>)}
             </select>
-            <i>NRS</i>
           </label>
         </div>
       )}

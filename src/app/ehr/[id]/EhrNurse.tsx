@@ -11,6 +11,7 @@ import WardBulk, { type BulkPt } from '../WardBulk';
 export type Roster = { id: string; ward: string | null; bed: string | null; name: string | null; ageSex: string | null; ptNo: string | null; doctor: string | null; admit?: string | null; disDate?: string | null };
 
 const MENUS: { id: string; label: string }[] = [
+  { id: 'todo', label: '오늘 할 일' },
   { id: 'notes', label: '간호기록' },
   { id: 'memos', label: '간호인수인계' },
   { id: 'vitals', label: '임상관찰' },
@@ -41,6 +42,19 @@ const teamOf = (bed: string | null) => ((Number((bed || '').split('-')[0]) || 0)
 const isMed = (r: Row) => (r.dose || r.route) && !/^check/i.test(r.name || '');
 
 type Item = { i: number; r: Row; notes: string[] };
+// 처방 횟수와 주기로 하루 수행 시각을 만든다
+const hhmm = (h: number) => `${String(h % 24).padStart(2, '0')}:00`;
+function timesFor(r: Row, kind: 'med' | 'base' | 'lab'): string[] {
+  const nm = r.name || '';
+  const q = /q\s*\[?\s*(\d+)\s*\]?\s*hr/i.exec(nm);
+  if (q) { const n = Number(q[1]); if (n >= 1 && n <= 24) { const out: string[] = []; for (let h = 6; h < 30; h += n) out.push(hhmm(h)); return out; } }
+  if (kind === 'lab') return ['07:00'];
+  const c = Number((/(\d+)\s*회/.exec(r.cnt || '') || [])[1] || '1');
+  if (kind === 'base') return /BW|체중|weight/i.test(nm) ? ['07:00'] : ['09:00'];
+  const map: Record<number, number[]> = { 1: [9], 2: [9, 21], 3: [9, 13, 18], 4: [9, 13, 17, 21] };
+  return (map[c] || map[1]).map(hhmm);
+}
+
 type Groups = { base: Item[]; med: Item[]; prn: Item[]; lab: Item[] };
 
 function group(orders: Row[]): Groups {
@@ -119,6 +133,9 @@ export default function EhrNurse({
   const [chk, setChk] = useState<Item | null>(null);
   const [c5, setC5] = useState<Record<string, boolean>>({});
   const [dbl, setDbl] = useState('');
+  const [pt, setPt] = useState('');
+  const [hold, setHold] = useState<string | null>(null);
+  const [holdNote, setHoldNote] = useState('');
   const g = useMemo(() => group(data.orders), [data.orders]);
   const wards = Array.from(new Set(roster.map(r => r.ward).filter((w): w is string => !!w)));
   const list = roster.filter(r => r.ward === ward && (team === '전체' || teamOf(r.bed) === team)).sort((a, b) => (a.bed || '').localeCompare(b.bed || '', 'ko', { numeric: true }));
@@ -162,6 +179,7 @@ export default function EhrNurse({
     const used = slots(it.r);
     const next = `t${(used.length ? Number(used[used.length - 1].slice(1)) : 0) + 1}`;
     const p: Row = { ck: '1', [next]: `${hm()} ${duty}/${userName}` };
+    if (HIGH.test(it.r.name || '') && dbl.trim()) p[`v${next.slice(1)}`] = dbl.trim();
     if (!isMed(it.r)) p.st = '완료';
     patch(it.i, p);
     const used2 = matsFor(it.r);
@@ -170,8 +188,13 @@ export default function EhrNurse({
       setData(d => ({ ...d, mat: [...d.mat, ...used2.map(([item, qty]): Row => ({ time: `${date.slice(5)} ${hm()}`, item, qty: String(qty), unit: MATS.find(m => m[0] === item)?.[1] || 'ea', act, by: userName }))] }));
     }
   };
+  const holdDose = (it: Item, reason: string, note: string) => {
+    const txt = `${hm()} ${reason}${note.trim() ? ` (${note.trim()})` : ''}/${userName}`;
+    patch(it.i, { hold: [it.r.hold, txt].filter(Boolean).join(' | ') });
+    setData(d => ({ ...d, notes: [...d.notes, { time: `${date} ${hm()}`, focus: '투약 보류', text: `D)\n${it.r.name} ${it.r.dose || ''}${it.r.unit || ''} ${it.r.route || ''} 투약 보류. 사유: ${reason}${note.trim() ? ` (${note.trim()})` : ''}\n\nA)\n담당의에게 보고 필요 여부 확인함.`, author: userName, shift: duty }] }));
+  };
   const ask = (it: Item) => {
-    if (isMed(it.r)) { setC5({}); setDbl(''); setChk(it); } else perform(it);
+    if (isMed(it.r)) { setC5({}); setDbl(''); setPt(''); setHold(null); setHoldNote(''); setChk(it); } else perform(it);
   };
   const undo = (it: Item) => {
     const used = slots(it.r);
@@ -204,6 +227,33 @@ export default function EhrNurse({
     else setQMsg('없는 환자예요');
   };
 
+  const isToday = date === `${new Date().getFullYear()}-${pad(new Date().getMonth() + 1)}-${pad(new Date().getDate())}`;
+  const todo = (() => {
+    type T = { time: string; label: string; name: string; detail: string; state: '완료' | '지연' | '예정'; it: Item; nth: number; first: boolean };
+    const out: T[] = [];
+    const add = (arr: Item[], kind: 'med' | 'base' | 'lab', label: string) => arr.forEach(it => {
+      if (it.r.pri === 'D/C' || it.r.st === '취소') return;
+      const times = timesFor(it.r, kind);
+      const nDone = kind === 'lab' ? (it.r.st === '완료' || it.r.st === '집계완료' ? times.length : 0) : slots(it.r).length;
+      const h0 = Number(hm().slice(0, 2));
+      const from = duty === 'D' ? 6 : duty === 'E' ? 14 : 22;
+      times.forEach((t, k) => {
+        const done = k < nDone;
+        const th = Number(t.slice(0, 2));
+        const inDuty = duty === 'N' ? (th >= 22 || th < 6) : (th >= from && th < from + 8);
+        if (kind !== 'med' && !done && isToday && !inDuty) return;
+        void h0;
+        const late = !done && isToday && t < hm() && (Number(hm().slice(0, 2)) * 60 + Number(hm().slice(3)) - (Number(t.slice(0, 2)) * 60 + Number(t.slice(3)))) > 60;
+        out.push({ time: t, label, name: it.r.name || '', detail: [it.r.dose && `${it.r.dose}${it.r.unit || ''}`, it.r.route].filter(Boolean).join(' · '), state: done ? '완료' : late ? '지연' : '예정', it, nth: k, first: k === nDone });
+      });
+    });
+    add(g.med, 'med', '투약');
+    add(g.base, 'base', '간호');
+    add(g.lab, 'lab', '검사');
+    out.sort((a, b) => a.time.localeCompare(b.time));
+    return out;
+  })();
+
   const sec = (label: string, items: Item[], kind: 'med' | 'base' | 'prn' | 'lab') => (
     <section className="ns-nsec">
       <h3>{label}</h3>
@@ -222,6 +272,7 @@ export default function EhrNurse({
             </div>
             <div className="ns-nd">
               {done.map(k => <span key={k} className="ns-chip">{r[k]}</span>)}
+              {r.hold && <span className="ns-chip ns-hold">보류 {r.hold}</span>}
               {!stop && (
                 <>
                   <button type="button" className="ns-go" onClick={() => ask(it)}>수행</button>
@@ -370,31 +421,53 @@ export default function EhrNurse({
         const al = (i.allergy || '').replace(/\(.*\)/, '').trim();
         const warn = al && !/^(없음|무|none|-)$/i.test(al) && (r.name || '').toLowerCase().includes(al.toLowerCase());
         const high = HIGH.test(r.name || '');
-        const need = ['p', 'd', 'q', 'r', 't', ...(warn ? ['a'] : [])];
-        const ok = need.every(k => c5[k]) && (!high || dbl.trim().length > 0);
-        const row = (k: string, label: string) => <label className="ns-ncb"><input type="checkbox" checked={!!c5[k]} onChange={e => setC5(c => ({ ...c, [k]: e.target.checked }))} />{label}</label>;
+        const need = ['d', 'q', 'r', 't', ...(warn ? ['a'] : [])];
+        const ptOk = pt.trim() !== '' && pt.trim() === (i.ptNo || '').trim();
+        const ok = ptOk && need.every(k => c5[k]) && (!high || dbl.trim().length > 0);
+        const row = (k: string, label: string) => <label className="ns-ncb"><input type="checkbox" disabled={!ptOk} checked={!!c5[k]} onChange={e => setC5(c => ({ ...c, [k]: e.target.checked }))} />{label}</label>;
+        const REASONS = ['환자 거부', '금식·검사 예정', '구토·삼킴 곤란', '활력징후 이상', '처방 확인 필요', '약 미도착', '기타'];
         return (
           <div className="ns-nmd" role="dialog" aria-label="투약 확인">
             <button type="button" className="ns-nmk" aria-label="닫기" onClick={() => setChk(null)} />
             <div className="ns-nmb">
               <header><b>투약 확인</b><button type="button" onClick={() => setChk(null)}>닫기</button></header>
               <div className="ns-nmc">
-                {row('p', `환자: ${i.name || ''} (${i.ptNo || ''})`)}
-                {row('d', `약물: ${r.name}`)}
-                {row('q', `용량: ${r.dose || ''}${r.unit || ''}`)}
-                {row('r', `경로: ${r.route || '-'}`)}
-                {row('t', `시간: ${hm()} (처방 시간 전후 30분 이내)`)}
-                {warn && <div className="ns-nwarn">{row('a', `알러지 주의: ${i.allergy}. 처방의에게 확인했나요?`)}</div>}
-                {high && (
-                  <div className="ns-nwarn">
-                    <p>고위험 약물: 용량, 농도, 펌프 설정을 둘이서 확인하세요.</p>
-                    <input className="ns-ndq" value={dbl} onChange={e => setDbl(e.target.value)} aria-label="이중확인자" />
-                  </div>
+                {hold === null ? (
+                  <>
+                    <div className="ns-nstep"><b>1. 환자 확인</b><span>{i.name} · 환자 팔찌의 환자번호를 입력</span></div>
+                    <input className="ns-ndq" value={pt} onChange={e => setPt(e.target.value)} aria-label="환자번호 확인" />
+                    {pt.trim() !== '' && !ptOk && <div className="ns-nwarn">환자번호가 달라요. 환자를 다시 확인하세요.</div>}
+                    <div className="ns-nstep"><b>2. 약 확인</b><span>{r.name}</span></div>
+                    {row('d', `약물: ${r.name}`)}
+                    {row('q', `용량: ${r.dose || ''}${r.unit || ''}`)}
+                    {row('r', `경로: ${r.route || '-'}`)}
+                    {row('t', `시간: ${hm()}`)}
+                    {warn && <div className="ns-nwarn">{row('a', `알러지 주의: ${i.allergy}. 처방의에게 확인했나요?`)}</div>}
+                    {high && (
+                      <div className="ns-nwarn">
+                        <p>고위험 약물: 용량, 농도, 펌프 설정을 둘이서 확인하고 확인한 사람 이름을 입력하세요.</p>
+                        <input className="ns-ndq" value={dbl} onChange={e => setDbl(e.target.value)} aria-label="이중확인자" />
+                      </div>
+                    )}
+                    <div className="ns-nfa">
+                      <button type="button" onClick={() => setHold('')}>보류·미투약</button>
+                      <button type="button" onClick={() => setChk(null)}>취소</button>
+                      <button type="button" className="ns-go" disabled={!ok} onClick={() => { perform(chk); setChk(null); }}>투약 완료</button>
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="ns-nstep"><b>보류·미투약 사유</b><span>{r.name}</span></div>
+                    <select className="ns-ndq" value={hold} onChange={e => setHold(e.target.value)} aria-label="사유">
+                      {['', ...REASONS].map(o => <option key={o} value={o}>{o}</option>)}
+                    </select>
+                    <input className="ns-ndq" value={holdNote} onChange={e => setHoldNote(e.target.value)} aria-label="추가 내용" />
+                    <div className="ns-nfa">
+                      <button type="button" onClick={() => setHold(null)}>돌아가기</button>
+                      <button type="button" className="ns-go" disabled={!hold} onClick={() => { holdDose(chk, hold, holdNote); setChk(null); }}>보류 기록</button>
+                    </div>
+                  </>
                 )}
-                <div className="ns-nfa">
-                  <button type="button" onClick={() => setChk(null)}>취소</button>
-                  <button type="button" className="ns-go" disabled={!ok} onClick={() => { perform(chk); setChk(null); }}>투약 완료</button>
-                </div>
               </div>
             </div>
           </div>
@@ -419,7 +492,22 @@ export default function EhrNurse({
             <button type="button" aria-label="닫기" onClick={onClose}>&times;</button>
           </header>
           <div className="ns-nwb">
-            {win === 'adm' ? (
+            {win === 'todo' ? (
+              <table className="ns-nlist ns-todo">
+                <thead><tr><th>시간</th><th>구분</th><th>내용</th><th>상태</th><th /></tr></thead>
+                <tbody>
+                  {todo.map((t, k) => (
+                    <tr key={k} className={t.state === '지연' ? 'ns-late' : t.state === '완료' ? 'ns-fin' : ''}>
+                      <td>{t.time}</td><td>{t.label}</td>
+                      <td><b>{t.name}</b>{t.detail && <span> {t.detail}</span>}</td>
+                      <td>{isToday ? t.state : ''}</td>
+                      <td>{isToday && t.state !== '완료' && t.first && t.label !== '검사' && <button type="button" className="ns-go" onClick={() => ask(t.it)}>수행</button>}</td>
+                    </tr>
+                  ))}
+                  {todo.length === 0 && <tr><td colSpan={5} className="ns-nnone">할 일이 없어요</td></tr>}
+                </tbody>
+              </table>
+            ) : win === 'adm' ? (
               <>
                 <div className="ns-nhd">
                   <button type="button" className="ns-arw" onClick={() => shiftA(-1)} aria-label="전날">&lt;</button>
@@ -458,6 +546,15 @@ export default function EhrNurse({
       )}
 
       <style>{`
+        .ns-nstep { display: flex; align-items: baseline; gap: 8px; margin-top: 6px; }
+        .ns-nstep span { color: var(--sub-text); font-size: 12px; }
+        .ns-nlist.ns-todo { table-layout: auto; }
+        .ns-nlist.ns-todo td, .ns-nlist.ns-todo th { text-align: center; white-space: nowrap; }
+        .ns-nlist.ns-todo td:nth-child(3), .ns-nlist.ns-todo th:nth-child(3) { text-align: left; white-space: normal; width: 55%; }
+        .ns-todo tr.ns-late td { background: rgba(239,68,68,.12); }
+        .ns-todo tr.ns-fin td { color: var(--sub-text); }
+        .ns-todo tbody tr { cursor: default; }
+        .ns-hold { background: rgba(245,158,11,.18); color: #b9770e; }
         .ns-nu { border: 1px solid #94a3b8; background: var(--background, #fff); color: var(--text); border-radius: 6px; overflow: hidden; font-size: 13px; position: relative; }
         .ns-nmenu { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 0 8px; background: linear-gradient(#233a5c, #17283f); }
         .ns-nmenu b { color: #e8c97a; padding: 0 12px 0 6px; }
