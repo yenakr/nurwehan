@@ -124,7 +124,7 @@ export const gi: Sample = {
       { time: md(0, '07:00'), s: '새벽 BP 96/58, HR 112로 하락. Hb 6.8, 추가 수혈 예정', b: '십이지장 궤양 출혈, 내시경 지혈술 후 2일째, 금식', a: '대변 흑색변은 어제 이후 없음, 구토 없음, 05:30 Hb 6.8', r: '10시 pRBC 1 unit 수혈, 6시간 후 Hb, 재출혈 시 notify', author: '최간호' },
     ],
     memos: [
-      { time: md(0, '09:10'), type: '진료메모', text: 'Hb 6.8 → pRBC 1 unit. 오후 Hb 재검 후 8.0 미만이면 추가 수혈 상의. 재출혈 시 즉시 연락.', author: '오소화', shift: 'D', imp: '1' },
+      { time: md(0, '09:10'), type: '진료메모', text: '금식 중 심한 갈증 호소. 보호자가 수혈 설명을 다시 듣고 싶어 함.', author: '오간호', shift: 'D', imp: '1' },
       { time: md(0, '07:00'), type: '인수인계', text: '새벽 저혈압 1회. 금식 중, 대변 색 관찰, 수액 150mL/hr.', author: '최간호', shift: 'N', imp: '1' },
     ],
     consent: [

@@ -98,7 +98,7 @@ export const psych: Sample = {
       { time: md(0, '07:00'), s: '야간 안정적, 5시간 수면. 환청 1회 호소', b: '조현병 급성기 입원 6일차, 보호입원, 약물 거부 이력', a: '안전 점검 q15min 유지, 위협 행동 없음, 아침 약 복용 확인 필요', r: '복용 후 구강 확인, 낮 프로그램 참여 유도, 증상 변화 시 notify', author: '최간호' },
     ],
     memos: [
-      { time: md(0, '09:50'), type: '진료메모', text: 'Risperidone 증량 없이 유지. 다음 주 퇴원 계획 수립을 위해 가족 면담(수요일).', author: '박정신', shift: 'D' },
+      { time: md(0, '09:50'), type: '진료메모', text: '가족 면담은 수요일 희망. 면회 제한 완화 요청함.', author: '김간호', shift: 'D' },
       { time: md(-3, '23:00'), type: '인수인계', text: '22시 초조 시 PRN lorazepam 투여. 이후 안정. 구강 확인 필수.', author: '김간호', shift: 'E', imp: '1' },
     ],
     consent: [
