@@ -28,6 +28,7 @@ const DIR: [string, string][] = [
 const pad = (n: number) => String(n).padStart(2, '0');
 const hm = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 const dutyNow = () => { const h = new Date().getHours(); return h >= 6 && h < 14 ? 'D' : h >= 14 && h < 22 ? 'E' : 'N'; };
+const HIGH = /(insulin|인슐린|heparin|헤파린|potassium|kcl|칼륨|morphine|모르핀|fentanyl|펜타닐|midazolam|미다졸람|항암|digoxin|디곡신|warfarin|와파린|propofol|ketamine|마약)/i;
 const isMed = (r: Row) => (r.dose || r.route) && !/^check/i.test(r.name || '');
 
 type Item = { i: number; r: Row; notes: string[] };
@@ -88,6 +89,9 @@ export default function EhrNurse({
   const [cmp, setCmp] = useState(false);
   const [msg, setMsg] = useState('');
   const [dq, setDq] = useState('');
+  const [chk, setChk] = useState<Item | null>(null);
+  const [c5, setC5] = useState<Record<string, boolean>>({});
+  const [dbl, setDbl] = useState('');
   const g = useMemo(() => group(data.orders), [data.orders]);
   const wards = Array.from(new Set(roster.map(r => r.ward).filter((w): w is string => !!w)));
   const list = roster.filter(r => r.ward === ward).sort((a, b) => (a.bed || '').localeCompare(b.bed || '', 'ko', { numeric: true }));
@@ -102,6 +106,9 @@ export default function EhrNurse({
     const p: Row = { ck: '1', [next]: `${hm()} ${duty}/${userName}` };
     if (!isMed(it.r)) p.st = '완료';
     patch(it.i, p);
+  };
+  const ask = (it: Item) => {
+    if (isMed(it.r)) { setC5({}); setDbl(''); setChk(it); } else perform(it);
   };
   const undo = (it: Item) => {
     const used = slots(it.r);
@@ -152,7 +159,7 @@ export default function EhrNurse({
               {done.map(k => <span key={k} className="chip">{r[k]}</span>)}
               {!stop && (
                 <>
-                  <button type="button" className="go" onClick={() => perform(it)}>수행</button>
+                  <button type="button" className="go" onClick={() => ask(it)}>수행</button>
                   {(done.length > 0 || r.ck) && <button type="button" onClick={() => undo(it)}>취소</button>}
                 </>
               )}
@@ -278,6 +285,42 @@ export default function EhrNurse({
         </div>
       )}
 
+      {chk && (() => {
+        const r = chk.r;
+        const al = (i.allergy || '').replace(/\(.*\)/, '').trim();
+        const warn = al && !/^(없음|무|none|-)$/i.test(al) && (r.name || '').toLowerCase().includes(al.toLowerCase());
+        const high = HIGH.test(r.name || '');
+        const need = ['p', 'd', 'q', 'r', 't', ...(warn ? ['a'] : [])];
+        const ok = need.every(k => c5[k]) && (!high || dbl.trim().length > 0);
+        const row = (k: string, label: string) => <label className="ncb"><input type="checkbox" checked={!!c5[k]} onChange={e => setC5(c => ({ ...c, [k]: e.target.checked }))} />{label}</label>;
+        return (
+          <div className="nmd" role="dialog" aria-label="투약 확인">
+            <button type="button" className="nmk" aria-label="닫기" onClick={() => setChk(null)} />
+            <div className="nmb">
+              <header><b>투약 확인</b><button type="button" onClick={() => setChk(null)}>닫기</button></header>
+              <div className="nmc">
+                {row('p', `환자: ${i.name || ''} (${i.ptNo || ''})`)}
+                {row('d', `약물: ${r.name}`)}
+                {row('q', `용량: ${r.dose || ''}${r.unit || ''}`)}
+                {row('r', `경로: ${r.route || '-'}`)}
+                {row('t', `시간: ${hm()} (처방 시간 전후 30분 이내)`)}
+                {warn && <div className="nwarn">{row('a', `알러지 주의: ${i.allergy}. 처방의에게 확인했나요?`)}</div>}
+                {high && (
+                  <div className="nwarn">
+                    <p>고위험 약물: 용량, 농도, 펌프 설정을 둘이서 확인하세요.</p>
+                    <input className="ndq" value={dbl} onChange={e => setDbl(e.target.value)} placeholder="이중확인자 이름" aria-label="이중확인자" />
+                  </div>
+                )}
+                <div className="nfa">
+                  <button type="button" onClick={() => setChk(null)}>취소</button>
+                  <button type="button" className="go" disabled={!ok} onClick={() => { perform(chk); setChk(null); }}>투약 완료</button>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+
       {win && (
         <div className="nwin" role="dialog" aria-label={win}>
           <header>
@@ -359,6 +402,12 @@ export default function EhrNurse({
         .nmb header, .nwin header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--border); }
         .nmb header button, .nwin header button { border: 0; background: transparent; color: var(--sub-text); font: inherit; cursor: pointer; }
         .nmc { padding: 12px 16px 16px; } .nmc h4 { margin: 10px 0 4px; } .nmc p { margin: 0 0 4px; }
+        .nwarn { background: rgba(239,68,68,.1); border-radius: 8px; padding: 6px 10px; margin-top: 6px; }
+        .nwarn p { margin: 4px 0; font-size: 12.5px; color: #dc2626; font-weight: 700; }
+        .nfa { display: flex; justify-content: flex-end; gap: 8px; margin-top: 14px; }
+        .nfa button { border: 1px solid var(--border); background: transparent; color: inherit; border-radius: 8px; padding: 8px 18px; font: inherit; font-weight: 600; cursor: pointer; }
+        .nfa .go { background: var(--primary); border-color: var(--primary); color: #fff; }
+        .nfa .go:disabled { opacity: .4; }
         .nwin { position: fixed; z-index: 55; top: 0; right: 0; bottom: 0; width: min(520px, 100%); background: var(--background, #fff); color: var(--text); border-left: 1px solid #94a3b8; box-shadow: -6px 0 24px rgba(0,0,0,.22); display: flex; flex-direction: column; }
         .nwb { padding: 12px 14px 24px; overflow: auto; flex: 1; }
         .ndq { width: 100%; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; padding: 8px; font: inherit; margin-bottom: 8px; background: var(--background); color: var(--text); }
