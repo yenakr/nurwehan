@@ -71,7 +71,7 @@ export const op1: Sample = {
       { date: dt(90), time: '09:30', dept: 'EN', doc: '서내분', purpose: '3개월 추적', st: '예약' },
     ],
     memos: [
-      { time: md(0, '09:55'), type: '진료메모', text: '검사 결과 확인 후 14일 뒤 약 조정. 저혈당 증상 지속되면 즉시 내원 안내.', author: '서내분', shift: 'D' },
+      { time: md(0, '09:55'), type: '진료메모', text: '대기 시간이 길어 불편 호소함. 처방전 약국 전송 요청함.', author: '최간호', shift: 'D' },
     ],
     history: [
       { dept: 'EN', date: dt(-90), dx: 'Type 2 diabetes mellitus', code: 'E11.9', kind: '외래' },
@@ -148,7 +148,7 @@ export const op2: Sample = {
       { date: dt(14), time: '10:00', dept: 'GS', doc: '장일반', purpose: '2주 후 경과 (증상 지속 시)', st: '예약' },
     ],
     memos: [
-      { time: md(0, '10:45'), type: '진료메모', text: '병리 결과 설명 완료. 증상 호전 시 추가 방문 불필요.', author: '장일반', shift: 'D' },
+      { time: md(0, '10:45'), type: '진료메모', text: '결과 설명 후 소견서 발급을 요청함.', author: '최간호', shift: 'D' },
     ],
     history: [
       { dept: 'GS', date: dt(-7), dx: 'Acute cholecystitis, s/p lap cholecystectomy', code: 'K81.0', kind: '입원' },

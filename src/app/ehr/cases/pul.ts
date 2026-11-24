@@ -132,7 +132,7 @@ export const pul: Sample = {
       { time: md(0, '07:00'), s: '야간에 열 없이 안정적, 기침으로 수면 부족', b: '인플루엔자 A 동반 CAP 입원 4일차, 비말 격리 중, COPD', a: 'BT 37.3, SpO2 95% (2L NC), 가래 점성 있고 배출 호전', r: 'O2 weaning 시도(SpO2 92% 이상 유지 시 1L 감량), 객담 배양 결과 확인', author: '최간호' },
     ],
     memos: [
-      { time: md(0, '09:40'), type: '진료메모', text: 'O2 1L로 감량 후 SpO2 모니터링. 객담 배양 결과 확인되면 항생제 조정 예정.', author: '최호흡', shift: 'D' },
+      { time: md(0, '09:40'), type: '진료메모', text: '격리 중 답답함 호소. 보호자 면회 대신 영상통화 요청함.', author: '박간호', shift: 'D' },
       { time: md(-2, '09:10'), type: '간호메모', text: '비말 격리 중. 병실 출입 시 마스크 착용, 이송 시 환자 마스크 착용 확인.', author: '박간호', shift: 'D', imp: '1' },
     ],
     consent: [

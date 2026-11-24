@@ -129,7 +129,7 @@ export const gs: Sample = {
       { time: md(0, '07:00'), s: '수술 후 1일, 밤새 안정적. 새벽 가스 배출 확인함', b: '급성 충수염으로 복강경 충수절제술(전신마취) 시행', a: 'BT 37.1, NRS 4, 상처 dressing 청결, 소변 자가 배뇨 양호', r: '식사 시작 후 구역·구토 관찰, 보행 격려, 오전 회진에서 PCA/진통제 확인', author: '최간호' },
     ],
     memos: [
-      { time: md(0, '09:00'), type: '진료메모', text: '오늘부터 연식 시작. 구역 없으면 내일 퇴원 가능. 퇴원 교육 및 외래 예약 진행.', author: '장일반', shift: 'D' },
+      { time: md(0, '09:00'), type: '진료메모', text: '직장 복귀 일정 때문에 진단서 요청함. 비급여 진통제는 원치 않음.', author: '김간호', shift: 'D' },
       { time: md(-1, '21:30'), type: '간호메모', text: '23:30 구역 호소 → ondansetron 4mg IV 투여, 이후 소실. 금식 유지.', author: '김간호', shift: 'E' },
     ],
     consent: [

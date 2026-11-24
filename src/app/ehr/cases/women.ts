@@ -125,7 +125,7 @@ export const women: Sample = {
       { time: md(0, '07:00'), s: '밤새 통증 NRS 7로 PRN 1회, 현재 NRS 5. Foley 제거 예정', b: '예정 제왕절개 후 1일, 모유수유 중, 신생아 모자동실', a: 'BT 37.3, 자궁저부 배꼽 아래 1FB firm, 오로 소량, 가스 배출 전', r: 'Foley 제거 후 자가 배뇨 확인, 보행 격려, 모유수유 교육, 가스 배출 확인', author: '최간호' },
     ],
     memos: [
-      { time: md(0, '09:00'), type: '진료메모', text: 'Foley 제거, 연식 시작. Hb 10.2로 경구 철분제. 내일 상처 소독 후 퇴원 가능 여부 판단.', author: '최산부', shift: 'D' },
+      { time: md(0, '09:00'), type: '진료메모', text: '신생아 면회 시간 연장을 원함. 산후조리원 입소 일정 문의함.', author: '박간호', shift: 'D' },
       { time: md(0, '10:40'), type: '간호메모', text: '아기 수유 시 유두 통증 호소, 젖 물리는 법 교육함. 오후에 모유수유 클리닉 상담 의뢰 예정.', author: '박간호', shift: 'D' },
     ],
     consent: [

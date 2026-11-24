@@ -145,7 +145,7 @@ export const os: Sample = {
       { time: md(0, '07:00'), s: '새벽 통증 NRS 7로 tramadol IV 투여 후 안정. Hb 8.6으로 수혈 예정', b: '우측 TKA 후 1일, NSAIDs 알레르기, 낙상 고위험', a: 'Hemovac 혈성 220mL/24h, 신경혈관 정상, BP 118/70', r: '10시 pRBC 1 unit 수혈, 수혈 중 활력징후 관찰, Foley 제거 후 자가 배뇨 확인', author: '최간호' },
     ],
     memos: [
-      { time: md(0, '09:00'), type: '진료메모', text: 'Hb 8.6 → pRBC 1 unit 수혈 처방. 오후 CPM 시작(PT 협진). NSAIDs 알레르기: ketorolac, celecoxib D/C함.', author: '하정형', shift: 'D', imp: '1' },
+      { time: md(0, '09:00'), type: '진료메모', text: '수혈에 대한 불안 호소. 보험사 제출용 진단서 2부 요청함.', author: '박간호', shift: 'D', imp: '1' },
       { time: md(0, '07:00'), type: '인수인계', text: '낙상 고위험(Morse 60). 보행은 반드시 간호사 또는 PT와 함께. 야간 PRN 투여 1회.', author: '최간호', shift: 'N', imp: '1' },
     ],
     consent: [

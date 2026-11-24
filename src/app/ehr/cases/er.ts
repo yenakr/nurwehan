@@ -109,7 +109,7 @@ export const er1: Sample = {
       { time: md(0, '14:50'), s: '14:10 VF 심정지, 제세동 2회 후 14:16 ROSC. 응급 PCI를 위해 심혈관조영실로 이송', b: '63세 남성, 하벽 STEMI, 고혈압·이상지질혈증, 흡연', a: 'BP 98~110/60s (norepinephrine 0.1), HR 90, SpO2 97% (O2 5L), 의식 명료. 항혈소판제·헤파린 투여 완료', r: '이송 중 모니터·제세동기 동반, 승압제 속도 유지, 부정맥 재발 시 즉시 제세동', author: '박간호' },
     ],
     memos: [
-      { time: md(0, '14:55'), type: '진료메모', text: '심장내과(이순환) 응급 PCI 수락. 중환자실 입실 예약 완료. ROSC 후 체온 33~36℃ 목표체온관리는 중환자실에서 결정.', author: '배응급', shift: 'D', imp: '1' },
+      { time: md(0, '14:55'), type: '진료메모', text: '보호자 도착 대기 중. 가족 면회를 요청함.', author: '구급이', shift: 'D', imp: '1' },
     ],
     consent: [
       consent('침습적 시술·검사 동의서', dt(0), '이순환', '법정대리인', '박영희', '배우자'),
@@ -202,7 +202,7 @@ export const er2: Sample = {
       { date: dt(7), time: '14:00', dept: 'OS', doc: '하정형', purpose: '발목 염좌 추적 (인대 손상 정도 평가)', st: '예약' },
     ],
     memos: [
-      { time: md(0, '16:00'), type: '진료메모', text: '귀가 가능. 목발 보행 확인 후 퇴원. 증상 악화(발가락 저림, 청색증, 심한 통증) 시 즉시 재방문.', author: '구급이', shift: 'D' },
+      { time: md(0, '16:00'), type: '진료메모', text: '보호자 동행이 어려운 상황. 회사 제출용 진단서 발급 요청함.', author: '구급이', shift: 'D' },
     ],
     history: [
       { dept: 'ER', date: dt(-730), dx: 'Ankle sprain, rt', code: 'S93.4', kind: '응급' },

@@ -3,6 +3,8 @@
 import { SAMPLES } from '../samples';
 import { MATS, matsFor } from '../codes';
 import NurseForm from './NurseForms';
+import { StaffWin, DocReqWin, RichMemo } from './NurseExtras';
+import { DEPTS } from '../directory';
 import { confirmDialog } from '@/components/Dialog';
 import { useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
 import { useRouter } from 'next/navigation';
@@ -24,6 +26,7 @@ const MENUS: { id: string; label: string }[] = [
   { id: 'ret', label: '약·주사 반납' },
   { id: 'consult', label: '협진' },
   { id: 'bulk', label: '활력징후 일괄' },
+  { id: 'docreq', label: '서류 요청' },
   { id: 'handover', label: '인수인계지' },
   { id: 'adm', label: '입퇴원 예정' },
   { id: 'dir', label: '원내번호조회' },
@@ -357,7 +360,7 @@ export default function EhrNurse({
     <div className={`ns-nu ${win ? 'ns-hasw' : ''}`}>
       <div className="ns-nmenu">
         <b>홈</b>
-        {MENUS.map(m => <button key={m.id} type="button" className={win === m.id ? 'ns-on' : ''} onClick={() => (m.id === 'handover' ? router.push(`/ehr/handover?ward=${encodeURIComponent(ward)}`) : onOpen(m.id))}>{m.label}</button>)}
+        {MENUS.map(m => <button key={m.id} type="button" className={win === m.id ? 'ns-on' : ''} onClick={() => (m.id === 'handover' ? router.push(`/ehr/handover?ward=${encodeURIComponent(ward)}&team=${encodeURIComponent(team)}`) : onOpen(m.id))}>{m.label}</button>)}
         <div className="ns-tools">{tools}</div>
       </div>
 
@@ -369,14 +372,19 @@ export default function EhrNurse({
           </div>
           {qMsg && <p className="ns-nerr">{qMsg}</p>}
           <div className="ns-npt">
-            <b>{i.name || '이름 없음'} 님</b>
-            <span>{[i.ageSex, i.ptNo].filter(Boolean).join(' · ')}</span>
-            {dd(i.admit) && <span>입원일 {dd(i.admit)} {dayN(i.admit) && `(${dayN(i.admit)})`}</span>}
-            {dd(i.disDate) && <span>퇴원예정일 {dd(i.disDate)}</span>}
-            {data.surgery[0] && dd(data.surgery[0].date) && <span>수술일 {dd(data.surgery[0].date)}</span>}
-            {i.dept && <span>{[i.dept, i.doctor].filter(Boolean).join(' · ')}</span>}
-            {i.ward && <span>{[i.ward, i.bed].filter(Boolean).join(' ')}</span>}
-            {dxMain || i.dx ? <span>{dxMain ? dxMain.name : i.dx}</span> : null}
+            <div className="ns-nph">
+              <b>{i.name || '이름 없음'}</b>
+              {i.ageSex && <span className="ns-nsx">{i.ageSex}</span>}
+              {i.ptNo && <span className="ns-nno">{i.ptNo}</span>}
+            </div>
+            <dl className="ns-nkv">
+              {i.ward && <><dt>병실</dt><dd>{[i.ward, i.bed].filter(Boolean).join(' ')}</dd></>}
+              {(i.dept || i.doctor) && <><dt>진료과</dt><dd><button type="button" className="ns-lnk" onClick={() => onOpen('staff')}>{[DEPTS.find(x => x.code === i.dept)?.name || i.dept, i.doctor && `${i.doctor} 교수`].filter(Boolean).join(' · ')}</button></dd></>}
+              {dd(i.admit) && <><dt>입원일</dt><dd>{dd(i.admit)}{dayN(i.admit) && <em>{dayN(i.admit)}</em>}</dd></>}
+              {dd(i.disDate) && <><dt>퇴원예정</dt><dd>{dd(i.disDate)}</dd></>}
+              {data.surgery[0] && dd(data.surgery[0].date) && <><dt>수술일</dt><dd>{dd(data.surgery[0].date)}</dd></>}
+              {(dxMain || i.dx) && <><dt>진단</dt><dd>{dxMain ? dxMain.name : i.dx}</dd></>}
+            </dl>
             <div className="ns-nflags">
               {flags.map(f => <em key={f}>{f}</em>)}
               {i.allergy && !/^(없음|무|none|-)$/i.test(i.allergy.trim()) && <em className="ns-al">알러지 {i.allergy}</em>}
@@ -453,7 +461,7 @@ export default function EhrNurse({
           ))}
           <div className="ns-nbox">
             <h4>간호메모</h4>
-            <textarea className="ns-nsticky" rows={9} value={sticky >= 0 ? data.memos[sticky].text || '' : ''} onChange={e => setSticky(e.target.value)} aria-label="간호메모" />
+            <div key={i.ptNo || 'x'}><RichMemo value={sticky >= 0 ? data.memos[sticky].text || '' : ''} onChange={setSticky} /></div>
           </div>
         </aside>
       </div>
@@ -550,7 +558,7 @@ export default function EhrNurse({
               window.addEventListener('pointerup', up);
             }}
           >
-            <b>{MENUS.find(m => m.id === win)?.label}</b>
+            <b>{win === 'staff' ? '의료진 · 노티' : MENUS.find(m => m.id === win)?.label}</b>
             <button type="button" aria-label="닫기" onClick={onClose}>&times;</button>
           </header>
           <div className="ns-nwb">
@@ -623,6 +631,10 @@ export default function EhrNurse({
               </>
             ) : win === 'bulk' ? (
               <WardBulk pts={bulkPts} onClose={onClose} onSelf={row => setData(d => ({ ...d, vitals: [...d.vitals, row] }))} />
+            ) : win === 'staff' ? (
+              <StaffWin data={data} setData={setData} userName={userName} duty={duty} />
+            ) : win === 'docreq' ? (
+              <DocReqWin data={data} setData={setData} userName={userName} duty={duty} />
             ) : (win === 'vitals' || win === 'bst' || win === 'mat' || win === 'nact') ? (
               <NurseForm kind={win} data={data} setData={setData} userName={userName} />
             ) : drawer}
@@ -665,6 +677,17 @@ export default function EhrNurse({
         .ns-arw { padding: 4px 10px; border: 1px solid var(--border); background: var(--background); color: var(--primary); font-weight: 700; border-radius: 4px; }
         .ns-npt b { font-size: 20px; }
         .ns-npt span { color: var(--sub-text); }
+        .ns-npt { display: block !important; padding: 0 !important; overflow: hidden; }
+        .ns-nph { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; padding: 10px 12px; background: linear-gradient(#233a5c, #17283f); }
+        .ns-nph b { font-size: 18px; color: #fff; }
+        .ns-nph .ns-nsx { color: #cbd5e1; font-size: 12px; }
+        .ns-nph .ns-nno { margin-left: auto; font-size: 12px; font-weight: 700; color: #e8c97a; border: 1px solid rgba(232,201,122,.5); border-radius: 4px; padding: 1px 7px; }
+        .ns-nkv { display: grid; grid-template-columns: auto 1fr; gap: 4px 12px; margin: 0; padding: 10px 12px; font-size: 13px; }
+        .ns-nkv dt { color: var(--sub-text); font-size: 12px; white-space: nowrap; }
+        .ns-nkv dd { margin: 0; font-weight: 600; }
+        .ns-nkv dd em { font-style: normal; margin-left: 6px; font-size: 11px; font-weight: 700; color: var(--primary); }
+        .ns-lnk { border: 0; background: transparent; color: var(--primary); font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 0; text-align: left; }
+        .ns-npt .ns-nflags { padding: 0 12px 10px; margin-top: 0; }
         .ns-nflags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
         .ns-nflags em { font-style: normal; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(245,158,11,.18); color: #b9770e; }
         .ns-nflags em.ns-al { background: rgba(239,68,68,.14); color: #dc2626; }
