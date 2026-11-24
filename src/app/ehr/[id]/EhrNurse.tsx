@@ -57,16 +57,32 @@ function group(orders: Row[]): Groups {
   return g;
 }
 
-// 검사·시술 예정에 따라 필요한 준비 항목
-function checklist(d: ChartData): string[] {
-  const text = [...d.sched.map(r => `${r.kind} ${r.name}`), ...d.orders.map(r => r.name || '')].join(' ');
-  const out = ['금식', '동의서', '보호자'];
-  if (/수술|시술|조영|관상동맥/.test(text)) out.push('수술·시술 부위 확인', '장신구·틀니 제거');
-  if (/CT|조영/i.test(text)) out.push('조영제 알러지 확인');
-  if (/내시경|endoscop|colonoscop/i.test(text)) out.push('장 정결 확인');
-  if (/수혈|transfusion|PRBC|혈액/i.test(text)) out.push('혈액 준비 확인');
-  if (/MRI/i.test(text)) out.push('금속 제거');
-  return Array.from(new Set(out));
+// 수술·시술·검사 예정마다 필요한 준비 항목. 해당 없으면 비어 있다.
+type CkGroup = { title: string; items: string[] };
+function checklist(d: ChartData): CkGroup[] {
+  const src: [string, string][] = [
+    ...d.sched.map((r): [string, string] => [r.kind || '', r.name || '']),
+    ...d.surgery.filter(r => r.name).map((r): [string, string] => ['수술', r.name || '']),
+    ...d.orders.filter(r => r.kind !== 'sec' && r.kind !== 'memo' && r.pri !== 'D/C' && r.name).map((r): [string, string] => ['', r.name || '']),
+  ];
+  const out: CkGroup[] = [];
+  const seen = new Set<string>();
+  src.forEach(([kind, name]) => {
+    const t = `${kind} ${name}`;
+    let items: string[] = [];
+    let label = kind || '검사';
+    if (/수술|시술|관상동맥/.test(t)) { items = ['금식', '동의서', '보호자', '수술·시술 부위 확인', '장신구·틀니 제거']; label = /시술/.test(t) && !/수술/.test(t) ? '시술' : '수술'; }
+    else if (/내시경|endoscop|colonoscop/i.test(t)) { items = ['금식', '동의서', '장 정결 확인']; label = '검사'; }
+    else if (/CT|조영/i.test(t)) { items = ['금식', '동의서', '조영제 알러지 확인']; label = '검사'; }
+    else if (/MRI/i.test(t)) { items = ['동의서', '금속 제거']; label = '검사'; }
+    else if (/수혈|transfusion|PRBC|혈액/i.test(t)) { items = ['동의서', '혈액 준비 확인']; label = '수혈'; }
+    if (!items.length || !name.trim()) return;
+    const title = `${label} · ${name.trim()}`;
+    if (seen.has(title)) return;
+    seen.add(title);
+    out.push({ title, items });
+  });
+  return out;
 }
 
 export default function EhrNurse({
@@ -139,7 +155,7 @@ export default function EhrNurse({
   };
   const sendMsg = () => addMemo('간호의사소통', msg, () => setMsg(''));
   const sendDoc = () => addMemo('진료메모', dmsg, () => setDmsg(''));
-  const ck = (label: string) => (i[`ck:${label}`] === '1') || (label === '금식' && i.npo === '1' && i['ck:금식'] !== '0');
+  const ck = (label: string) => (i[`ck:${label}`] === '1') || (label.endsWith('/금식') && i.npo === '1' && i[`ck:${label}`] !== '0');
   const toggle = (label: string) => setData(d => ({ ...d, info: { ...d.info, [`ck:${label}`]: ck(label) ? '0' : '1' } }));
   const find = () => {
     const t = q.trim();
@@ -268,12 +284,14 @@ export default function EhrNurse({
         </main>
 
         <aside className="ns-nr">
-          <div className="ns-nbox">
-            <h4>체크리스트</h4>
-            {cl.map(l => (
-              <label key={l} className="ns-ncb"><input type="checkbox" checked={ck(l)} onChange={() => toggle(l)} />{l}</label>
-            ))}
-          </div>
+          {cl.map(g => (
+            <div key={g.title} className="ns-nbox">
+              <h4>체크리스트 · {g.title}</h4>
+              {g.items.map(l => (
+                <label key={l} className="ns-ncb"><input type="checkbox" checked={ck(`${g.title}/${l}`)} onChange={() => toggle(`${g.title}/${l}`)} />{l}</label>
+              ))}
+            </div>
+          ))}
           <div className="ns-nbox">
             <h4>간호메모</h4>
             <textarea className="ns-nsticky" rows={9} value={sticky >= 0 ? data.memos[sticky].text || '' : ''} onChange={e => setSticky(e.target.value)} aria-label="간호메모" />
