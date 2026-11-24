@@ -379,7 +379,7 @@ export default function EhrNurse({
             </div>
             <dl className="ns-nkv">
               {i.ward && <><dt>병실</dt><dd>{[i.ward, i.bed].filter(Boolean).join(' ')}</dd></>}
-              {(i.dept || i.doctor) && <><dt>진료과</dt><dd><button type="button" className="ns-lnk" onClick={() => onOpen('staff')}>{[DEPTS.find(x => x.code === i.dept)?.name || i.dept, i.doctor && `${i.doctor} 교수`].filter(Boolean).join(' · ')}</button></dd></>}
+              {(i.dept || i.doctor) && <><dt>진료과</dt><dd><button type="button" className="ns-lnk" onClick={() => onOpen('staff')}>{[DEPTS.find(x => x.code === i.dept)?.name || i.dept, i.doctor].filter(Boolean).join(' · ')}</button></dd></>}
               {dd(i.admit) && <><dt>입원일</dt><dd>{dd(i.admit)}{dayN(i.admit) && <em>{dayN(i.admit)}</em>}</dd></>}
               {dd(i.disDate) && <><dt>퇴원예정</dt><dd>{dd(i.disDate)}</dd></>}
               {data.surgery[0] && dd(data.surgery[0].date) && <><dt>수술일</dt><dd>{dd(data.surgery[0].date)}</dd></>}
