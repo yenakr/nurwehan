@@ -17,14 +17,16 @@ import RegisterCard from './EhrRegister';
 import MarPanel from './EhrMar';
 import MemoPanel from './EhrMemo';
 import { shiftOf, criticalFlags, badgesOf, BMI, DC_EDU, ISO } from '../emr';
+import RxPanel from './EhrRx';
+import { DX, ACTS, MATS, DIETS, FORMS2, RET_KINDS, dxName, dxCode } from '../codes';
 import FormPanel, { FORMS, FORM_CSS, type FormKey } from './EhrForms';
 
 type ListKey =
-  | 'progress' | 'vitals' | 'io' | 'bst' | 'diet' | 'labs' | 'notes' | 'care'
+  | 'progress' | 'vitals' | 'io' | 'bst' | 'diet' | 'dxcode' | 'nact' | 'mat' | 'dietord' | 'ret' | 'dcmed' | 'dcnote' | 'sched' | 'acu' | 'docs' | 'labs' | 'notes' | 'care'
   | 'transfusion' | 'nutrition' | 'consult' | 'consent' | 'surgery' | 'appts' | 'handover' | 'risk' | 'history' | 'imaging' | 'memos' | 'mar' | 'anes'
   | 'lines' | 'iv' | 'wounds' | 'edu' | 'specimen' | 'transport' | 'moves' | 'cpr';
 type FormTab = 'f_morse' | 'f_braden' | 'f_pain' | 'f_preop';
-type TabId = ListKey | 'orders' | 'admission' | 'nurseinfo' | 'discharge' | FormTab;
+type TabId = ListKey | 'rx' | 'orders' | 'admission' | 'nurseinfo' | 'discharge' | FormTab;
 const isForm = (t: TabId): t is FormTab => t.startsWith('f_');
 
 type MenuItem = { id: TabId; label: string };
@@ -32,22 +34,22 @@ type MenuNode = { label: string; items: MenuItem[] };
 const MENU: MenuNode[] = [
   { label: '경과기록', items: [{ id: 'progress', label: '경과기록' }, { id: 'consult', label: '협진기록' }] },
   { label: '수술', items: [{ id: 'surgery', label: '수술기록' }, { id: 'anes', label: '마취기록' }, { id: 'f_preop', label: '수술 전 확인' }] },
-  { label: '의사처방', items: [{ id: 'orders', label: '의사처방' }, { id: 'mar', label: '투약' }] },
-  { label: '입원기록', items: [{ id: 'admission', label: '입원기록' }, { id: 'nurseinfo', label: '간호정보조사지' }, { id: 'history', label: '상병이력' }] },
+  { label: '의사처방', items: [{ id: 'orders', label: '의사처방' }, { id: 'rx', label: '처방 관리' }, { id: 'mar', label: '투약' }, { id: 'ret', label: '약·주사 반납' }] },
+  { label: '입원기록', items: [{ id: 'admission', label: '입원기록' }, { id: 'nurseinfo', label: '간호정보조사지' }, { id: 'history', label: '상병이력' }, { id: 'dxcode', label: '상병코드' }] },
   { label: '임상관찰', items: [{ id: 'vitals', label: '임상관찰' }, { id: 'bst', label: '혈당·인슐린' }] },
   { label: '치료/검사', items: [{ id: 'labs', label: '검사결과' }, { id: 'imaging', label: '영상검사' }, { id: 'transfusion', label: '수혈기록' }, { id: 'specimen', label: '검체 채취' }, { id: 'transport', label: '이송 의뢰' }] },
-  { label: '간호관리', items: [{ id: 'lines', label: '튜브·라인' }, { id: 'iv', label: 'IV 수액' }, { id: 'wounds', label: '상처·드레싱' }, { id: 'edu', label: '환자 교육' }] },
+  { label: '간호관리', items: [{ id: 'nact', label: '간호행위' }, { id: 'mat', label: '처치재료' }, { id: 'dietord', label: '식이처방' }, { id: 'lines', label: '튜브·라인' }, { id: 'iv', label: 'IV 수액' }, { id: 'wounds', label: '상처·드레싱' }, { id: 'edu', label: '환자 교육' }] },
   { label: '응급', items: [{ id: 'cpr', label: 'CPR 기록지' }] },
   { label: '영양기록', items: [{ id: 'diet', label: '식이' }, { id: 'nutrition', label: '영양기록' }] },
   { label: '평가도구', items: FORMS.filter(f => f.key !== 'preop').map(f => ({ id: f.tab as TabId, label: f.label })) },
-  { label: '간호기록', items: [{ id: 'notes', label: '간호기록' }, { id: 'risk', label: '위험도평가' }, { id: 'handover', label: '인계(SBAR)' }, { id: 'memos', label: '메모·인수인계' }] },
+  { label: '간호기록', items: [{ id: 'notes', label: '간호기록' }, { id: 'risk', label: '위험도평가' }, { id: 'handover', label: '인계(SBAR)' }, { id: 'memos', label: '메모·인수인계' }, { id: 'acu', label: '중증도·고위험' }, { id: 'sched', label: '당일 일정' }] },
   { label: '간호과정', items: [{ id: 'care', label: '간호과정' }] },
-  { label: '동의서', items: [{ id: 'consent', label: '동의서' }] },
+  { label: '동의서', items: [{ id: 'consent', label: '동의서' }, { id: 'docs', label: '간호 서식지' }] },
   { label: '외래예약', items: [{ id: 'appts', label: '외래예약' }] },
-  { label: '퇴원', items: [{ id: 'discharge', label: '퇴원계획' }, { id: 'moves', label: '전동·전과·외출' }] },
+  { label: '퇴원', items: [{ id: 'dcnote', label: '퇴원예고' }, { id: 'dcmed', label: '퇴원약' }, { id: 'discharge', label: '퇴원계획' }, { id: 'moves', label: '전동·전과·외출' }] },
 ];
 
-type Col = { key: string; label: string; w: number; type?: 'area' | 'select' | 'ro'; opts?: string[]; ph?: string };
+type Col = { key: string; label: string; w: number; type?: 'area' | 'select' | 'ro' | 'pick'; list?: string; opts?: string[]; ph?: string };
 
 export const COLS: Record<ListKey, Col[]> = {
   progress: [
@@ -70,6 +72,83 @@ export const COLS: Record<ListKey, Col[]> = {
     { key: 'intake', label: '섭취 (mL)', w: 200 },
     { key: 'output', label: '배설 (mL)', w: 200 },
     { key: 'note', label: '비고', w: 260 },
+  ],
+  dxcode: [
+    { key: 'kind', label: '구분', w: 80, type: 'select', opts: ['', '주상병', '부상병', '의증'] },
+    { key: 'code', label: '상병코드', w: 100, type: 'pick', list: 'dl-dxc', ph: 'I50.0' },
+    { key: 'name', label: '상병명', w: 260, type: 'pick', list: 'dl-dxn' },
+    { key: 'date', label: '진단일', w: 100, ph: '2026-11-10' },
+    { key: 'doc', label: '진단의', w: 80 },
+  ],
+  nact: [
+    { key: 'time', label: '일시', w: 130, ph: '11-10 10:00' },
+    { key: 'act', label: '간호행위', w: 220, type: 'pick', list: 'dl-act' },
+    { key: 'mat', label: '사용 재료', w: 180 },
+    { key: 'by', label: '수행자', w: 80 },
+    { key: 'st', label: '상태', w: 80, type: 'select', opts: ['', '수행', '삭제'] },
+    { key: 'note', label: '비고', w: 200 },
+  ],
+  mat: [
+    { key: 'time', label: '일시', w: 130, ph: '11-10 10:00' },
+    { key: 'item', label: '처치재료', w: 220, type: 'pick', list: 'dl-mat' },
+    { key: 'qty', label: '수량', w: 60 },
+    { key: 'unit', label: '단위', w: 60 },
+    { key: 'act', label: '관련 행위', w: 160, type: 'pick', list: 'dl-act' },
+    { key: 'by', label: '입력자', w: 80 },
+  ],
+  dietord: [
+    { key: 'start', label: '시작일', w: 100, ph: '2026-11-10' },
+    { key: 'end', label: '종료일', w: 100 },
+    { key: 'type', label: '식이', w: 160, type: 'pick', list: 'dl-diet' },
+    { key: 'st', label: '상태', w: 80, type: 'select', opts: ['등록', '변경', '중지'] },
+    { key: 'by', label: '등록자', w: 80 },
+    { key: 'note', label: '비고', w: 200 },
+  ],
+  ret: [
+    { key: 'time', label: '일시', w: 130, ph: '11-10 10:00' },
+    { key: 'kind', label: '구분', w: 130, type: 'select', opts: ['', ...RET_KINDS] },
+    { key: 'name', label: '품목', w: 200 },
+    { key: 'qty', label: '수량·잔량', w: 90 },
+    { key: 'reason', label: '사유', w: 180 },
+    { key: 'by', label: '반납자', w: 80 },
+    { key: 'chk', label: '확인자', w: 80 },
+    { key: 'st', label: '상태', w: 90, type: 'select', opts: ['반납대기', '반납완료'] },
+  ],
+  dcnote: [
+    { key: 'date', label: '퇴원 예정일', w: 110, ph: '2026-11-12' },
+    { key: 'doc', label: '지시 의사', w: 80 },
+    { key: 'plan', label: '구분', w: 90, type: 'select', opts: ['퇴원', '전원', '자의퇴원', '가퇴원'] },
+    { key: 'diet', label: '미래 식이처방 확인', w: 130, type: 'select', opts: ['', '확인', '미확인'] },
+    { key: 'note', label: '비고', w: 220 },
+  ],
+  dcmed: [
+    { key: 'name', label: '퇴원약', w: 220 },
+    { key: 'dose', label: '용량', w: 80 },
+    { key: 'cnt', label: '횟수/일', w: 80 },
+    { key: 'days', label: '일수', w: 60 },
+    { key: 'st', label: '확인', w: 90, type: 'select', opts: ['', '확인', '미확인'] },
+    { key: 'note', label: '복약 설명', w: 220 },
+  ],
+  sched: [
+    { key: 'time', label: '시간', w: 80, ph: '14:00' },
+    { key: 'kind', label: '구분', w: 90, type: 'select', opts: ['', '수술', '검사', 'PT', '시술', '외출', '병실이동', '기타'] },
+    { key: 'name', label: '내용', w: 220 },
+    { key: 'prep', label: '준비·특이사항', w: 240 },
+    { key: 'st', label: '상태', w: 90, type: 'select', opts: ['예정', '완료', '취소'] },
+  ],
+  acu: [
+    { key: 'date', label: '일자', w: 100, ph: '2026-11-10' },
+    { key: 'level', label: '중증도', w: 90, type: 'select', opts: ['', '1군', '2군', '3군', '4군'] },
+    { key: 'risk', label: '고위험', w: 130, type: 'select', opts: ['', '낙상', '욕창', '감염 격리', '억제대', '자살·자해', '섬망', '출혈', '기타'] },
+    { key: 'by', label: '평가자', w: 80 },
+    { key: 'note', label: '비고', w: 240 },
+  ],
+  docs: [
+    { key: 'name', label: '서식지', w: 200, type: 'pick', list: 'dl-doc' },
+    { key: 'date', label: '일자', w: 100 },
+    { key: 'st', label: '상태', w: 100, type: 'select', opts: ['', '출력', '설명 완료', '서명 받음', '스캔 등록'] },
+    { key: 'by', label: '담당', w: 80 },
+    { key: 'note', label: '비고', w: 200 },
   ],
   bst: [
     { key: 'time', label: '일시', w: 130, ph: '11-10 07:30' },
@@ -346,7 +425,7 @@ const NURSE: { key: string; label: string }[] = [
   { key: 'pain', label: '통 증' },
 ];
 
-const ORDER_STATUS = ['', '집계완료', '접수', '추가', '완료'];
+const ORDER_STATUS = ['', '집계완료', '접수', '추가', '완료', '취소'];
 const ROUTES = ['', 'PO', 'IV', 'IM', 'SC', 'SL', 'Inh', 'CIV', 'Top'];
 
 const nowStamp = () => {
@@ -650,6 +729,12 @@ export default function EhrEditor({
         const t = new Date(); const p = (x: number) => String(x).padStart(2, '0');
         n.mod = `${p(t.getMonth() + 1)}-${p(t.getDate())} ${p(t.getHours())}:${p(t.getMinutes())}`;
       }
+      if (lk === 'dxcode') {
+        if (k === 'code') { const nm = dxName(v); if (nm) n.name = nm; }
+        if (k === 'name') { const cd = dxCode(v); if (cd) n.code = cd; }
+      }
+      if (lk === 'mat' && k === 'item') { const u = MATS.find(m => m[0] === v)?.[1]; if (u) { n.unit = u; if (!n.qty) n.qty = '1'; } }
+      if (lk === 'nact' && k === 'act') { const m = ACTS.find(a => a[0] === v)?.[1]; if (m && !n.mat) n.mat = m; if (!n.st) n.st = '수행'; }
       return n;
     }) }));
   const addRow = (lk: AnyList, init: Row = {}) => setData(d => ({ ...d, [lk]: [...d[lk], { ...init }] }));
@@ -756,6 +841,10 @@ export default function EhrEditor({
                           <span className="ro">{v}</span>
                         ) : c.type === 'area' ? (
                           <textarea rows={['notes', 'progress', 'nutrition', 'imaging'].includes(lk) ? 5 : 3} value={v} onChange={e => setCell(lk, i, c.key, e.target.value)} />
+                        ) : c.type === 'pick' ? (
+                          <input list={c.list} value={v} placeholder={c.ph} onChange={e => setCell(lk, i, c.key, e.target.value)} />
+                        ) : c.type === 'pick' ? (
+                          <input list={c.list} value={v} placeholder={c.ph} onChange={e => setCell(lk, i, c.key, e.target.value)} />
                         ) : c.type === 'select' ? (
                           <select value={v} onChange={e => setCell(lk, i, c.key, e.target.value)}>
                             {(c.opts!.includes(v) ? c.opts! : [...c.opts!, v]).map(o => <option key={o} value={o}>{o}</option>)}
@@ -1099,6 +1188,13 @@ export default function EhrEditor({
               </>
             )}
 
+            <datalist id="dl-dxc">{DX.map(d => <option key={d[0]} value={d[0]}>{d[1]}</option>)}</datalist>
+            <datalist id="dl-dxn">{DX.map(d => <option key={d[0]} value={d[1]}>{d[0]}</option>)}</datalist>
+            <datalist id="dl-act">{ACTS.map(a => <option key={a[0]} value={a[0]} />)}</datalist>
+            <datalist id="dl-mat">{MATS.map(m => <option key={m[0]} value={m[0]}>{m[1]}</option>)}</datalist>
+            <datalist id="dl-diet">{DIETS.map(d => <option key={d} value={d} />)}</datalist>
+            <datalist id="dl-doc">{FORMS2.map(d => <option key={d} value={d} />)}</datalist>
+            {tab === 'rx' && <RxPanel data={data} author={userName || ''} onChange={orders => setData(d => ({ ...d, orders }))} />}
             {tab === 'bst' && (
               <>
                 <h4 className="ph">혈당·인슐린</h4>
@@ -1115,7 +1211,7 @@ export default function EhrEditor({
             {tab === 'mar' && <MarPanel data={data} author={userName || ''} onChange={(orders, mar) => setData(d => ({ ...d, orders, mar }))} />}
             {tab === 'memos' && <MemoPanel rows={data.memos} author={userName || ''} onChange={rs => setData(d => ({ ...d, memos: rs }))} />}
             {tab === 'labs' && <LabSets onApply={rs => setData(d => ({ ...d, labs: [...d.labs, ...rs] }))} />}
-            {!isForm(tab) && tab !== 'notes' && tab !== 'care' && tab !== 'orders' && tab !== 'admission' && tab !== 'discharge' && tab !== 'nurseinfo' && tab !== 'vitals' && tab !== 'bst' && tab !== 'memos' && tab !== 'mar' && tab !== 'consent' && (
+            {!isForm(tab) && tab !== 'notes' && tab !== 'care' && tab !== 'orders' && tab !== 'admission' && tab !== 'discharge' && tab !== 'nurseinfo' && tab !== 'vitals' && tab !== 'bst' && tab !== 'rx' && tab !== 'memos' && tab !== 'mar' && tab !== 'consent' && (
               <>
                 {tab === 'progress' && (
                   <div className="adds" style={{ marginBottom: 6 }}>

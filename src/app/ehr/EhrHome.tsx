@@ -6,6 +6,7 @@ import { SAMPLES, WARDS, bedLabel, roomNo } from './samples';
 import { emptyChart, migrate, shiftChart, type Sample } from './types';
 import { newPtNo } from './directory';
 import AiMark from '@/components/AiMark';
+import { printNameTag } from './print';
 import WardBulk, { type BulkPt } from './WardBulk';
 
 type Item = {
@@ -61,6 +62,7 @@ export default function EhrHome({ cases, initialView, ai, aiLeft, extra }: { cas
   const [busy, setBusy] = useState<string | null>(null);
   const [err, setErr] = useState('');
   const [bulk, setBulk] = useState(false);
+  const [ctx, setCtx] = useState<{ x: number; y: number; saved?: Item; p: P } | null>(null);
   const view = VIEWS[vi];
   const wardName = view.kind === 'op' ? '외래' : view.kind === 'er' ? '응급실' : view.name;
   const active = cases.filter(c => !c.discharged);
@@ -77,7 +79,7 @@ export default function EhrHome({ cases, initialView, ai, aiLeft, extra }: { cas
       const res = await fetch('/api/ehr', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(make()) });
       const j = await res.json().catch(() => ({}));
       if (!res.ok || !j.id) throw new Error();
-      router.push(`/ehr/${j.id}?edit=1`);
+      router.push(`/ehr/${j.id}${make().title === '새 환자' ? '?edit=1' : ''}`);
     } catch {
       setErr('열 수 없어요');
       setBusy(null);
@@ -147,7 +149,7 @@ export default function EhrHome({ cases, initialView, ai, aiLeft, extra }: { cas
       const res = await fetch('/api/ehr/generate', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ kind: view.kind, ward: wardName, bed: free?.label }) });
       const j = await res.json().catch(() => ({}));
       if (!res.ok || !j.id) { setErr(res.status === 429 ? '오늘 횟수를 다 썼어요' : '만들지 못했어요'); setBusy(null); return; }
-      router.push(`/ehr/${j.id}?edit=1`);
+      router.push(`/ehr/${j.id}`);
     } catch {
       setErr('만들지 못했어요');
       setBusy(null);
@@ -227,7 +229,7 @@ export default function EhrHome({ cases, initialView, ai, aiLeft, extra }: { cas
                 }
                 const nm = busy === e.key ? '…' : <>{p.name}{e.saved?.submitted && <span className={`sbd ${e.saved.reviewed ? 'rv' : ''}`}>{e.saved.reviewed ? '확인' : '제출'}</span>}</>;
                 return (
-                  <tr key={e.key} onClick={() => open(e.key, e.saved, e.make)}>
+                  <tr key={e.key} onClick={() => open(e.key, e.saved, e.make)} onContextMenu={ev => { ev.preventDefault(); setCtx({ x: Math.min(ev.clientX, window.innerWidth - 190), y: Math.min(ev.clientY, window.innerHeight - 220), saved: e.saved, p }); }}>
                     {view.kind === 'ward' && (
                       <>
                         {roomCell}
@@ -265,6 +267,20 @@ export default function EhrHome({ cases, initialView, ai, aiLeft, extra }: { cas
           </table>
         </div>
       </div>
+      {ctx && (
+        <>
+          <div className="ctxbg" onClick={() => setCtx(null)} onContextMenu={ev => { ev.preventDefault(); setCtx(null); }} />
+          <div className="ctx" style={{ left: ctx.x, top: ctx.y }}>
+            <b>{ctx.p.name}</b>
+            {ctx.saved && <button type="button" onClick={() => router.push(`/ehr/${ctx.saved!.id}`)}>차트 보기</button>}
+            {ctx.saved && <button type="button" onClick={() => router.push(`/ehr/${ctx.saved!.id}?edit=1`)}>기록 입력</button>}
+            <button type="button" onClick={() => { printNameTag(ctx.p as Record<string, string | null | undefined>); setCtx(null); }}>네임지 출력</button>
+            {ctx.saved && (['투약', '주사', '수액'] as const).map(k => (
+              <button key={k} type="button" onClick={() => router.push(`/ehr/${ctx.saved!.id}?print=${encodeURIComponent(k)}`)}>{k} 티켓 출력</button>
+            ))}
+          </div>
+        </>
+      )}
       {err && <p className="err">{err}</p>}
 
       <style jsx global>{`
@@ -318,6 +334,11 @@ export default function EhrHome({ cases, initialView, ai, aiLeft, extra }: { cas
           .ehrWard .top nav .mi > button { padding: 10px 13px; }
           .ehrWard .top .aipt { margin-top: 6px; margin-bottom: 6px; }
         }
+        .ehrWard .ctxbg { position: fixed; inset: 0; z-index: 50; }
+        .ehrWard .ctx { position: fixed; z-index: 51; width: 180px; background: #fff; border: 1px solid #94a3b8; box-shadow: 0 6px 16px rgba(15,23,42,0.22); display: flex; flex-direction: column; }
+        .ehrWard .ctx b { padding: 8px 12px; font-size: 12.5px; color: #0e4a84; border-bottom: 1px solid #e1e5ea; }
+        .ehrWard .ctx button { border: 0; background: #fff; text-align: left; padding: 9px 12px; font-size: 13px; font-family: inherit; color: #1f2937; cursor: pointer; }
+        .ehrWard .ctx button:hover { background: #eef6ff; }
         .ehrWard .err { color: #b91c1c; font-size: 0.8125rem; margin-top: 10px; }
       `}</style>
     </div>

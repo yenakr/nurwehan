@@ -8,6 +8,16 @@ export type ChartData = {
   io: Row[];
   bst: Row[]; // 혈당·인슐린
   diet: Row[]; // 식이
+  dxcode: Row[]; // 상병코드
+  nact: Row[]; // 간호행위
+  mat: Row[]; // 처치재료
+  dietord: Row[]; // 식이처방
+  ret: Row[]; // 약·주사 반납
+  dcmed: Row[]; // 퇴원약
+  dcnote: Row[]; // 퇴원예고
+  sched: Row[]; // 당일 일정
+  acu: Row[]; // 중증도·고위험
+  docs: Row[]; // 간호 서식지
   labs: Row[]; // 검사결과
   notes: Row[]; // 간호기록
   care: Row[]; // 간호과정
@@ -35,7 +45,7 @@ export type ChartData = {
   forms: Record<string, Row[]>; // 평가도구(낙상·욕창·통증·수술 전 확인)
 };
 
-const LISTS = ['progress', 'orders', 'vitals', 'io', 'bst', 'diet', 'labs', 'notes', 'care', 'transfusion', 'nutrition', 'consult', 'consent', 'surgery', 'appts', 'handover', 'risk', 'history', 'imaging', 'memos', 'mar', 'lines', 'iv', 'wounds', 'edu', 'specimen', 'transport', 'moves', 'cpr', 'anes'] as const;
+const LISTS = ['progress', 'orders', 'vitals', 'io', 'bst', 'diet', 'dxcode', 'nact', 'mat', 'dietord', 'ret', 'dcmed', 'dcnote', 'sched', 'acu', 'docs', 'labs', 'notes', 'care', 'transfusion', 'nutrition', 'consult', 'consent', 'surgery', 'appts', 'handover', 'risk', 'history', 'imaging', 'memos', 'mar', 'lines', 'iv', 'wounds', 'edu', 'specimen', 'transport', 'moves', 'cpr', 'anes'] as const;
 
 export const emptyChart = (): ChartData => {
   const d: Record<string, unknown> = { info: {}, forms: {} };

@@ -1,6 +1,9 @@
 'use client';
 
 import Link from 'next/link';
+import { useEffect } from 'react';
+import { useSearchParams } from 'next/navigation';
+import { printNameTag, printTickets, type TicketKind } from '../print';
 import type { ChartData, Row } from '../types';
 import { COLS } from './EhrEditor';
 import { IoTotals } from './EhrExtras';
@@ -15,6 +18,16 @@ const SECTIONS: { key: Key; label: string; rev?: boolean }[] = [
   { key: 'notes', label: '간호기록', rev: true },
   { key: 'care', label: '간호과정' },
   { key: 'diet', label: '식이' },
+  { key: 'dxcode', label: '상병코드' },
+  { key: 'nact', label: '간호행위' },
+  { key: 'mat', label: '처치재료' },
+  { key: 'dietord', label: '식이처방' },
+  { key: 'ret', label: '약·주사 반납' },
+  { key: 'acu', label: '중증도·고위험' },
+  { key: 'sched', label: '당일 일정' },
+  { key: 'dcnote', label: '퇴원예고' },
+  { key: 'dcmed', label: '퇴원약' },
+  { key: 'docs', label: '간호 서식지' },
   { key: 'labs', label: '검사결과' },
   { key: 'progress', label: '경과기록', rev: true },
   { key: 'lines', label: '튜브·라인' },
@@ -47,6 +60,11 @@ function Block({ label, rows, k, rev, extra }: { label: string; rows: Row[]; k: 
 
 export default function EhrView({ id, title, data }: { id: string; title: string; data: ChartData }) {
   const i = data.info;
+  const q = useSearchParams().get('print');
+  useEffect(() => {
+    if (q === '투약' || q === '주사' || q === '수액') printTickets(data, q as TicketKind);
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  const main = data.dxcode.find(r => r.kind === '주상병' && r.name);
   const allergy = !!i.allergy && !/^(없음|무|none|-)$/i.test(i.allergy.trim());
   const shown = SECTIONS.filter(s => (data[s.key as keyof ChartData] as Row[] | undefined)?.length);
   return (
@@ -55,10 +73,12 @@ export default function EhrView({ id, title, data }: { id: string; title: string
         <div className="evp">
           <b>{i.name || title}</b>
           <span>{[i.ageSex, i.ward && `${i.ward} ${i.bed || ''}`.trim(), i.dept].filter(Boolean).join(' · ')}</span>
-          {i.dx && <span className="dx">{i.dx}</span>}
+          {(main || i.dx) && <span className="dx">{main ? `${main.code ? `[${main.code}] ` : ''}${main.name}` : i.dx}</span>}
         </div>
         {allergy && <span className="al">알러지 {i.allergy}</span>}
         <div className="evb">
+          <button type="button" className="g" onClick={() => printNameTag(i)}>네임지</button>
+          {(['투약', '주사', '수액'] as const).map(k => <button key={k} type="button" className="g" onClick={() => printTickets(data, k)}>{k} 티켓</button>)}
           <Link href="/ehr" className="g">병동뷰</Link>
           <Link href={`/ehr/${id}?edit=1`} className="p">기록 입력</Link>
         </div>
@@ -78,6 +98,8 @@ export default function EhrView({ id, title, data }: { id: string; title: string
         .al{font-size:.75rem;font-weight:700;padding:3px 9px;border-radius:999px;background:rgba(239,68,68,.14);color:#dc2626}
         .evb{display:flex;gap:6px}
         .evb a{padding:6px 12px;font-size:.8125rem;font-weight:600;border-radius:8px;border:1px solid var(--primary);text-decoration:none}
+        .evb button{padding:6px 12px;font-size:.8125rem;font-weight:600;border-radius:8px;border:1px solid var(--primary);background:transparent;cursor:pointer;font-family:inherit}
+        .evb{flex-wrap:wrap}
         .evb .p{background:var(--primary);color:#fff}
         .evb .g{color:var(--primary)}
         .vb{background:var(--background);border:1px solid var(--border);border-radius:12px;padding:12px 14px}
