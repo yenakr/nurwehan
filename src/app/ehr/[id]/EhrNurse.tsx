@@ -176,7 +176,7 @@ export default function EhrNurse({
   const all = [...g.base, ...g.med, ...g.prn, ...g.lab];
 
   return (
-    <div className="nu">
+    <div className={`nu ${win ? 'hasw' : ''}`}>
       <div className="nmenu">
         <b>홈</b>
         {MENUS.map(m => <button key={m.id} type="button" className={win === m.id ? 'on' : ''} onClick={() => onOpen(m.id)}>{m.label}</button>)}
@@ -371,7 +371,8 @@ export default function EhrNurse({
         .nd3 { display: flex; gap: 4px; margin-bottom: 6px; }
         .nd3 select, .nd3 input { min-width: 0; border: 1px solid var(--border); border-radius: 6px; padding: 6px; font: inherit; background: var(--background); color: var(--text); }
         .nd3 select:first-child { flex: 1.4; } .nd3 input { flex: 1; } .nd3 select:last-child { width: 52px; }
-        .nlist { width: 100%; border-collapse: collapse; font-size: 12.5px; }
+        .nlist { width: 100%; min-width: 0; table-layout: fixed; border-collapse: collapse; font-size: 12.5px; }
+        .nlist td, .nlist th { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .nlist th { text-align: left; color: var(--sub-text); font-weight: 600; padding: 4px; border-bottom: 1px solid var(--border); }
         .nlist td { padding: 5px 4px; border-bottom: 1px solid var(--border); }
         .nlist tbody tr { cursor: pointer; }
@@ -408,7 +409,8 @@ export default function EhrNurse({
         .nfa button { border: 1px solid var(--border); background: transparent; color: inherit; border-radius: 8px; padding: 8px 18px; font: inherit; font-weight: 600; cursor: pointer; }
         .nfa .go { background: var(--primary); border-color: var(--primary); color: #fff; }
         .nfa .go:disabled { opacity: .4; }
-        .nwin { position: fixed; z-index: 55; top: 0; right: 0; bottom: 0; width: min(520px, 100%); background: var(--background, #fff); color: var(--text); border-left: 1px solid #94a3b8; box-shadow: -6px 0 24px rgba(0,0,0,.22); display: flex; flex-direction: column; }
+        @media (min-width: 1200px) { .nu.hasw { margin-right: 440px; } }
+        .nwin { position: fixed; z-index: 55; top: 0; right: 0; bottom: 0; width: min(440px, 100%); background: var(--background, #fff); color: var(--text); border-left: 1px solid #94a3b8; box-shadow: -6px 0 24px rgba(0,0,0,.22); display: flex; flex-direction: column; }
         .nwb { padding: 12px 14px 24px; overflow: auto; flex: 1; }
         .ndq { width: 100%; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; padding: 8px; font: inherit; margin-bottom: 8px; background: var(--background); color: var(--text); }
         @media (max-width: 980px) {
