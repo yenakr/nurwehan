@@ -107,7 +107,7 @@ export default function MarPanel({ data, author, onChange }: { data: ChartData; 
               const ready = need.every(n => ck[n]) && wbOk && (!high || dbl.trim().length > 0);
               return (
                 <div key={key} className="fv">
-                  <label>환자: 팔찌 등록번호 입력 ({data.info.name || '-'})<input className="wbi" value={wb} onChange={e => setWb(e.target.value)} placeholder="바코드 / 등록번호" aria-label="팔찌 등록번호" />{wb && !wbOk && <span className="wn">불일치</span>}{wbOk && <span>일치</span>}</label>
+                  <label>환자: 팔찌 환자번호 입력 ({data.info.name || '-'})<input className="wbi" value={wb} onChange={e => setWb(e.target.value)} placeholder="바코드 / 환자번호" aria-label="팔찌 환자번호" />{wb && !wbOk && <span className="wn">불일치</span>}{wbOk && <span>일치</span>}</label>
                   <label><input type="checkbox" checked={!!ck.r1} onChange={e => setCk(c => ({ ...c, r1: e.target.checked }))} />약물: {name}</label>
                   <label><input type="checkbox" checked={!!ck.r2} onChange={e => setCk(c => ({ ...c, r2: e.target.checked }))} />용량: {med.r.dose}{med.r.unit}</label>
                   <label><input type="checkbox" checked={!!ck.r3} onChange={e => setCk(c => ({ ...c, r3: e.target.checked }))} />경로: {med.r.route || '-'}</label>

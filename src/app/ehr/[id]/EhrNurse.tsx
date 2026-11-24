@@ -1,11 +1,12 @@
 'use client';
 
+import { SAMPLES } from '../samples';
 import { useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
 import { useRouter } from 'next/navigation';
 import type { ChartData, Row } from '../types';
 import WardBulk, { type BulkPt } from '../WardBulk';
 
-export type Roster = { id: string; ward: string | null; bed: string | null; name: string | null; ageSex: string | null; ptNo: string | null; doctor: string | null };
+export type Roster = { id: string; ward: string | null; bed: string | null; name: string | null; ageSex: string | null; ptNo: string | null; doctor: string | null; admit?: string | null; disDate?: string | null };
 
 const MENUS: { id: string; label: string }[] = [
   { id: 'notes', label: '간호기록' },
@@ -20,6 +21,7 @@ const MENUS: { id: string; label: string }[] = [
   { id: 'consult', label: '협진' },
   { id: 'bulk', label: '활력징후 일괄' },
   { id: 'handover', label: '인수인계지' },
+  { id: 'adm', label: '입퇴원 예정' },
   { id: 'dir', label: '원내번호조회' },
 ];
 
@@ -126,6 +128,23 @@ export default function EhrNurse({
     const t = new Date(y, m - 1, d0 + n);
     setDate(`${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`);
   };
+  const [adate, setAdate] = useState(date);
+  const shiftA = (n: number) => {
+    const [y, m, d0] = adate.split('-').map(Number);
+    if (!y) return;
+    const t = new Date(y, m - 1, d0 + n);
+    setAdate(`${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`);
+  };
+  const admRows = (adm: boolean) => {
+    const rows: Roster[] = [...roster];
+    const have = new Set(roster.map(r => r.ptNo));
+    SAMPLES.forEach(sp => {
+      const x = sp.data.info;
+      if (!x.ward || x.ward === '외래' || x.ward === '응급실' || have.has(x.ptNo || '')) return;
+      rows.push({ id: '', ward: x.ward, bed: x.bed || '', name: x.name || '', ageSex: x.ageSex || '', ptNo: x.ptNo || '', doctor: x.doctor || '', admit: x.admit, disDate: x.disDate });
+    });
+    return rows.filter(r => (adm ? (r.admit || '') : (r.disDate || '')).slice(0, 10) === adate);
+  };
   const dd = (v?: string) => (v || '').slice(0, 10);
   const dayN = (from?: string) => {
     const f = dd(from);
@@ -225,7 +244,7 @@ export default function EhrNurse({
       <div className="ns-ngrid">
         <aside className="ns-nl">
           <div className="ns-nsr">
-            <input value={q} onChange={e => { setQ(e.target.value); setQMsg(''); }} onKeyDown={e => e.key === 'Enter' && find()} aria-label="환자등록번호 검색" />
+            <input value={q} onChange={e => { setQ(e.target.value); setQMsg(''); }} onKeyDown={e => e.key === 'Enter' && find()} aria-label="환자환자번호 검색" />
             <button type="button" onClick={find}>검색</button>
           </div>
           {qMsg && <p className="ns-nerr">{qMsg}</p>}
@@ -275,7 +294,7 @@ export default function EhrNurse({
               </select>
             </div>
             <table className="ns-nlist">
-              <thead><tr><th>병실</th><th>환자명</th><th>등록번호</th><th>주치의</th></tr></thead>
+              <thead><tr><th>병실</th><th>환자명</th><th>환자번호</th><th>주치의</th></tr></thead>
               <tbody>
                 {list.map(r => (
                   <tr key={r.id} className={r.name === i.name && r.ptNo === i.ptNo ? 'ns-on' : ''} onClick={() => router.push(`/ehr/${r.id}`)}>
@@ -393,7 +412,27 @@ export default function EhrNurse({
             <button type="button" aria-label="닫기" onClick={onClose}>&times;</button>
           </header>
           <div className="ns-nwb">
-            {win === 'dir' ? (
+            {win === 'adm' ? (
+              <>
+                <div className="ns-nhd">
+                  <button type="button" className="ns-arw" onClick={() => shiftA(-1)} aria-label="전날">&lt;</button>
+                  <input type="date" value={adate} onChange={e => setAdate(e.target.value)} aria-label="조회일" />
+                  <button type="button" className="ns-arw" onClick={() => shiftA(1)} aria-label="다음날">&gt;</button>
+                </div>
+                {([['입원', admRows(true)], ['퇴원예정', admRows(false)]] as const).map(([t, rows]) => (
+                  <div key={t}>
+                    <h4>{t} ({rows.length})</h4>
+                    <table className="ns-nlist">
+                      <thead><tr><th>병동</th><th>병상</th><th>환자명</th><th>환자번호</th><th>주치의</th></tr></thead>
+                      <tbody>
+                        {rows.map(r => <tr key={r.ptNo + t}><td>{r.ward}</td><td>{r.bed}</td><td>{r.name}</td><td>{r.ptNo}</td><td>{r.doctor}</td></tr>)}
+                        {rows.length === 0 && <tr><td colSpan={5} className="ns-nnone">없음</td></tr>}
+                      </tbody>
+                    </table>
+                  </div>
+                ))}
+              </>
+            ) : win === 'dir' ? (
               <>
                 <input className="ns-ndq" value={dq} onChange={e => setDq(e.target.value)} aria-label="부서 검색" />
                 <table className="ns-nlist">

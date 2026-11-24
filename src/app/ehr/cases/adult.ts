@@ -7,7 +7,7 @@ export const adult: Sample = {
   title: '성인 · 심부전 악화',
   data: {
     info: {
-      sampleKey: 'adult', bed: '601-1', ptNo: '00000001', name: '김순자', ageSex: '72/F', ward: '61병동', dept: 'CV', doctor: '이순환', admit: dt(-4), orderDate: dt(0),
+      sampleKey: 'adult', bed: '601-1', ptNo: '0001', name: '김순자', ageSex: '72/F', ward: '61병동', dept: 'CV', doctor: '이순환', admit: dt(-4), orderDate: dt(0),
       allergy: '페니실린 (발진)', dx: 'Acute decompensated heart failure (HFrEF, EF 32%)', height: '155', weight: '61.5', iso: '없음', npo: '0', surg: '0',
       cc: '호흡곤란, 하지 부종', onset: dt(-7),
       hpi: '3일 전부터 계단 오를 때 숨이 차고 밤에 기침과 함께 누우면 숨이 차 베개 3개를 사용함. 체중이 3일간 2.5kg 증가하고 양 발목이 부어 외래 경유하여 입원함.',

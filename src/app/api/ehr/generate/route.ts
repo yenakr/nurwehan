@@ -54,7 +54,7 @@ export async function POST(req: Request) {
   const doc = DOCTORS.find(d => d.dept === dept)?.name || '';
   const d = emptyChart();
   d.info = {
-    ward: wardName, ...(kind === 'ward' ? { bed } : {}), ptNo: String(Date.now() % 1e8).padStart(8, '0'), admit: ymd, dept, doctor: doc,
+    ward: wardName, ...(kind === 'ward' ? { bed } : {}), ptNo: String(1000 + (Date.now() % 9000)), admit: ymd, dept, doctor: doc,
     name: s(j.name, 20), ageSex: s(j.ageSex, 10), allergy: s(j.allergy, 100) || '무', dx: s(j.dx, 200), cc: s(j.cc, 200), onset: s(j.onset, 20),
     hpi: s(j.hpi, 900), pmh: s(j.pmh, 400), pe: s(j.pe, 600), plan: s(j.plan, 500),
     ...(kind !== 'ward' ? { visitTime: hm, vstatus: kind === 'er' ? '대기' : '접수' } : {}),

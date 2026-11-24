@@ -43,4 +43,4 @@ export function bedOptions(ward: string): string[] {
   return out;
 }
 
-export const newPtNo = () => String(Math.floor(10000000 + Math.random() * 89999999));
+export const newPtNo = () => String(Math.floor(1000 + Math.random() * 9000));

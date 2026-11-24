@@ -18,7 +18,7 @@ const lbl = (l: Level) => LEVELS.find(x => x.k === l)?.label ?? '';
 const rank: Record<Level, number> = { O: 1, P: 2, D: 3 };
 const newId = () => Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
 // 날짜 오름차순 (같은 날은 입력 순서 유지)
-const PNOTE = '환자를 알아볼 수 있는 정보(이름, 등록번호 등)는 쓰지 마세요.';
+const PNOTE = '환자를 알아볼 수 있는 정보(이름, 환자번호 등)는 쓰지 마세요.';
 
 const Warn = () => {
   const [open, setOpen] = useState(false);
