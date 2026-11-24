@@ -131,7 +131,7 @@ function todoOf(g: Groups, duty: string, isToday: boolean): Todo[] {
 }
 
 export default function EhrNurse({
-  data, setData, userName, roster, win, onOpen, onClose, drawer, onChart, onLabel,
+  data, setData, userName, roster, win, onOpen, onClose, drawer, tools, onChart, onLabel,
 }: {
   data: ChartData;
   setData: Dispatch<SetStateAction<ChartData>>;
@@ -141,6 +141,7 @@ export default function EhrNurse({
   onOpen: (id: string) => void;
   onClose: () => void;
   drawer: ReactNode;
+  tools?: ReactNode;
   onChart: () => void;
   onLabel: () => void;
 }) {
@@ -310,7 +311,7 @@ export default function EhrNurse({
       <div className="ns-nmenu">
         <b>홈</b>
         {MENUS.map(m => <button key={m.id} type="button" className={win === m.id ? 'ns-on' : ''} onClick={() => (m.id === 'handover' ? router.push(`/ehr/handover?ward=${encodeURIComponent(ward)}`) : onOpen(m.id))}>{m.label}</button>)}
-        <button type="button" className="ns-ch" onClick={onChart}>전체 차트</button>
+        <div className="ns-tools">{tools}</div>
       </div>
 
       <div className="ns-ngrid">
@@ -593,6 +594,11 @@ export default function EhrNurse({
         .ns-todo tbody tr { cursor: default; }
         .ns-hold { background: rgba(245,158,11,.18); color: #b9770e; }
         .ns-arw.ns-sel { background: var(--primary); color: #fff; }
+        .ns-nmenu .ns-tools { margin-left: auto; display: flex; align-items: center; gap: 8px; padding: 4px 0; }
+        .ns-tools .back { border: 1px solid rgba(255,255,255,.35); background: transparent; color: #fff; border-radius: 4px; padding: 5px 10px; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+        .ns-tools .st { color: #cbd5e1; font-size: 12px; }
+        .ns-tools .subm { border-radius: 4px; padding: 5px 12px; }
+        .ns-tools .mbtn { color: #fff; }
         .ns-nu { border: 1px solid #94a3b8; background: var(--background, #fff); color: var(--text); border-radius: 6px; overflow: hidden; font-size: 13px; position: relative; }
         .ns-nmenu { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 0 8px; background: linear-gradient(#233a5c, #17283f); }
         .ns-nmenu b { color: #e8c97a; padding: 0 12px 0 6px; }

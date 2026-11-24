@@ -1126,17 +1126,8 @@ export default function EhrEditor({
   const setDraftVal = (k: string, v: string) => setDraft(d => { const n = { ...d, [k]: v }; applyRules(tab, n, k, v); return n; });
   const saveDraft = () => { addRow(tab as AnyList, draft); setInp(false); };
 
-  return (
-    <div className="ehr">
-      <div className="bar">
-        <Link href="/" className="home" aria-label="홈">NUR위한</Link>
-        <span className="ttl" />
-        <span className="who">{userName}</span>
-        <LogoutButton />
-      </div>
-
-      <p className="pvn">실제 환자 정보(이름, 환자번호, 생년월일, 병실 등)는 쓰지 마세요. 가상 정보로 바꿔서 연습하세요.</p>
-      <div className="etool">
+  const tools = (
+    <>
         <button type="button" className="back" onClick={() => router.push(`/ehr?view=${encodeURIComponent(info.ward === '응급실' ? '응급' : info.ward || '')}`)}>&larr; {info.ward === '응급실' ? '응급' : info.ward || '목록'}</button>
           <button type="button" className="back" onClick={() => { setWin(null); setScreen(screen === 'main' ? 'chart' : 'main'); }}>{screen === 'main' ? '전체 차트' : '간호 화면'}</button>
           <span className={`st ${status}`}>{status === 'saved' ? '저장됨' : status === 'saving' ? '저장 중…' : '저장 실패'}</span>
@@ -1171,7 +1162,20 @@ export default function EhrEditor({
               </>
             )}
           </div>
+    </>
+  );
+
+  return (
+    <div className="ehr">
+      <div className="bar">
+        <Link href="/" className="home" aria-label="홈">NUR위한</Link>
+        <span className="ttl" />
+        <span className="who">{userName}</span>
+        <LogoutButton />
       </div>
+
+      <p className="pvn">실제 환자 정보(이름, 환자번호, 생년월일, 병실 등)는 쓰지 마세요. 가상 정보로 바꿔서 연습하세요.</p>
+      {screen === 'chart' && <div className="etool">{tools}</div>}
       {locked && <div className="lkb">{info.reviewed ? '교수님이 확인했어요' : '제출했어요. 교수님 확인 전에는 제출 취소로 고칠 수 있어요'}</div>}
       {info.comment && <div className="cmt"><b>교수님 의견</b><p>{info.comment}</p></div>}
       {fb && <div className="cmt ai"><b style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><AiMark size={14} />AI 피드백</b><button type="button" className="cx" aria-label="닫기" onClick={() => setFb('')}>&times;</button><p>{fb}</p></div>}
@@ -1187,6 +1191,7 @@ export default function EhrEditor({
           onOpen={id => { if (id !== 'dir') setTab(id as TabId); setWin(win === id ? null : id); }}
           onClose={() => setWin(null)}
           drawer={tabBody}
+          tools={tools}
           onChart={() => setScreen('chart')}
           onLabel={() => printTickets(data, '전체')}
         />
@@ -1345,7 +1350,10 @@ export default function EhrEditor({
       <style>{FORM_CSS}</style>
       <style jsx global>{`
         .ehr { --nv1: #1c2f4b; --nv2: #13233a; --tl: #cfe5e6; --ln: #cfd5dc; }
-        .ehr .etool { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 8px; padding: 6px 8px; border: 1px solid var(--border); border-radius: 8px; background: var(--muted-background); }
+        .ehr .etool { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 8px; padding: 6px 10px; border-radius: 6px; background: linear-gradient(#233a5c, #17283f); }
+        .ehr .etool .back { border-color: rgba(255,255,255,.35); color: #fff; }
+        .ehr .etool .st { color: #cbd5e1; }
+        .ehr .etool .mbtn { color: #fff; }
         .ehr .etool .st { margin-left: auto; }
         .ehr .bar { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
         .ehr .back { border: 1px solid var(--border); background: transparent; color: var(--text); border-radius: 999px; padding: 5px 12px; font: inherit; font-size: 0.8125rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
