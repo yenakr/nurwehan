@@ -5,6 +5,7 @@ import { MATS, matsFor } from '../codes';
 import NurseForm from './NurseForms';
 import LabResults from './LabResults';
 import OrderCompare from './OrderCompare';
+import NursingRecord from './NursingRecord';
 import { PatInfo, DxHist, SurgHist, VaccHist } from './PatientViews';
 import { StaffWin, DocReqWin, RichMemo } from './NurseExtras';
 import { DEPTS, buildDirectory } from '../directory';
@@ -904,6 +905,8 @@ export default function EhrNurse({
                   </table>
                 )}
               </>
+            ) : win === 'notes' ? (
+              <NursingRecord data={data} setData={setData} userName={userName} duty={duty} today={date} />
             ) : win === 'patinfo' ? (
               <PatInfo data={data} />
             ) : win === 'dxhist' ? (
