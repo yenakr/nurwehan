@@ -312,6 +312,8 @@ export default function EhrNurse({
   const [mOpen, setMOpen] = useState(0); // 0 닫힘, 1 메뉴, 2 메뉴 > 업무
   const [mq, setMq] = useState('');
   const [figOpen, setFigOpen] = useState(true);
+  const [ddPos, setDdPos] = useState<{ left: number; top: number } | null>(null);
+  const place = (el: HTMLElement) => { const r = el.getBoundingClientRect(); setDdPos({ left: Math.max(4, Math.min(r.left, window.innerWidth - 190)), top: r.bottom + 2 }); };
   const [tabs, setTabs] = useState<string[]>([]);
   const [recent, setRecent] = useState<string[]>([]);
   const openMenu = (id: string) => {
@@ -651,37 +653,33 @@ export default function EhrNurse({
         <button type="button" className={mOpen ? 'ns-on' : ''} onClick={() => { setMOpen(mOpen ? 0 : 1); setCat(''); setMq(''); }}>메뉴 ▾</button>
         {mOpen >= 1 && <button type="button" className={`ns-wk ${mOpen === 2 ? 'ns-on' : ''}`} onClick={() => setMOpen(mOpen === 2 ? 1 : 2)}>업무</button>}
         {mOpen === 2 && <span className="ns-sepv" />}
-        {mOpen === 2 && CATS.map(c => <button key={c.name} type="button" disabled={c.name === '최근사용' ? recent.length === 0 : c.name === '출력·퇴원' ? false : c.items.length === 0} className={cat === c.name ? 'ns-on' : ''} onClick={() => setCat(cat === c.name ? '' : c.name)}>{c.name}</button>)}
-        {mOpen === 2 && <label className="ns-mq">메뉴찾기<input value={mq} onChange={e => setMq(e.target.value)} /></label>}
+        {mOpen === 2 && CATS.map(c => <button key={c.name} type="button" disabled={c.name === '최근사용' ? recent.length === 0 : c.name === '출력·퇴원' ? false : c.items.length === 0} className={cat === c.name ? 'ns-on' : ''} onClick={e => { place(e.currentTarget); setMq(''); setCat(cat === c.name ? '' : c.name); }}>{c.name}</button>)}
+        {mOpen === 2 && <label className="ns-mq">메뉴찾기<input value={mq} onFocus={e => place(e.currentTarget)} onChange={e => { place(e.currentTarget); setMq(e.target.value); }} /></label>}
       </div>
-      {mOpen === 2 && (
-        <div className="ns-wrk">
-          {mq.trim() && (
-            <div className="ns-nsub">
-              {MENUS.filter(m => m.label.includes(mq.trim())).map(m => <button key={m.id} type="button" onClick={() => { openMenu(m.id); setMq(''); setMOpen(0); }}>{m.label}</button>)}
-              {MENUS.filter(m => m.label.includes(mq.trim())).length === 0 && <span className="ns-nnone">검색 결과가 없어요</span>}
+      {mOpen === 2 && ddPos && (mq.trim() || cat) && (() => {
+        const ms = (ids: string[]) => ids.map(id => MENUS.find(m => m.id === id)).filter((m): m is { id: string; label: string } => !!m);
+        const list: { key: string; label: string; disabled?: boolean; run: () => void }[] = mq.trim()
+          ? MENUS.filter(m => m.label.includes(mq.trim())).map(m => ({ key: m.id, label: m.label, run: () => { openMenu(m.id); setMq(''); setMOpen(0); setCat(''); } }))
+          : cat === '출력·퇴원'
+            ? (actions || []).map(a => ({ key: a.label, label: a.label, disabled: a.disabled, run: () => { a.run(); setMOpen(0); setCat(''); } }))
+            : (cat === '최근사용' ? ms(recent) : ms(CATS.find(c => c.name === cat)?.items || [])).map(m => ({ key: m.id, label: m.label, run: () => { openMenu(m.id); setMOpen(0); setCat(''); } }));
+        return (
+          <>
+            <button type="button" className="ns-ddbk" style={{ top: ddPos.top - 2 }} aria-label="닫기" onClick={() => { setCat(''); setMq(''); }} />
+            <div className="ns-dd" style={{ left: ddPos.left, top: ddPos.top }}>
+              {list.map(x => <button key={x.key} type="button" disabled={x.disabled} onClick={x.run}>{x.label}</button>)}
+              {list.length === 0 && <span className="ns-nnone">검색 결과가 없어요</span>}
             </div>
-          )}
-          {!mq.trim() && cat === '출력·퇴원' && (
-            <div className="ns-nsub">
-              {(actions || []).map(a => <button key={a.label} type="button" disabled={a.disabled} onClick={() => { a.run(); setMOpen(0); setCat(''); }}>{a.label}</button>)}
-            </div>
-          )}
-          {!mq.trim() && cat && cat !== '출력·퇴원' && (
-            <div className="ns-nsub">
-              {(cat === '최근사용' ? recent.map(id => MENUS.find(m => m.id === id)).filter((m): m is { id: string; label: string } => !!m) : (CATS.find(c => c.name === cat)?.items || []).map(id => MENUS.find(m => m.id === id)).filter((m): m is { id: string; label: string } => !!m)).map(m => (
-                <button key={m.id} type="button" onClick={() => { openMenu(m.id); setMOpen(0); setCat(''); }}>{m.label}</button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+          </>
+        );
+      })()}
       {tabs.length > 0 && (
         <div className="ns-ntabs">
           {tabs.map(id => (
             <span key={id} className={win === id ? 'ns-on' : ''}>
-              <button type="button" onClick={() => { if (win !== id) openMenu(id); }}>{id === 'staff' ? '의료진 · Notify' : MENUS.find(m => m.id === id)?.label}</button>
-              <button type="button" aria-label="탭 닫기" onClick={() => closeTab(id)}>&times;</button>
+              <button type="button" title={win === id ? '누르면 최소화' : '누르면 열기'} onClick={() => { if (win === id) onClose(); else openMenu(id); }}>{id === 'staff' ? '의료진 · Notify' : MENUS.find(m => m.id === id)?.label}</button>
+              {win === id && <button type="button" aria-label="최소화" title="최소화" onClick={() => onClose()}>&minus;</button>}
+              <button type="button" aria-label="탭 닫기" title="닫기" onClick={() => closeTab(id)}>&times;</button>
             </span>
           ))}
         </div>
@@ -1204,6 +1202,12 @@ export default function EhrNurse({
         .ns-ntabs { display: flex; gap: 2px; padding: 4px 8px 0; background: #dfe6ee; border-bottom: 1px solid var(--border); }
         .ns-ntabs span { display: inline-flex; align-items: center; background: #f6f8fb; border: 1px solid var(--border); border-bottom: 0; border-radius: 6px 6px 0 0; }
         .ns-ntabs span.ns-on { background: #fff; font-weight: 700; }
+        .ns-ntabs span:not(.ns-on) { opacity: .75; }
+        .ns-ddbk { position: fixed; inset: 0; z-index: 40; border: 0; background: transparent; cursor: default; }
+        .ns-dd { position: fixed; z-index: 41; min-width: 170px; max-height: 70vh; overflow-y: auto; display: flex; flex-direction: column; background: #fff; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.2); padding: 4px; }
+        .ns-dd button { border: 0; background: transparent; text-align: left; font: inherit; font-size: 13.5px; font-weight: 600; padding: 8px 12px; border-radius: 6px; cursor: pointer; color: var(--text); }
+        .ns-dd button:hover:not(:disabled) { background: #eaf0f7; }
+        .ns-dd button:disabled { opacity: .4; cursor: default; }
         .ns-ntabs button { border: 0; background: none; font: inherit; font-size: 12.5px; padding: 5px 8px; cursor: pointer; color: inherit; }
         .ns-nmenu .ns-ch { margin-left: auto; color: #e8c97a; }
         .ns-ngrid { display: grid; grid-template-columns: 240px minmax(0, 1fr) 240px; min-height: 70vh; }
