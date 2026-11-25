@@ -506,77 +506,82 @@ export default function EhrNurse({
 
   const nowMin = Number(hm().slice(0, 2)) * 60 + Number(hm().slice(3));
   const unSlot = async (it: Item) => { if (await confirmDialog('마지막 수행 기록을 취소할까요?')) undo(it); };
-  const sec = (label: string, items: Item[], kind: 'med' | 'base' | 'prn' | 'lab') => (
-    <section className="ns-nsec">
-      <h3>{label}</h3>
-      {items.length === 0 ? <p className="ns-nnone">처방이 없어요.</p> : (
-        <div className="ns-otw">
-          <table className="ns-ot">
-            <thead>
-              <tr>
-                <th>처방명</th>
-                {kind !== 'lab' && <><th>용량</th><th>경로</th><th>횟수</th></>}
-                <th>{kind === 'lab' ? '처리' : '수행 시간'}</th>
-                <th>상태</th>
-              </tr>
-            </thead>
-            <tbody>
-              {(kind === 'med' ? [...items].sort((a, b) => subOf(a.r) - subOf(b.r)) : items).map((it, idx, arr) => {
-                const r = it.r;
-                const subHead = kind === 'med' && (idx === 0 || subOf(arr[idx - 1].r) !== subOf(r)) ? <tr key={`sh${it.i}`} className="ns-subh"><td colSpan={6}>[{SUBS[subOf(r)]}]</td></tr> : null;
-                const stop = r.pri === 'D/C' || r.st === '취소';
-                const done = slots(r);
-                const times = kind === 'prn' || kind === 'lab' ? [] : timesFor(r, kind);
-                const n = Math.max(times.length, done.length);
-                const labDone = r.st === '완료' || r.st === '집계완료';
-                return (
-                  <Fragment key={it.i}>
-                  {subHead}
-                  <tr className={stop ? 'ns-x' : ''}>
-                    <td className="ns-otn">
-                      <b>{r.name}</b>
-                      {r.pri && r.pri !== 'D/C' && <i>{r.pri}</i>}
-                      {(r.opt || '').split(' ').filter(Boolean).map(o => <i key={o} className={o === '비급여' ? 'ns-nhi' : 'ns-alone'}>[{o}]</i>)}
-                      {it.notes.map((m, k) => <em key={k}>{m}</em>)}
-                    </td>
-                    {kind !== 'lab' && <><td>{r.dose ? `${r.dose}${r.unit || ''}` : ''}</td><td>{r.route}</td><td>{r.cnt}</td></>}
-                    <td className="ns-ots">
-                      {kind === 'lab' ? (
-                        labDone ? (
-                          <button type="button" className="ns-sl ns-sl-done" disabled={stop || r.st === '집계완료'} onClick={() => unSlot(it)}>{r.st}</button>
-                        ) : !stop && <button type="button" className="ns-sl ns-sl-next" onClick={() => ask(it)}>완료 처리</button>
-                      ) : (
-                        <>
-                          {Array.from({ length: n }, (_, k) => {
-                            if (k < done.length) {
-                              const last = k === done.length - 1;
-                              return <button key={k} type="button" className="ns-sl ns-sl-done" title={last ? '누르면 취소' : ''} disabled={stop || !last} onClick={() => unSlot(it)}>{r[done[k]]}{r[`v${done[k].slice(1)}`] ? ` (확인 ${r[`v${done[k].slice(1)}`]})` : ''}</button>;
-                            }
-                            const t = times[k] || '';
-                            const next = k === done.length;
-                            const th = Number(t.slice(0, 2));
-                            const from = duty === 'D' ? 6 : duty === 'E' ? 14 : 22;
-                            const inDuty = duty === 'N' ? (th >= 22 || th < 6) : (th >= from && th < from + 8);
-                            const late = !stop && isToday && t !== '' && inDuty && nowMin - (th * 60 + Number(t.slice(3))) > 60;
-                            return <button key={k} type="button" className={`ns-sl ${next && !stop ? (late ? 'ns-sl-late' : 'ns-sl-next') : 'ns-sl-wait'}`} disabled={stop || !next} onClick={() => ask(it)}>{t}</button>;
-                          })}
-                          {kind === 'prn' && !stop && <button type="button" className="ns-sl ns-sl-next" onClick={() => ask(it)}>+ 투약 기록</button>}
-                          {kind === 'base' && times.length === 0 && !stop && done.length === 0 && <button type="button" className="ns-sl ns-sl-next" onClick={() => ask(it)}>수행 기록</button>}
-                        </>
-                      )}
-                      {r.hold && <span className="ns-sl ns-hold" title={r.hold}>보류</span>}
-                    </td>
-                    <td className="ns-otst">{stop ? (r.pri === 'D/C' ? 'D/C' : '취소') : r.st === '추가' ? <button type="button" className="ns-sl ns-sl-next" onClick={() => { patch(it.i, { st: '접수', rcv: `${hm()} ${userName}` }); setOrdMsg(''); }}>접수</button> : kind === 'lab' ? r.st : n > 0 && done.length >= n ? '완료' : r.rcv ? <span title={`접수 ${r.rcv}`}>접수</span> : ''}</td>
-                  </tr>
-                  </Fragment>
-                );
-              })}
-            </tbody>
-          </table>
-        </div>
-      )}
-    </section>
-  );
+  // 처방 조회: 실제 OCS처럼 한 장의 표에 구분 띠(기본처방/투약/PRN/검사)와 1~N회 칸을 둔다
+  const slotN = (it: Item, kind: 'med' | 'base' | 'prn' | 'lab') => (kind === 'prn' || kind === 'lab' ? slots(it.r).length + (kind === 'prn' ? 1 : 0) : Math.max(timesFor(it.r, kind).length, slots(it.r).length));
+  const ocs = () => {
+    const parts: { label: string; items: Item[]; kind: 'med' | 'base' | 'prn' | 'lab' }[] = [
+      { label: '기본처방', items: g.base, kind: 'base' }, { label: '투 약', items: g.med, kind: 'med' },
+      { label: '약주사 PRN', items: g.prn, kind: 'prn' }, { label: '진단검사', items: g.lab, kind: 'lab' },
+    ];
+    const N = Math.min(7, Math.max(3, ...parts.flatMap(pp => pp.items.map(it => slotN(it, pp.kind)))));
+    const COLS = 7 + N;
+    let seq = 0;
+    return (
+      <div className="ns-otw ns-ocs">
+        <table className="ns-ot">
+          <thead>
+            <tr>
+              <th style={{ width: 34 }}>순번</th><th>처방명</th><th>용량</th><th>경로</th><th>횟수</th><th>구분</th><th>진행상태</th>
+              {Array.from({ length: N }, (_, k) => <th key={k} className="ns-ocn">{k + 1}회</th>)}
+            </tr>
+          </thead>
+          <tbody>
+            {parts.map(({ label, items, kind }) => (
+              <Fragment key={label}>
+                <tr className="ns-ocb"><td colSpan={COLS}>▶ {label} ◀</td></tr>
+                {items.length === 0 && <tr><td colSpan={COLS} className="ns-nnone">처방이 없어요.</td></tr>}
+                {(kind === 'med' ? [...items].sort((a, b) => subOf(a.r) - subOf(b.r)) : items).map((it, idx, arr) => {
+                  const r = it.r;
+                  const subHead = kind === 'med' && (idx === 0 || subOf(arr[idx - 1].r) !== subOf(r)) ? <tr key={`sh${it.i}`} className="ns-subh"><td colSpan={COLS}>[{SUBS[subOf(r)]}]</td></tr> : null;
+                  const stop = r.pri === 'D/C' || r.st === '취소';
+                  const done = slots(r);
+                  const times = kind === 'prn' || kind === 'lab' ? [] : timesFor(r, kind);
+                  const n = Math.max(times.length, done.length);
+                  const labDone = r.st === '완료' || r.st === '집계완료';
+                  seq += 1;
+                  const cellFor = (k: number) => {
+                    if (kind === 'lab') {
+                      if (k !== 0) return null;
+                      return labDone ? <button type="button" className="ns-sl ns-sl-done" disabled={stop || r.st === '집계완료'} onClick={() => unSlot(it)}>{r.st}</button> : !stop ? <button type="button" className="ns-sl ns-sl-next" onClick={() => ask(it)}>완료 처리</button> : null;
+                    }
+                    if (k < done.length) {
+                      const last = k === done.length - 1;
+                      return <button type="button" className="ns-sl ns-sl-done" title={last ? '누르면 취소' : ''} disabled={stop || !last} onClick={() => unSlot(it)}>{r[done[k]]}{r[`v${done[k].slice(1)}`] ? ` (확인 ${r[`v${done[k].slice(1)}`]})` : ''}</button>;
+                    }
+                    if (kind === 'prn') return k === done.length && !stop ? <button type="button" className="ns-sl ns-sl-next" onClick={() => ask(it)}>+ 투약</button> : null;
+                    if (kind === 'base' && times.length === 0) return k === 0 && !stop && done.length === 0 ? <button type="button" className="ns-sl ns-sl-next" onClick={() => ask(it)}>수행 기록</button> : null;
+                    const t = times[k] || '';
+                    if (!t) return null;
+                    const next = k === done.length;
+                    const th = Number(t.slice(0, 2));
+                    const from = duty === 'D' ? 6 : duty === 'E' ? 14 : 22;
+                    const inDuty = duty === 'N' ? (th >= 22 || th < 6) : (th >= from && th < from + 8);
+                    const late = !stop && isToday && inDuty && nowMin - (th * 60 + Number(t.slice(3))) > 60;
+                    return <button type="button" className={`ns-sl ${next && !stop ? (late ? 'ns-sl-late' : 'ns-sl-next') : 'ns-sl-wait'}`} disabled={stop || !next} onClick={() => ask(it)}>{t}</button>;
+                  };
+                  const status = stop ? (r.pri === 'D/C' ? 'D/C' : '취소') : r.st === '추가' ? <button type="button" className="ns-sl ns-sl-next" onClick={() => { patch(it.i, { st: '접수', rcv: `${hm()} ${userName}` }); setOrdMsg(''); }}>접수</button> : kind === 'lab' ? r.st : n > 0 && done.length >= n ? '집계완료' : r.rcv ? <span title={`접수 ${r.rcv}`}>접수</span> : '';
+                  return (
+                    <Fragment key={it.i}>
+                      {subHead}
+                      <tr className={stop ? 'ns-x' : ''}>
+                        <td className="ns-ocq">{seq}</td>
+                        <td className="ns-otn"><b>{r.name}</b></td>
+                        <td>{r.dose ? `${r.dose}${r.unit || ''}` : ''}</td><td>{r.route}</td><td>{r.cnt}</td>
+                        <td className="ns-ocg">{r.pri && r.pri !== 'D/C' ? <i>{r.pri}</i> : null}{(r.opt || '').split(' ').filter(Boolean).map(o => <i key={o} className={o === '비급여' ? 'ns-nhi' : 'ns-alone'}>[{o}]</i>)}{r.hold && <span className="ns-sl ns-hold" title={r.hold}>보류</span>}</td>
+                        <td className="ns-otst">{status}</td>
+                        {Array.from({ length: N }, (_, k) => <td key={k} className="ns-ocs-c">{cellFor(k)}</td>)}
+                      </tr>
+                      {it.notes.map((m, k) => <tr key={`n${it.i}-${k}`} className="ns-ocm"><td /><td colSpan={COLS - 1}>※ {m.replace(/^※\s*/, '')}</td></tr>)}
+                    </Fragment>
+                  );
+                })}
+              </Fragment>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    );
+  };
 
   const cl = checklist(data);
   const stat = (it: Item) => (it.r.st === '추가' ? '신규' : it.r.pri === 'D/C' ? '중지' : '유지');
@@ -733,10 +738,7 @@ export default function EhrNurse({
             <button type="button" className="ns-cmp" onClick={() => setCmp(true)}>처방비교</button>
           </div>
           {ordMsg && <p className="ns-nerr">{ordMsg}</p>}
-          {sec('기본처방', g.base, 'base')}
-          {sec('투약', g.med, 'med')}
-          {sec('투약 PRN 처방', g.prn, 'prn')}
-          {sec('진단검사', g.lab, 'lab')}
+          {ocs()}
           <div className="ns-nft"><button type="button" onClick={onLabel}>투약라벨 출력</button></div>
         </main>
 
@@ -1239,6 +1241,14 @@ export default function EhrNurse({
         .ns-nhd input { border: 1px solid var(--border); border-radius: 6px; padding: 5px 8px; font: inherit; background: var(--background); color: var(--text); }
         .ns-nhd .ns-cmp { margin-left: auto; border: 1px solid var(--border); background: transparent; color: inherit; border-radius: 6px; padding: 6px 12px; font: inherit; cursor: pointer; }
         .ns-otw { overflow-x: auto; }
+        .ns-ocs .ns-ot { min-width: 760px; }
+        .ns-ocb td { background: #cfe3e8; color: #1f3b45; text-align: center; font-weight: 800; padding: 5px; letter-spacing: 2px; }
+        .ns-ocq { text-align: center; color: var(--sub-text); width: 34px; }
+        .ns-ocn { min-width: 74px; }
+        .ns-ocs-c { text-align: center; white-space: nowrap; padding: 3px 4px !important; }
+        .ns-ocg i { display: block; font-style: normal; font-size: 11px; font-weight: 700; }
+        .ns-ocm td { border-top: 0 !important; color: #c0267c; font-size: 12.5px; padding-top: 0 !important; }
+        .ns-ocs .ns-subh td { background: #f2f6f8; font-weight: 700; color: #0e4a84; }
         .ns-ot { width: 100%; min-width: 560px; table-layout: auto; border-collapse: collapse; font-size: 13px; }
         .ns-ot th { background: var(--muted-background); border: 1px solid var(--border); padding: 5px 8px; font-size: 12px; white-space: nowrap; }
         .ns-ot td { border: 1px solid var(--border); padding: 6px 8px; vertical-align: top; }
