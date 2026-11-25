@@ -6,7 +6,7 @@ import NurseForm from './NurseForms';
 import { StaffWin, DocReqWin, RichMemo } from './NurseExtras';
 import { DEPTS } from '../directory';
 import { confirmDialog } from '@/components/Dialog';
-import { Fragment, useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
+import { Fragment, useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
 import { useRouter } from 'next/navigation';
 import { migrate, shiftChart, type ChartData, type Row } from '../types';
 import WardBulk, { type BulkPt } from '../WardBulk';
@@ -267,12 +267,33 @@ export default function EhrNurse({
   const [mf, setMf] = useState<'all' | 'base' | 'med' | 'lab'>('med');
   const [rt, setRt] = useState<'meal' | 'sched' | 'cons' | 'appt'>('meal');
   const [fTab, setFTab] = useState<'obs' | 'state' | 'lab'>('obs');
-  const [fEdit, setFEdit] = useState<{ it: string; h: string } | null>(null);
+  const [fEdit, setFEdit] = useState<{ it: string; d: string; h: string } | null>(null);
   const [fVal, setFVal] = useState('');
-  const [fCtx, setFCtx] = useState<{ x: number; y: number; it: string; h: string } | null>(null);
+  const [fCtx, setFCtx] = useState<{ x: number; y: number; it: string; d: string; h: string } | null>(null);
   const ALLH = Array.from({ length: 24 }, (_, k) => String(k).padStart(2, '0'));
   const [fShift, setFShift] = useState<'all' | 'D' | 'E' | 'N'>('all');
   const FH = fShift === 'D' ? ALLH.slice(7, 15) : fShift === 'E' ? ALLH.slice(15, 23) : fShift === 'N' ? [...ALLH.slice(23), ...ALLH.slice(0, 7)] : ALLH;
+  const todayS = (() => { const t = new Date(); return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`; })();
+  const addD = (ds: string, n: number) => { const t = new Date(`${ds}T00:00:00`); t.setDate(t.getDate() + n); return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`; };
+  const FDAYS = useMemo(() => {
+    const a0 = (data.info.admit || '').slice(0, 10);
+    let st = /^\d{4}-\d{2}-\d{2}$/.test(a0) ? a0 : addD(todayS, -6);
+    if (st < addD(todayS, -13)) st = addD(todayS, -13);
+    const out: string[] = [];
+    for (let x = st; x <= addD(todayS, 1); x = addD(x, 1)) out.push(x);
+    return out;
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [data.info.admit, todayS]);
+  const FCOLS = FDAYS.flatMap(d => FH.map(h => ({ d, h })));
+  const flowRef = useRef<HTMLDivElement>(null);
+  const drag = useRef<{ x: number; l: number } | null>(null);
+  useEffect(() => {
+    if (win !== 'flowsheet') return;
+    const el = flowRef.current;
+    if (!el) return;
+    const k = FCOLS.findIndex(c => c.d === todayS && c.h >= pad(new Date().getHours()));
+    el.scrollLeft = Math.max(0, (k < 0 ? FCOLS.length : k) * 52 - el.clientWidth / 2);
+  }, [win, fShift, FCOLS.length, todayS]);
   const FG: { g: string; items: string[] }[] = [
     { g: '활력징후', items: ['체온 (℃)', '수축기혈압', '이완기혈압', '맥박 (회/분)', '호흡 (회/분)', 'SpO2 (%)'] },
     { g: '욕창예방 및 관리', items: ['욕창위험평가 (Braden)', '체위변경'] },
@@ -283,12 +304,20 @@ export default function EhrNurse({
   ];
   const IN = ['IV (mL)', 'Diet (mL)', '기타 섭취 (mL)'];
   const OUT = ['소변 (mL)', '배액 (mL)', '기타 배출 (mL)'];
-  const fNum = (it: string, h: string) => Number(fGet(it, h)?.text) || 0;
-  const ioTotal = (h: string) => IN.reduce((a, it) => a + fNum(it, h), 0) - OUT.reduce((a, it) => a + fNum(it, h), 0);
-  const fGet = (it: string, h: string) => data.memos.find(m => m.type === 'flow' && m.date === date && m.item === it && m.hour === h);
-  const fSet = (it: string, h: string, v: string) => setData(d => {
-    const rest = d.memos.filter(m => !(m.type === 'flow' && m.date === date && m.item === it && m.hour === h));
-    return { ...d, memos: v.trim() ? [...rest, { type: 'flow', date, item: it, hour: h, text: v.trim(), author: userName }] : rest };
+  const VMAP: Record<string, string> = { '체온 (℃)': 'bt', '맥박 (회/분)': 'hr', '호흡 (회/분)': 'rr', 'SpO2 (%)': 'spo2' };
+  const vitAt = (it: string, d: string, h: string) => {
+    const r = data.vitals.find(v => (v.time || '').slice(0, 10) === d && (v.time || '').slice(11, 13) === h);
+    if (!r) return '';
+    if (it === '수축기혈압') return (r.bp || '').split('/')[0] || '';
+    if (it === '이완기혈압') return (r.bp || '').split('/')[1] || '';
+    return VMAP[it] ? r[VMAP[it]] || '' : '';
+  };
+  const fGet = (it: string, d: string, h: string) => data.memos.find(m => m.type === 'flow' && m.date === d && m.item === it && m.hour === h);
+  const fNum = (it: string, d: string, h: string) => Number(fGet(it, d, h)?.text) || 0;
+  const ioTotal = (d: string, h: string) => IN.reduce((a, it) => a + fNum(it, d, h), 0) - OUT.reduce((a, it) => a + fNum(it, d, h), 0);
+  const fSet = (it: string, d: string, h: string, v: string) => setData(dd => {
+    const rest = dd.memos.filter(m => !(m.type === 'flow' && m.date === d && m.item === it && m.hour === h));
+    return { ...dd, memos: v.trim() ? [...rest, { type: 'flow', date: d, item: it, hour: h, text: v.trim(), author: userName }] : rest };
   });
   const esc = (v: string) => v.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c] as string));
   const printDoc = (title: string, body: string) => {
@@ -519,18 +548,18 @@ export default function EhrNurse({
               {data.surgery[0] && dd(data.surgery[0].date) && <><dt>수술일</dt><dd>{dd(data.surgery[0].date)}{podN(data.surgery[0].date) && <em>{podN(data.surgery[0].date)}</em>}</dd></>}
               {(dxMain || i.dx) && <><dt>진단</dt><dd>{dxMain ? dxMain.name : i.dx}</dd></>}
             </dl>
-            <div className="ns-nlinks">
+            <div className="ns-ngrp"><span>구분</span><div className="ns-nlinks">
               {[['외래', '외래'], ['병동', i.ward === '응급실' ? '응급' : i.ward || ''], ['응급', '응급']].map(([k, v]) => <button key={k} type="button" disabled={!v} onClick={() => router.push(`/ehr?view=${encodeURIComponent(v)}`)}>{k}</button>)}
-            </div>
-            <div className="ns-nlinks">
+            </div></div>
+            <div className="ns-ngrp"><span>조회</span><div className="ns-nlinks">
               {[['CPR', data.cpr.length ? `CPR 기록 ${data.cpr.length}건` : 'CPR 기록 없음'], ['약물이상반응', i.allergy ? `알러지: ${i.allergy}` : '등록된 약물이상반응 없음'], ['건강보험', '건강보험 자격 확인됨 (모의 · 심평원 조회)']].map(([k, v]) => <button key={k} type="button" className={chip === k ? 'ns-on' : ''} onClick={() => setChip(chip === k ? '' : k)}>{k}</button>)}
               {chip && <p>{[['CPR', data.cpr.length ? `CPR 기록 ${data.cpr.length}건` : 'CPR 기록 없음'], ['약물이상반응', i.allergy ? `알러지: ${i.allergy}` : '등록된 약물이상반응 없음'], ['건강보험', '건강보험 자격 확인됨 (모의 · 심평원 조회)']].find(x => x[0] === chip)?.[1]}</p>}
-            </div>
-            <div className="ns-nlinks ns-nprt">
+            </div></div>
+            <div className="ns-ngrp"><span>출력</span><div className="ns-nlinks ns-nprt">
               <button type="button" onClick={printOrders}>처방출력</button>
               <button type="button" onClick={printBed}>침상카드</button>
               <button type="button" onClick={printWarn}>주의라벨</button>
-            </div>
+            </div></div>
             <div className="ns-nflags">
               {flags.map(f => <em key={f}>{f}</em>)}
               {i.allergy && !/^(없음|무|none|-)$/i.test(i.allergy.trim()) && <em className="ns-al">알러지 {i.allergy}</em>}
@@ -813,26 +842,34 @@ export default function EhrNurse({
               })()
             ) : win === 'flowsheet' ? (
               <div className="ns-fl" onClick={() => setFCtx(null)}>
-                <div className="ns-fl-t">
+                <div className="ns-fl-t" ref={flowRef}
+                  onMouseDown={e => { if ((e.target as HTMLElement).closest('input,button')) return; drag.current = { x: e.clientX, l: e.currentTarget.scrollLeft }; }}
+                  onMouseMove={e => { if (drag.current && e.buttons === 1) e.currentTarget.scrollLeft = drag.current.l - (e.clientX - drag.current.x); }}
+                  onMouseUp={() => { drag.current = null; }} onMouseLeave={() => { drag.current = null; }}>
                   <table>
-                    <thead><tr><th>기간 · {date}<div className="ns-fl-s">{([['all', '24시간'], ['D', 'Day'], ['E', 'Evening'], ['N', 'Night']] as const).map(([k, l]) => <button key={k} type="button" className={fShift === k ? 'ns-on' : ''} onClick={() => setFShift(k)}>{l}</button>)}</div></th>{FH.map(h => <th key={h}>{h}시</th>)}</tr></thead>
+                    <thead>
+                      <tr><th rowSpan={2} className="ns-fl-c"><div className="ns-fl-s">{([['all', '24시간'], ['D', 'Day'], ['E', 'Evening'], ['N', 'Night']] as const).map(([k, l]) => <button key={k} type="button" className={fShift === k ? 'ns-on' : ''} onClick={() => setFShift(k)}>{l}</button>)}</div></th>{FDAYS.map(d => <th key={d} colSpan={FH.length} className={d === todayS ? 'ns-fl-today' : 'ns-fl-day'}>{d.slice(5).replace('-', '/')} ({'일월화수목금토'[new Date(`${d}T00:00:00`).getDay()]}){d === todayS ? ' · 오늘' : ''}</th>)}</tr>
+                      <tr>{FCOLS.map(c => <th key={c.d + c.h}>{c.h}시</th>)}</tr>
+                    </thead>
                     <tbody>
                       {FG.map(g => (
                         <Fragment key={g.g}>
-                          <tr className="ns-fl-g"><td colSpan={FH.length + 1}>{g.g}</td></tr>
+                          <tr className="ns-fl-g"><td className="ns-fl-c">{g.g}</td><td colSpan={FCOLS.length} /></tr>
                           {g.items.map(it => (
                             <tr key={it}>
-                              <th>{it}</th>
-                              {FH.map(h => {
-                                const c = fGet(it, h);
-                                const on = fEdit?.it === it && fEdit.h === h;
+                              <th className="ns-fl-c">{it}</th>
+                              {FCOLS.map(({ d, h }) => {
+                                const c = fGet(it, d, h);
+                                const key = d + h;
+                                const on = fEdit?.it === it && fEdit.h === h && fEdit.d === d;
                                 if (it === 'I/O Total (mL)') {
-                                  const anyIO = [...IN, ...OUT].some(x => fGet(x, h));
-                                  return <td key={h} style={{ cursor: 'default', background: '#f6f8fb', fontWeight: 700 }}>{anyIO ? ioTotal(h) : ''}</td>;
+                                  const anyIO = [...IN, ...OUT].some(x => fGet(x, d, h));
+                                  return <td key={key} style={{ cursor: 'default', background: '#f6f8fb', fontWeight: 700 }}>{anyIO ? ioTotal(d, h) : ''}</td>;
                                 }
+                                const auto = !c ? vitAt(it, d, h) : '';
                                 return (
-                                  <td key={h} className={c ? 'ns-fl-v' : ''} onDoubleClick={() => { setFEdit({ it, h }); setFVal(c?.text || ''); }} onContextMenu={e => { e.preventDefault(); e.stopPropagation(); setFCtx({ x: e.clientX, y: e.clientY, it, h }); }}>
-                                    {on ? <input autoFocus value={fVal} onChange={e => setFVal(e.target.value)} onBlur={() => { fSet(it, h, fVal); setFEdit(null); }} onKeyDown={e => { if (e.key === 'Enter') { fSet(it, h, fVal); setFEdit(null); } if (e.key === 'Escape') setFEdit(null); }} /> : <>{c?.text}{c?.memo && <sup title={c.memo}>●</sup>}</>}
+                                  <td key={key} className={c ? 'ns-fl-v' : auto ? 'ns-fl-a' : ''} onDoubleClick={() => { setFEdit({ it, d, h }); setFVal(c?.text || auto); }} onContextMenu={e => { e.preventDefault(); e.stopPropagation(); setFCtx({ x: e.clientX, y: e.clientY, it, d, h }); }}>
+                                    {on ? <input autoFocus value={fVal} onChange={e => setFVal(e.target.value)} onBlur={() => { fSet(it, d, h, fVal); setFEdit(null); }} onKeyDown={e => { if (e.key === 'Enter') { fSet(it, d, h, fVal); setFEdit(null); } if (e.key === 'Escape') setFEdit(null); }} /> : <>{c?.text || auto}{c?.memo && <sup title={c.memo}>●</sup>}</>}
                                   </td>
                                 );
                               })}
@@ -843,12 +880,12 @@ export default function EhrNurse({
                     </tbody>
                   </table>
                 </div>
-                <p className="ns-fl-h">칸을 더블클릭하면 입력, 우클릭하면 메뉴(메모 / 간호기록 / 그룹입력)</p>
+                <p className="ns-fl-h">표를 꾹 누른 채 좌우로 끌면 다른 시간대·날짜로 이동 · 칸 더블클릭=입력, 우클릭=메뉴(메모 / 간호기록 / 그룹입력) · 파란 글씨는 임상관찰 연동값</p>
                 {fCtx && (
                   <div className="ns-fl-m" style={{ left: fCtx.x, top: fCtx.y }} onClick={e => e.stopPropagation()}>
-                    <button type="button" onClick={() => { const c = fGet(fCtx.it, fCtx.h); if (!c) { setFCtx(null); return; } const m = window.prompt('메모', c.memo || ''); if (m !== null) setData(d => ({ ...d, memos: d.memos.map(x => (x === c ? { ...x, memo: m } : x)) })); setFCtx(null); }}>메모</button>
-                    <button type="button" onClick={() => { const c = fGet(fCtx.it, fCtx.h); if (c) setData(d => ({ ...d, notes: [...d.notes, { time: `${date} ${fCtx.h}:00`, focus: fCtx.it.split(' (')[0], text: `D)\n${fCtx.h}시 ${fCtx.it} ${c.text}${c.memo ? ` (${c.memo})` : ''}`, author: userName, shift: duty }] })); setFCtx(null); }}>간호기록</button>
-                    <button type="button" onClick={() => { const c = fGet(fCtx.it, fCtx.h); if (c) { const i0 = FH.indexOf(fCtx.h); FH.slice(i0 + 1, i0 + 4).forEach(h => { if (!fGet(fCtx.it, h)) fSet(fCtx.it, h, c.text); }); } setFCtx(null); }}>그룹입력 (이후 3칸 동일값)</button>
+                    <button type="button" onClick={() => { const c = fGet(fCtx.it, fCtx.d, fCtx.h); if (!c) { setFCtx(null); return; } const m = window.prompt('메모', c.memo || ''); if (m !== null) setData(d => ({ ...d, memos: d.memos.map(x => (x === c ? { ...x, memo: m } : x)) })); setFCtx(null); }}>메모</button>
+                    <button type="button" onClick={() => { const c = fGet(fCtx.it, fCtx.d, fCtx.h); if (c) setData(d => ({ ...d, notes: [...d.notes, { time: `${fCtx.d} ${fCtx.h}:00`, focus: fCtx.it.split(' (')[0], text: `D)\n${fCtx.h}시 ${fCtx.it} ${c.text}${c.memo ? ` (${c.memo})` : ''}`, author: userName, shift: duty }] })); setFCtx(null); }}>간호기록</button>
+                    <button type="button" onClick={() => { const c = fGet(fCtx.it, fCtx.d, fCtx.h); if (c) { const i0 = FCOLS.findIndex(x => x.d === fCtx.d && x.h === fCtx.h); FCOLS.slice(i0 + 1, i0 + 4).forEach(x => { if (!fGet(fCtx.it, x.d, x.h)) fSet(fCtx.it, x.d, x.h, c.text); }); } setFCtx(null); }}>그룹입력 (이후 3칸 동일값)</button>
                   </div>
                 )}
                 <div className="ns-fl-b">
@@ -1022,7 +1059,18 @@ export default function EhrNurse({
         .ns-rt { min-width: 0 !important; width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 6px; }
         .ns-rt th, .ns-rt td { border: 1px solid var(--border); padding: 3px 5px; text-align: left; }
         .ns-rt th { background: #f6f8fb; }
-        .ns-fl-t { overflow: auto; }
+        .ns-fl-t { overflow: auto; cursor: grab; user-select: none; max-height: 70vh; }
+        .ns-fl-t:active { cursor: grabbing; }
+        .ns-fl .ns-fl-c { position: sticky; left: 0; z-index: 2; background: #f6f8fb; min-width: 150px; text-align: left; }
+        .ns-fl thead th { position: sticky; top: 0; background: #eaf0f7; z-index: 1; }
+        .ns-fl thead th.ns-fl-c { z-index: 3; }
+        .ns-fl thead tr:nth-child(2) th { top: 29px; }
+        .ns-fl-day { background: #dfe6ee !important; border-left: 2px solid #94a3b8 !important; }
+        .ns-fl-today { background: var(--primary) !important; color: #fff; border-left: 2px solid #94a3b8 !important; }
+        .ns-ngrp { display: flex; align-items: flex-start; gap: 8px; border-top: 1px dashed var(--border); padding: 5px 0; }
+        .ns-ngrp > span { flex: none; width: 30px; padding-top: 5px; font-size: 11.5px; font-weight: 700; color: var(--sub-text); }
+        .ns-ngrp .ns-nlinks { flex: 1; margin: 0; }
+        .ns-fl-a { color: #2563eb; }
         .ns-fl table { min-width: 0; border-collapse: collapse; font-size: 12.5px; width: 100%; }
         .ns-fl th, .ns-fl td { border: 1px solid var(--border); padding: 4px 6px; text-align: center; height: 28px; white-space: nowrap; }
         .ns-fl tbody th { text-align: left; background: #f6f8fb; font-weight: 600; }
