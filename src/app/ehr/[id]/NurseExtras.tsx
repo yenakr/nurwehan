@@ -32,7 +32,7 @@ export function StaffWin({ data, setData, userName, duty }: P) {
   const [text, setText] = useState('');
   const [urgent, setUrgent] = useState(false);
   const [msg, setMsg] = useState('');
-  const staff = staffOf(dept);
+  const staff = staffOf(dept).slice().sort((a, b) => Number(b.name === data.info.doctor) - Number(a.name === data.info.doctor));
   const sent = data.memos.filter(m => m.type === '노티');
 
   const send = () => {
@@ -61,7 +61,7 @@ export function StaffWin({ data, setData, userName, duty }: P) {
         <tbody>
           {staff.map(s => (
             <tr key={s.rank + s.name} className={to?.name === s.name ? 'on' : ''}>
-              <td>{s.rank}</td><td>{s.name}</td><td>{s.ext}</td>
+              <td>{s.rank}</td><td>{s.name}{s.name === data.info.doctor && <b style={{ marginLeft: 6, fontSize: 11, color: 'var(--primary)' }}>주치의</b>}</td><td>{s.ext}</td>
               <td><button type="button" onClick={() => { setTo(s); setMsg(''); }}>노티</button></td>
             </tr>
           ))}

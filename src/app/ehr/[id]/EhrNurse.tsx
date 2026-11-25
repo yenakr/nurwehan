@@ -4,7 +4,7 @@ import { SAMPLES } from '../samples';
 import { MATS, matsFor } from '../codes';
 import NurseForm from './NurseForms';
 import { StaffWin, DocReqWin, RichMemo } from './NurseExtras';
-import { DEPTS } from '../directory';
+import { DEPTS, buildDirectory } from '../directory';
 import { confirmDialog } from '@/components/Dialog';
 import { Fragment, useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
 import { useRouter } from 'next/navigation';
@@ -56,11 +56,7 @@ const CATS: { name: string; items: string[] }[] = [
   { name: '원내전화번호', items: ['dir'] },
 ];
 
-const DIRLOC: Record<string, string> = { '응급실': '본관 1층', '중환자실': '본관 3층', '수술실': '본관 4층', '마취과': '본관 4층', '영상의학과 (CT·MRI)': '별관 지하1층', '진단검사의학과': '별관 1층', '약제부': '본관 지하1층', '영양팀': '본관 지하1층', '원무과 (입퇴원)': '본관 1층', '의료정보팀 (EMR)': '행정동 2층', '감염관리실': '본관 5층', '재활의학과 (PT)': '별관 2층', '내시경실': '본관 2층', '혈액은행': '별관 1층' };
-const DIR: [string, string][] = [
-  ['응급실', '2119'], ['중환자실', '2301'], ['수술실', '2410'], ['마취과', '2415'], ['영상의학과 (CT·MRI)', '2520'], ['진단검사의학과', '2610'], ['약제부', '2710'],
-  ['영양팀', '2750'], ['원무과 (입퇴원)', '2800'], ['의료정보팀 (EMR)', '2910'], ['감염관리실', '2930'], ['재활의학과 (PT)', '2560'], ['내시경실', '2480'], ['혈액은행', '2630'],
-];
+const ORG = buildDirectory();
 
 const pad = (n: number) => String(n).padStart(2, '0');
 const hm = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
@@ -249,6 +245,7 @@ export default function EhrNurse({
   const dxMain = data.dxcode.find(r => r.kind === '주상병' && r.name);
   const [chip, setChip] = useState('');
   const [cat, setCat] = useState('');
+  const [orgSel, setOrgSel] = useState('순환기내과');
   const [mOpen, setMOpen] = useState(0); // 0 닫힘, 1 메뉴, 2 메뉴 > 업무
   const [mq, setMq] = useState('');
   const [tabs, setTabs] = useState<string[]>([]);
@@ -973,15 +970,39 @@ export default function EhrNurse({
                 ))}
               </>
             ) : win === 'dir' ? (
-              <>
-                <input className="ns-ndq" value={dq} onChange={e => setDq(e.target.value)} aria-label="부서 검색" />
-                <table className="ns-nlist">
-                  <thead><tr><th>과</th><th>전화번호</th><th>위치</th><th>비고</th></tr></thead>
-                  <tbody>
-                    {DIR.filter(([n, t]) => n.includes(dq.trim()) || t.includes(dq.trim())).map(([n, t]) => <tr key={n}><td>{n}</td><td>{t}</td><td>{DIRLOC[n] || ''}</td><td /></tr>)}
-                  </tbody>
-                </table>
-              </>
+              <div className="ns-org">
+                <aside>
+                  <input value={dq} onChange={e => setDq(e.target.value)} placeholder="이름·부서·내선 검색" aria-label="부서 검색" />
+                  {!dq.trim() && ORG.map(g => (
+                    <div key={g.name}>
+                      <h5>{g.name}</h5>
+                      {g.units.map(u => <button key={u.name} type="button" className={orgSel === u.name ? 'ns-on' : ''} onClick={() => setOrgSel(u.name)}>{u.name}<i>{u.ext}</i></button>)}
+                    </div>
+                  ))}
+                </aside>
+                <section>
+                  {dq.trim() ? (
+                    <table className="ns-nlist">
+                      <thead><tr><th>부서</th><th>직급</th><th>이름</th><th>내선</th></tr></thead>
+                      <tbody>
+                        {ORG.flatMap(g => g.units.flatMap(u => [{ u, p: { rank: '대표', name: u.name, ext: u.ext } as { rank: string; name: string; ext: string; role?: string } }, ...u.people.map(p => ({ u, p }))])).filter(({ u, p }) => `${u.name}${p.name}${p.ext}${u.ext}${p.rank}`.includes(dq.trim())).slice(0, 60).map(({ u, p }, k) => <tr key={k}><td>{u.name}</td><td>{p.rank}</td><td>{p.name}</td><td>{p.ext}</td></tr>)}
+                      </tbody>
+                    </table>
+                  ) : (() => {
+                    const u = ORG.flatMap(g => g.units).find(x => x.name === orgSel) || ORG[0].units[0];
+                    const g = ORG.find(x => x.units.includes(u));
+                    return (
+                      <>
+                        <p className="ns-org-p">{g?.name} › <b>{u.name}</b> · 대표 {u.ext} · {u.loc}</p>
+                        <table className="ns-nlist">
+                          <thead><tr><th>직급</th><th>이름</th><th>내선</th><th>비고</th></tr></thead>
+                          <tbody>{u.people.map((p, k) => <tr key={k}><td>{p.rank}</td><td>{p.name}</td><td>{p.ext}</td><td>{p.role || ''}</td></tr>)}</tbody>
+                        </table>
+                      </>
+                    );
+                  })()}
+                </section>
+              </div>
             ) : win === 'bulk' ? (
               <WardBulk pts={bulkPts} onClose={onClose} onSelf={row => setData(d => ({ ...d, vitals: [...d.vitals, row] }))} />
             ) : win === 'staff' ? (
@@ -1070,6 +1091,16 @@ export default function EhrNurse({
         .ns-ngrp { display: flex; align-items: flex-start; gap: 8px; border-top: 1px dashed var(--border); padding: 5px 0; }
         .ns-ngrp > span { flex: none; width: 30px; padding-top: 5px; font-size: 11.5px; font-weight: 700; color: var(--sub-text); }
         .ns-ngrp .ns-nlinks { flex: 1; margin: 0; }
+        .ns-org { display: grid; grid-template-columns: 220px 1fr; gap: 12px; padding: 10px 12px; }
+        .ns-org aside { max-height: 70vh; overflow: auto; border: 1px solid var(--border); border-radius: 6px; padding: 6px; }
+        .ns-org aside input { width: 100%; margin-bottom: 6px; padding: 6px 8px; font-size: 13px; }
+        .ns-org aside h5 { margin: 8px 0 2px; font-size: 12px; color: var(--primary); }
+        .ns-org aside button { display: flex; justify-content: space-between; width: 100%; border: 0; background: none; padding: 5px 8px; border-radius: 4px; font: inherit; font-size: 13px; cursor: pointer; text-align: left; }
+        .ns-org aside button i { font-style: normal; color: var(--sub-text); font-size: 12px; }
+        .ns-org aside button.ns-on { background: var(--primary); color: #fff; }
+        .ns-org aside button.ns-on i { color: #dbe7f5; }
+        .ns-org-p { margin: 0 0 8px; font-size: 13px; }
+        @media (max-width: 700px) { .ns-org { grid-template-columns: 1fr; } }
         .ns-fl-a { color: #2563eb; }
         .ns-fl table { min-width: 0; border-collapse: collapse; font-size: 12.5px; width: 100%; }
         .ns-fl th, .ns-fl td { border: 1px solid var(--border); padding: 4px 6px; text-align: center; height: 28px; white-space: nowrap; }
