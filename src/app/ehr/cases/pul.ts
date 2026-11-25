@@ -27,11 +27,11 @@ export const pul: Sample = {
       sec('▶ 기본처방 ◀'),
       od('Check V/S q [4] hrs', '', '', '', '', '', [], '1'),
       od('Check I/O q [8] hrs', '', '', '', '', '', [], '1'),
-      od('비말 격리 (마스크 착용, 1인실 또는 코호트)', '', '', '', '', '집계완료', [], '1'),
-      od('O2 2L/min NC (SpO2 90~94% 유지)', '', '', '', '', '', [], '1'),
+      od('Droplet isolation (mask, single room or cohort)', '', '', '', '', '집계완료', [], '1'),
+      od('O2 2L/min NC (keep SpO2 90~94%)', '', '', '', '', '', [], '1'),
       memo('※ COPD 환자이므로 SpO2 목표 88~92% 이상 과도한 산소 투여 주의'),
       od('Chest physiotherapy, Incentive spirometry q [2] hrs while awake', '', '', '', '', '', [], '1'),
-      od('연하곤란 선별 후 연식', '', '', '', '', '집계완료'),
+      od('Soft diet after dysphagia screening', '', '', '', '', '집계완료'),
       sec('▶ 주사약 ◀'),
       od('Ceftriaxone 1g/V (로세핀)', '2', 'g', '1회', 'IV', '집계완료', ['10:00/박'], '1'),
       od('Azithromycin 500mg/V (지스로맥스)', '500', 'mg', '1회', 'IV', '집계완료', ['10:00/박'], '1'),
@@ -102,11 +102,11 @@ export const pul: Sample = {
       { dx: '감염 위험성', data: '고령, COPD, 인플루엔자 양성, 면회객', goal: '격리 기간 동안 타 환자·의료진 전파 없음', plan: '비말 격리, 손 위생, 면회 제한 교육', eval: '진행 중.' },
     ],
     lines: [
-      { kind: 'IV catheter', site: '좌측 전완 22G', ins: dt(-3), chg: dt(1), out: '', st: '유지', note: '발적·통증 없음' },
+      { kind: 'IV catheter', site: 'Lt. 전완 22G', ins: dt(-3), chg: dt(1), out: '', st: '유지', note: '발적·통증 없음' },
     ],
     iv: [
-      { time: '14:00', fluid: '0.9% N/S 100mL (항생제 희석)', rate: '200', remain: '0', site: '좌측 전완 22G', st: '완료', by: '박간호' },
-      { time: '06:00', fluid: '0.9% N/S 500mL', rate: '50', remain: '300', site: '좌측 전완 22G', st: '주입 중', by: '최간호' },
+      { time: '14:00', fluid: '0.9% N/S 100mL (항생제 희석)', rate: '200', remain: '0', site: 'Lt. 전완 22G', st: '완료', by: '박간호' },
+      { time: '06:00', fluid: '0.9% N/S 500mL', rate: '50', remain: '300', site: 'Lt. 전완 22G', st: '주입 중', by: '최간호' },
     ],
     edu: [
       { time: md(0, '11:00'), topic: '기침 요령과 심호흡, 인센티브 스피로미터 사용', target: '환자', method: '시범', under: '충분', by: '박간호' },
@@ -126,7 +126,7 @@ export const pul: Sample = {
     forms: {
       morse: [morse(md(-3, '21:00'), [0, 1, 1, 1, 1, 0])],
       braden: [braden(md(-3, '21:00'), [3, 2, 1, 2, 1, 1])],
-      pain: [painForm(md(-3, '21:00'), '3', '우측 흉부', '찌름', '움직일 때', '기침, 심호흡', '안정, 자세 변경', '기침 시 베개로 흉부 지지 교육', '2')],
+      pain: [painForm(md(-3, '21:00'), '3', 'Rt. 흉부', '찌름', '움직일 때', '기침, 심호흡', '안정, 자세 변경', '기침 시 베개로 흉부 지지 교육', '2')],
     },
     handover: [
       { time: md(0, '07:00'), s: '야간에 열 없이 안정적, 기침으로 수면 부족', b: '인플루엔자 A 동반 CAP 입원 4일차, 비말 격리 중, COPD', a: 'BT 37.3, SpO2 95% (2L NC), 가래 점성 있고 배출 호전', r: 'O2 weaning 시도(SpO2 92% 이상 유지 시 1L 감량), 객담 배양 결과 확인', author: '최간호' },

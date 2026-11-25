@@ -21,7 +21,7 @@ const DXC: Record<string, [string, string, string][]> = {
 const ymd = (v?: string) => (v || '').slice(0, 10);
 
 // 샘플 데이터 버전: 올리면 이전 버전으로 저장된 미제출 샘플 차트는 정리되고 새 데이터로 다시 열린다.
-export const SAMPLE_VER = '12';
+export const SAMPLE_VER = '13';
 
 const CONSULT: Record<string, [string, string, string, string][]> = {
   adult: [['RM', '심장재활 교육 및 운동처방 의뢰', '퇴원 후 외래 재활 프로그램 등록 권고', '회신완료']],
@@ -99,8 +99,8 @@ export function enrich(s: Sample): Sample {
   if (!memos.some(m => m.type === 'vacc')) {
     const mo = (n: number) => { const t = new Date(`${day}T00:00:00`); t.setMonth(t.getMonth() - n); return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`; };
     const V: [number, string, string, string][] = key === 'child'
-      ? [[6, 'B형간염 (HepB)', '2차', '대퇴부'], [6, 'DTaP', '2차', '대퇴부'], [6, 'IPV (폴리오)', '2차', '대퇴부'], [6, 'Hib', '2차', '대퇴부'], [6, 'PCV (폐렴구균)', '2차', '대퇴부'], [8, 'BCG', '1차', '우측 상완']]
-      : [[2, '인플루엔자 (독감)', '2026-27', '좌측 상완'], [96, 'Td (파상풍·디프테리아)', '추가', '좌측 상완'], [20, 'COVID-19', '추가', '좌측 상완']];
+      ? [[6, 'B형간염 (HepB)', '2차', '대퇴부'], [6, 'DTaP', '2차', '대퇴부'], [6, 'IPV (폴리오)', '2차', '대퇴부'], [6, 'Hib', '2차', '대퇴부'], [6, 'PCV (폐렴구균)', '2차', '대퇴부'], [8, 'BCG', '1차', 'Rt. 상완']]
+      : [[2, '인플루엔자 (독감)', '2026-27', 'Lt. 상완'], [96, 'Td (파상풍·디프테리아)', '추가', 'Lt. 상완'], [20, 'COVID-19', '추가', 'Lt. 상완']];
     V.forEach(([m, name, dose, site]) => add.push({ type: 'vacc', name, date: mo(m), dose, site, note: '' }));
   }
   // 처방 비교용 이력: 용량이 바뀐 약 1건, 전일에 중지된 처방 1건

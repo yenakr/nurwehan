@@ -26,9 +26,9 @@ export const psych: Sample = {
     orders: [
       sec('▶ 기본처방 ◀'),
       od('Check V/S q [8] hrs', '', '', '', '', '', [], '1'),
-      od('안전 점검 q 15min (위험 물품 점검, 자·타해 관찰)', '', '', '', '', '집계완료', [], '1'),
-      od('폐쇄병동 규칙, 외출 제한', '', '', '', '', '집계완료'),
-      od('체중, 허리둘레 weekly', '', '', '', '', '', [], '1'),
+      od('Safety check q 15min (belongings, self-harm/violence observation)', '', '', '', '', '집계완료', [], '1'),
+      od('Closed ward rules, outing restricted', '', '', '', '', '집계완료'),
+      od('BW, waist circumference weekly', '', '', '', '', '', [], '1'),
       sec('▶ 식사 처방 ◀'),
       od('일반식', '', '', '', '', '집계완료'),
       sec('▶ 먹는약 ◀'),

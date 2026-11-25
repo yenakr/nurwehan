@@ -32,10 +32,10 @@ export const adult: Sample = {
       od('Check I/O q [8] hrs', '', '', '', '', '', [], '1'),
       od('Check BW', '', '', '', '', '', [], '1'),
       memo('※ 매일 아침, 소변 본 직후에 측정.'),
-      od('O2 2L/min NC (SpO2 94% 이상 유지)', '', '', '', '', '', [], '1'),
+      od('O2 2L/min NC (keep SpO2 ≥94%)', '', '', '', '', '', [], '1'),
       memo('※ 12시 현재 room air 유지 중. 94% 미만 시 재적용.'),
       sec('▶ 식사 처방 ◀'),
-      od('저염식 (2g Na) / 수분 1,000mL 제한', '', '', '', '', '집계완료'),
+      od('Low salt diet (2g Na) / Fluid restriction 1,000mL', '', '', '', '', '집계완료'),
       sec('▶ 투 약 ◀'),
       od('Furosemide 20mg/2mL (라식스)', '40', 'mg', '2회', 'IV', '집계완료', ['09:00/박', '17:00/김'], '1', 'D/C'),
       memo('※ 2일째부터 경구 전환 (D/C)'),
@@ -47,7 +47,7 @@ export const adult: Sample = {
       od('Aspirin 100mg (아스피린프로텍트)', '1', 'T', '1회', 'PO', '집계완료', ['09:00/박'], '1'),
       od('Acetaminophen 650mg (타이레놀)', '1', 'T', '0회/4회', 'PO', '', [], '', 'PRN'),
       memo('※ 두통 또는 통증 호소 시. 최소투여간격 6시간.'),
-      od('Furosemide 20mg/2mL (라식스) 응급 투여', '20', 'mg', '1회', 'IV', '집계완료', [full(0, '03:40').slice(11) + '/최'], '1', 'STAT'),
+      od('Furosemide 20mg/2mL (라식스) (stat)', '20', 'mg', '1회', 'IV', '집계완료', [full(0, '03:40').slice(11) + '/최'], '1', 'STAT'),
       memo('※ 새벽 호흡곤란 악화 시 1회 투여함'),
       sec('▶ 검 사 ◀'),
       od('Echocardiography', '', '', '', '', '완료', [], '1'),
@@ -60,7 +60,7 @@ export const adult: Sample = {
       mar(full(0, '09:10'), 'Enalapril 5mg (이나프릴)', '1T', 'PO', '09:00', '박간호'),
       mar(full(0, '09:10'), 'Spironolactone 25mg (알닥톤)', '1T', 'PO', '09:00', '박간호', { note: 'K 4.1 재확인' }),
       mar(full(-1, '09:10'), 'Spironolactone 25mg (알닥톤)', '1T', 'PO', '09:00', '박간호', { st: '미수행', note: '기타 / K 5.4로 보류, 주치의에게 보고함' }),
-      mar(full(0, '03:45'), 'Furosemide 20mg/2mL (라식스) 응급 투여', '20mg', 'IV', 'STAT', '최간호', { note: '야간 호흡곤란 악화, 주치의 지시' }),
+      mar(full(0, '03:45'), 'Furosemide 20mg/2mL (라식스) (stat)', '20mg', 'IV', 'STAT', '최간호', { note: '야간 호흡곤란 악화, 주치의 지시' }),
     ],
     vitals: [
       vit(md(-4, '14:00'), '152/94', '112', '26', '36.8', '89', '0'),
@@ -98,7 +98,7 @@ export const adult: Sample = {
     notes: [
       { time: md(0, '09:20'), focus: '체액과다', text: 'S)\n"어제보다 숨쉬기 편해요."\n\nO)\nBP 128/76, HR 82, SpO2 96% (room air), 체중 61.5kg (입원 시 64.0kg), 하지 부종 trace, 폐 청진 시 crackles 감소.\n\nA)\n체액과다 호전됨. 경구 이뇨제로 전환 처방 확인함.\n\nI)\n수분 1,000mL 제한 및 저염식 유지 격려, 체중·I&O 기록함.\n\nE)\n환자가 하루 수분 섭취량을 정확히 말함.', author: '박간호', shift: 'D' },
       { time: md(0, '03:45'), focus: '호흡곤란', text: 'D)\n03:30 누워 있다 숨이 차다며 깸. RR 28, SpO2 88%, 기좌호흡.\n\nA)\n반 좌위 취해주고 O2 4L NC 적용, 주치의에게 notify 후 처방에 따라 furosemide 20mg IV 투여함.\n\nR)\n04:15 RR 22, SpO2 94%, 호흡곤란 완화됨. 이후 소변 700mL 배출. O2 2L로 감량함.', author: '최간호', shift: 'N' },
-      { time: md(-1, '16:30'), focus: '배뇨', text: 'D)\nFoley catheter 제거 후 첫 자가 배뇨 시도, 3시간 만에 소변 250mL 배출, 잔뇨감 없음.\n\nA)\n처방에 따라 Foley 제거함. 배뇨 시 소변량 측정하도록 소변 통 제공 및 교육함.\n\nR)\n배뇨 곤란이나 요통 없음.', author: '김간호', shift: 'E' },
+      { time: md(-1, '16:30'), focus: '배뇨', text: 'D)\nFoley catheter removal 후 첫 자가 배뇨 시도, 3시간 만에 소변 250mL 배출, 잔뇨감 없음.\n\nA)\n처방에 따라 Foley 제거함. 배뇨 시 소변량 측정하도록 소변 통 제공 및 교육함.\n\nR)\n배뇨 곤란이나 요통 없음.', author: '김간호', shift: 'E' },
       { time: md(-1, '09:20'), focus: '활동 지속성 장애', text: 'D)\n병실 안에서 화장실까지 걷고 나서 숨이 차 쉬었다 걷는다고 함. 보행 후 SpO2 92%, HR 104.\n\nA)\n휴식 후 회복 확인. 활동 간 휴식 계획 교육, 낙상 위험도 높아 보행 시 호출하도록 교육함.\n\nR)\n휴식 5분 후 SpO2 95%, 환자가 호출벨 위치와 사용법을 말함.', author: '박간호', shift: 'D' },
     ],
     care: [
@@ -108,11 +108,11 @@ export const adult: Sample = {
       { dx: '지식부족', data: '약물 이름과 부작용을 모름, 체중 측정 방법 모름', goal: '퇴원 전 약물·증상 관리 내용을 설명할 수 있음', plan: '약물·식이·체중 측정 교육, teach-back 확인, 딸 동반 교육', eval: '' },
     ],
     lines: [
-      { kind: 'IV catheter', site: '우측 전완 22G', ins: dt(-2), chg: dt(1), out: '', st: '유지', note: '삽입 부위 발적·부종 없음' },
+      { kind: 'IV catheter', site: 'Rt. 전완 22G', ins: dt(-2), chg: dt(1), out: '', st: '유지', note: '삽입 부위 발적·부종 없음' },
       { kind: 'Foley catheter', site: '16Fr', ins: dt(-4), chg: '', out: '소변 투명 황색', st: '제거', note: `${dt(-1)} 제거` },
     ],
     iv: [
-      { time: '09:00', fluid: '0.9% N/S 50mL', rate: '12', remain: '38', site: '우측 전완 22G', st: '주입 중', by: '박간호' },
+      { time: '09:00', fluid: '0.9% N/S 50mL', rate: '12', remain: '38', site: 'Rt. 전완 22G', st: '주입 중', by: '박간호' },
     ],
     wounds: [
       { time: md(-1, '10:00'), site: '천골', kind: '욕창', size: '2×2', look: '비창백성 발적 없음, 압박 해소 시 소실. 피부 건조.', dress: '예방적 폼 드레싱', by: '박간호' },
@@ -145,7 +145,7 @@ export const adult: Sample = {
     nact: [
       { time: md(0, '09:20'), act: '혈액 채취', mat: '채혈 주사기', by: '최간호', st: '수행', note: 'BNP, BMP, CBC' },
       { time: md(-1, '16:20'), act: '도뇨관 삽입 (Foley)', mat: 'Foley catheter', by: '김간호', st: '삭제', note: '제거함' },
-      { time: md(-2, '10:00'), act: '정맥 주사 (IV 라인 확보)', mat: 'IV catheter', by: '박간호', st: '수행', note: '우측 전완 22G' },
+      { time: md(-2, '10:00'), act: '정맥 주사 (IV 라인 확보)', mat: 'IV catheter', by: '박간호', st: '수행', note: 'Rt. 전완 22G' },
       { time: md(-1, '10:00'), act: '욕창 드레싱', mat: '폼 드레싱', by: '박간호', st: '수행', note: '천골 예방 드레싱' },
     ],
     mat: [
@@ -164,7 +164,7 @@ export const adult: Sample = {
       { date: dt(-1), meal: '점심', type: '저염식 (2g Na)', amt: '전량', note: '' },
     ],
     sched: [
-      { time: '14:00', kind: '시술', name: '관상동맥조영술', prep: '금식 확인, 동의서 서명, 우측 요골동맥 Allen test', st: '예정' },
+      { time: '14:00', kind: '시술', name: '관상동맥조영술', prep: '금식 확인, 동의서 서명, Rt. 요골동맥 Allen test', st: '예정' },
       { time: '11:00', kind: '검사', name: 'K, BNP, Cr (f/u)', prep: '아침 공복 채혈 완료', st: '완료' },
     ],
     risk: [

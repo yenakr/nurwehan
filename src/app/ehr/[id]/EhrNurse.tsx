@@ -177,7 +177,7 @@ type Dot = { v: 'front' | 'back'; x: number; y: number; c: string; t: string };
 function bodyPlace(kind: string, site: string): { v: 'front' | 'back'; x: number; y: number } {
   const t = `${kind} ${site}`;
   const R = /우|rt|right/i.test(site), L = /좌|lt|left/i.test(site);
-  const back = /천골|엉덩|sacr|둔|회음|등|배면|견갑|후두|뒤꿈치|발뒤꿈|heel|back|occip/i.test(t) && !/foley|도뇨|요도/i.test(t);
+  const back = /천골|엉덩|sacr|둔|회음|(?<!손)등|배면|견갑|후두|뒤꿈치|발뒤꿈|heel|back|occip/i.test(t) && !/foley|도뇨|요도/i.test(t);
   const sx = (x: number) => (back ? 220 - x : x); // 뒷면은 좌우 반전
   const side = (r: number, l: number, mid: number) => (R ? r : L ? l : mid);
   const at = (x: number, y: number) => ({ v: back ? ('back' as const) : ('front' as const), x: sx(x), y });
@@ -190,7 +190,7 @@ function bodyPlace(kind: string, site: string): { v: 'front' | 'back'; x: number
   if (/central|c-line|중심정맥|picc|port|쇄골|경부|목|jugular|subclav/i.test(t)) return at(side(90, 130, 110), 102);
   if (/천골|sacr|엉덩|둔/i.test(t)) return at(110, 272);
   if (/회음/i.test(t)) return at(110, 290);
-  if (/등|배면|견갑|back/i.test(t)) return at(110, 175);
+  if (/(?<!손)등|배면|견갑|back/i.test(t)) return at(110, 175);
   if (/흉|가슴|chest/i.test(t)) return at(side(82, 138, 110), 145);
   if (/복|abd|jp|drain|배액|위루|장루|stoma|배꼽/i.test(t)) return at(side(86, 134, 110), 215);
   if (/손|수부|hand|손목|wrist/i.test(t)) return at(side(30, 190, 30), 300);
@@ -200,10 +200,11 @@ function bodyPlace(kind: string, site: string): { v: 'front' | 'back'; x: number
   if (/대퇴|허벅|무릎|다리|하지|leg|thigh|knee/i.test(t)) return at(side(90, 130, 90), 360);
   return at(side(86, 134, 110), 190);
 }
+const lr = (x: string) => x.replace(/우측\s*/g, 'Rt. ').replace(/좌측\s*/g, 'Lt. ').replace(/양측\s*/g, 'Both ');
 export function bodyDots(data: ChartData): Dot[] {
   const dots: Dot[] = [];
-  data.wounds.forEach(w => { if (w.site) dots.push({ ...bodyPlace(w.kind || '', w.site), c: '#d97706', t: `${w.kind || '상처'} ${w.site}` }); });
-  data.lines.filter(l => l.st !== '제거').forEach(l => { if (l.site || l.kind) dots.push({ ...bodyPlace(l.kind || '', l.site || ''), c: '#2563eb', t: `${l.kind || '라인'} ${l.site || ''}` }); });
+  data.wounds.forEach(w => { if (w.site) dots.push({ ...bodyPlace(w.kind || '', w.site), c: '#d97706', t: `${w.kind || '상처'} ${lr(w.site)}` }); });
+  data.lines.filter(l => l.st !== '제거').forEach(l => { if (l.site || l.kind) dots.push({ ...bodyPlace(l.kind || '', l.site || ''), c: '#2563eb', t: `${l.kind || '라인'} ${lr(l.site || '')}` }); });
   return dots;
 }
 // 왼쪽이 뒷면, 오른쪽이 앞면
@@ -309,6 +310,7 @@ export default function EhrNurse({
   const [orgSel, setOrgSel] = useState('순환기내과');
   const [mOpen, setMOpen] = useState(0); // 0 닫힘, 1 메뉴, 2 메뉴 > 업무
   const [mq, setMq] = useState('');
+  const [figOpen, setFigOpen] = useState(true);
   const [tabs, setTabs] = useState<string[]>([]);
   const [recent, setRecent] = useState<string[]>([]);
   const openMenu = (id: string) => {
@@ -789,6 +791,19 @@ export default function EhrNurse({
             ))}
             {data.history.length === 0 && !i.admit && <p className="ns-nnone">이력 없음</p>}
           </div>
+          <div className="ns-nbox ns-fig">
+            <h4 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <span>오버뷰</span>
+              <span style={{ display: 'flex', gap: 4 }}>
+                <button type="button" className="ns-figb" onClick={() => openMenu('overview')}>열기</button>
+                <button type="button" className="ns-figb" aria-expanded={figOpen} onClick={() => setFigOpen(v => !v)}>{figOpen ? '접기' : '펼치기'}</button>
+              </span>
+            </h4>
+            {figOpen && (<>
+              <BodyFig dots={bodyDots(data)} width={210} />
+              <div className="ns-figl">{bodyDots(data).length ? bodyDots(data).map((d, k) => <span key={k}><i style={{ background: d.c }} />{d.t}</span>) : <span className="ns-nnone">삽입물·상처 없음</span>}</div>
+            </>)}
+          </div>
         </aside>
 
         <main className="ns-nc">
@@ -806,11 +821,6 @@ export default function EhrNurse({
         </main>
 
         <aside className="ns-nr">
-          <div className="ns-nbox ns-fig" role="button" tabIndex={0} title="오버뷰 열기" onClick={() => openMenu('overview')} onKeyDown={e => e.key === 'Enter' && openMenu('overview')}>
-            <h4>오버뷰</h4>
-            <BodyFig dots={bodyDots(data)} width={210} />
-            <div className="ns-figl">{bodyDots(data).length ? bodyDots(data).map((d, k) => <span key={k}><i style={{ background: d.c }} />{d.t}</span>) : <span className="ns-nnone">삽입물·상처 없음</span>}</div>
-          </div>
           {cl.map(g => (
             <div key={g.title} className="ns-nbox">
               <h4>체크리스트 · {g.title}</h4>
@@ -1238,7 +1248,8 @@ export default function EhrNurse({
         .ns-admw { display: inline-flex; align-items: center; gap: 6px; margin: 6px 0; font-size: 13px; font-weight: 700; }
         .ns-sepv { width: 1px; height: 18px; background: rgba(255,255,255,.3); margin: 0 6px; }
         .ns-nmenu .ns-wk { color: #e8c97a; }
-        .ns-fig { cursor: pointer; align-items: center; }
+        .ns-fig { align-items: center; }
+        .ns-figb { border: 1px solid var(--border); background: #fff; border-radius: 4px; font: inherit; font-size: 11.5px; padding: 0 7px; cursor: pointer; }
         .ns-figl { display: flex; flex-direction: column; gap: 2px; font-size: 12px; align-self: stretch; }
         .ns-figl i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
         .ns-pn { border: 1px solid rgba(255,255,255,.4); background: transparent; color: #fff; border-radius: 4px; font-size: 11px; padding: 1px 6px; cursor: pointer; }
