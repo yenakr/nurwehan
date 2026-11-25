@@ -46,6 +46,8 @@ const dutyNow = () => { const h = new Date().getHours(); return h >= 6 && h < 14
 const HIGH = /(insulin|인슐린|heparin|헤파린|potassium|kcl|칼륨|morphine|모르핀|fentanyl|펜타닐|midazolam|미다졸람|항암|digoxin|디곡신|warfarin|와파린|propofol|ketamine|마약)/i;
 // 병실 기준 담당 팀: 1~3호실 1팀, 4호실 이후 2팀
 const teamOf = (bed: string | null) => ((Number((bed || '').split('-')[0]) || 0) % 100 <= 3 ? '1팀' : '2팀');
+const SUBS = ['먹는약', '주사약', '기타'];
+const subOf = (r: Row) => (/주사|IV|IM|SC|inj/i.test(`${r.route || ''}`) ? 1 : /PO|경구/i.test(r.route || '') ? 0 : 2);
 const isMed = (r: Row) => (r.dose || r.route) && !/^check/i.test(r.name || '');
 
 type Item = { i: number; r: Row; notes: string[] };
@@ -349,18 +351,22 @@ export default function EhrNurse({
               </tr>
             </thead>
             <tbody>
-              {items.map(it => {
+              {(kind === 'med' ? [...items].sort((a, b) => subOf(a.r) - subOf(b.r)) : items).map((it, idx, arr) => {
                 const r = it.r;
+                const subHead = kind === 'med' && (idx === 0 || subOf(arr[idx - 1].r) !== subOf(r)) ? <tr key={`sh${it.i}`} className="ns-subh"><td colSpan={6}>[{SUBS[subOf(r)]}]</td></tr> : null;
                 const stop = r.pri === 'D/C' || r.st === '취소';
                 const done = slots(r);
                 const times = kind === 'prn' || kind === 'lab' ? [] : timesFor(r, kind);
                 const n = Math.max(times.length, done.length);
                 const labDone = r.st === '완료' || r.st === '집계완료';
                 return (
-                  <tr key={it.i} className={stop ? 'ns-x' : ''}>
+                  <Fragment key={it.i}>
+                  {subHead}
+                  <tr className={stop ? 'ns-x' : ''}>
                     <td className="ns-otn">
                       <b>{r.name}</b>
                       {r.pri && r.pri !== 'D/C' && <i>{r.pri}</i>}
+                      {(r.opt || '').split(' ').filter(Boolean).map(o => <i key={o} className={o === '비급여' ? 'ns-nhi' : 'ns-alone'}>[{o}]</i>)}
                       {it.notes.map((m, k) => <em key={k}>{m}</em>)}
                     </td>
                     {kind !== 'lab' && <><td>{r.dose ? `${r.dose}${r.unit || ''}` : ''}</td><td>{r.route}</td><td>{r.cnt}</td></>}
@@ -392,6 +398,7 @@ export default function EhrNurse({
                     </td>
                     <td className="ns-otst">{stop ? (r.pri === 'D/C' ? 'D/C' : '취소') : kind === 'lab' ? r.st : n > 0 && done.length >= n ? '완료' : ''}</td>
                   </tr>
+                  </Fragment>
                 );
               })}
             </tbody>
@@ -880,6 +887,9 @@ export default function EhrNurse({
         .ns-npt .ns-nflags { padding: 0 12px 10px; margin-top: 0; }
         .ns-mr { padding: 10px 12px; }
         .ns-fl-pb { font: inherit; font-size: 12.5px; font-weight: 700; padding: 4px 14px; border: 1px solid var(--border); border-radius: 4px; background: #fff; cursor: pointer; }
+        .ns-subh td { background: #f3f6fa; font-weight: 700; font-size: 12.5px; color: var(--primary); }
+        .ns-nhi { color: #b91c1c !important; }
+        .ns-alone { color: #1d4ed8 !important; }
         .ns-fl { padding: 10px 12px; position: relative; }
         .ns-rt { min-width: 0 !important; width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 6px; }
         .ns-rt th, .ns-rt td { border: 1px solid var(--border); padding: 3px 5px; text-align: left; }
