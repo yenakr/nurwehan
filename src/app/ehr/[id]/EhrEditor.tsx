@@ -1211,10 +1211,14 @@ export default function EhrEditor({
   const setDraftVal = (k: string, v: string) => setDraft(d => { const n = { ...d, [k]: v }; applyRules(tab, n, k, v, ruleCtx); return n; });
   const saveDraft = () => { addRow(tab as AnyList, draft); setInp(false); };
 
-  const tools = (
+  const navBtns = (
     <>
         <button type="button" className="back" onClick={() => router.push(`/ehr?view=${encodeURIComponent(info.ward === '응급실' ? '응급' : info.ward || '')}`)}>&larr; {info.ward === '응급실' ? '응급' : info.ward || '목록'}</button>
           <button type="button" className="back" onClick={() => { setWin(null); setScreen(screen === 'main' ? 'chart' : 'main'); }}>{screen === 'main' ? '전체 차트' : '간호 화면'}</button>
+    </>
+  );
+  const tools = (
+    <>
           <span className={`st ${status}`}>{status === 'saved' ? '저장됨' : status === 'saving' ? '저장 중…' : '저장 실패'}</span>
           {ai && !locked && aiOn && <button type="button" className="aib" onClick={askFb} disabled={fbBusy || fbLeft <= 0}><AiMark size={14} />{fbBusy ? '살펴보는 중' : `AI 피드백 ${fbLeft}회`}</button>}
           {locked
@@ -1261,7 +1265,7 @@ export default function EhrEditor({
         <LogoutButton />
       </div>
 
-      <div className="etool">{tools}</div>
+      <div className="etool">{screen === 'chart' && navBtns}{tools}</div>
       {locked && <div className="lkb">{info.reviewed ? '교수님이 확인했어요' : '제출했어요. 교수님 확인 전에는 제출 취소로 고칠 수 있어요'}</div>}
       {info.comment && <div className="cmt"><b>교수님 의견</b><p>{info.comment}</p></div>}
       {fb && <div className="cmt ai"><b style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><AiMark size={14} />AI 피드백</b><button type="button" className="cx" aria-label="닫기" onClick={() => setFb('')}>&times;</button><p>{fb}</p></div>}
@@ -1277,6 +1281,7 @@ export default function EhrEditor({
           onOpen={id => { if (MENU.some(g => g.items.some(it => it.id === id))) setTab(id as TabId); setWin(win === id ? null : id); }}
           onClose={() => setWin(null)}
           drawer={tabBody}
+          nav={navBtns}
           actions={[
             { label: '네임지 출력', run: () => printNameTag(info) },
             ...(['투약', '주사', '수액'] as const).map(k => ({ label: `${k} 티켓 출력`, run: () => printTickets(data, k as TicketKind) })),

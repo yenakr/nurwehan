@@ -223,7 +223,7 @@ function BodyFig({ dots, width }: { dots: Dot[]; width: number }) {
 }
 
 export default function EhrNurse({
-  data, setData, userName, roster, win, onOpen, onClose, drawer, actions, onChart, onLabel,
+  data, setData, userName, roster, win, onOpen, onClose, drawer, nav, actions, onChart, onLabel,
 }: {
   data: ChartData;
   setData: Dispatch<SetStateAction<ChartData>>;
@@ -233,6 +233,7 @@ export default function EhrNurse({
   onOpen: (id: string) => void;
   onClose: () => void;
   drawer: ReactNode;
+  nav?: ReactNode;
   actions?: { label: string; run: () => void; disabled?: boolean }[];
   onChart: () => void;
   onLabel: () => void;
@@ -655,6 +656,7 @@ export default function EhrNurse({
         {mOpen === 2 && <span className="ns-sepv" />}
         {mOpen === 2 && CATS.map(c => <button key={c.name} type="button" disabled={c.name === '최근사용' ? recent.length === 0 : c.name === '출력·퇴원' ? false : c.items.length === 0} className={cat === c.name ? 'ns-on' : ''} onClick={e => { place(e.currentTarget); setMq(''); setCat(cat === c.name ? '' : c.name); }}>{c.name}</button>)}
         {mOpen === 2 && <label className="ns-mq">메뉴찾기<input value={mq} onFocus={e => place(e.currentTarget)} onChange={e => { place(e.currentTarget); setMq(e.target.value); }} /></label>}
+        <div className="ns-nav">{nav}</div>
       </div>
       {mOpen === 2 && ddPos && (mq.trim() || cat) && (() => {
         const ms = (ids: string[]) => ids.map(id => MENUS.find(m => m.id === id)).filter((m): m is { id: string; label: string } => !!m);
@@ -1184,6 +1186,8 @@ export default function EhrNurse({
         .ns-todo tbody tr { cursor: default; }
         .ns-hold { background: rgba(245,158,11,.18); color: #b9770e; }
         .ns-arw.ns-sel { background: var(--primary); color: #fff; }
+        .ns-nav { margin-left: auto; display: flex; gap: 8px; align-items: center; padding: 4px 0; flex: none; }
+        .ns-nav .back { border: 1px solid rgba(255,255,255,.35); background: transparent; color: #fff; border-radius: 4px; padding: 5px 10px; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; white-space: nowrap; }
         .ns-nmenu .ns-tools { margin-left: auto; display: flex; align-items: center; gap: 8px; padding: 4px 0; }
         .ns-tools .back { border: 1px solid rgba(255,255,255,.35); background: transparent; color: #fff; border-radius: 4px; padding: 5px 10px; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
         .ns-tools .st { color: #cbd5e1; font-size: 12px; }
