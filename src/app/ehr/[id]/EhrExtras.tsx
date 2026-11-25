@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState } from 'react';
-import type { ChartData, Row } from '../types';
+import { withBp, type ChartData, type Row } from '../types';
 import { FORMS, formLine } from './EhrForms';
 
 const num = (v: string | undefined) => {
@@ -183,7 +183,8 @@ export function useDictation(onFinal: (t: string) => void) {
 
 // 활력징후 일괄 입력: 여러 시간대를 표로 한 번에 넣는다
 const VCOLS: { key: string; label: string; ph: string }[] = [
-  { key: 'bp', label: '혈압', ph: '120/80' },
+  { key: 'sbp', label: '수축기', ph: '120' },
+  { key: 'dbp', label: '이완기', ph: '80' },
   { key: 'hr', label: '맥박', ph: '72' },
   { key: 'rr', label: '호흡', ph: '18' },
   { key: 'bt', label: '체온', ph: '36.5' },
@@ -212,7 +213,7 @@ export function VitalsBulk({ onApply }: { onApply: (rows: Row[]) => void }) {
   const apply = () => {
     const out = rows.filter(r => VCOLS.some(c => r[c.key]));
     if (out.length === 0) return;
-    onApply(out);
+    onApply(out.map(withBp));
     setRows(fresh());
     setOpen(false);
   };
@@ -227,7 +228,7 @@ export function VitalsBulk({ onApply }: { onApply: (rows: Row[]) => void }) {
             {rows.map((r, i) => (
               <tr key={i}>
                 <td><input value={r.time || ''} onChange={e => set(i, 'time', e.target.value)} aria-label="시간" /></td>
-                {VCOLS.map(c => <td key={c.key}><input value={r[c.key] || ''} inputMode={c.key === 'bp' ? 'text' : 'decimal'} onChange={e => set(i, c.key, e.target.value)} aria-label={c.label} /></td>)}
+                {VCOLS.map(c => <td key={c.key}><input value={r[c.key] || ''} inputMode="decimal" onChange={e => set(i, c.key, e.target.value)} aria-label={c.label} /></td>)}
                 <td><button type="button" aria-label="삭제" onClick={() => setRows(rs => rs.filter((_, j) => j !== i))} style={{ border: 0, background: 'transparent', color: 'inherit', fontSize: 18, cursor: 'pointer' }}>×</button></td>
               </tr>
             ))}

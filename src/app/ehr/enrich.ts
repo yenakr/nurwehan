@@ -21,7 +21,7 @@ const DXC: Record<string, [string, string, string][]> = {
 const ymd = (v?: string) => (v || '').slice(0, 10);
 
 // 샘플 데이터 버전: 올리면 이전 버전으로 저장된 미제출 샘플 차트는 정리되고 새 데이터로 다시 열린다.
-export const SAMPLE_VER = '8';
+export const SAMPLE_VER = '9';
 
 const CONSULT: Record<string, [string, string, string, string][]> = {
   adult: [['RM', '심장재활 교육 및 운동처방 의뢰', '퇴원 후 외래 재활 프로그램 등록 권고', '회신완료']],
@@ -63,6 +63,7 @@ export function enrich(s: Sample): Sample {
   const ward = info.ward || '';
   const inpatient = ward !== '외래' && ward !== '응급실';
   const orders: Row[] = d.orders || [];
+  const labs: Row[] = d.labs || [];
   const out: Partial<typeof d> = {};
   const day = ymd(info.orderDate) || ymd(info.admit);
   const key = s.key;
@@ -89,6 +90,24 @@ export function enrich(s: Sample): Sample {
   if (inpatient && !memos.some(m => m.type === '노티')) (NOTI[key] || []).forEach(([hm, text, u]) => add.push({ type: '노티', text, doctor: info.doctor || '', rank: '주치의', dept: info.dept || '', urgent: u, status: '발송', time: `${day} ${hm}`, author: '박간호', shift: 'D' }));
   if (inpatient && DOCREQ[key] && !memos.some(m => m.type === '서류요청')) add.push({ type: '서류요청', text: DOCREQ[key][0], copies: DOCREQ[key][1], how: DOCREQ[key][2], note: '', status: '요청', time: `${day} 09:20`, author: '박간호', shift: 'D' });
   if (inpatient && COMM[key] && !memos.some(m => m.type === '간호의사소통')) add.push({ type: '간호의사소통', text: COMM[key], time: `${day} 08:00`, author: '박간호', shift: 'D' });
+  // 검사 시계열용 과거 수치 (같은 검사의 이전 3일)
+  if (inpatient && !memos.some(m => m.type === 'labhist') && labs.length) {
+    const base = new Date(`${day}T00:00:00`);
+    const num = labs.filter(r => r.value && !Number.isNaN(parseFloat(r.value)));
+    const seen = new Set<string>();
+    num.forEach(r => {
+      const nm = r.name || '';
+      if (seen.has(nm)) return; seen.add(nm);
+      const v = parseFloat(r.value || '0');
+      [-1, -2, -3].forEach((n, k) => {
+        const t = new Date(base); t.setDate(t.getDate() + n);
+        const mdS = `${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+        const f = 1 + ((((nm.length + k * 3) % 5) - 2) * 0.06) * (k + 1);
+        const val = v * f;
+        add.push({ type: 'labhist', name: nm, value: Math.abs(v) >= 100 ? String(Math.round(val)) : val.toFixed(1), unit: r.unit || '', time: `${mdS} 05:30` });
+      });
+    });
+  }
   if (add.length) out.memos = [...memos, ...add];
 
   if (!d.dxcode?.length && DXC[s.key]) {

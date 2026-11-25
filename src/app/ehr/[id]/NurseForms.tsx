@@ -58,7 +58,7 @@ export default function NurseForm({ kind, data, setData, userName }: Props) {
       for (const [k, v] of keys) if (v && check(k, v).bad) { setMsg(`${LIMITS[k].label} 값을 확인하세요`); return; }
       if (![f.sbp, f.hr, f.rr, f.bt, f.spo2, f.pain].some(x => x)) { setMsg('측정한 항목을 입력하세요'); return; }
       const warns = keys.filter(([k, v]) => v && check(k, v).warn).map(([k]) => LIMITS[k].label);
-      const row: Row = { time, bp: f.sbp ? `${f.sbp}/${f.dbp}` : '', hr: f.hr || '', rr: f.rr || '', bt: f.bt || '', spo2: f.spo2 || '', pain: f.pain || '', by: userName };
+      const row: Row = { time, bp: f.sbp ? `${f.sbp}/${f.dbp}` : '', sbp: f.sbp || '', dbp: f.dbp || '', hr: f.hr || '', rr: f.rr || '', bt: f.bt || '', spo2: f.spo2 || '', pain: f.pain || '', by: userName };
       setData(d => ({ ...d, vitals: [...d.vitals, row] }));
       setF({});
       setTime(nowStr());
@@ -238,7 +238,7 @@ export default function NurseForm({ kind, data, setData, userName }: Props) {
       <table className="nf-t">
         <thead>
           <tr>
-            {kind === 'vitals' && <><th>시간</th><th>혈압</th><th>맥박</th><th>호흡</th><th>체온</th><th>SpO₂</th><th>통증</th><th>입력자</th></>}
+            {kind === 'vitals' && <><th>시간</th><th>수축기</th><th>이완기</th><th>맥박</th><th>호흡</th><th>체온</th><th>SpO₂</th><th>통증</th><th>입력자</th></>}
             {kind === 'bst' && <><th>일시</th><th>시점</th><th>혈당</th><th>인슐린</th><th>용량</th><th>부위</th><th>입력자</th></>}
             {kind === 'mat' && <><th>일시</th><th>처치재료</th><th>수량</th><th>단위</th><th>관련 행위</th><th>입력자</th></>}
             {kind === 'nact' && <><th>일시</th><th>간호행위</th><th>사용 재료</th><th>수행자</th><th>상태</th></>}
@@ -247,7 +247,7 @@ export default function NurseForm({ kind, data, setData, userName }: Props) {
         <tbody>
           {recent.map((r, i) => (
             <tr key={i}>
-              {kind === 'vitals' && <><td>{r.time}</td><td>{r.bp}</td><td>{r.hr}</td><td>{r.rr}</td><td>{r.bt}</td><td>{r.spo2}</td><td>{r.pain}</td><td>{r.by}</td></>}
+              {kind === 'vitals' && <><td>{r.time}</td><td>{r.sbp ?? (r.bp || '').split('/')[0]}</td><td>{r.dbp ?? (r.bp || '').split('/')[1]}</td><td>{r.hr}</td><td>{r.rr}</td><td>{r.bt}</td><td>{r.spo2}</td><td>{r.pain}</td><td>{r.by}</td></>}
               {kind === 'bst' && <><td>{r.time}</td><td>{r.meal}</td><td>{r.glu}</td><td>{r.ins}</td><td>{r.dose}</td><td>{r.site}</td><td>{r.by}</td></>}
               {kind === 'mat' && <><td>{r.time}</td><td>{r.item}</td><td>{r.qty}</td><td>{r.unit}</td><td>{r.act}</td><td>{r.by}</td></>}
               {kind === 'nact' && <><td>{r.time}</td><td>{r.act}</td><td>{r.mat}</td><td>{r.by}</td><td>{r.st}</td></>}
