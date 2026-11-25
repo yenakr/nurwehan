@@ -19,6 +19,7 @@ const MENUS: { id: string; label: string }[] = [
   { id: 'overview', label: '오버뷰' },
   { id: 'flowsheet', label: 'Flowsheet' },
   { id: 'medrec', label: '투약기록' },
+  { id: 'labres', label: '검사결과' },
   { id: 'memos', label: '간호인수인계' },
   { id: 'vitals', label: '임상관찰' },
   { id: 'bst', label: '혈당·인슐린' },
@@ -38,9 +39,9 @@ const MENUS: { id: string; label: string }[] = [
 const CATS: { name: string; items: string[] }[] = [
   { name: '최근사용', items: [] },
   { name: '환자선택', items: [] },
-  { name: '정보조회', items: ['todo', 'overview', 'dir'] },
+  { name: '정보조회', items: ['todo', 'overview', 'labres', 'dir'] },
   { name: '의사소통', items: ['consult', 'docreq', 'staff'] },
-  { name: '기록', items: ['notes', 'flowsheet', 'vitals', 'bst', 'nurseinfo', 'care', 'nact', 'mat', 'memos'] },
+  { name: '기록', items: ['notes', 'labres', 'flowsheet', 'vitals', 'bst', 'nurseinfo', 'care', 'nact', 'mat', 'memos'] },
   { name: '처방', items: ['medrec', 'ret'] },
   { name: '예약', items: ['adm'] },
   { name: '병동', items: ['bulk', 'handover'] },
@@ -319,7 +320,10 @@ export default function EhrNurse({
     patch(it.i, { hold: [it.r.hold, txt].filter(Boolean).join(' | ') });
     setData(d => ({ ...d, notes: [...d.notes, { time: `${date} ${hm()}`, focus: '투약 보류', text: `D)\n${it.r.name} ${it.r.dose || ''}${it.r.unit || ''} ${it.r.route || ''} 투약 보류. 사유: ${reason}${note.trim() ? ` (${note.trim()})` : ''}\n\nA)\n담당의에게 보고 필요 여부 확인함.`, author: userName, shift: duty }] }));
   };
+  const [ordMsg, setOrdMsg] = useState('');
   const ask = (it: Item) => {
+    if (it.r.st === '추가') { setOrdMsg(`'${it.r.name}' 처방을 먼저 접수하세요`); return; }
+    setOrdMsg('');
     if (isMed(it.r)) { setC5({}); setDbl(''); setPt(''); setHold(null); setHoldNote(''); setChk(it); } else perform(it);
   };
   const undo = (it: Item) => {
@@ -407,7 +411,7 @@ export default function EhrNurse({
                       {kind === 'lab' ? (
                         labDone ? (
                           <button type="button" className="ns-sl ns-sl-done" disabled={stop || r.st === '집계완료'} onClick={() => unSlot(it)}>{r.st}</button>
-                        ) : !stop && <button type="button" className="ns-sl ns-sl-next" onClick={() => perform(it)}>완료 처리</button>
+                        ) : !stop && <button type="button" className="ns-sl ns-sl-next" onClick={() => ask(it)}>완료 처리</button>
                       ) : (
                         <>
                           {Array.from({ length: n }, (_, k) => {
@@ -429,7 +433,7 @@ export default function EhrNurse({
                       )}
                       {r.hold && <span className="ns-sl ns-hold" title={r.hold}>보류</span>}
                     </td>
-                    <td className="ns-otst">{stop ? (r.pri === 'D/C' ? 'D/C' : '취소') : kind === 'lab' ? r.st : n > 0 && done.length >= n ? '완료' : ''}</td>
+                    <td className="ns-otst">{stop ? (r.pri === 'D/C' ? 'D/C' : '취소') : r.st === '추가' ? <button type="button" className="ns-sl ns-sl-next" onClick={() => { patch(it.i, { st: '접수', rcv: `${hm()} ${userName}` }); setOrdMsg(''); }}>접수</button> : kind === 'lab' ? r.st : n > 0 && done.length >= n ? '완료' : r.rcv ? <span title={`접수 ${r.rcv}`}>접수</span> : ''}</td>
                   </tr>
                   </Fragment>
                 );
@@ -561,6 +565,7 @@ export default function EhrNurse({
             <button type="button" className="ns-arw" onClick={() => shift(1)} aria-label="다음날">&gt;</button>
             <button type="button" className="ns-cmp" onClick={() => setCmp(true)}>전일처방비교</button>
           </div>
+          {ordMsg && <p className="ns-nerr">{ordMsg}</p>}
           {sec('기본처방', g.base, 'base')}
           {sec('투약', g.med, 'med')}
           {sec('투약 PRN 처방', g.prn, 'prn')}
@@ -730,6 +735,28 @@ export default function EhrNurse({
                   </table>
                 )}
               </>
+            ) : win === 'labres' ? (
+              (() => {
+                const flagOf = (r: Row) => { const v = parseFloat(r.value || ''); const lo = parseFloat(r.min || ''); const hi = parseFloat(r.max || ''); return Number.isNaN(v) ? '' : !Number.isNaN(hi) && v > hi ? 'H' : !Number.isNaN(lo) && v < lo ? 'L' : ''; };
+                const unack = data.labs.filter(r => flagOf(r) && !r.ack).length;
+                return (
+                  <div className="ns-mr">
+                    <p style={{ margin: '0 0 8px', fontWeight: 700 }}>검사결과 · 미확인 이상치 <span style={{ color: unack ? '#dc2626' : 'inherit' }}>{unack}건</span></p>
+                    <table className="ns-rt">
+                      <thead><tr>{['검사일시', '검사명', '결과', '단위', '참고범위', '구분', '확인'].map(h => <th key={h}>{h}</th>)}</tr></thead>
+                      <tbody>
+                        {data.labs.map((r, k) => { const f = flagOf(r); return (
+                          <tr key={k} style={f && !r.ack ? { background: '#fff1f1' } : undefined}>
+                            <td>{r.time}</td><td>{r.name}</td><td style={{ fontWeight: 700, color: f ? '#dc2626' : 'inherit' }}>{r.value}{f && (f === 'H' ? ' ▲' : ' ▼')}</td><td>{r.unit}</td><td>{r.min}~{r.max}</td><td>{r.sample}</td>
+                            <td>{r.ack ? <span title={r.ack}>확인</span> : f ? <button type="button" className="ns-fl-pb" onClick={() => setData(d => ({ ...d, labs: d.labs.map(x => (x === r ? { ...x, ack: `${hm()} ${userName}` } : x)) }))}>결과 확인</button> : ''}</td>
+                          </tr>
+                        ); })}
+                        {data.labs.length === 0 && <tr><td colSpan={7} className="ns-nnone">검사결과 없음</td></tr>}
+                      </tbody>
+                    </table>
+                  </div>
+                );
+              })()
             ) : win === 'medrec' ? (
               (() => {
                 const rows: [string, Item][] = [
