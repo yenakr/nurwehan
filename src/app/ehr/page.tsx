@@ -1,5 +1,6 @@
 import { getCurrentUser } from '@/lib/auth';
-import { listCases } from '@/lib/ehr';
+import { listCases, cleanupCases } from '@/lib/ehr';
+import { SAMPLE_VER } from './enrich';
 import { listVirtuals, studentVirtuals } from '@/lib/ehr-class';
 import { isAdminRole } from '@/lib/auth-core';
 import type { Sample } from './types';
@@ -17,6 +18,7 @@ export default async function EhrPage({ searchParams }: { searchParams: Promise<
   const user = await getCurrentUser();
   if (!user) redirect('/login?redirect=/ehr');
   if (!(await hasEhrAccess(user))) notFound();
+  await cleanupCases(user.id, SAMPLE_VER);
   const cases = await listCases(user.id);
   const extra: Sample[] = (isAdminRole(user.role) ? (await listVirtuals()).filter(v => v.published) : await studentVirtuals(user.id)).map(v => {
     const d = v.data as Sample['data'];

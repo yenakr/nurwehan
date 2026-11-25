@@ -190,3 +190,26 @@ export async function ordersByCase(userId: string): Promise<Record<string, unkno
     return {};
   }
 }
+
+// 옛날 버전으로 저장된 미제출 샘플 차트와 같은 병상·샘플의 중복 차트를 정리한다.
+// (샘플 환자는 목록에서 최신 데이터로 다시 열린다. 제출·퇴원한 차트는 건드리지 않는다.)
+export async function cleanupCases(userId: string, ver: string): Promise<number> {
+  try {
+    const n = await prisma.$executeRaw`
+      DELETE FROM "EhrCase"
+      WHERE "userId" = ${userId} AND "data"->'info'->>'submitted' IS NULL AND COALESCE("data"->'info'->>'discharged', '') = ''
+        AND COALESCE("data"->'info'->>'sampleKey', '') <> '' AND COALESCE("data"->'info'->>'sampleKey', '') NOT LIKE 'v:%'
+        AND COALESCE("data"->'info'->>'dataVer', '') <> ${ver}`;
+    const m = await prisma.$executeRaw`
+      DELETE FROM "EhrCase" c USING "EhrCase" k
+      WHERE c."userId" = ${userId} AND k."userId" = ${userId} AND c."id" <> k."id"
+        AND c."data"->'info'->>'submitted' IS NULL AND k."data"->'info'->>'submitted' IS NULL
+        AND COALESCE(c."data"->'info'->>'discharged', '') = '' AND COALESCE(k."data"->'info'->>'discharged', '') = ''
+        AND ((COALESCE(c."data"->'info'->>'sampleKey', '') <> '' AND c."data"->'info'->>'sampleKey' = k."data"->'info'->>'sampleKey')
+          OR (COALESCE(c."data"->'info'->>'bed', '') <> '' AND c."data"->'info'->>'ward' = k."data"->'info'->>'ward' AND c."data"->'info'->>'bed' = k."data"->'info'->>'bed'))
+        AND (c."updatedAt", c."id") < (k."updatedAt", k."id")`;
+    return Number(n) + Number(m);
+  } catch {
+    return 0;
+  }
+}
