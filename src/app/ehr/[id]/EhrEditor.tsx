@@ -1265,7 +1265,7 @@ export default function EhrEditor({
         <LogoutButton />
       </div>
 
-      <div className="etool">{screen === 'chart' && navBtns}{tools}</div>
+      <div className="etool">{tools}</div>
       {locked && <div className="lkb">{info.reviewed ? '교수님이 확인했어요' : '제출했어요. 교수님 확인 전에는 제출 취소로 고칠 수 있어요'}</div>}
       {info.comment && <div className="cmt"><b>교수님 의견</b><p>{info.comment}</p></div>}
       {fb && <div className="cmt ai"><b style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><AiMark size={14} />AI 피드백</b><button type="button" className="cx" aria-label="닫기" onClick={() => setFb('')}>&times;</button><p>{fb}</p></div>}
@@ -1340,6 +1340,7 @@ export default function EhrEditor({
               );
             })}
           </div>
+          <button type="button" className="topgo" onClick={() => { setWin(null); setScreen('main'); }}>간호 화면</button>
         </div>
 
         <div className="body">
@@ -1495,6 +1496,7 @@ export default function EhrEditor({
         .ehr .wardSel { position: relative; flex: 0 0 auto; display: flex; }
         .ehr .ward { border: 0; background: transparent; cursor: pointer; font-family: inherit; flex: 0 0 auto; display: flex; align-items: center; padding: 0 16px; color: #e2e8f0; font-weight: 700; font-size: 13px; border-right: 1px solid rgba(255,255,255,0.15); }
         .ehr .nav { display: flex; flex-wrap: wrap; }
+        .ehr .topgo { margin-left: auto; align-self: center; margin-right: 10px; border: 1px solid rgba(255,255,255,.35); background: transparent; color: #fff; border-radius: 4px; padding: 5px 12px; font: inherit; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap; }
         .ehr .mi { position: relative; flex: 0 0 auto; }
         .ehr .nav .mi > button { flex: 0 0 auto; border: 0; background: transparent; color: #e5ebf3; padding: 11px 14px; font-size: 13px; font-weight: 600; font-family: inherit; cursor: pointer; border-right: 1px solid rgba(255,255,255,0.08); }
         .ehr .nav .mi > button.on { color: #38d6ff; box-shadow: inset 0 -3px 0 #38d6ff; }
