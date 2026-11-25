@@ -223,11 +223,15 @@ export default function EhrNurse({
   };
   const dxMain = data.dxcode.find(r => r.kind === '주상병' && r.name);
   const [chip, setChip] = useState('');
+  const [rt, setRt] = useState<'meal' | 'sched' | 'cons' | 'appt'>('meal');
+  const [kb, setKb] = useState('');
   const [fTab, setFTab] = useState<'obs' | 'state' | 'lab'>('obs');
   const [fEdit, setFEdit] = useState<{ it: string; h: string } | null>(null);
   const [fVal, setFVal] = useState('');
   const [fCtx, setFCtx] = useState<{ x: number; y: number; it: string; h: string } | null>(null);
-  const FH = ['06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17'];
+  const ALLH = Array.from({ length: 24 }, (_, k) => String(k).padStart(2, '0'));
+  const [fShift, setFShift] = useState<'all' | 'D' | 'E' | 'N'>('all');
+  const FH = fShift === 'D' ? ALLH.slice(7, 15) : fShift === 'E' ? ALLH.slice(15, 23) : fShift === 'N' ? [...ALLH.slice(23), ...ALLH.slice(0, 7)] : ALLH;
   const FG: { g: string; items: string[] }[] = [
     { g: '활력징후', items: ['체온 (℃)', '수축기혈압', '이완기혈압', '맥박 (회/분)', '호흡 (회/분)', 'SpO2 (%)'] },
     { g: '욕창예방 및 관리', items: ['욕창위험평가 (Braden)', '체위변경'] },
@@ -423,6 +427,10 @@ export default function EhrNurse({
               {(dxMain || i.dx) && <><dt>진단</dt><dd>{dxMain ? dxMain.name : i.dx}</dd></>}
             </dl>
             <div className="ns-nlinks">
+              {[['외래', `외래 예약 ${data.appts.length}건`], ['병동', [i.ward, i.bed].filter(Boolean).join(' ') || '병동 정보 없음'], ['응급', data.cpr.length ? `응급 CPR ${data.cpr.length}건` : '응급 내원 기록 없음']].map(([k, v]) => <button key={k} type="button" className={kb === k ? 'ns-on' : ''} onClick={() => setKb(kb === k ? '' : k)}>{k}</button>)}
+              {kb && <p>{kb === '외래' ? `외래 예약 ${data.appts.length}건` : kb === '병동' ? [i.ward, i.bed].filter(Boolean).join(' ') || '병동 정보 없음' : data.cpr.length ? `응급 CPR ${data.cpr.length}건` : '응급 내원 기록 없음'}</p>}
+            </div>
+            <div className="ns-nlinks">
               {[['CPR', data.cpr.length ? `CPR 기록 ${data.cpr.length}건` : 'CPR 기록 없음'], ['약물이상반응', i.allergy ? `알러지: ${i.allergy}` : '등록된 약물이상반응 없음'], ['건강보험', '건강보험 자격 확인됨 (모의 · 심평원 조회)']].map(([k, v]) => <button key={k} type="button" className={chip === k ? 'ns-on' : ''} onClick={() => setChip(chip === k ? '' : k)}>{k}</button>)}
               {chip && <p>{[['CPR', data.cpr.length ? `CPR 기록 ${data.cpr.length}건` : 'CPR 기록 없음'], ['약물이상반응', i.allergy ? `알러지: ${i.allergy}` : '등록된 약물이상반응 없음'], ['건강보험', '건강보험 자격 확인됨 (모의 · 심평원 조회)']].find(x => x[0] === chip)?.[1]}</p>}
             </div>
@@ -505,6 +513,18 @@ export default function EhrNurse({
               ))}
             </div>
           ))}
+          <div className="ns-nbox">
+            <div className="ns-fl-b">
+              {([['meal', '식사'], ['sched', '치료일정'], ['cons', '협진'], ['appt', '타과예약']] as const).map(([k, l]) => <button key={k} type="button" className={rt === k ? 'ns-on' : ''} onClick={() => setRt(k)}>{l}</button>)}
+            </div>
+            <table className="ns-rt">
+              <thead><tr>{(rt === 'meal' ? ['구분', '식이', '시작일', '종료일'] : rt === 'sched' ? ['시간', '구분', '내용'] : rt === 'cons' ? ['의뢰일자', '회신과', '회신의', '실시일자'] : ['예약일', '진료과', '의사']).map(h => <th key={h}>{h}</th>)}</tr></thead>
+              <tbody>
+                {(rt === 'meal' ? data.dietord.map(r => [r.kind || '환자', r.type, r.start, r.end]) : rt === 'sched' ? data.sched.map(r => [r.time, r.kind, r.name]) : rt === 'cons' ? data.consult.map(r => [r.date, r.rdept, r.rdoc, r.perf]) : data.appts.map(r => [r.date, r.dept, r.doc])).map((r, k) => <tr key={k}>{r.map((c, j) => <td key={j}>{c || ''}</td>)}</tr>)}
+                {(rt === 'meal' ? data.dietord : rt === 'sched' ? data.sched : rt === 'cons' ? data.consult : data.appts).length === 0 && <tr><td colSpan={4} className="ns-nnone">없음</td></tr>}
+              </tbody>
+            </table>
+          </div>
           <div className="ns-nbox">
             <h4>간호메모</h4>
             <div key={i.ptNo || 'x'}><RichMemo value={sticky >= 0 ? data.memos[sticky].text || '' : ''} onChange={setSticky} /></div>
@@ -650,7 +670,7 @@ export default function EhrNurse({
               <div className="ns-fl" onClick={() => setFCtx(null)}>
                 <div className="ns-fl-t">
                   <table>
-                    <thead><tr><th>기간 · {date}</th>{FH.map(h => <th key={h}>{h}시</th>)}</tr></thead>
+                    <thead><tr><th>기간 · {date}<div className="ns-fl-s">{([['all', '24시간'], ['D', 'Day'], ['E', 'Evening'], ['N', 'Night']] as const).map(([k, l]) => <button key={k} type="button" className={fShift === k ? 'ns-on' : ''} onClick={() => setFShift(k)}>{l}</button>)}</div></th>{FH.map(h => <th key={h}>{h}시</th>)}</tr></thead>
                     <tbody>
                       {FG.map(g => (
                         <Fragment key={g.g}>
@@ -818,12 +838,18 @@ export default function EhrNurse({
         .ns-lnk { border: 0; background: transparent; color: var(--primary); font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 0; text-align: left; }
         .ns-npt .ns-nflags { padding: 0 12px 10px; margin-top: 0; }
         .ns-fl { padding: 10px 12px; position: relative; }
+        .ns-rt { min-width: 0 !important; width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 6px; }
+        .ns-rt th, .ns-rt td { border: 1px solid var(--border); padding: 3px 5px; text-align: left; }
+        .ns-rt th { background: #f6f8fb; }
         .ns-fl-t { overflow: auto; }
         .ns-fl table { min-width: 0; border-collapse: collapse; font-size: 12.5px; width: 100%; }
         .ns-fl th, .ns-fl td { border: 1px solid var(--border); padding: 4px 6px; text-align: center; height: 28px; white-space: nowrap; }
         .ns-fl tbody th { text-align: left; background: #f6f8fb; font-weight: 600; }
         .ns-fl td { min-width: 52px; cursor: cell; }
         .ns-fl td input { width: 48px; padding: 2px 4px; font-size: 12.5px; }
+        .ns-fl-s { display: flex; gap: 3px; margin-top: 3px; }
+        .ns-fl-s button { font: inherit; font-size: 11px; padding: 1px 6px; border: 1px solid var(--border); border-radius: 3px; background: #fff; cursor: pointer; }
+        .ns-fl-s button.ns-on { background: var(--primary); color: #fff; border-color: var(--primary); }
         .ns-fl-v { background: #eef6ff; font-weight: 700; }
         .ns-fl-g td { background: #eaf0f7; text-align: left; font-weight: 700; cursor: default; }
         .ns-fl-h { font-size: 12px; color: var(--sub-text); margin: 6px 0; }
