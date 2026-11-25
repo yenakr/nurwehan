@@ -5,6 +5,7 @@ import { MATS, matsFor } from '../codes';
 import NurseForm from './NurseForms';
 import LabResults from './LabResults';
 import OrderCompare from './OrderCompare';
+import { PatInfo, DxHist, SurgHist, VaccHist } from './PatientViews';
 import { StaffWin, DocReqWin, RichMemo } from './NurseExtras';
 import { DEPTS, buildDirectory } from '../directory';
 import { confirmDialog } from '@/components/Dialog';
@@ -38,12 +39,16 @@ const MENUS: { id: string; label: string }[] = [
   { id: 'discharge', label: '퇴원정보/계획' },
   { id: 'dir', label: '원내번호조회' },
   { id: 'staff', label: '의료진 · Notify' },
+  { id: 'patinfo', label: '환자정보' },
+  { id: 'dxhist', label: '상병이력' },
+  { id: 'surghist', label: '수술이력' },
+  { id: 'vacc', label: '방종이력' },
 ];
 
 const CATS: { name: string; items: string[] }[] = [
   { name: '최근사용', items: [] },
   { name: '환자선택', items: [] },
-  { name: '정보조회', items: ['todo', 'overview', 'labres', 'dir'] },
+  { name: '정보조회', items: ['todo', 'overview', 'labres', 'patinfo', 'dxhist', 'surghist', 'vacc', 'dir'] },
   { name: '의사소통', items: ['consult', 'docreq', 'staff'] },
   { name: '기록', items: ['notes', 'labres', 'flowsheet', 'vitals', 'bst', 'nurseinfo', 'care', 'nact', 'mat', 'memos'] },
   { name: '처방', items: ['medrec', 'ret'] },
@@ -638,6 +643,7 @@ export default function EhrNurse({
               {prevNext.map(([lb, h]) => <button key={lb} type="button" className="ns-pn" disabled={!h} title={h ? `${h.bed} ${h.name}` : ''} onClick={() => h && router.push(`/ehr/${h.id}`)}>{lb}</button>)}
               <b>{i.name || '이름 없음'}</b>
               {i.ageSex && <span className="ns-nsx">{i.ageSex}</span>}
+              {i.blood && <span className="ns-nsx" title="혈액형">{i.blood}</span>}
               {i.ptNo && <span className="ns-nno">{i.ptNo}</span>}
             </div>
             <dl className="ns-nkv">
@@ -646,12 +652,19 @@ export default function EhrNurse({
               {i.doctor && <><dt>지정의</dt><dd>{i.doctor}</dd></>}
               {i.attending && <><dt>주치의</dt><dd>{i.attending}</dd></>}
               {dd(i.admit) && <><dt>입원일</dt><dd>{dd(i.admit)}{dayN(i.admit) && <em>HD#{dayN(i.admit).replace('일째', '')}</em>}</dd></>}
+              {dd(i.admit) && <><dt>재원기간</dt><dd>{dd(i.admit).replace(/-/g, '.')}~{dd(i.disDate) ? dd(i.disDate).replace(/-/g, '.') : ''}</dd></>}
               {dd(i.disDate) && <><dt>퇴원예정</dt><dd>{dd(i.disDate)}</dd></>}
               {data.surgery[0] && dd(data.surgery[0].date) && <><dt>수술일</dt><dd>{dd(data.surgery[0].date)}{podN(data.surgery[0].date) && <em>{podN(data.surgery[0].date)}</em>}</dd></>}
               {(dxMain || i.dx) && <><dt>진단명</dt><dd>{dxMain ? dxMain.name : i.dx}</dd></>}
             </dl>
             <div className="ns-ngrp"><span>구분</span><div className="ns-nlinks">
               {[['외래', '외래'], ['병동', i.ward === '응급실' ? '응급' : i.ward || ''], ['응급', '응급']].map(([k, v]) => <button key={k} type="button" disabled={!v} onClick={() => router.push(`/ehr?view=${encodeURIComponent(v)}`)}>{k}</button>)}
+              {['통합', '다학제'].map(k => <button key={k} type="button" disabled>{k}</button>)}
+            </div></div>
+            <div className="ns-ngrp"><span>메뉴</span><div className="ns-nlinks">
+              <button type="button" onClick={() => win && closeTab(win)}>OCS</button>
+              {([['환자정보', 'patinfo'], ['검사결과', 'labres'], ['상병이력', 'dxhist'], ['수술이력', 'surghist'], ['방종이력', 'vacc']] as const).map(([k, id]) => <button key={k} type="button" onClick={() => openMenu(id)}>{k}</button>)}
+              {['PACS', 'CIS', '통합치료계획', '타병원', 'PROMS'].map(k => <button key={k} type="button" disabled>{k}</button>)}
             </div></div>
             <div className="ns-ngrp"><span>조회</span><div className="ns-nlinks">
               {[['CPR', data.cpr.length ? `CPR 기록 ${data.cpr.length}건` : 'CPR 기록 없음'], ['약물이상반응', i.allergy ? `알러지: ${i.allergy}` : '등록된 약물이상반응 없음'], ['건강보험', '건강보험 자격 확인됨 (모의 · 심평원 조회)']].map(([k, v]) => <button key={k} type="button" className={chip === k ? 'ns-on' : ''} onClick={() => setChip(chip === k ? '' : k)}>{k}</button>)}
@@ -891,6 +904,14 @@ export default function EhrNurse({
                   </table>
                 )}
               </>
+            ) : win === 'patinfo' ? (
+              <PatInfo data={data} />
+            ) : win === 'dxhist' ? (
+              <DxHist data={data} />
+            ) : win === 'surghist' ? (
+              <SurgHist data={data} />
+            ) : win === 'vacc' ? (
+              <VaccHist data={data} />
             ) : win === 'labres' ? (
               <LabResults data={data} setData={setData} userName={userName} />
             ) : win === 'medrec' ? (
