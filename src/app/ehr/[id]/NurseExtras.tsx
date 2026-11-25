@@ -7,10 +7,25 @@ import { DEPTS, staffOf, type Staff } from '../directory';
 const p2 = (n: number) => String(n).padStart(2, '0');
 const stamp = () => { const d = new Date(); return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}`; };
 
+// 실시간 연동이 아니므로 경과 시간으로 상태·답변을 모의한다
+const mins = (t?: string) => { const m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/.exec(t || ''); return m ? (Date.now() - new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]).getTime()) / 60000 : 0; };
+const useTick = () => { const [, set] = useState(0); useEffect(() => { const id = setInterval(() => set(x => x + 1), 20000); return () => clearInterval(id); }, []); };
+const notiState = (m: Row): { st: string; reply: string } => {
+  const k = m.urgent ? 0.5 : 1;
+  const e = mins(m.time);
+  if (e < 1 * k) return { st: '발송', reply: '' };
+  if (e < 3 * k) return { st: '수신 확인', reply: '' };
+  const t = m.text || '';
+  const reply = /통증|아프|NRS/i.test(t) ? '진통제 처방 추가했습니다. 확인 바랍니다.' : /열|발열|오한/.test(t) ? 'Fever work-up 오더 내겠습니다. 혈액배양 확인해주세요.' : /혈압|BP|저혈압|고혈압/i.test(t) ? '15분 뒤 재측정 후 다시 노티 부탁드립니다.' : /혈당|BST|저혈당|고혈당/i.test(t) ? 'Insulin 처방 확인해서 조정하겠습니다.' : /구토|오심|메스꺼/.test(t) ? '항구토제 처방 추가했습니다.' : /호흡|산소|SpO2|숨/i.test(t) ? '산소 유지하고 ABGA 오더 내겠습니다. 상태 계속 관찰해주세요.' : '확인했습니다. 오더 확인 바랍니다.';
+  return { st: '답변', reply };
+};
+const docState = (m: Row) => { const e = mins(m.time); return e < 2 ? '요청' : e < 5 ? '접수' : e < 10 ? '작성중' : '발급완료 (수령 가능)'; };
+
 type P = { data: ChartData; setData: Dispatch<SetStateAction<ChartData>>; userName: string; duty: string };
 
 // 진료과 의료진 목록과 노티 보내기
 export function StaffWin({ data, setData, userName, duty }: P) {
+  useTick();
   const code = data.info.dept || '';
   const [dept, setDept] = useState(DEPTS.some(d => d.code === code) ? code : DEPTS[0].code);
   const [to, setTo] = useState<Staff | null>(null);
@@ -67,10 +82,10 @@ export function StaffWin({ data, setData, userName, duty }: P) {
       )}
       <h4>노티 내역</h4>
       <table className="nx-t">
-        <thead><tr><th>일시</th><th>대상</th><th>내용</th><th>상태</th></tr></thead>
+        <thead><tr><th>일시</th><th>대상</th><th>내용</th><th>상태</th><th>답변</th></tr></thead>
         <tbody>
-          {sent.slice().reverse().map((m, k) => <tr key={k}><td>{(m.time || '').slice(5)}</td><td>{m.rank} {m.doctor}</td><td style={{ textAlign: 'left' }}>{m.urgent && <b className="u">[긴급] </b>}{m.text}</td><td>{m.status}</td></tr>)}
-          {sent.length === 0 && <tr><td colSpan={4} className="none">내역 없음</td></tr>}
+          {sent.slice().reverse().map((m, k) => <tr key={k}><td>{(m.time || '').slice(5)}</td><td>{m.rank} {m.doctor}</td><td style={{ textAlign: 'left' }}>{m.urgent && <b className="u">[긴급] </b>}{m.text}</td><td>{notiState(m).st}</td><td style={{ textAlign: 'left' }}>{notiState(m).reply}</td></tr>)}
+          {sent.length === 0 && <tr><td colSpan={5} className="none">내역 없음</td></tr>}
         </tbody>
       </table>
       <NxCss />
@@ -83,6 +98,7 @@ const HOW = ['병실 전달', '원무과 방문 수령', '우편 발송', '이�
 
 // 원무과로 보내는 서류 발급 요청
 export function DocReqWin({ data, setData, userName, duty }: P) {
+  useTick();
   const [f, setF] = useState<Record<string, string>>({ doc: '', copies: '1', how: HOW[0], note: '' });
   const [msg, setMsg] = useState('');
   const set = (k: string, v: string) => { setF(o => ({ ...o, [k]: v })); setMsg(''); };
@@ -120,7 +136,7 @@ export function DocReqWin({ data, setData, userName, duty }: P) {
       <table className="nx-t">
         <thead><tr><th>일시</th><th>서류</th><th>부수</th><th>수령 방법</th><th>비고</th><th>상태</th></tr></thead>
         <tbody>
-          {list.slice().reverse().map((m, k) => <tr key={k}><td>{(m.time || '').slice(5)}</td><td>{m.text}</td><td>{m.copies}</td><td>{m.how}</td><td>{m.note}</td><td>{m.status}</td></tr>)}
+          {list.slice().reverse().map((m, k) => <tr key={k}><td>{(m.time || '').slice(5)}</td><td>{m.text}</td><td>{m.copies}</td><td>{m.how}</td><td>{m.note}</td><td>{docState(m)}</td></tr>)}
           {list.length === 0 && <tr><td colSpan={6} className="none">내역 없음</td></tr>}
         </tbody>
       </table>
