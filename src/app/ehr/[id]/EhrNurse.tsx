@@ -16,6 +16,7 @@ export type Roster = { id: string; ward: string | null; bed: string | null; name
 const MENUS: { id: string; label: string }[] = [
   { id: 'todo', label: '오늘 할 일' },
   { id: 'notes', label: '간호기록' },
+  { id: 'overview', label: '오버뷰' },
   { id: 'memos', label: '간호인수인계' },
   { id: 'vitals', label: '임상관찰' },
   { id: 'bst', label: '혈당·인슐린' },
@@ -629,6 +630,47 @@ export default function EhrNurse({
                   </table>
                 )}
               </>
+            ) : win === 'overview' ? (
+              (() => {
+                const dots: { x: number; y: number; c: string; t: string }[] = [];
+                const place = (site: string) => {
+                  const L = /우|rt|right/i.test(site), Lf = /좌|lt|left/i.test(site);
+                  const dx = L ? 44 : Lf ? 116 : 80;
+                  if (/두|머리|head/i.test(site)) return { x: 80, y: 28 };
+                  if (/흉|가슴|chest/i.test(site)) return { x: dx, y: 95 };
+                  if (/복|abd/i.test(site)) return { x: dx, y: 140 };
+                  if (/천골|엉덩|sacr|둔/i.test(site)) return { x: 80, y: 175 };
+                  if (/손|수|전완|상지|arm|hand/i.test(site)) return { x: L ? 22 : 138, y: 135 };
+                  if (/다리|하지|발|leg|foot|대퇴/i.test(site)) return { x: L ? 62 : 98, y: 240 };
+                  return { x: dx, y: 120 };
+                };
+                data.wounds.forEach(w => { if (w.site) dots.push({ ...place(w.site), c: '#d97706', t: `${w.kind || '상처'} ${w.site}` }); });
+                data.lines.filter(l => l.st !== '제거').forEach(l => { if (l.site) dots.push({ ...place(l.site), c: '#2563eb', t: `${l.kind || '라인'} ${l.site}` }); });
+                return (
+                  <div className="ns-ov">
+                    <svg viewBox="0 0 160 300" width="170" aria-label="신체 도식">
+                      <ellipse cx="80" cy="30" rx="20" ry="24" fill="#e4eaf2" stroke="#9fb3cc" />
+                      <rect x="42" y="56" width="76" height="130" rx="24" fill="#e4eaf2" stroke="#9fb3cc" />
+                      <rect x="10" y="64" width="26" height="100" rx="12" fill="#e4eaf2" stroke="#9fb3cc" />
+                      <rect x="124" y="64" width="26" height="100" rx="12" fill="#e4eaf2" stroke="#9fb3cc" />
+                      <rect x="48" y="186" width="30" height="100" rx="14" fill="#e4eaf2" stroke="#9fb3cc" />
+                      <rect x="82" y="186" width="30" height="100" rx="14" fill="#e4eaf2" stroke="#9fb3cc" />
+                      {dots.map((d, k) => <circle key={k} cx={d.x} cy={d.y} r="6" fill={d.c}><title>{d.t}</title></circle>)}
+                    </svg>
+                    <div>
+                      <div className="ns-nflags">{flags.length ? flags.map(f => <em key={f}>{f}</em>) : <em>위험 태그 없음</em>}</div>
+                      <h4>간호진단 · {data.care.length}문제</h4>
+                      {data.care.map((c, k) => <p key={k}>{c.dx}</p>)}
+                      <h4>삽입물·라인</h4>
+                      {data.lines.filter(l => l.st !== '제거').map((l, k) => <p key={k}>{l.kind} {l.site} {l.ins && `(${l.ins})`}</p>)}
+                      {data.lines.filter(l => l.st !== '제거').length === 0 && <p className="ns-nnone">없음</p>}
+                      <h4>상처·욕창</h4>
+                      {data.wounds.map((w, k) => <p key={k}>{w.kind} {w.site}</p>)}
+                      {data.wounds.length === 0 && <p className="ns-nnone">없음</p>}
+                    </div>
+                  </div>
+                );
+              })()
             ) : win === 'adm' ? (
               <>
                 <div className="ns-nhd">
@@ -717,6 +759,9 @@ export default function EhrNurse({
         .ns-nkv dd em { font-style: normal; margin-left: 6px; font-size: 11px; font-weight: 700; color: var(--primary); }
         .ns-lnk { border: 0; background: transparent; color: var(--primary); font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 0; text-align: left; }
         .ns-npt .ns-nflags { padding: 0 12px 10px; margin-top: 0; }
+        .ns-ov { display: flex; gap: 20px; padding: 14px; align-items: flex-start; }
+        .ns-ov h4 { margin: 12px 0 4px; font-size: 13px; }
+        .ns-ov p { margin: 2px 0; font-size: 13px; }
         .ns-nlinks { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 12px 8px; }
         .ns-nlinks button { font: inherit; font-size: 12px; font-weight: 700; padding: 3px 9px; border: 1px solid var(--border); border-radius: 4px; background: #fff; cursor: pointer; }
         .ns-nlinks button.ns-on { background: var(--primary); color: #fff; border-color: var(--primary); }
