@@ -21,7 +21,7 @@ const DXC: Record<string, [string, string, string][]> = {
 const ymd = (v?: string) => (v || '').slice(0, 10);
 
 // 샘플 데이터 버전: 올리면 이전 버전으로 저장된 미제출 샘플 차트는 정리되고 새 데이터로 다시 열린다.
-export const SAMPLE_VER = '11';
+export const SAMPLE_VER = '12';
 
 const CONSULT: Record<string, [string, string, string, string][]> = {
   adult: [['RM', '심장재활 교육 및 운동처방 의뢰', '퇴원 후 외래 재활 프로그램 등록 권고', '회신완료']],
@@ -91,6 +91,10 @@ export function enrich(s: Sample): Sample {
   if (inpatient && !memos.some(m => m.type === '노티')) (NOTI[key] || []).forEach(([hm, text, u]) => add.push({ type: '노티', text, doctor: info.doctor || '', rank: '주치의', dept: info.dept || '', urgent: u, status: '발송', time: `${day} ${hm}`, author: '박간호', shift: 'D' }));
   if (inpatient && DOCREQ[key] && !memos.some(m => m.type === '서류요청')) add.push({ type: '서류요청', text: DOCREQ[key][0], copies: DOCREQ[key][1], how: DOCREQ[key][2], note: '', status: '요청', time: `${day} 09:20`, author: '박간호', shift: 'D' });
   if (inpatient && COMM[key] && !memos.some(m => m.type === '간호의사소통')) add.push({ type: '간호의사소통', text: COMM[key], time: `${day} 08:00`, author: '박간호', shift: 'D' });
+  // 처방 변경 확인 기준(간호가 마지막으로 확인한 처방 내용)
+  if (!memos.some(m => m.type === 'ordack')) {
+    orders.forEach(o => { if (o.name && o.kind !== 'sec' && o.kind !== 'memo') add.push({ type: 'ordack', name: o.name, sig: [o.dose, o.unit, o.cnt, o.route, o.pri].map(x => x || '').join('|'), text: `${o.dose || ''}${o.unit || ''} ${o.route || ''} ${o.cnt || ''} ${o.pri || ''}`.replace(/\s+/g, ' ').trim() || '-', author: '', time: '' }); });
+  }
   // 방종이력
   if (!memos.some(m => m.type === 'vacc')) {
     const mo = (n: number) => { const t = new Date(`${day}T00:00:00`); t.setMonth(t.getMonth() - n); return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`; };

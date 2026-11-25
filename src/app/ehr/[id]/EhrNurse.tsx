@@ -6,6 +6,7 @@ import NurseForm from './NurseForms';
 import LabResults from './LabResults';
 import OrderCompare from './OrderCompare';
 import NursingRecord from './NursingRecord';
+import { labTestsFor, resolveLabs } from '../labref';
 import { PatInfo, DxHist, SurgHist, VaccHist } from './PatientViews';
 import { StaffWin, DocReqWin, RichMemo } from './NurseExtras';
 import { DEPTS, buildDirectory } from '../directory';
@@ -423,6 +424,23 @@ export default function EhrNurse({
   const printBed = () => printDoc('침상카드', `${head()}<div class="big">${esc(i.name || '')}</div><p>지정의 ${esc(i.doctor || '')} · 주치의 ${esc(i.attending || '')} · 진단 ${esc(dxMain ? dxMain.name : i.dx || '')}</p><p>알러지: ${esc(i.allergy || '없음')} · 격리: ${esc(i.iso || '없음')} · ${i.npo === '1' ? '금식' : ''}</p>${flags.map(f => `<span class="tag">${esc(f)}</span>`).join('')}`);
   const printWarn = () => printDoc('주의라벨', `${head()}${[...flags, ...(i.npo === '1' ? ['금식'] : []), ...(i.allergy && !/^(없음|무|none|-)$/i.test(i.allergy.trim()) ? [`알러지 ${i.allergy}`] : [])].map(f => `<span class="tag">${esc(f)}</span>`).join('') || '<p>주의 항목 없음</p>'}`);
 
+  const ordSig = (o: Row) => [o.dose, o.unit, o.cnt, o.route, o.pri].map(x => x || '').join('|');
+  const ordTxt = (o: Row) => `${o.dose || ''}${o.unit || ''} ${o.route || ''} ${o.cnt || ''} ${o.pri || ''}`.replace(/\s+/g, ' ').trim() || '-';
+  const ackOf = (name: string) => data.memos.find(m => m.type === 'ordack' && m.name === name);
+  const isChanged = (o: Row) => { const a = ackOf(o.name || ''); return !!a && a.sig !== ordSig(o) && o.st !== '추가'; };
+  const ordAck = (o: Row) => setData(d => ({ ...d, memos: [...d.memos.filter(m => !(m.type === 'ordack' && m.name === o.name)), { type: 'ordack', name: o.name || '', sig: ordSig(o), text: ordTxt(o), author: userName, time: `${date} ${hm()}` }] }));
+  const chgCnt = data.orders.filter(o => o.name && isChanged(o)).length;
+  const ivMl = (r: Row) => {
+    if (!isMed(r) || !/^(IV|CIV|IVF|IV-?DRIP)$/i.test((r.route || '').trim())) return 0;
+    const amt = parseFloat(r.dose || '');
+    return Number.isNaN(amt) ? 0 : /^l$/i.test((r.unit || '').trim()) ? amt * 1000 : /^(ml|cc)$/i.test((r.unit || '').trim()) ? amt : 0;
+  };
+  const flowAdd = (hh: string, delta: number) => setData(d => {
+    const cur = d.memos.find(m => m.type === 'flow' && m.date === date && m.item === 'IV (mL)' && m.hour === hh);
+    const rest = d.memos.filter(m => m !== cur);
+    const nv = Math.max(0, (Number(cur?.text) || 0) + delta);
+    return { ...d, memos: nv > 0 ? [...rest, { type: 'flow', date, item: 'IV (mL)', hour: hh, text: String(nv), author: userName }] : rest };
+  });
   const patch = (idx: number, p: Row) => setData(d => ({ ...d, orders: d.orders.map((o, j) => (j === idx ? { ...o, ...p } : o)) }));
   const slots = slotsOf;
   const perform = (it: Item) => {
@@ -433,15 +451,17 @@ export default function EhrNurse({
     if (!isMed(it.r)) p.st = '완료';
     patch(it.i, p);
     // IV 투약량은 Flowsheet Intake(IV)에 자동 누적
-    if (isMed(it.r) && /^(IV|CIV|IVF|IV-?DRIP)$/i.test((it.r.route || '').trim())) {
-      const amt = parseFloat(it.r.dose || '');
-      const ml = Number.isNaN(amt) ? 0 : /^l$/i.test((it.r.unit || '').trim()) ? amt * 1000 : /^(ml|cc)$/i.test((it.r.unit || '').trim()) ? amt : 0;
-      if (ml > 0) {
-        const hh = hm().slice(0, 2);
+    const ml = ivMl(it.r);
+    if (ml > 0) flowAdd(hm().slice(0, 2), ml);
+    // 검사 처방은 채혈(검체 채취) 시각을 남기고 결과를 일정 시간 뒤 자동 반영
+    if (!isMed(it.r)) {
+      const tests = labTestsFor(it.r.name || '');
+      if (tests.length) {
+        const now = Date.now();
         setData(d => {
-          const cur = d.memos.find(m => m.type === 'flow' && m.date === date && m.item === 'IV (mL)' && m.hour === hh);
-          const rest = d.memos.filter(m => m !== cur);
-          return { ...d, memos: [...rest, { type: 'flow', date, item: 'IV (mL)', hour: hh, text: String((Number(cur?.text) || 0) + ml), author: userName }] };
+          const keep = d.labs.filter(l => l.value || !tests.some(t => t.name === l.name));
+          const add = tests.map((t): Row => ({ name: t.name, value: '', unit: t.unit, min: String(t.min), max: String(t.max), sample: t.sample, time: `${date.slice(5)} ${hm()}`, col: `${date} ${hm()}`, due: String(now + 45 * 1000), ord: it.r.name || '' }));
+          return { ...d, labs: [...keep, ...add] };
         });
       }
     }
@@ -464,10 +484,38 @@ export default function EhrNurse({
   };
   const undo = (it: Item) => {
     const used = slots(it.r);
+    // 마지막 투약을 취소하면 Flowsheet Intake(IV)에서 같은 양을 뺀다
+    if (used.length) { const ml = ivMl(it.r); const hh = (it.r[used[used.length - 1]] || '').slice(0, 2); if (ml > 0 && /^\d{2}$/.test(hh)) flowAdd(hh, -ml); }
+    // 채혈을 취소하면 아직 결과 전인 검사는 대기 목록에서 뺀다
+    if (!isMed(it.r)) setData(d => ({ ...d, labs: d.labs.filter(l => !(l.ord === it.r.name && !l.value)) }));
     if (!used.length) return patch(it.i, { ck: '', st: it.r.st === '완료' ? '' : it.r.st });
     patch(it.i, { [used[used.length - 1]]: '', ck: used.length > 1 ? '1' : '' });
   };
 
+  // 시간 경과 시뮬레이션: 검사 결과 자동 반영, 협진 접수 → 진행중 → 회신완료
+  useEffect(() => {
+    const tick = () => setData(d => {
+      const now = Date.now();
+      const labs = resolveLabs(d.labs, now);
+      let cch = false;
+      const consult = d.consult.map(c => {
+        if (c.st !== '접수' && c.st !== '진행중') return c;
+        if (!c.rt) { cch = true; return { ...c, rt: String(now) }; }
+        const el = now - Number(c.rt);
+        if (el > 120000) {
+          cch = true;
+          return { ...c, st: '회신완료', rdoc: c.rdoc || '회신의', perf: c.perf || date, reply: c.reply || '의뢰 내용 확인함. 현재 처방 유지하며 경과 관찰 권고. 증상 악화 시 재협진 바랍니다.' };
+        }
+        if (el > 40000 && c.st === '접수') { cch = true; return { ...c, st: '진행중' }; }
+        return c;
+      });
+      return labs === d.labs && !cch ? d : { ...d, labs, consult };
+    });
+    const id = setInterval(tick, 10000);
+    tick();
+    return () => clearInterval(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [date]);
   const memoOf = (t: string) => data.memos.filter(m => m.type === t);
   const sticky = data.memos.findIndex(m => m.type === '간호메모');
   const setSticky = (text: string) => setData(d => {
@@ -565,7 +613,7 @@ export default function EhrNurse({
                     const late = !stop && isToday && inDuty && nowMin - (th * 60 + Number(t.slice(3))) > 60;
                     return <button type="button" className={`ns-sl ${next && !stop ? (late ? 'ns-sl-late' : 'ns-sl-next') : 'ns-sl-wait'}`} disabled={stop || !next} onClick={() => ask(it)}>{t}</button>;
                   };
-                  const status = stop ? (r.pri === 'D/C' ? 'D/C' : '취소') : r.st === '추가' ? <button type="button" className="ns-sl ns-sl-next" onClick={() => { patch(it.i, { st: '접수', rcv: `${hm()} ${userName}` }); setOrdMsg(''); }}>접수</button> : kind === 'lab' ? r.st : n > 0 && done.length >= n ? '집계완료' : r.rcv ? <span title={`접수 ${r.rcv}`}>접수</span> : '';
+                  const status = stop ? (r.pri === 'D/C' ? 'D/C' : '취소') : r.st === '추가' ? <button type="button" className="ns-sl ns-sl-next" onClick={() => { patch(it.i, { st: '접수', rcv: `${hm()} ${userName}` }); ordAck(it.r); setOrdMsg(''); }}>접수</button> : kind === 'lab' ? r.st : n > 0 && done.length >= n ? '집계완료' : r.rcv ? <span title={`접수 ${r.rcv}`}>접수</span> : '';
                   return (
                     <Fragment key={it.i}>
                       {subHead}
@@ -574,7 +622,7 @@ export default function EhrNurse({
                         <td className="ns-otn"><b>{r.name}</b></td>
                         <td>{r.dose ? `${r.dose}${r.unit || ''}` : ''}</td><td>{r.route}</td><td>{r.cnt}</td>
                         <td className="ns-ocg">{r.pri && r.pri !== 'D/C' ? <i>{r.pri}</i> : null}{(r.opt || '').split(' ').filter(Boolean).map(o => <i key={o} className={o === '비급여' ? 'ns-nhi' : 'ns-alone'}>[{o}]</i>)}{r.hold && <span className="ns-sl ns-hold" title={r.hold}>보류</span>}</td>
-                        <td className="ns-otst">{status}</td>
+                        <td className="ns-otst">{status}{isChanged(r) && <button type="button" className="ns-sl ns-sl-late" title={`이전 ${ackOf(r.name || '')?.text || ''} → 현재 ${ordTxt(r)}`} onClick={() => ordAck(r)}>변경됨 · 확인</button>}</td>
                         {Array.from({ length: N }, (_, k) => <td key={k} className="ns-ocs-c">{cellFor(k)}</td>)}
                       </tr>
                       {it.notes.map((m, k) => <tr key={`n${it.i}-${k}`} className="ns-ocm"><td /><td colSpan={COLS - 1}>※ {m.replace(/^※\s*/, '')}</td></tr>)}
@@ -752,6 +800,7 @@ export default function EhrNurse({
             <button type="button" className="ns-cmp" onClick={() => setCmp(true)}>처방비교</button>
           </div>
           {ordMsg && <p className="ns-nerr">{ordMsg}</p>}
+          {chgCnt > 0 && <p className="ns-nerr">변경된 처방 {chgCnt}건이 있어요. 내용을 확인하고 &apos;변경됨 · 확인&apos;을 눌러 주세요.</p>}
           {ocs()}
           <div className="ns-nft"><button type="button" onClick={onLabel}>투약라벨 출력</button></div>
         </main>
