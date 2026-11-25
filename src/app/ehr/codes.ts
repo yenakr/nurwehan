@@ -2,21 +2,21 @@ import { KCD } from './kcd';
 import { MAT_MASTER, ACT_MASTER } from './master';
 // 가상 환자 실습용 코드표 (실제 병원 코드와 다를 수 있음)
 const DX0: [string, string][] = [
-  ['I10', '본태성 고혈압'], ['I50.0', '울혈심부전'], ['I50.9', '상세불명의 심부전'], ['I21.9', '급성 심근경색증'], ['I20.9', '협심증'], ['I48', '심방세동 및 조동'],
-  ['I63.9', '뇌경색증'], ['I61.9', '뇌내출혈'], ['I82.9', '정맥 색전증 및 혈전증'],
-  ['E11.9', '제2형 당뇨병'], ['E11.65', '고혈당을 동반한 제2형 당뇨병'], ['E10.9', '제1형 당뇨병'], ['E78.5', '상세불명의 고지혈증'], ['E87.1', '저나트륨혈증'], ['E87.6', '저칼륨혈증'], ['E86', '체액량 감소'],
-  ['J18.9', '상세불명의 폐렴'], ['J44.1', '급성 악화를 동반한 만성 폐쇄성 폐질환'], ['J45.9', '천식'], ['J96.0', '급성 호흡부전'], ['J90', '흉막삼출'], ['J93.9', '기흉'],
-  ['K35.8', '급성 충수염'], ['K80.2', '담석증'], ['K81.0', '급성 담낭염'], ['K29.7', '위염'], ['K25.9', '위궤양'], ['K56.6', '장폐색'], ['K74.6', '간경변증'], ['K85.9', '급성 췌장염'], ['K92.2', '위장관 출혈'],
-  ['N39.0', '요로감염'], ['N18.9', '만성 신장병'], ['N17.9', '급성 신부전'], ['N20.0', '신장결석'],
-  ['M17.9', '무릎 관절증'], ['M16.9', '고관절증'], ['M51.2', '추간판 전위'], ['M54.5', '요통'],
-  ['S72.0', '대퇴골 경부 골절'], ['S52.5', '요골 원위부 골절'], ['S82.6', '외과 골절'], ['S06.9', '두개내 손상'],
-  ['C16.9', '위의 악성 신생물'], ['C18.9', '결장의 악성 신생물'], ['C34.9', '기관지 및 폐의 악성 신생물'], ['C50.9', '유방의 악성 신생물'], ['C22.0', '간세포암종'],
-  ['A09', '감염성 위장염 및 대장염'], ['A41.9', '패혈증'], ['L03.1', '사지 연조직염'], ['L89.9', '욕창성 궤양'],
-  ['O80', '자연분만'], ['O82', '제왕절개 분만'], ['O14.1', '중증 전자간증'],
-  ['F32.9', '우울 삽화'], ['F20.9', '조현병'], ['F10.3', '알코올 금단상태'],
-  ['R07.4', '상세불명의 흉통'], ['R10.4', '복통'], ['R50.9', '발열'], ['R55', '실신'], ['D64.9', '빈혈'],
-  ['S93.4', '발목 염좌'], ['K26.4', '출혈을 동반한 십이지장 궤양'], ['B98.0', '헬리코박터 파일로리 감염'], ['E11.4', '당뇨병성 신경병증을 동반한 제2형 당뇨병'], ['J10.1', '인플루엔자 (A형)'], ['I49.0', '심실세동'], ['I21.1', '급성 하벽 심근경색증'],
-  ['J21.9', '급성 세기관지염'], ['J03.9', '급성 편도염'], ['B34.9', '바이러스 감염'],
+  ['I10', 'Essential (primary) hypertension'], ['I50.0', 'Heart failure'], ['I50.9', 'Heart failure, unspecified'], ['I21.9', 'Acute myocardial infarction, unspecified'], ['I20.9', 'Angina pectoris, unspecified'], ['I48', 'Atrial fibrillation and flutter'],
+  ['I63.9', 'Cerebral infarction, unspecified'], ['I61.9', 'Nontraumatic intracerebral hemorrhage, unspecified'], ['I82.9', 'Embolism and thrombosis of unspecified vein'],
+  ['E11.9', 'Type 2 diabetes mellitus without complications'], ['E11.65', 'Type 2 diabetes mellitus with hyperglycemia'], ['E10.9', 'Type 1 diabetes mellitus without complications'], ['E78.5', 'Hyperlipidemia, unspecified'], ['E87.1', 'Hypo-osmolality and hyponatremia'], ['E87.6', 'Hypokalemia'], ['E86', 'Volume depletion'],
+  ['J18.9', 'Pneumonia, unspecified organism'], ['J44.1', 'Chronic obstructive pulmonary disease with (acute) exacerbation'], ['J45.9', 'Other and unspecified asthma'], ['J96.0', 'Acute respiratory failure'], ['J90', 'Pleural effusion, not elsewhere classified'], ['J93.9', 'Pneumothorax, unspecified'],
+  ['K35.8', 'Other and unspecified acute appendicitis'], ['K80.2', 'Calculus of gallbladder without cholecystitis'], ['K81.0', 'Acute cholecystitis'], ['K29.7', 'Gastritis, unspecified'], ['K25.9', 'Gastric ulcer, unspecified as acute or chronic, without hemorrhage or perforation'], ['K56.6', 'Other and unspecified intestinal obstruction'], ['K74.6', 'Other and unspecified cirrhosis of liver'], ['K85.9', 'Acute pancreatitis, unspecified'], ['K92.2', 'Gastrointestinal hemorrhage, unspecified'],
+  ['N39.0', 'Urinary tract infection, site not specified'], ['N18.9', 'Chronic kidney disease, unspecified'], ['N17.9', 'Acute kidney failure, unspecified'], ['N20.0', 'Calculus of kidney'],
+  ['M17.9', 'Osteoarthritis of knee, unspecified'], ['M16.9', 'Osteoarthritis of hip, unspecified'], ['M51.2', 'Other thoracic, thoracolumbar and lumbosacral intervertebral disc displacement'], ['M54.5', 'Low back pain'],
+  ['S72.0', 'Fracture of head and neck of femur'], ['S52.5', 'Fracture of lower end of radius'], ['S82.6', 'Fracture of lateral malleolus'], ['S06.9', 'Unspecified intracranial injury'],
+  ['C16.9', 'Malignant neoplasm of stomach, unspecified'], ['C18.9', 'Malignant neoplasm of colon, unspecified'], ['C34.9', 'Malignant neoplasm of unspecified part of bronchus or lung'], ['C50.9', 'Malignant neoplasm of breast of unspecified site'], ['C22.0', 'Liver cell carcinoma'],
+  ['A09', 'Infectious gastroenteritis and colitis, unspecified'], ['A41.9', 'Sepsis, unspecified organism'], ['L03.1', 'Cellulitis and acute lymphangitis of other parts of limb'], ['L89.9', 'Pressure ulcer of unspecified site'],
+  ['O80', 'Encounter for full-term uncomplicated delivery'], ['O82', 'Encounter for cesarean delivery without indication'], ['O14.1', 'Severe pre-eclampsia'],
+  ['F32.9', 'Major depressive disorder, single episode, unspecified'], ['F20.9', 'Schizophrenia, unspecified'], ['F10.3', 'Alcohol related disorders'],
+  ['R07.4', 'Pain in throat and chest'], ['R10.4', 'Abdominal and pelvic pain'], ['R50.9', 'Fever, unspecified'], ['R55', 'Syncope and collapse'], ['D64.9', 'Anemia, unspecified'],
+  ['S93.4', 'Sprain of ankle'], ['K26.4', 'Chronic or unspecified duodenal ulcer with hemorrhage'], ['B98.0', 'Helicobacter pylori [H. pylori] as the cause of diseases classified elsewhere'], ['E11.4', 'Type 2 diabetes mellitus with neurological complications'], ['J10.1', 'Influenza due to other identified influenza virus with other respiratory manifestations'], ['I49.0', 'Ventricular fibrillation and flutter'], ['I21.1', 'ST elevation (STEMI) myocardial infarction of inferior wall'],
+  ['J21.9', 'Acute bronchiolitis, unspecified'], ['J03.9', 'Acute tonsillitis, unspecified'], ['B34.9', 'Viral infection, unspecified'],
 ];
 
 // 간호행위(약속처방): [행위, 기본 재료(첫 번째)] — 전체 목록은 master.ts

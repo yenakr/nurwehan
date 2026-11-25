@@ -1,4 +1,5 @@
 import { WARDS, bedLabel } from './samples';
+import { nm, residentName } from './names';
 
 // 병원 구성 (선택지)
 export const DEPTS: { code: string; name: string }[] = [
@@ -47,16 +48,13 @@ export const newPtNo = () => String(Math.floor(1000 + Math.random() * 9000));
 
 // 진료과별 의료진 (가상 인물). 교수는 위 DOCTORS, 나머지는 과 코드로 만든다.
 export type Staff = { name: string; dept: string; rank: '교수' | '전임의' | '레지던트' | '인턴'; ext: string };
-const SUR = ['김', '이', '박', '최', '정', '강', '조', '윤', '장', '임', '한', '오', '서', '신', '권', '황'];
-const GIV = ['민준', '서연', '지후', '하윤', '도윤', '수아', '예준', '지우', '시우', '유진', '건우', '다은', '현우', '채원', '준서', '소율'];
-const nm = (seed: number) => `${SUR[seed % SUR.length]}${GIV[(seed * 7 + 3) % GIV.length]}`;
 export function staffOf(dept: string): Staff[] {
   const di = Math.max(0, DEPTS.findIndex(d => d.code === dept));
   const base = 3000 + di * 20;
   const prof = DOCTORS.filter(d => d.dept === dept).map((d, k): Staff => ({ name: d.name, dept, rank: '교수', ext: String(base + k) }));
   const rest: Staff[] = [
     { name: nm(di * 5 + 1), dept, rank: '전임의', ext: String(base + 5) },
-    { name: nm(di * 5 + 2), dept, rank: '레지던트', ext: String(base + 6) },
+    { name: residentName(dept), dept, rank: '레지던트', ext: String(base + 6) },
   ];
   return [...prof, ...rest];
 }
