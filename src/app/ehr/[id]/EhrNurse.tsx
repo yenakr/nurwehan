@@ -214,6 +214,20 @@ export default function EhrNurse({
     return n > 0 ? `${n}일째` : '';
   };
   const dxMain = data.dxcode.find(r => r.kind === '주상병' && r.name);
+  const [chip, setChip] = useState('');
+  const esc = (v: string) => v.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c] as string));
+  const printDoc = (title: string, body: string) => {
+    const w = window.open('', '_blank', 'width=720,height=900');
+    if (!w) return;
+    w.document.write(`<html><head><title>${esc(title)}</title><style>body{font-family:sans-serif;padding:24px}h1{font-size:20px;border-bottom:2px solid #000;padding-bottom:6px}table{border-collapse:collapse;width:100%;font-size:13px}td,th{border:1px solid #444;padding:5px 8px;text-align:left}.big{font-size:34px;font-weight:800;margin:10px 0}.tag{display:inline-block;border:3px solid #000;padding:6px 14px;margin:6px;font-size:26px;font-weight:800}</style></head><body>${body}</body></html>`);
+    w.document.close();
+    w.focus();
+    w.print();
+  };
+  const head = () => `<h1>${esc(i.name || '')} (${esc(i.ageSex || '')}) · 환자번호 ${esc(i.ptNo || '')} · ${esc([i.ward, i.bed].filter(Boolean).join(' '))}</h1>`;
+  const printOrders = () => printDoc('처방출력', `${head()}<p>${date} 처방</p><table><tr><th>처방명</th><th>용량</th><th>경로</th><th>횟수</th></tr>${data.orders.filter(o => o.name).map(o => `<tr><td>${esc(o.name || '')}</td><td>${esc(o.dose || '')}</td><td>${esc(o.route || '')}</td><td>${esc(o.cnt || o.q || '')}</td></tr>`).join('')}</table>`);
+  const printBed = () => printDoc('침상카드', `${head()}<div class="big">${esc(i.name || '')}</div><p>주치의 ${esc(i.doctor || '')} · 진단 ${esc(dxMain ? dxMain.name : i.dx || '')}</p><p>알러지: ${esc(i.allergy || '없음')} · 격리: ${esc(i.iso || '없음')} · ${i.npo === '1' ? '금식' : ''}</p>${flags.map(f => `<span class="tag">${esc(f)}</span>`).join('')}`);
+  const printWarn = () => printDoc('주의라벨', `${head()}${[...flags, ...(i.npo === '1' ? ['금식'] : []), ...(i.allergy && !/^(없음|무|none|-)$/i.test(i.allergy.trim()) ? [`알러지 ${i.allergy}`] : [])].map(f => `<span class="tag">${esc(f)}</span>`).join('') || '<p>주의 항목 없음</p>'}`);
 
   const patch = (idx: number, p: Row) => setData(d => ({ ...d, orders: d.orders.map((o, j) => (j === idx ? { ...o, ...p } : o)) }));
   const slots = slotsOf;
@@ -385,6 +399,15 @@ export default function EhrNurse({
               {data.surgery[0] && dd(data.surgery[0].date) && <><dt>수술일</dt><dd>{dd(data.surgery[0].date)}</dd></>}
               {(dxMain || i.dx) && <><dt>진단</dt><dd>{dxMain ? dxMain.name : i.dx}</dd></>}
             </dl>
+            <div className="ns-nlinks">
+              {[['CPR', data.cpr.length ? `CPR 기록 ${data.cpr.length}건` : 'CPR 기록 없음'], ['약물이상반응', i.allergy ? `알러지: ${i.allergy}` : '등록된 약물이상반응 없음'], ['건강보험', '건강보험 자격 확인됨 (모의 · 심평원 조회)']].map(([k, v]) => <button key={k} type="button" className={chip === k ? 'ns-on' : ''} onClick={() => setChip(chip === k ? '' : k)}>{k}</button>)}
+              {chip && <p>{[['CPR', data.cpr.length ? `CPR 기록 ${data.cpr.length}건` : 'CPR 기록 없음'], ['약물이상반응', i.allergy ? `알러지: ${i.allergy}` : '등록된 약물이상반응 없음'], ['건강보험', '건강보험 자격 확인됨 (모의 · 심평원 조회)']].find(x => x[0] === chip)?.[1]}</p>}
+            </div>
+            <div className="ns-nlinks ns-nprt">
+              <button type="button" onClick={printOrders}>처방출력</button>
+              <button type="button" onClick={printBed}>침상카드</button>
+              <button type="button" onClick={printWarn}>주의라벨</button>
+            </div>
             <div className="ns-nflags">
               {flags.map(f => <em key={f}>{f}</em>)}
               {i.allergy && !/^(없음|무|none|-)$/i.test(i.allergy.trim()) && <em className="ns-al">알러지 {i.allergy}</em>}
@@ -688,6 +711,11 @@ export default function EhrNurse({
         .ns-nkv dd em { font-style: normal; margin-left: 6px; font-size: 11px; font-weight: 700; color: var(--primary); }
         .ns-lnk { border: 0; background: transparent; color: var(--primary); font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 0; text-align: left; }
         .ns-npt .ns-nflags { padding: 0 12px 10px; margin-top: 0; }
+        .ns-nlinks { display: flex; flex-wrap: wrap; gap: 4px; padding: 0 12px 8px; }
+        .ns-nlinks button { font: inherit; font-size: 12px; font-weight: 700; padding: 3px 9px; border: 1px solid var(--border); border-radius: 4px; background: #fff; cursor: pointer; }
+        .ns-nlinks button.ns-on { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .ns-nlinks p { flex-basis: 100%; margin: 2px 0 0; font-size: 12px; color: var(--sub-text); }
+        .ns-nprt button { background: #f3f6fa; }
         .ns-nflags { display: flex; flex-wrap: wrap; gap: 4px; margin-top: 6px; }
         .ns-nflags em { font-style: normal; font-size: 12px; font-weight: 700; padding: 2px 8px; border-radius: 999px; background: rgba(245,158,11,.18); color: #b9770e; }
         .ns-nflags em.ns-al { background: rgba(239,68,68,.14); color: #dc2626; }
