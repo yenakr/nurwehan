@@ -35,6 +35,7 @@ const MENUS: { id: string; label: string }[] = [
   { id: 'adm', label: '입퇴원 예정' },
   { id: 'discharge', label: '퇴원정보/계획' },
   { id: 'dir', label: '원내번호조회' },
+  { id: 'staff', label: '의료진 · Notify' },
 ];
 
 const CATS: { name: string; items: string[] }[] = [
@@ -517,7 +518,7 @@ export default function EhrNurse({
         <div className="ns-ntabs">
           {tabs.map(id => (
             <span key={id} className={win === id ? 'ns-on' : ''}>
-              <button type="button" onClick={() => { if (win !== id) openMenu(id); }}>{id === 'staff' ? '의료진 · 노티' : MENUS.find(m => m.id === id)?.label}</button>
+              <button type="button" onClick={() => { if (win !== id) openMenu(id); }}>{id === 'staff' ? '의료진 · Notify' : MENUS.find(m => m.id === id)?.label}</button>
               <button type="button" aria-label="탭 닫기" onClick={() => closeTab(id)}>&times;</button>
             </span>
           ))}
@@ -743,7 +744,7 @@ export default function EhrNurse({
               window.addEventListener('pointerup', up);
             }}
           >
-            <b>{win === 'staff' ? '의료진 · 노티' : MENUS.find(m => m.id === win)?.label}</b>
+            <b>{win === 'staff' ? '의료진 · Notify' : MENUS.find(m => m.id === win)?.label}</b>
             <button type="button" aria-label="닫기" onClick={() => closeTab(win)}>&times;</button>
           </header>
           <div className="ns-nwb">

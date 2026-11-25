@@ -23,7 +23,7 @@ const docState = (m: Row) => { const e = mins(m.time); return e < 2 ? '요청' :
 
 type P = { data: ChartData; setData: Dispatch<SetStateAction<ChartData>>; userName: string; duty: string };
 
-// 진료과 의료진 목록과 노티 보내기
+// 진료과 의료진 목록과 Notify 보내기
 export function StaffWin({ data, setData, userName, duty }: P) {
   useTick();
   const code = data.info.dept || '';
@@ -37,57 +37,68 @@ export function StaffWin({ data, setData, userName, duty }: P) {
 
   const send = () => {
     if (!to) return;
-    if (!text.trim()) { setMsg('노티 내용을 입력하세요'); return; }
+    if (!text.trim()) { setMsg('Notify 내용을 입력하세요'); return; }
     const row: Row = { type: '노티', text: text.trim(), doctor: to.name, rank: to.rank, dept, urgent: urgent ? '1' : '', status: '발송', time: stamp(), author: userName, shift: duty };
     setData(d => ({ ...d, memos: [...d.memos, row] }));
     setTo(null);
     setText('');
     setUrgent(false);
-    setMsg('노티를 보냈어요.');
+    setMsg('Notify를 보냈어요.');
   };
 
+  const dn = DEPTS.find(d => d.code === dept)?.name || '';
   return (
-    <div className="nx">
-      <div className="nx-row">
-        <label>진료과
-          <select value={dept} onChange={e => { setDept(e.target.value); setTo(null); }}>
-            {DEPTS.map(d => <option key={d.code} value={d.code}>{d.name}</option>)}
-          </select>
-        </label>
-        {msg && <span className="ok">{msg}</span>}
-      </div>
-      <table className="nx-t">
-        <thead><tr><th>직급</th><th>이름</th><th>내선</th><th /></tr></thead>
-        <tbody>
+    <div className="nx nx-nf">
+      <aside>
+        {DEPTS.map(d => <button key={d.code} type="button" className={dept === d.code ? 'on' : ''} onClick={() => { setDept(d.code); setTo(null); setMsg(''); }}>{d.name}</button>)}
+      </aside>
+      <section>
+        <h4 style={{ marginTop: 0 }}>{dn} 의료진</h4>
+        <div className="nf-cards">
           {staff.map(s => (
-            <tr key={s.rank + s.name} className={to?.name === s.name ? 'on' : ''}>
-              <td>{s.rank}</td><td>{s.name}{s.name === data.info.doctor && <b style={{ marginLeft: 6, fontSize: 11, color: 'var(--primary)' }}>주치의</b>}</td><td>{s.ext}</td>
-              <td><button type="button" onClick={() => { setTo(s); setMsg(''); }}>노티</button></td>
-            </tr>
+            <div key={s.rank + s.name} className={`nf-c ${to?.name === s.name ? 'on' : ''}`}>
+              <div><b>{s.name}</b>{s.name === data.info.doctor && <em>주치의</em>}</div>
+              <span>{s.rank} · 내선 {s.ext}</span>
+              <button type="button" onClick={() => { setTo(s); setMsg(''); }}>Notify</button>
+            </div>
           ))}
-        </tbody>
-      </table>
-      {to && (
-        <div className="nx-box">
-          <b>{to.rank} {to.name}에게 노티</b>
-          <span>환자 {data.info.name} ({data.info.ptNo})</span>
-          <textarea rows={4} value={text} onChange={e => { setText(e.target.value); setMsg(''); }} aria-label="노티 내용" />
-          <label className="nx-ck"><input type="checkbox" checked={urgent} onChange={e => setUrgent(e.target.checked)} />긴급</label>
-          <div className="nx-act">
-            {msg && <span className="err">{msg}</span>}
-            <button type="button" onClick={() => setTo(null)}>취소</button>
-            <button type="button" className="go" onClick={send}>보내기</button>
-          </div>
         </div>
-      )}
-      <h4>노티 내역</h4>
-      <table className="nx-t">
-        <thead><tr><th>일시</th><th>대상</th><th>내용</th><th>상태</th><th>답변</th></tr></thead>
-        <tbody>
-          {sent.slice().reverse().map((m, k) => <tr key={k}><td>{(m.time || '').slice(5)}</td><td>{m.rank} {m.doctor}</td><td style={{ textAlign: 'left' }}>{m.urgent && <b className="u">[긴급] </b>}{m.text}</td><td>{notiState(m).st}</td><td style={{ textAlign: 'left' }}>{notiState(m).reply}</td></tr>)}
-          {sent.length === 0 && <tr><td colSpan={5} className="none">내역 없음</td></tr>}
-        </tbody>
-      </table>
+        {to && (
+          <div className="nx-box">
+            <b>To. {to.rank} {to.name}</b>
+            <span>Re. {data.info.name} ({data.info.ptNo}) {data.info.ward} {data.info.bed}</span>
+            <textarea rows={4} value={text} onChange={e => { setText(e.target.value); setMsg(''); }} aria-label="Notify 내용" placeholder="S) 현재 상태 / A) 사정 내용 / R) 요청 사항" />
+            <label className="nx-ck"><input type="checkbox" checked={urgent} onChange={e => setUrgent(e.target.checked)} />긴급 (STAT)</label>
+            <div className="nx-act">
+              {msg && <span className="err">{msg}</span>}
+              <button type="button" onClick={() => setTo(null)}>취소</button>
+              <button type="button" className="go" onClick={send}>보내기</button>
+            </div>
+          </div>
+        )}
+        {!to && msg && <p className="ok">{msg}</p>}
+        <h4>Notify 내역</h4>
+        <table className="nx-t">
+          <thead><tr><th>일시</th><th>대상</th><th>내용</th><th>상태</th><th>답변</th></tr></thead>
+          <tbody>
+            {sent.slice().reverse().map((m, k) => <tr key={k}><td>{(m.time || '').slice(5)}</td><td>{m.rank} {m.doctor}</td><td style={{ textAlign: 'left' }}>{m.urgent && <b className="u">[긴급] </b>}{m.text}</td><td>{notiState(m).st}</td><td style={{ textAlign: 'left' }}>{notiState(m).reply}</td></tr>)}
+            {sent.length === 0 && <tr><td colSpan={5} className="none">내역 없음</td></tr>}
+          </tbody>
+        </table>
+      </section>
+      <style>{`
+        .nx-nf { display: grid; grid-template-columns: 150px 1fr; gap: 12px; align-items: start; }
+        .nx-nf aside { display: flex; flex-direction: column; border: 1px solid var(--border); border-radius: 6px; padding: 4px; max-height: 70vh; overflow: auto; }
+        .nx-nf aside button { border: 0; background: none; text-align: left; padding: 6px 8px; border-radius: 4px; font: inherit; font-size: 13px; cursor: pointer; }
+        .nx-nf aside button.on { background: var(--primary); color: #fff; }
+        .nf-cards { display: grid; grid-template-columns: repeat(auto-fill, minmax(170px, 1fr)); gap: 8px; margin-bottom: 10px; }
+        .nf-c { border: 1px solid var(--border); border-radius: 8px; padding: 8px 10px; display: flex; flex-direction: column; gap: 4px; }
+        .nf-c.on { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(14,74,132,.15); }
+        .nf-c em { font-style: normal; font-size: 11px; font-weight: 700; color: var(--primary); margin-left: 6px; }
+        .nf-c span { font-size: 12px; color: var(--sub-text); }
+        .nf-c button { align-self: flex-start; border: 1px solid var(--primary); color: var(--primary); background: #fff; border-radius: 4px; padding: 3px 12px; font: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+        @media (max-width: 700px) { .nx-nf { grid-template-columns: 1fr; } .nx-nf aside { flex-direction: row; flex-wrap: wrap; max-height: none; } }
+      `}</style>
       <NxCss />
     </div>
   );
