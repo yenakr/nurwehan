@@ -162,6 +162,45 @@ function todoOf(g: Groups, duty: string, isToday: boolean): Todo[] {
   return out;
 }
 
+
+type Dot = { x: number; y: number; c: string; t: string };
+function bodyPlace(kind: string, site: string): { x: number; y: number } {
+  const t = `${kind} ${site}`;
+  const R = /우|rt|right/i.test(site), Lf = /좌|lt|left/i.test(site);
+  const dx = R ? 44 : Lf ? 116 : 80;
+  if (/foley|도뇨|요도|방광|urethra|bladder/i.test(t)) return { x: 80, y: 176 };
+  if (/l-tube|ng tube|비위관|경관|nasogastric|위관/i.test(t)) return { x: 80, y: 62 };
+  if (/t-cannula|tracheo|기관/i.test(t)) return { x: 80, y: 58 };
+  if (/chest tube|흉관|흉부|chest/i.test(t)) return { x: dx, y: 95 };
+  if (/두|머리|head|비강|코/i.test(t)) return { x: 80, y: 28 };
+  if (/central|c-line|중심정맥|picc|port|쇄골|경부|목/i.test(t)) return { x: dx === 80 ? 66 : dx, y: 70 };
+  if (/흉|가슴/i.test(t)) return { x: dx, y: 95 };
+  if (/복|abd|jp|drain|배액|위루|장루|stoma/i.test(t)) return { x: dx, y: 140 };
+  if (/천골|엉덩|sacr|둔|회음/i.test(t)) return { x: 80, y: 190 };
+  if (/손|수|전완|상지|arm|hand|iv|정맥|말초|peripheral|a-line|동맥/i.test(t)) return { x: R ? 22 : 138, y: 135 };
+  if (/다리|하지|발|leg|foot|대퇴|무릎|족|발꿈치/i.test(t)) return { x: R ? 62 : 98, y: 240 };
+  return { x: dx, y: 120 };
+}
+export function bodyDots(data: ChartData): Dot[] {
+  const dots: Dot[] = [];
+  data.wounds.forEach(w => { if (w.site) dots.push({ ...bodyPlace(w.kind || '', w.site), c: '#d97706', t: `${w.kind || '상처'} ${w.site}` }); });
+  data.lines.filter(l => l.st !== '제거').forEach(l => { if (l.site || l.kind) dots.push({ ...bodyPlace(l.kind || '', l.site || ''), c: '#2563eb', t: `${l.kind || '라인'} ${l.site || ''}` }); });
+  return dots;
+}
+function BodyFig({ dots, width }: { dots: Dot[]; width: number }) {
+  return (
+    <svg viewBox="0 0 160 300" width={width} aria-label="신체 도식">
+      <ellipse cx="80" cy="30" rx="20" ry="24" fill="#e4eaf2" stroke="#9fb3cc" />
+      <rect x="42" y="56" width="76" height="130" rx="24" fill="#e4eaf2" stroke="#9fb3cc" />
+      <rect x="10" y="64" width="26" height="100" rx="12" fill="#e4eaf2" stroke="#9fb3cc" />
+      <rect x="124" y="64" width="26" height="100" rx="12" fill="#e4eaf2" stroke="#9fb3cc" />
+      <rect x="48" y="186" width="30" height="100" rx="14" fill="#e4eaf2" stroke="#9fb3cc" />
+      <rect x="82" y="186" width="30" height="100" rx="14" fill="#e4eaf2" stroke="#9fb3cc" />
+      {dots.map((d, k) => <circle key={k} cx={d.x} cy={d.y} r="6" fill={d.c} stroke="#fff" strokeWidth="1.5"><title>{d.t}</title></circle>)}
+    </svg>
+  );
+}
+
 export default function EhrNurse({
   data, setData, userName, roster, win, onOpen, onClose, drawer, tools, onChart, onLabel,
 }: {
@@ -486,20 +525,14 @@ export default function EhrNurse({
       <div className="ns-nmenu">
         <b>홈</b>
         <button type="button" className={mOpen ? 'ns-on' : ''} onClick={() => { setMOpen(mOpen ? 0 : 1); setCat(''); setMq(''); }}>메뉴 ▾</button>
+        {mOpen >= 1 && <button type="button" className={`ns-wk ${mOpen === 2 ? 'ns-on' : ''}`} onClick={() => setMOpen(mOpen === 2 ? 1 : 2)}>업무</button>}
+        {mOpen === 2 && <span className="ns-sepv" />}
+        {mOpen === 2 && CATS.map(c => <button key={c.name} type="button" disabled={c.name === '최근사용' ? recent.length === 0 : c.items.length === 0} className={cat === c.name ? 'ns-on' : ''} onClick={() => setCat(cat === c.name ? '' : c.name)}>{c.name}</button>)}
+        {mOpen === 2 && <label className="ns-mq">메뉴찾기<input value={mq} onChange={e => setMq(e.target.value)} /></label>}
         <div className="ns-tools">{tools}</div>
       </div>
-      {mOpen === 1 && (
-        <div className="ns-nsub">
-          <button type="button" onClick={() => setMOpen(2)}>업무</button>
-        </div>
-      )}
       {mOpen === 2 && (
         <div className="ns-wrk">
-          <div className="ns-nmenu ns-nmenu2">
-            <b>업무</b>
-            {CATS.map(c => <button key={c.name} type="button" disabled={c.name === '최근사용' ? recent.length === 0 : c.items.length === 0} className={cat === c.name ? 'ns-on' : ''} onClick={() => setCat(cat === c.name ? '' : c.name)}>{c.name}</button>)}
-            <label className="ns-mq">메뉴찾기<input value={mq} onChange={e => setMq(e.target.value)} /></label>
-          </div>
           {mq.trim() && (
             <div className="ns-nsub">
               {MENUS.filter(m => m.label.includes(mq.trim())).map(m => <button key={m.id} type="button" onClick={() => { openMenu(m.id); setMq(''); setMOpen(0); }}>{m.label}</button>)}
@@ -529,7 +562,7 @@ export default function EhrNurse({
       <div className="ns-ngrid">
         <aside className="ns-nl">
           <div className="ns-nsr">
-            <input value={q} onChange={e => { setQ(e.target.value); setQMsg(''); }} onKeyDown={e => e.key === 'Enter' && find()} aria-label="환자환자번호 검색" />
+            <input value={q} onChange={e => { setQ(e.target.value); setQMsg(''); }} onKeyDown={e => e.key === 'Enter' && find()} aria-label="환자번호 검색" placeholder="환자번호" />
             <button type="button" onClick={find}>검색</button>
           </div>
           {qMsg && <p className="ns-nerr">{qMsg}</p>}
@@ -626,6 +659,11 @@ export default function EhrNurse({
         </main>
 
         <aside className="ns-nr">
+          <div className="ns-nbox ns-fig" role="button" tabIndex={0} title="오버뷰 열기" onClick={() => openMenu('overview')} onKeyDown={e => e.key === 'Enter' && openMenu('overview')}>
+            <h4>신체 도식</h4>
+            <BodyFig dots={bodyDots(data)} width={110} />
+            <div className="ns-figl">{bodyDots(data).length ? bodyDots(data).map((d, k) => <span key={k}><i style={{ background: d.c }} />{d.t}</span>) : <span className="ns-nnone">삽입물·상처 없음</span>}</div>
+          </div>
           {cl.map(g => (
             <div key={g.title} className="ns-nbox">
               <h4>체크리스트 · {g.title}</h4>
@@ -895,32 +933,11 @@ export default function EhrNurse({
               </div>
             ) : win === 'overview' ? (
               (() => {
-                const dots: { x: number; y: number; c: string; t: string }[] = [];
-                const place = (site: string) => {
-                  const L = /우|rt|right/i.test(site), Lf = /좌|lt|left/i.test(site);
-                  const dx = L ? 44 : Lf ? 116 : 80;
-                  if (/두|머리|head/i.test(site)) return { x: 80, y: 28 };
-                  if (/흉|가슴|chest/i.test(site)) return { x: dx, y: 95 };
-                  if (/복|abd/i.test(site)) return { x: dx, y: 140 };
-                  if (/천골|엉덩|sacr|둔/i.test(site)) return { x: 80, y: 175 };
-                  if (/손|수|전완|상지|arm|hand/i.test(site)) return { x: L ? 22 : 138, y: 135 };
-                  if (/다리|하지|발|leg|foot|대퇴/i.test(site)) return { x: L ? 62 : 98, y: 240 };
-                  return { x: dx, y: 120 };
-                };
-                data.wounds.forEach(w => { if (w.site) dots.push({ ...place(w.site), c: '#d97706', t: `${w.kind || '상처'} ${w.site}` }); });
-                data.lines.filter(l => l.st !== '제거').forEach(l => { if (l.site) dots.push({ ...place(l.site), c: '#2563eb', t: `${l.kind || '라인'} ${l.site}` }); });
+                const dots = bodyDots(data);
                 return (
                   <div className="ns-ovw">
                   <div className="ns-ov">
-                    <svg viewBox="0 0 160 300" width="170" aria-label="신체 도식">
-                      <ellipse cx="80" cy="30" rx="20" ry="24" fill="#e4eaf2" stroke="#9fb3cc" />
-                      <rect x="42" y="56" width="76" height="130" rx="24" fill="#e4eaf2" stroke="#9fb3cc" />
-                      <rect x="10" y="64" width="26" height="100" rx="12" fill="#e4eaf2" stroke="#9fb3cc" />
-                      <rect x="124" y="64" width="26" height="100" rx="12" fill="#e4eaf2" stroke="#9fb3cc" />
-                      <rect x="48" y="186" width="30" height="100" rx="14" fill="#e4eaf2" stroke="#9fb3cc" />
-                      <rect x="82" y="186" width="30" height="100" rx="14" fill="#e4eaf2" stroke="#9fb3cc" />
-                      {dots.map((d, k) => <circle key={k} cx={d.x} cy={d.y} r="6" fill={d.c}><title>{d.t}</title></circle>)}
-                    </svg>
+                    <BodyFig dots={dots} width={170} />
                     <div>
                       <div className="ns-nflags">{flags.length ? flags.map(f => <em key={f}>{f}</em>) : <em>위험 태그 없음</em>}</div>
                       <h4>간호진단 · {data.care.length}문제</h4>
@@ -1100,6 +1117,11 @@ export default function EhrNurse({
         .ns-ngrp > span { flex: none; width: 30px; padding-top: 5px; font-size: 11.5px; font-weight: 700; color: var(--sub-text); }
         .ns-ngrp .ns-nlinks { flex: 1; margin: 0; }
         .ns-admw { display: inline-flex; align-items: center; gap: 6px; margin: 6px 0; font-size: 13px; font-weight: 700; }
+        .ns-sepv { width: 1px; height: 18px; background: rgba(255,255,255,.3); margin: 0 6px; }
+        .ns-nmenu .ns-wk { color: #e8c97a; }
+        .ns-fig { cursor: pointer; align-items: center; }
+        .ns-figl { display: flex; flex-direction: column; gap: 2px; font-size: 12px; align-self: stretch; }
+        .ns-figl i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
         .ns-org { display: grid; grid-template-columns: 220px 1fr; gap: 12px; padding: 10px 12px; }
         .ns-org aside { max-height: 70vh; overflow: auto; border: 1px solid var(--border); border-radius: 6px; padding: 6px; }
         .ns-org aside input { width: 100%; margin-bottom: 6px; padding: 6px 8px; font-size: 13px; }
