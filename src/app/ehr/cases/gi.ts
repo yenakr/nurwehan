@@ -27,13 +27,13 @@ export const gi: Sample = {
       sec('▶ 기본처방 ◀'),
       od('Check V/S q [2] hrs', '', '', '', '', '', [], '1'),
       od('Check I/O q [8] hrs', '', '', '', '', '', [], '1'),
-      od('대변 양상(색, 양) 관찰 및 보고', '', '', '', '', '', [], '1'),
-      od('구토 시 혈액 여부 확인 및 보고', '', '', '', '', '', [], '1'),
+      od('Stool character (color, amount) check & report', '', '', '', '', '', [], '1'),
+      od('Check hematemesis if vomiting & report', '', '', '', '', '', [], '1'),
       memo('※ HR 110 이상 또는 SBP 90 미만 시 즉시 notify'),
       sec('▶ 식사 처방 ◀'),
-      od('금식 (NPO)', '', '', '', '', '집계완료', [], '1'),
+      od('NPO', '', '', '', '', '집계완료', [], '1'),
       sec('▶ 주사약 ◀'),
-      od('Pantoprazole 80mg bolus 후 8mg/hr 지속 주입', '8', 'mg/hr', '지속', 'CIV', '집계완료', ['09:00/박'], '1'),
+      od('Pantoprazole 80mg bolus then 8mg/hr continuous infusion', '8', 'mg/hr', '지속', 'CIV', '집계완료', ['09:00/박'], '1'),
       memo('※ 고위험 약물: 펌프 설정 이중확인'),
       od('0.9% Sod. Chloride 1L (대한약품)', '1', 'L', '지속', 'IV', '집계완료', ['06:00/최'], '1'),
       od('Tranexamic acid 500mg', '500', 'mg', '3회', 'IV', '', [], '', 'D/C'),
@@ -49,7 +49,7 @@ export const gi: Sample = {
       od('Cross-matching pRBC 2 unit', '', '', '', '', '집계완료', [], '1'),
     ],
     mar: [
-      mar(full(0, '09:10'), 'Pantoprazole 80mg bolus 후 8mg/hr 지속 주입', '8mg/hr', 'CIV', '09:00', '박간호', { dbl: '이간호', note: '펌프 속도 8mg/hr 확인' }),
+      mar(full(0, '09:10'), 'Pantoprazole 80mg bolus then 8mg/hr continuous infusion', '8mg/hr', 'CIV', '09:00', '박간호', { dbl: '이간호', note: '펌프 속도 8mg/hr 확인' }),
       mar(full(0, '10:40'), 'pRBC 1 unit', '1unit', 'IV', 'STAT', '박간호', { note: '2인 확인 후 시작' }),
     ],
     vitals: [
@@ -89,12 +89,12 @@ export const gi: Sample = {
       { dx: '지식부족', data: 'NSAIDs와 음주의 위험을 모름, H. pylori 제균 약물을 모름', goal: '퇴원 전 NSAIDs·음주 위험과 제균 요법 지침을 설명할 수 있음', plan: 'NSAIDs 중단, 금주·금연 교육, 제균 요법 7~14일 복용 방법', eval: '' },
     ],
     lines: [
-      { kind: 'IV catheter', site: '우측 전완 18G', ins: dt(-2), chg: dt(1), out: '', st: '유지', note: '수혈 전용' },
-      { kind: 'IV catheter', site: '좌측 전완 20G', ins: dt(-2), chg: dt(1), out: '', st: '유지', note: 'PPI 지속 주입' },
+      { kind: 'IV catheter', site: 'Rt. 전완 18G', ins: dt(-2), chg: dt(1), out: '', st: '유지', note: '수혈 전용' },
+      { kind: 'IV catheter', site: 'Lt. 전완 20G', ins: dt(-2), chg: dt(1), out: '', st: '유지', note: 'PPI 지속 주입' },
     ],
     iv: [
-      { time: '09:00', fluid: 'Pantoprazole 80mg + N/S 100mL', rate: '10', remain: '80', site: '좌측 전완 20G', st: '주입 중', by: '박간호' },
-      { time: '06:00', fluid: '0.9% N/S 1L', rate: '150', remain: '600', site: '우측 전완 18G', st: '주입 중', by: '최간호' },
+      { time: '09:00', fluid: 'Pantoprazole 80mg + N/S 100mL', rate: '10', remain: '80', site: 'Lt. 전완 20G', st: '주입 중', by: '박간호' },
+      { time: '06:00', fluid: '0.9% N/S 1L', rate: '150', remain: '600', site: 'Rt. 전완 18G', st: '주입 중', by: '최간호' },
     ],
     edu: [
       { time: md(0, '14:00'), topic: '수혈 중 이상 반응 증상과 호출 방법', target: '환자', method: '구두', under: '충분', by: '박간호' },

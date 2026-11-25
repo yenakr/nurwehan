@@ -250,7 +250,7 @@ export const COLS: Record<ListKey, Col[]> = {
   ],
   lines: [
     { key: 'kind', label: '종류', w: 100, type: 'select', opts: ['', 'IV catheter', 'Foley catheter', 'L-tube', 'Chest tube', 'JP drain', 'Hemovac', 'T-tube', 'Central line', '기타'] },
-    { key: 'site', label: '부위·크기', w: 130, ph: '우측 전완 22G' },
+    { key: 'site', label: '부위·크기', w: 130, ph: 'Rt. 전완 22G' },
     { key: 'ins', label: '삽입일', w: 100, ph: '11-10' },
     { key: 'chg', label: '교체 예정일', w: 100, ph: '11-13' },
     { key: 'out', label: '배액량 / 양상', w: 140 },
