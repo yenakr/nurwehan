@@ -974,7 +974,12 @@ export default function EhrEditor({
                             <button type="button" className={r.ck ? 'on' : ''} aria-pressed={!!r.ck} aria-label="수행 확인" onClick={() => setCell('orders', i, 'ck', r.ck ? '' : '1')}>✓</button>
                           </td>
                           <td className="seq">{seq}</td>
-                          <td><input value={r.name || ''} onChange={e => setCell('orders', i, 'name', e.target.value)} /></td>
+                          <td>
+                            <input value={r.name || ''} onChange={e => setCell('orders', i, 'name', e.target.value)} />
+                            <select value={r.opt || ''} onChange={e => setCell('orders', i, 'opt', e.target.value)} aria-label="단독·비급여">
+                              {['', '단독', '비급여', '단독 비급여'].map(o => <option key={o} value={o}>{o || '-'}</option>)}
+                            </select>
+                          </td>
                           <td><input className="r" value={r.dose || ''} onChange={e => setCell('orders', i, 'dose', e.target.value)} /></td>
                           <td><input value={r.unit || ''} onChange={e => setCell('orders', i, 'unit', e.target.value)} /></td>
                           <td><input value={r.cnt || ''} onChange={e => setCell('orders', i, 'cnt', e.target.value)} /></td>
