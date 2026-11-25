@@ -52,6 +52,7 @@ const CATS: { name: string; items: string[] }[] = [
   { name: '환자선택', items: [] },
   { name: '정보조회', items: ['todo', 'overview', 'labres', 'patinfo', 'dxhist', 'surghist', 'vacc', 'dir'] },
   { name: '의사소통', items: ['consult', 'docreq', 'staff'] },
+  { name: '출력·퇴원', items: [] },
   { name: '기록', items: ['notes', 'labres', 'flowsheet', 'vitals', 'bst', 'nurseinfo', 'care', 'nact', 'mat', 'memos'] },
   { name: '처방', items: ['medrec', 'ret'] },
   { name: '예약', items: ['adm', 'discharge'] },
@@ -222,7 +223,7 @@ function BodyFig({ dots, width }: { dots: Dot[]; width: number }) {
 }
 
 export default function EhrNurse({
-  data, setData, userName, roster, win, onOpen, onClose, drawer, tools, onChart, onLabel,
+  data, setData, userName, roster, win, onOpen, onClose, drawer, actions, onChart, onLabel,
 }: {
   data: ChartData;
   setData: Dispatch<SetStateAction<ChartData>>;
@@ -232,7 +233,7 @@ export default function EhrNurse({
   onOpen: (id: string) => void;
   onClose: () => void;
   drawer: ReactNode;
-  tools?: ReactNode;
+  actions?: { label: string; run: () => void; disabled?: boolean }[];
   onChart: () => void;
   onLabel: () => void;
 }) {
@@ -650,9 +651,8 @@ export default function EhrNurse({
         <button type="button" className={mOpen ? 'ns-on' : ''} onClick={() => { setMOpen(mOpen ? 0 : 1); setCat(''); setMq(''); }}>메뉴 ▾</button>
         {mOpen >= 1 && <button type="button" className={`ns-wk ${mOpen === 2 ? 'ns-on' : ''}`} onClick={() => setMOpen(mOpen === 2 ? 1 : 2)}>업무</button>}
         {mOpen === 2 && <span className="ns-sepv" />}
-        {mOpen === 2 && CATS.map(c => <button key={c.name} type="button" disabled={c.name === '최근사용' ? recent.length === 0 : c.items.length === 0} className={cat === c.name ? 'ns-on' : ''} onClick={() => setCat(cat === c.name ? '' : c.name)}>{c.name}</button>)}
+        {mOpen === 2 && CATS.map(c => <button key={c.name} type="button" disabled={c.name === '최근사용' ? recent.length === 0 : c.name === '출력·퇴원' ? false : c.items.length === 0} className={cat === c.name ? 'ns-on' : ''} onClick={() => setCat(cat === c.name ? '' : c.name)}>{c.name}</button>)}
         {mOpen === 2 && <label className="ns-mq">메뉴찾기<input value={mq} onChange={e => setMq(e.target.value)} /></label>}
-        <div className="ns-tools">{tools}</div>
       </div>
       {mOpen === 2 && (
         <div className="ns-wrk">
@@ -662,7 +662,12 @@ export default function EhrNurse({
               {MENUS.filter(m => m.label.includes(mq.trim())).length === 0 && <span className="ns-nnone">검색 결과가 없어요</span>}
             </div>
           )}
-          {!mq.trim() && cat && (
+          {!mq.trim() && cat === '출력·퇴원' && (
+            <div className="ns-nsub">
+              {(actions || []).map(a => <button key={a.label} type="button" disabled={a.disabled} onClick={() => { a.run(); setMOpen(0); setCat(''); }}>{a.label}</button>)}
+            </div>
+          )}
+          {!mq.trim() && cat && cat !== '출력·퇴원' && (
             <div className="ns-nsub">
               {(cat === '최근사용' ? recent.map(id => MENUS.find(m => m.id === id)).filter((m): m is { id: string; label: string } => !!m) : (CATS.find(c => c.name === cat)?.items || []).map(id => MENUS.find(m => m.id === id)).filter((m): m is { id: string; label: string } => !!m)).map(m => (
                 <button key={m.id} type="button" onClick={() => { openMenu(m.id); setMOpen(0); setCat(''); }}>{m.label}</button>
@@ -1187,7 +1192,7 @@ export default function EhrNurse({
         .ns-tools .subm { border-radius: 4px; padding: 5px 12px; }
         .ns-tools .mbtn { color: #fff; }
         .ns-nu { border: 1px solid #94a3b8; background: var(--background, #fff); color: var(--text); border-radius: 6px; overflow: hidden; font-size: 13px; position: relative; }
-        .ns-nmenu { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 0 8px; background: linear-gradient(#233a5c, #17283f); }
+        .ns-nmenu { display: flex; flex-wrap: nowrap; overflow-x: auto; align-items: center; gap: 2px; padding: 0 8px; background: linear-gradient(#233a5c, #17283f); }
         .ns-nmenu b { color: #e8c97a; padding: 0 12px 0 6px; }
         .ns-nmenu button { border: 0; background: transparent; color: #e5ebf3; padding: 11px 12px; font: inherit; font-weight: 600; cursor: pointer; }
         .ns-mq { display: inline-flex; align-items: center; gap: 6px; color: #c9d6e8; font-size: 12px; margin-left: 10px; }
