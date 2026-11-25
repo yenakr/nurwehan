@@ -57,7 +57,7 @@ export default async function HandoverPage({ searchParams }: { searchParams: Pro
         `}</style>
         <div className="noprint" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
           <Link href="/ehr" style={{ color: 'inherit' }}>← 목록</Link>
-          <b style={{ marginLeft: 8 }}>{w} {tm === '전체' ? '' : tm} 인수인계지 ({duty} 근무, {rows.length}명)</b>
+          <b style={{ marginLeft: 8 }}>{w} {tm === '전체' ? '' : tm} 간호업무일지 ({duty} 근무 · ★낙상위험 ♡욕창위험 Ⓒ CP적용, {rows.length}명)</b>
           <PrintBtn />
         </div>
         {rows.length === 0 && <div className="hp">입원 중인 환자가 없어요.</div>}
@@ -72,20 +72,33 @@ export default async function HandoverPage({ searchParams }: { searchParams: Pro
                 const memo = d.memos.find(x => x.type === '간호메모');
                 const req = d.memos.filter(x => x.type === '진료메모').slice(-2);
                 const al = i.allergy && !/^(없음|무|none|-)$/i.test(i.allergy.trim());
+                const day = (f?: string) => { const x = (f || '').slice(0, 10); return x ? Math.round((Date.now() - new Date(x).getTime()) / 86400000) : NaN; };
+                const hd = day(i.admit);
+                const pod = day(d.surgery[0]?.date);
+                const fall = d.acu.some(r => /낙상/.test(r.risk || '')) || d.risk.some(r => /낙상/.test(r.kind || '') && /고위험/.test(r.level || ''));
+                const ulcer = d.acu.some(r => /욕창/.test(r.risk || '')) || d.risk.some(r => /욕창/.test(r.kind || '') && /고위험/.test(r.level || ''));
+                const cp = d.care.length > 0;
+                const diet = d.dietord[d.dietord.length - 1];
+                const drains = [...d.lines.filter(x => x.st !== '제거').map(x => `${x.kind || ''} ${x.site || ''}`), ...d.wounds.map(x => `${x.kind || ''} ${x.site || ''}`)].filter(x => x.trim());
+                const cons = d.consult.filter(x => x.st !== '회신완료').map(x => `${x.dept || ''} ${x.req || ''}`);
+                const meds = d.orders.filter(o => o.pri === 'PRN' || /insulin|heparin|morphine|KCl/i.test(o.name || '')).map(o => o.name).filter(Boolean);
+                const labs = d.labs.filter(x => !x.value).map(x => x.name);
+                const row = (lb: string, v: string) => <div><span className="lb">[{lb}]</span> {v || '-'}</div>;
                 return (
                   <div key={bed + (i.ptNo || '')} className="hc">
-                    <div className="hh"><b>{bed}</b><span>{i.name} {i.ageSex}</span><i>{i.ptNo}</i></div>
-                    <div>{DEPTS.find(x => x.code === i.dept)?.name || i.dept} {i.doctor && `· ${i.doctor}`}</div>
-                    <div>{i.dx}</div>
-                    <div className="fl">
-                      {al && <em className="al">알러지 {i.allergy}</em>}
-                      {i.iso && i.iso !== '해당 없음' && i.iso !== '없음' && <em>{i.iso}</em>}
-                      {i.npo === '1' && <em>금식</em>}
-                    </div>
+                    <div className="hh"><b>{bed}</b><span>{i.name} {i.ptNo} {i.ageSex}</span><i>{fall && '★'}{ulcer && '♡'}{cp && 'Ⓒ'}</i></div>
+                    <div>{i.dx || '진단명'} · {DEPTS.find(x => x.code === i.dept)?.name || i.dept} {i.doctor && `/ ${i.doctor}`}</div>
+                    <div>{!Number.isNaN(hd) ? `HD(${hd + 1}일)` : ''}{!Number.isNaN(pod) && pod >= 0 ? ` / POD(${pod})` : ''}</div>
+                    {row('진료', req.map(x => x.text).join(' / '))}
+                    {row('식이', diet ? diet.type || '' : '')}
+                    {row('환자정보', [al && `알러지 ${i.allergy}`, i.iso && i.iso !== '해당 없음' && i.iso !== '없음' && i.iso, i.npo === '1' && '금식'].filter(Boolean).join(', '))}
+                    {row('배액관/상처관리', drains.join(', '))}
+                    {row('협진', cons.join(', '))}
+                    {row('투약', meds.join(', '))}
+                    {row('검사', labs.join(', '))}
                     {v && <div><span className="lb">V/S</span> {vit(v)}</div>}
                     {h && <div><span className="lb">SBAR</span> {[h.s && `S ${h.s}`, h.b && `B ${h.b}`, h.a && `A ${h.a}`, h.r && `R ${h.r}`].filter(Boolean).join(' / ')}</div>}
-                    {req.length > 0 && <div><span className="lb">요청·관찰</span> {req.map(x => x.text).join(' / ')}</div>}
-                    <div className="mm">{memo?.text ? <Rich text={memo.text} /> : <span className="none">간호메모 없음</span>}</div>
+                    <div className="mm"><span className="lb">[기타]</span> {memo?.text ? <Rich text={memo.text} /> : <span className="none">간호메모 없음</span>}</div>
                   </div>
                 );
               })}
