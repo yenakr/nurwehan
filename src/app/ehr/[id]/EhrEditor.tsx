@@ -456,6 +456,17 @@ function NoteComposer({ onAdd, author }: { onAdd: (n: Row) => void; author: stri
   const [txt, setTxt] = useState<Record<string, string>>({});
   const [time, setTime] = useState(nowStamp);
   const [act, setAct] = useState('');
+  const [draftMsg, setDraftMsg] = useState('');
+  const DK = 'ehr-note-draft';
+  useEffect(() => {
+    try {
+      const d = JSON.parse(localStorage.getItem(DK) || 'null');
+      if (d) { setFmt(d.fmt); setFocus(d.focus || ''); setTxt(d.txt || {}); setDraftMsg('임시저장된 내용을 불러왔어요'); }
+    } catch { /* 저장소 사용 불가 */ }
+  }, []);
+  const saveDraft = () => {
+    try { localStorage.setItem(DK, JSON.stringify({ fmt, focus, txt })); setDraftMsg('임시저장 완료'); } catch { setDraftMsg('임시저장 실패'); }
+  };
   const ph = PHRASES.find(p => p.focus === focus);
   const fields = NFMT[fmt].fields;
 
@@ -476,6 +487,8 @@ function NoteComposer({ onAdd, author }: { onAdd: (n: Row) => void; author: stri
     setTxt({});
     setTime(nowStamp());
     setErr('');
+    setDraftMsg('');
+    try { localStorage.removeItem(DK); } catch { /* 무시 */ }
     if (dict.on) dict.stop();
   };
 
@@ -527,8 +540,10 @@ function NoteComposer({ onAdd, author }: { onAdd: (n: Row) => void; author: stri
       </div>
       <div className="ncFoot">
         {err && <span style={{ color: '#dc2626', fontWeight: 700, marginRight: 'auto' }}>{err}</span>}
-        <button type="button" className="clr" onClick={() => { setTxt({}); setErr(''); }}>지우기</button>
-        <button type="button" className="sv" disabled={empty} onClick={add}>기록 저장</button>
+        {draftMsg && !err && <span style={{ color: 'var(--sub-text)', fontSize: 12, marginRight: 'auto' }}>{draftMsg}</span>}
+        <button type="button" className="clr" disabled={empty} onClick={saveDraft}>임시저장</button>
+        <button type="button" className="clr" onClick={() => { setTxt({}); setErr(''); setDraftMsg(''); try { localStorage.removeItem(DK); } catch { /* 무시 */ } }}>삭제</button>
+        <button type="button" className="sv" disabled={empty} onClick={add}>제출</button>
       </div>
     </div>
   );
@@ -655,6 +670,7 @@ export default function EhrEditor({
   const [title, setTitle] = useState(initialTitle);
   const [data, setData] = useState<ChartData>(initial);
   const [tab, setTab] = useState<TabId>('notes');
+  const [noteQ, setNoteQ] = useState('');
   const [screen, setScreen] = useState<'main' | 'chart'>('main');
   const [win, setWin] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
@@ -844,7 +860,7 @@ export default function EhrEditor({
   };
   const docs = DOCTORS.filter(d => !info.dept || d.dept === info.dept);
 
-  const tbl = (lk: ListKey) => {
+  const tbl = (lk: ListKey, keep?: (r: Row) => boolean) => {
     const cols = COLS[lk];
     if (!cols) return null;
     const rows = data[lk] || [];
@@ -862,6 +878,7 @@ export default function EhrEditor({
               <tr><td colSpan={cols.length + 1} className="none">내용이 없어요</td></tr>
             )}
             {rows.map((row, i) => {
+              if (keep && !keep(row)) return null;
               const flag = lk === 'labs' ? labFlag(row) : '';
               return (
                 <tr key={i}>
@@ -1002,6 +1019,12 @@ export default function EhrEditor({
 
             {tab === 'notes' && (
               <>
+                <div className="nhd2" style={{ display: 'flex', gap: 12, fontSize: 13, fontWeight: 700, padding: '6px 0', borderBottom: '1px solid var(--border)', marginBottom: 6 }}>
+                  <span>기록분류/선택</span>
+                  <span>{[info.ward, info.bed].filter(Boolean).join(' ')}</span>
+                  <span>{info.ptNo}</span>
+                  <span>{info.name}</span>
+                </div>
                 <NoteComposer author={userName || ''} onAdd={n => setData(d => ({ ...d, notes: [n, ...d.notes] }))} />
                 {data.notes.some(n => n.fb) && (
                   <div className="pfb">
@@ -1010,7 +1033,13 @@ export default function EhrEditor({
                     {data.notes.filter(n => n.fb).map((n, i) => <div key={i}><small>{n.time} {n.focus}</small><p>{n.fb}</p></div>)}
                   </div>
                 )}
-                {tbl('notes')}
+                <div className="nsr">
+                  <style>{`.nsr { display: flex; align-items: center; gap: 8px; margin: 8px 0; font-size: 13px; } .nsr input { width: 220px; }`}</style>
+                  <b>간호기록 검색</b>
+                  <input value={noteQ} onChange={e => setNoteQ(e.target.value)} />
+                  {noteQ && <button type="button" className="clr" onClick={() => setNoteQ('')}>지우기</button>}
+                </div>
+                {tbl('notes', noteQ.trim() ? (r => `${r.focus || ''} ${r.text || ''} ${r.author || ''}`.includes(noteQ.trim())) : undefined)}
               </>
             )}
 
