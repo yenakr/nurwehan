@@ -164,23 +164,33 @@ function todoOf(g: Groups, duty: string, isToday: boolean): Todo[] {
 }
 
 
-type Dot = { x: number; y: number; c: string; t: string };
-function bodyPlace(kind: string, site: string): { x: number; y: number } {
+type Dot = { v: 'front' | 'back'; x: number; y: number; c: string; t: string };
+// 좌표는 한 쪽 그림(폭 220 × 높이 480) 기준. 앞면에서는 환자의 오른쪽이 화면 왼쪽, 뒷면은 반대.
+function bodyPlace(kind: string, site: string): { v: 'front' | 'back'; x: number; y: number } {
   const t = `${kind} ${site}`;
-  const R = /우|rt|right/i.test(site), Lf = /좌|lt|left/i.test(site);
-  const dx = R ? 44 : Lf ? 116 : 80;
-  if (/foley|도뇨|요도|방광|urethra|bladder/i.test(t)) return { x: 80, y: 176 };
-  if (/l-tube|ng tube|비위관|경관|nasogastric|위관/i.test(t)) return { x: 80, y: 62 };
-  if (/t-cannula|tracheo|기관/i.test(t)) return { x: 80, y: 58 };
-  if (/chest tube|흉관|흉부|chest/i.test(t)) return { x: dx, y: 95 };
-  if (/두|머리|head|비강|코/i.test(t)) return { x: 80, y: 28 };
-  if (/central|c-line|중심정맥|picc|port|쇄골|경부|목/i.test(t)) return { x: dx === 80 ? 66 : dx, y: 70 };
-  if (/흉|가슴/i.test(t)) return { x: dx, y: 95 };
-  if (/복|abd|jp|drain|배액|위루|장루|stoma/i.test(t)) return { x: dx, y: 140 };
-  if (/천골|엉덩|sacr|둔|회음/i.test(t)) return { x: 80, y: 190 };
-  if (/손|수|전완|상지|arm|hand|iv|정맥|말초|peripheral|a-line|동맥/i.test(t)) return { x: R ? 22 : 138, y: 135 };
-  if (/다리|하지|발|leg|foot|대퇴|무릎|족|발꿈치/i.test(t)) return { x: R ? 62 : 98, y: 240 };
-  return { x: dx, y: 120 };
+  const R = /우|rt|right/i.test(site), L = /좌|lt|left/i.test(site);
+  const back = /천골|엉덩|sacr|둔|회음|등|배면|견갑|후두|뒤꿈치|발뒤꿈|heel|back|occip/i.test(t) && !/foley|도뇨|요도/i.test(t);
+  const sx = (x: number) => (back ? 220 - x : x); // 뒷면은 좌우 반전
+  const side = (r: number, l: number, mid: number) => (R ? r : L ? l : mid);
+  const at = (x: number, y: number) => ({ v: back ? ('back' as const) : ('front' as const), x: sx(x), y });
+  if (/foley|도뇨|요도|방광|urethra|bladder/i.test(t)) return at(110, 270);
+  if (/l-tube|ng tube|비위관|경관|nasogastric|위관/i.test(t)) return at(110, 56);
+  if (/t-cannula|tracheo|기관/i.test(t)) return at(110, 96);
+  if (/chest tube|흉관/i.test(t)) return at(side(78, 142, 110), 168);
+  if (/후두|occip/i.test(t)) return at(110, 36);
+  if (/두|머리|head|비강|코|얼굴/i.test(t)) return at(110, 40);
+  if (/central|c-line|중심정맥|picc|port|쇄골|경부|목|jugular|subclav/i.test(t)) return at(side(90, 130, 110), 102);
+  if (/천골|sacr|엉덩|둔/i.test(t)) return at(110, 272);
+  if (/회음/i.test(t)) return at(110, 290);
+  if (/등|배면|견갑|back/i.test(t)) return at(110, 175);
+  if (/흉|가슴|chest/i.test(t)) return at(side(82, 138, 110), 145);
+  if (/복|abd|jp|drain|배액|위루|장루|stoma|배꼽/i.test(t)) return at(side(86, 134, 110), 215);
+  if (/손|수부|hand|손목|wrist/i.test(t)) return at(side(30, 190, 30), 300);
+  if (/전완|팔|상지|arm|iv|정맥|말초|peripheral|a-line|동맥|주관절/i.test(t)) return at(side(45, 175, 45), 235);
+  if (/뒤꿈치|발뒤꿈|heel/i.test(t)) return at(side(92, 128, 92), 455);
+  if (/발|foot|족/i.test(t)) return at(side(92, 128, 92), 455);
+  if (/대퇴|허벅|무릎|다리|하지|leg|thigh|knee/i.test(t)) return at(side(90, 130, 90), 360);
+  return at(side(86, 134, 110), 190);
 }
 export function bodyDots(data: ChartData): Dot[] {
   const dots: Dot[] = [];
@@ -188,16 +198,16 @@ export function bodyDots(data: ChartData): Dot[] {
   data.lines.filter(l => l.st !== '제거').forEach(l => { if (l.site || l.kind) dots.push({ ...bodyPlace(l.kind || '', l.site || ''), c: '#2563eb', t: `${l.kind || '라인'} ${l.site || ''}` }); });
   return dots;
 }
+// 왼쪽이 뒷면, 오른쪽이 앞면
 function BodyFig({ dots, width }: { dots: Dot[]; width: number }) {
   return (
-    <svg viewBox="0 0 160 300" width={width} aria-label="신체 도식">
-      <ellipse cx="80" cy="30" rx="20" ry="24" fill="#e4eaf2" stroke="#9fb3cc" />
-      <rect x="42" y="56" width="76" height="130" rx="24" fill="#e4eaf2" stroke="#9fb3cc" />
-      <rect x="10" y="64" width="26" height="100" rx="12" fill="#e4eaf2" stroke="#9fb3cc" />
-      <rect x="124" y="64" width="26" height="100" rx="12" fill="#e4eaf2" stroke="#9fb3cc" />
-      <rect x="48" y="186" width="30" height="100" rx="14" fill="#e4eaf2" stroke="#9fb3cc" />
-      <rect x="82" y="186" width="30" height="100" rx="14" fill="#e4eaf2" stroke="#9fb3cc" />
-      {dots.map((d, k) => <circle key={k} cx={d.x} cy={d.y} r="6" fill={d.c} stroke="#fff" strokeWidth="1.5"><title>{d.t}</title></circle>)}
+    <svg viewBox="0 0 450 480" width={width} aria-label="오버뷰 신체">
+      <rect x="0" y="0" width="450" height="480" rx="8" fill="#fff" />
+      <image href="/ehr/body-back.png" x="2" y="0" width="218" height="480" />
+      <image href="/ehr/body-front.png" x="226" y="0" width="224" height="480" />
+      <text x="110" y="476" textAnchor="middle" fontSize="14" fill="#64748b">뒤</text>
+      <text x="338" y="476" textAnchor="middle" fontSize="14" fill="#64748b">앞</text>
+      {dots.map((d, k) => <circle key={k} cx={(d.v === 'back' ? 2 : 226) + d.x} cy={d.y} r="11" fill={d.c} stroke="#fff" strokeWidth="2.5"><title>{d.t}</title></circle>)}
     </svg>
   );
 }
@@ -731,8 +741,8 @@ export default function EhrNurse({
 
         <aside className="ns-nr">
           <div className="ns-nbox ns-fig" role="button" tabIndex={0} title="오버뷰 열기" onClick={() => openMenu('overview')} onKeyDown={e => e.key === 'Enter' && openMenu('overview')}>
-            <h4>신체 도식</h4>
-            <BodyFig dots={bodyDots(data)} width={110} />
+            <h4>오버뷰</h4>
+            <BodyFig dots={bodyDots(data)} width={210} />
             <div className="ns-figl">{bodyDots(data).length ? bodyDots(data).map((d, k) => <span key={k}><i style={{ background: d.c }} />{d.t}</span>) : <span className="ns-nnone">삽입물·상처 없음</span>}</div>
           </div>
           {cl.map(g => (
@@ -988,7 +998,7 @@ export default function EhrNurse({
                 return (
                   <div className="ns-ovw">
                   <div className="ns-ov">
-                    <BodyFig dots={dots} width={170} />
+                    <BodyFig dots={dots} width={300} />
                     <div>
                       <div className="ns-nflags">{flags.length ? flags.map(f => <em key={f}>{f}</em>) : <em>위험 태그 없음</em>}</div>
                       <h4>간호진단 · {data.care.length}문제</h4>
