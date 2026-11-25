@@ -246,6 +246,7 @@ export default function EhrNurse({
   const dxMain = data.dxcode.find(r => r.kind === '주상병' && r.name);
   const [chip, setChip] = useState('');
   const [cat, setCat] = useState('');
+  const [admW, setAdmW] = useState('');
   const [orgSel, setOrgSel] = useState('순환기내과');
   const [mOpen, setMOpen] = useState(0); // 0 닫힘, 1 메뉴, 2 메뉴 > 업무
   const [mq, setMq] = useState('');
@@ -957,13 +958,19 @@ export default function EhrNurse({
                   <input type="date" value={adate} onChange={e => setAdate(e.target.value)} aria-label="조회일" />
                   <button type="button" className="ns-arw" onClick={() => shiftA(1)} aria-label="다음날">&gt;</button>
                 </div>
-                {([['입원', admRows(true)], ['퇴원예정', admRows(false)]] as const).map(([t, rows]) => (
+                <label className="ns-admw">병동
+                  <select value={admW} onChange={e => setAdmW(e.target.value)}>
+                    <option value="">전체</option>
+                    {Array.from(new Set(admRows(true).concat(admRows(false)).map(r => r.ward))).sort().map(w => <option key={w} value={w}>{w}</option>)}
+                  </select>
+                </label>
+                {([['입원', admRows(true).filter(r => !admW || r.ward === admW)], ['퇴원예정', admRows(false).filter(r => !admW || r.ward === admW)]] as const).map(([t, rows]) => (
                   <div key={t}>
                     <h4>{t} ({rows.length})</h4>
                     <table className="ns-nlist">
                       <thead><tr><th>병동</th><th>병상</th><th>환자명</th><th>환자번호</th><th>주치의</th></tr></thead>
                       <tbody>
-                        {rows.map(r => <tr key={r.ptNo + t}><td>{r.ward}</td><td>{r.bed}</td><td>{r.name}</td><td>{r.ptNo}</td><td>{r.doctor}</td></tr>)}
+                        {rows.slice().sort((a, b) => `${a.ward || ''}${a.bed || ''}`.localeCompare(`${b.ward || ''}${b.bed || ''}`, 'ko', { numeric: true })).map(r => <tr key={r.ptNo + t} style={{ cursor: r.id ? 'pointer' : 'default' }} onClick={() => r.id && router.push(`/ehr/${r.id}`)}><td>{r.ward}</td><td>{r.bed}</td><td>{r.name}</td><td>{r.ptNo}</td><td>{r.doctor}</td></tr>)}
                         {rows.length === 0 && <tr><td colSpan={5} className="ns-nnone">없음</td></tr>}
                       </tbody>
                     </table>
@@ -1092,6 +1099,7 @@ export default function EhrNurse({
         .ns-ngrp { display: flex; align-items: flex-start; gap: 8px; border-top: 1px dashed var(--border); padding: 5px 0; }
         .ns-ngrp > span { flex: none; width: 30px; padding-top: 5px; font-size: 11.5px; font-weight: 700; color: var(--sub-text); }
         .ns-ngrp .ns-nlinks { flex: 1; margin: 0; }
+        .ns-admw { display: inline-flex; align-items: center; gap: 6px; margin: 6px 0; font-size: 13px; font-weight: 700; }
         .ns-org { display: grid; grid-template-columns: 220px 1fr; gap: 12px; padding: 10px 12px; }
         .ns-org aside { max-height: 70vh; overflow: auto; border: 1px solid var(--border); border-radius: 6px; padding: 6px; }
         .ns-org aside input { width: 100%; margin-bottom: 6px; padding: 6px 8px; font-size: 13px; }
