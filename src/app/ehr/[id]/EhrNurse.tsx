@@ -33,6 +33,7 @@ const MENUS: { id: string; label: string }[] = [
   { id: 'docreq', label: '서류 요청' },
   { id: 'handover', label: '인수인계지' },
   { id: 'adm', label: '입퇴원 예정' },
+  { id: 'discharge', label: '퇴원정보/계획' },
   { id: 'dir', label: '원내번호조회' },
 ];
 
@@ -43,7 +44,7 @@ const CATS: { name: string; items: string[] }[] = [
   { name: '의사소통', items: ['consult', 'docreq', 'staff'] },
   { name: '기록', items: ['notes', 'labres', 'flowsheet', 'vitals', 'bst', 'nurseinfo', 'care', 'nact', 'mat', 'memos'] },
   { name: '처방', items: ['medrec', 'ret'] },
-  { name: '예약', items: ['adm'] },
+  { name: '예약', items: ['adm', 'discharge'] },
   { name: '병동', items: ['bulk', 'handover'] },
   { name: '회송', items: [] },
   { name: '의무기록', items: [] },
@@ -55,6 +56,7 @@ const CATS: { name: string; items: string[] }[] = [
   { name: '원내전화번호', items: ['dir'] },
 ];
 
+const DIRLOC: Record<string, string> = { '응급실': '본관 1층', '중환자실': '본관 3층', '수술실': '본관 4층', '마취과': '본관 4층', '영상의학과 (CT·MRI)': '별관 지하1층', '진단검사의학과': '별관 1층', '약제부': '본관 지하1층', '영양팀': '본관 지하1층', '원무과 (입퇴원)': '본관 1층', '의료정보팀 (EMR)': '행정동 2층', '감염관리실': '본관 5층', '재활의학과 (PT)': '별관 2층', '내시경실': '본관 2층', '혈액은행': '별관 1층' };
 const DIR: [string, string][] = [
   ['응급실', '2119'], ['중환자실', '2301'], ['수술실', '2410'], ['마취과', '2415'], ['영상의학과 (CT·MRI)', '2520'], ['진단검사의학과', '2610'], ['약제부', '2710'],
   ['영양팀', '2750'], ['원무과 (입퇴원)', '2800'], ['의료정보팀 (EMR)', '2910'], ['감염관리실', '2930'], ['재활의학과 (PT)', '2560'], ['내시경실', '2480'], ['혈액은행', '2630'],
@@ -247,6 +249,7 @@ export default function EhrNurse({
   const dxMain = data.dxcode.find(r => r.kind === '주상병' && r.name);
   const [chip, setChip] = useState('');
   const [cat, setCat] = useState('');
+  const [mq, setMq] = useState('');
   const [tabs, setTabs] = useState<string[]>([]);
   const [recent, setRecent] = useState<string[]>([]);
   const openMenu = (id: string) => {
@@ -454,9 +457,16 @@ export default function EhrNurse({
       <div className="ns-nmenu">
         <b>홈</b>
         {CATS.map(c => <button key={c.name} type="button" disabled={c.name === '최근사용' ? recent.length === 0 : c.items.length === 0} className={cat === c.name ? 'ns-on' : ''} onClick={() => setCat(cat === c.name ? '' : c.name)}>{c.name}</button>)}
+        <label className="ns-mq">메뉴찾기<input value={mq} onChange={e => setMq(e.target.value)} /></label>
         <div className="ns-tools">{tools}</div>
       </div>
-      {cat && (
+      {mq.trim() && (
+        <div className="ns-nsub">
+          {MENUS.filter(m => m.label.includes(mq.trim())).map(m => <button key={m.id} type="button" onClick={() => { openMenu(m.id); setMq(''); }}>{m.label}</button>)}
+          {MENUS.filter(m => m.label.includes(mq.trim())).length === 0 && <span className="ns-nnone">검색 결과가 없어요</span>}
+        </div>
+      )}
+      {!mq.trim() && cat && (
         <div className="ns-nsub">
           {(cat === '최근사용' ? recent.map(id => MENUS.find(m => m.id === id)).filter((m): m is { id: string; label: string } => !!m) : (CATS.find(c => c.name === cat)?.items || []).map(id => MENUS.find(m => m.id === id)).filter((m): m is { id: string; label: string } => !!m)).map(m => (
             <button key={m.id} type="button" onClick={() => openMenu(m.id)}>{m.label}</button>
@@ -850,6 +860,7 @@ export default function EhrNurse({
                 data.wounds.forEach(w => { if (w.site) dots.push({ ...place(w.site), c: '#d97706', t: `${w.kind || '상처'} ${w.site}` }); });
                 data.lines.filter(l => l.st !== '제거').forEach(l => { if (l.site) dots.push({ ...place(l.site), c: '#2563eb', t: `${l.kind || '라인'} ${l.site}` }); });
                 return (
+                  <div className="ns-ovw">
                   <div className="ns-ov">
                     <svg viewBox="0 0 160 300" width="170" aria-label="신체 도식">
                       <ellipse cx="80" cy="30" rx="20" ry="24" fill="#e4eaf2" stroke="#9fb3cc" />
@@ -871,6 +882,22 @@ export default function EhrNurse({
                       {data.wounds.map((w, k) => <p key={k}>{w.kind} {w.site}</p>)}
                       {data.wounds.length === 0 && <p className="ns-nnone">없음</p>}
                     </div>
+                  </div>
+                  <div className="ns-ovd">
+                    <h4>간호진단 / 문제</h4>
+                    {data.care.length === 0 ? <p className="ns-nnone">등록된 간호진단이 없어요</p> : <ul>{data.care.map((c, k) => <li key={k}>{c.dx}</li>)}</ul>}
+                    <h4>처방 메모</h4>
+                    {(() => { const ms = data.orders.filter(o => o.kind === 'memo' && (o.name || '').replace('※', '').trim()); return ms.length ? <ul>{ms.map((o, k) => <li key={k}>{o.name}</li>)}</ul> : <p className="ns-nnone">없음</p>; })()}
+                    <h4>7일 내 미실시 검사</h4>
+                    <table className="ns-rt">
+                      <thead><tr><th>검사명</th><th>채혈일</th><th>예약일시</th></tr></thead>
+                      <tbody>
+                        {g.lab.filter(it => it.r.st !== '완료' && it.r.st !== '집계완료' && it.r.pri !== 'D/C').map((it, k) => <tr key={`l${k}`}><td>{it.r.name}</td><td>{date}</td><td>{it.r.t1 || ''}</td></tr>)}
+                        {data.appts.filter(a2 => a2.st !== '취소' && a2.st !== '진료완료').map((a2, k) => <tr key={`a${k}`}><td>{a2.purpose || a2.dept}</td><td /><td>{a2.date} {a2.time}</td></tr>)}
+                        {g.lab.filter(it => it.r.st !== '완료' && it.r.st !== '집계완료').length === 0 && data.appts.length === 0 && <tr><td colSpan={3} className="ns-nnone">없음</td></tr>}
+                      </tbody>
+                    </table>
+                  </div>
                   </div>
                 );
               })()
@@ -898,8 +925,9 @@ export default function EhrNurse({
               <>
                 <input className="ns-ndq" value={dq} onChange={e => setDq(e.target.value)} aria-label="부서 검색" />
                 <table className="ns-nlist">
+                  <thead><tr><th>과</th><th>전화번호</th><th>위치</th><th>비고</th></tr></thead>
                   <tbody>
-                    {DIR.filter(([n]) => n.includes(dq.trim())).map(([n, t]) => <tr key={n}><td>{n}</td><td>{t}</td></tr>)}
+                    {DIR.filter(([n, t]) => n.includes(dq.trim()) || t.includes(dq.trim())).map(([n, t]) => <tr key={n}><td>{n}</td><td>{t}</td><td>{DIRLOC[n] || ''}</td><td /></tr>)}
                   </tbody>
                 </table>
               </>
@@ -936,6 +964,8 @@ export default function EhrNurse({
         .ns-nmenu { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 0 8px; background: linear-gradient(#233a5c, #17283f); }
         .ns-nmenu b { color: #e8c97a; padding: 0 12px 0 6px; }
         .ns-nmenu button { border: 0; background: transparent; color: #e5ebf3; padding: 11px 12px; font: inherit; font-weight: 600; cursor: pointer; }
+        .ns-mq { display: inline-flex; align-items: center; gap: 6px; color: #c9d6e8; font-size: 12px; margin-left: 10px; }
+        .ns-mq input { width: 110px; padding: 3px 6px; font-size: 12.5px; }
         .ns-nmenu button:disabled { opacity: .45; cursor: default; }
         .ns-nmenu button.ns-on { color: #38d6ff; box-shadow: inset 0 -3px 0 #38d6ff; }
         .ns-nsub { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 10px; background: #eaf0f7; border-bottom: 1px solid var(--border); }
@@ -997,6 +1027,10 @@ export default function EhrNurse({
         .ns-fl-b button { font: inherit; font-size: 12.5px; font-weight: 700; padding: 4px 12px; border: 1px solid var(--border); border-radius: 4px; background: #fff; cursor: pointer; }
         .ns-fl-b button.ns-on { background: var(--primary); color: #fff; border-color: var(--primary); }
         .ns-fl-x p { margin: 3px 0; font-size: 13px; }
+        .ns-ovw { padding-bottom: 12px; }
+        .ns-ovd { padding: 0 14px; border-top: 1px solid var(--border); margin-top: 6px; }
+        .ns-ovd h4 { margin: 12px 0 4px; font-size: 13px; }
+        .ns-ovd ul { margin: 0; padding-left: 18px; font-size: 13px; }
         .ns-ov { display: flex; gap: 20px; padding: 14px; align-items: flex-start; }
         .ns-ov h4 { margin: 12px 0 4px; font-size: 13px; }
         .ns-ov p { margin: 2px 0; font-size: 13px; }
