@@ -1,4 +1,5 @@
 import { KCD } from './kcd';
+import { MAT_MASTER, ACT_MASTER } from './master';
 // 가상 환자 실습용 코드표 (실제 병원 코드와 다를 수 있음)
 const DX0: [string, string][] = [
   ['I10', '본태성 고혈압'], ['I50.0', '울혈심부전'], ['I50.9', '상세불명의 심부전'], ['I21.9', '급성 심근경색증'], ['I20.9', '협심증'], ['I48', '심방세동 및 조동'],
@@ -18,28 +19,12 @@ const DX0: [string, string][] = [
   ['J21.9', '급성 세기관지염'], ['J03.9', '급성 편도염'], ['B34.9', '바이러스 감염'],
 ];
 
-// 간호행위(약속처방): [행위, 기본 재료]
-export const ACTS: [string, string][] = [
-  ['정맥 주사 (IV 라인 확보)', 'IV catheter'], ['수액 교체', 'IV 수액 세트'], ['혈액 채취', '채혈 주사기'], ['혈당 측정 (BST)', '혈당 검사지'],
-  ['도뇨관 삽입 (Foley)', 'Foley catheter'], ['단순 도뇨', '일회용 도뇨 세트'], ['L-tube 삽입', 'L-tube'], ['경관영양', '경관영양 세트'],
-  ['상처 드레싱', '드레싱 세트'], ['욕창 드레싱', '폼 드레싱'], ['배액관 관리', '배액 주머니'], ['흡인 (Suction)', '흡인 카테터'],
-  ['산소 요법', '산소 마스크'], ['네뷸라이저', '네뷸라이저 세트'], ['관장', '관장 세트'], ['체위 변경', ''], ['활동 보조·보행 교육', ''],
-  ['심전도 (ECG)', 'ECG 전극'], ['소독·봉합사 제거', '봉합사 제거 세트'], ['투약 (주사)', '주사기'], ['수혈', '수혈 세트'], ['억제대 적용', '억제대'],
-];
-
+// 간호행위(약속처방): [행위, 기본 재료(첫 번째)] — 전체 목록은 master.ts
+export const ACTS: [string, string][] = ACT_MASTER.map(x => [x.name, x.mats[0]?.[0] || '']);
 // 처치재료(간호fee): [품목, 단위]
-export const MATS: [string, string][] = [
-  ['IV catheter 18G', 'ea'], ['IV catheter 20G', 'ea'], ['IV catheter 22G', 'ea'], ['IV catheter 24G', 'ea'], ['IV 수액 세트', 'set'], ['IV 수액 세트 (정밀)', 'set'], ['Extension line', 'ea'], ['3-way stopcock', 'ea'],
-  ['주사기 1mL', 'ea'], ['주사기 3mL', 'ea'], ['주사기 5mL', 'ea'], ['주사기 10mL', 'ea'], ['주사기 20mL', 'ea'], ['주사기 50mL', 'ea'], ['인슐린 주사기', 'ea'], ['주사침 23G', 'ea'], ['주사침 25G', 'ea'],
-  ['채혈 주사기', 'ea'], ['채혈 튜브', 'ea'], ['채혈 튜브 (EDTA)', 'ea'], ['채혈 튜브 (SST)', 'ea'], ['채혈 튜브 (Citrate)', 'ea'], ['혈액배양 병', 'set'], ['소변 검체 용기', 'ea'], ['객담 검체 용기', 'ea'], ['혈당 검사지', 'ea'], ['란셋', 'ea'],
-  ['알코올 솜', 'ea'], ['베타딘 솜', 'ea'], ['클로르헥시딘 솜', 'ea'], ['멸균 거즈 (4x4)', 'pack'], ['멸균 거즈 (2x2)', 'pack'], ['생리식염수 100mL', 'ea'], ['생리식염수 500mL (세척용)', 'ea'], ['멸균 증류수', 'ea'],
-  ['Foley catheter 14Fr', 'ea'], ['Foley catheter 16Fr', 'ea'], ['Foley catheter 18Fr', 'ea'], ['Urine bag', 'ea'], ['일회용 도뇨 세트', 'set'], ['윤활젤', 'ea'], ['소변 주머니 (시간뇨)', 'ea'],
-  ['L-tube 14Fr', 'ea'], ['L-tube 16Fr', 'ea'], ['경관영양 세트', 'set'], ['경관영양 주입기 (50mL)', 'ea'], ['위관 고정 테이프', 'ea'],
-  ['드레싱 세트', 'set'], ['폼 드레싱', 'ea'], ['투명 필름 드레싱', 'ea'], ['하이드로콜로이드 드레싱', 'ea'], ['습윤 거즈', 'pack'], ['탄력 붕대', 'ea'], ['의료용 테이프', 'ea'], ['고정용 밴드', 'ea'],
-  ['배액 주머니', 'ea'], ['JP drain', 'ea'], ['흡인 카테터 12Fr', 'ea'], ['흡인 카테터 14Fr', 'ea'], ['산소 마스크', 'ea'], ['비강 캐뉼라', 'ea'], ['네뷸라이저 세트', 'set'], ['가습 증류수', 'ea'],
-  ['관장 세트', 'set'], ['글리세린 관장액', 'ea'], ['ECG 전극', 'ea'], ['봉합사 제거 세트', 'set'], ['수혈 세트', 'set'], ['혈액 가온기 필터', 'ea'],
-  ['장갑', 'pair'], ['멸균 장갑', 'pair'], ['마스크', 'ea'], ['가운 (일회용)', 'ea'], ['억제대', 'ea'], ['욕창 예방 매트', 'ea'], ['PCA 세트', 'set'], ['주사약 라벨', 'ea'],
-];
+export const MATS: [string, string][] = MAT_MASTER.map(x => [x.name, x.unit]);
+export const MAT_INFO = new Map(MAT_MASTER.map(x => [x.name, x]));
+export const actMats = (act: string): [string, number][] => ACT_MASTER.find(x => x.name === act)?.mats || [];
 
 // 처방을 수행할 때 함께 쓰이는 기본 처치재료. [품목, 수량]
 const has = (n: string, re: RegExp) => re.test(n);
@@ -47,14 +32,14 @@ export function matsFor(o: Record<string, string | undefined>): [string, number]
   const name = o.name || '';
   const route = (o.route || '').toUpperCase();
   if (has(name, /BST|blood glucose|혈당/i)) return [['혈당 검사지', 1], ['란셋', 1], ['알코올 솜', 1]];
-  if (has(name, /N\/S|saline|D5|D10|hartmann|ringer|fluid|수액|\bHS\b|plasma/i) && route !== 'PO') return [['IV 수액 세트', 1], ['알코올 솜', 1]];
+  if (has(name, /N\/S|saline|D5|D10|hartmann|ringer|fluid|수액|\bHS\b|plasma/i) && route !== 'PO') return [['IV 수액 세트 (일반)', 1], ['알코올 솜', 1]];
   if (has(name, /transfusion|PRBC|수혈|FFP|platelet/i)) return [['수혈 세트', 1], ['알코올 솜', 1]];
-  if (has(name, /foley|도뇨/i)) return [['Foley catheter 16Fr', 1], ['Urine bag', 1], ['일회용 도뇨 세트', 1]];
-  if (has(name, /L-tube|경관/i)) return [['경관영양 세트', 1], ['경관영양 주입기 (50mL)', 1]];
-  if (has(name, /dressing|드레싱|wound/i)) return [['드레싱 세트', 1], ['멸균 거즈 (4x4)', 1]];
+  if (has(name, /foley|도뇨/i)) return [['Foley catheter 16Fr', 1], ['Urine bag (일반)', 1], ['일회용 도뇨 세트', 1]];
+  if (has(name, /L-tube|경관/i)) return [['경관영양 세트', 1], ['경관영양 주입기 50mL', 1]];
+  if (has(name, /dressing|드레싱|wound/i)) return [['드레싱 세트 (일반)', 1], ['멸균 거즈 (4x4)', 1]];
   if (has(name, /suction|흡인/i)) return [['흡인 카테터 12Fr', 1]];
   if (has(name, /neb|네뷸/i)) return [['네뷸라이저 세트', 1]];
-  if (has(name, /O2|oxygen|산소/i)) return [['비강 캐뉼라', 1]];
+  if (has(name, /O2|oxygen|산소/i)) return [['비강 캐뉼라 (성인)', 1]];
   if (has(name, /ECG|심전도/i)) return [['ECG 전극', 3]];
   if (has(name, /enema|관장/i)) return [['관장 세트', 1]];
   if (route === 'IV' || route === 'IM' || route === 'SC' || route === 'ID') return [[route === 'SC' ? '주사기 1mL' : '주사기 5mL', 1], ['알코올 솜', 1]];

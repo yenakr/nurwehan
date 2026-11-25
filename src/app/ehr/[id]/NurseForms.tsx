@@ -3,7 +3,8 @@
 import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import type { ChartData, Row } from '../types';
 import SearchPick, { type PickItem } from './SearchPick';
-import { ACTS, MATS } from '../codes';
+import { ACTS, MATS, MAT_INFO, actMats } from '../codes';
+import { ACT_MASTER } from '../master';
 
 const p2 = (n: number) => String(n).padStart(2, '0');
 const todayStr = () => { const t = new Date(); return `${t.getFullYear()}-${p2(t.getMonth() + 1)}-${p2(t.getDate())}`; };
@@ -34,8 +35,8 @@ export default function NurseForm({ kind, data, setData, userName }: Props) {
   const [msg, setMsg] = useState('');
   const set = (k: string, v: string) => { setF(o => ({ ...o, [k]: v })); setMsg(''); };
 
-  const matItems = useMemo<PickItem[]>(() => MATS.map(m => [m[0], m[1]]), []);
-  const actItems = useMemo<PickItem[]>(() => ACTS.map(a => [a[0], a[1]]), []);
+  const matItems = useMemo<PickItem[]>(() => MATS.map(m => [m[0], `${MAT_INFO.get(m[0])?.cat || ''} · ${m[1]} · ${MAT_INFO.get(m[0])?.code || ''}`]), []);
+  const actItems = useMemo<PickItem[]>(() => ACT_MASTER.map(a => [a.name, `${a.cat} · ${a.code}`]), []);
 
   const rows = (kind === 'vitals' ? data.vitals : kind === 'bst' ? data.bst : kind === 'mat' ? data.mat : data.nact) as Row[];
   const recent = rows.slice(-6).reverse();
@@ -84,7 +85,8 @@ export default function NurseForm({ kind, data, setData, userName }: Props) {
       if (!f.act) { setMsg('간호행위를 선택하세요'); return; }
       if (!ACTS.some(a => a[0] === f.act)) { setMsg('목록에서 간호행위를 선택하세요'); return; }
       const row: Row = { time: ts, act: f.act, mat: f.mat || '', by: userName, st: '수행', note: f.note || '' };
-      setData(d => ({ ...d, nact: [...d.nact, row] }));
+      const used: Row[] = actMats(f.act).map(([item, qty]) => ({ time: ts, item, qty: String(qty), unit: MATS.find(m => m[0] === item)?.[1] || 'ea', act: f.act, by: userName }));
+      setData(d => ({ ...d, nact: [...d.nact, row], mat: [...d.mat, ...used] }));
       setF({});
       setMsg('저장했어요.');
     }
@@ -194,6 +196,7 @@ export default function NurseForm({ kind, data, setData, userName }: Props) {
               <SearchPick items={actItems} value={f.act || ''} onChange={v => set('act', v)} />
             </label>
             <button type="button" className="nf-add" onClick={addCart}>추가</button>
+            {actMats(f.act || '').length > 0 && <button type="button" className="nf-add" onClick={() => { setCart(c => [...c, ...actMats(f.act || '').map(([item, q]) => ({ item, qty: String(q), unit: MATS.find(m => m[0] === item)?.[1] || 'ea', act: f.act || '' }))]); setMsg(''); }}>행위 기본재료 담기</button>}
           </div>
           {cart.length > 0 && (
             <table className="nf-t">
@@ -212,7 +215,7 @@ export default function NurseForm({ kind, data, setData, userName }: Props) {
         <div className="nf-row">
           <label className="nf-f" style={{ flex: 1, minWidth: 240 }}>
             <span>간호행위</span>
-            <SearchPick items={actItems} value={f.act || ''} onChange={v => { set('act', v); const m = ACTS.find(a => a[0] === v)?.[1]; if (m) setF(o => ({ ...o, act: v, mat: m })); }} />
+            <SearchPick items={actItems} value={f.act || ''} onChange={v => { set('act', v); const m = actMats(v).map(([n, q]) => `${n} x${q}`).join(', '); setF(o => ({ ...o, act: v, mat: m })); }} />
           </label>
           <label className="nf-f" style={{ flex: 1, minWidth: 180 }}>
             <span>사용 재료</span>
