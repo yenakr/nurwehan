@@ -213,6 +213,12 @@ export default function EhrNurse({
     const n = Math.round((new Date(date).getTime() - new Date(f).getTime()) / 86400000) + 1;
     return n > 0 ? `${n}일째` : '';
   };
+  const podN = (from?: string) => {
+    const f = dd(from);
+    if (!f) return '';
+    const n = Math.round((new Date(date).getTime() - new Date(f).getTime()) / 86400000);
+    return n > 0 ? `POD#${n}` : n === 0 ? '수술당일' : `D-${-n}`;
+  };
   const dxMain = data.dxcode.find(r => r.kind === '주상병' && r.name);
   const [chip, setChip] = useState('');
   const esc = (v: string) => v.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c] as string));
@@ -394,9 +400,9 @@ export default function EhrNurse({
             <dl className="ns-nkv">
               {i.ward && <><dt>병실</dt><dd>{[i.ward, i.bed].filter(Boolean).join(' ')}</dd></>}
               {(i.dept || i.doctor) && <><dt>진료과</dt><dd><button type="button" className="ns-lnk" onClick={() => onOpen('staff')}>{[DEPTS.find(x => x.code === i.dept)?.name || i.dept, i.doctor].filter(Boolean).join(' · ')}</button></dd></>}
-              {dd(i.admit) && <><dt>입원일</dt><dd>{dd(i.admit)}{dayN(i.admit) && <em>{dayN(i.admit)}</em>}</dd></>}
+              {dd(i.admit) && <><dt>입원일</dt><dd>{dd(i.admit)}{dayN(i.admit) && <em>HD#{dayN(i.admit).replace('일째', '')}</em>}</dd></>}
               {dd(i.disDate) && <><dt>퇴원예정</dt><dd>{dd(i.disDate)}</dd></>}
-              {data.surgery[0] && dd(data.surgery[0].date) && <><dt>수술일</dt><dd>{dd(data.surgery[0].date)}</dd></>}
+              {data.surgery[0] && dd(data.surgery[0].date) && <><dt>수술일</dt><dd>{dd(data.surgery[0].date)}{podN(data.surgery[0].date) && <em>{podN(data.surgery[0].date)}</em>}</dd></>}
               {(dxMain || i.dx) && <><dt>진단</dt><dd>{dxMain ? dxMain.name : i.dx}</dd></>}
             </dl>
             <div className="ns-nlinks">
