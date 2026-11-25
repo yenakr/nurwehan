@@ -3,12 +3,13 @@
 import { SAMPLES } from '../samples';
 import { MATS, matsFor } from '../codes';
 import NurseForm from './NurseForms';
+import LabResults from './LabResults';
 import { StaffWin, DocReqWin, RichMemo } from './NurseExtras';
 import { DEPTS, buildDirectory } from '../directory';
 import { confirmDialog } from '@/components/Dialog';
 import { Fragment, useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
 import { useRouter } from 'next/navigation';
-import { migrate, shiftChart, type ChartData, type Row } from '../types';
+import { migrate, shiftChart, withBp, type ChartData, type Row } from '../types';
 import WardBulk, { type BulkPt } from '../WardBulk';
 
 export type Roster = { id: string; ward: string | null; bed: string | null; name: string | null; ageSex: string | null; ptNo: string | null; doctor: string | null; admit?: string | null; disDate?: string | null; orders?: Row[] };
@@ -369,8 +370,8 @@ export default function EhrNurse({
   const vitAt = (it: string, d: string, h: string) => {
     const r = vitRow(d, h);
     if (!r) return '';
-    if (it === '수축기혈압') return (r.bp || '').split('/')[0] || '';
-    if (it === '이완기혈압') return (r.bp || '').split('/')[1] || '';
+    if (it === '수축기혈압') return r.sbp ?? ((r.bp || '').split('/')[0] || '');
+    if (it === '이완기혈압') return r.dbp ?? ((r.bp || '').split('/')[1] || '');
     return VMAP[it] ? r[VMAP[it]] || '' : '';
   };
   const fGet = (it: string, d: string, h: string) => data.memos.find(m => m.type === 'flow' && m.date === d && m.item === it && m.hour === h);
@@ -384,9 +385,9 @@ export default function EhrNurse({
       const tm = `${d.slice(5)} ${h}:00`;
       const idx = dd.vitals.findIndex(r => (r.time || '').startsWith(d.slice(5)) && (r.time || '').slice(6, 8) === h);
       const old = idx >= 0 ? dd.vitals[idx] : ({ time: tm } as Row);
-      let val = v.trim();
-      if (vk === 'bp') { const [s0, d0] = (old.bp || '/').split('/'); val = it === '수축기혈압' ? `${val}/${d0 || ''}` : `${s0 || ''}/${val}`; }
-      const row = { ...old, [vk]: val };
+      const val = v.trim();
+      let row: Row = { ...old, [vk]: val };
+      if (vk === 'bp') { const k2 = it === '수축기혈압' ? 'sbp' : 'dbp'; row = withBp({ ...old, [k2]: val }); }
       next.vitals = idx >= 0 ? dd.vitals.map((r, j) => (j === idx ? row : r)) : [...dd.vitals, row];
     }
     return next;
@@ -414,6 +415,19 @@ export default function EhrNurse({
     if (HIGH.test(it.r.name || '') && dbl.trim()) p[`v${next.slice(1)}`] = dbl.trim();
     if (!isMed(it.r)) p.st = '완료';
     patch(it.i, p);
+    // IV 투약량은 Flowsheet Intake(IV)에 자동 누적
+    if (isMed(it.r) && /^(IV|CIV|IVF|IV-?DRIP)$/i.test((it.r.route || '').trim())) {
+      const amt = parseFloat(it.r.dose || '');
+      const ml = Number.isNaN(amt) ? 0 : /^l$/i.test((it.r.unit || '').trim()) ? amt * 1000 : /^(ml|cc)$/i.test((it.r.unit || '').trim()) ? amt : 0;
+      if (ml > 0) {
+        const hh = hm().slice(0, 2);
+        setData(d => {
+          const cur = d.memos.find(m => m.type === 'flow' && m.date === date && m.item === 'IV (mL)' && m.hour === hh);
+          const rest = d.memos.filter(m => m !== cur);
+          return { ...d, memos: [...rest, { type: 'flow', date, item: 'IV (mL)', hour: hh, text: String((Number(cur?.text) || 0) + ml), author: userName }] };
+        });
+      }
+    }
     const used2 = matsFor(it.r);
     if (used2.length) {
       const act = isMed(it.r) ? '투약' : (it.r.name || '');
@@ -687,6 +701,16 @@ export default function EhrNurse({
               </tbody>
             </table>
           </div>
+          <div className="ns-tl">
+            <h4>진료이력</h4>
+            {[...(i.admit ? [{ date: dd(i.admit), kind: '입원', dept: DEPTS.find(x => x.code === i.dept)?.name || i.dept || '', dx: i.dx || '' }] : []), ...data.history.map(h => ({ date: dd(h.date), kind: h.kind || '외래', dept: DEPTS.find(x => x.code === h.dept)?.name || h.dept || '', dx: h.dx || '' }))].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8).map((h, k) => (
+              <div key={k} className="ns-tli">
+                <i className={`k_${h.kind}`} />
+                <div><b>{h.date.slice(5)}</b> <em className={`k_${h.kind}`}>{h.kind}</em> {h.dept}<br /><span>{h.dx}</span></div>
+              </div>
+            ))}
+            {data.history.length === 0 && !i.admit && <p className="ns-nnone">이력 없음</p>}
+          </div>
         </aside>
 
         <main className="ns-nc">
@@ -873,27 +897,7 @@ export default function EhrNurse({
                 )}
               </>
             ) : win === 'labres' ? (
-              (() => {
-                const flagOf = (r: Row) => { const v = parseFloat(r.value || ''); const lo = parseFloat(r.min || ''); const hi = parseFloat(r.max || ''); return Number.isNaN(v) ? '' : !Number.isNaN(hi) && v > hi ? 'H' : !Number.isNaN(lo) && v < lo ? 'L' : ''; };
-                const unack = data.labs.filter(r => flagOf(r) && !r.ack).length;
-                return (
-                  <div className="ns-mr">
-                    <p style={{ margin: '0 0 8px', fontWeight: 700 }}>검사결과 · 미확인 이상치 <span style={{ color: unack ? '#dc2626' : 'inherit' }}>{unack}건</span></p>
-                    <table className="ns-rt">
-                      <thead><tr>{['검사일시', '검사명', '결과', '단위', '참고범위', '구분', '확인'].map(h => <th key={h}>{h}</th>)}</tr></thead>
-                      <tbody>
-                        {data.labs.map((r, k) => { const f = flagOf(r); return (
-                          <tr key={k} style={f && !r.ack ? { background: '#fff1f1' } : undefined}>
-                            <td>{r.time}</td><td>{r.name}</td><td style={{ fontWeight: 700, color: f ? '#dc2626' : 'inherit' }}>{r.value}{f && (f === 'H' ? ' ▲' : ' ▼')}</td><td>{r.unit}</td><td>{r.min}~{r.max}</td><td>{r.sample}</td>
-                            <td>{r.ack ? <span title={r.ack}>확인</span> : f ? <button type="button" className="ns-fl-pb" onClick={() => setData(d => ({ ...d, labs: d.labs.map(x => (x === r ? { ...x, ack: `${hm()} ${userName}` } : x)) }))}>결과 확인</button> : ''}</td>
-                          </tr>
-                        ); })}
-                        {data.labs.length === 0 && <tr><td colSpan={7} className="ns-nnone">검사결과 없음</td></tr>}
-                      </tbody>
-                    </table>
-                  </div>
-                );
-              })()
+              <LabResults data={data} setData={setData} userName={userName} />
             ) : win === 'medrec' ? (
               (() => {
                 const rows: [string, Item][] = [
@@ -1174,6 +1178,12 @@ export default function EhrNurse({
         .ns-abn { margin: 0 12px 8px; padding: 6px 8px; border: 1px solid #ef4444; background: rgba(239,68,68,.08); border-radius: 6px; font-size: 12px; display: flex; flex-direction: column; gap: 4px; }
         .ns-abn b { color: #dc2626; }
         .ns-abn button { align-self: flex-start; border: 1px solid #dc2626; background: #fff; color: #dc2626; border-radius: 4px; padding: 2px 10px; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+        .ns-tl h4 { margin: 4px 0 6px; font-size: 13px; }
+        .ns-tli { display: flex; gap: 8px; padding: 6px 0; border-top: 1px solid var(--border); font-size: 12.5px; }
+        .ns-tli > i { flex: none; width: 9px; height: 9px; border-radius: 50%; margin-top: 5px; background: #3b82f6; }
+        .ns-tli > i.k_입원 { background: #10b981; } .ns-tli > i.k_응급 { background: #ef4444; }
+        .ns-tli em { font-style: normal; font-weight: 700; color: #3b82f6; } .ns-tli em.k_입원 { color: #10b981; } .ns-tli em.k_응급 { color: #ef4444; }
+        .ns-tli span { color: var(--sub-text); font-size: 12px; }
         .ns-org { display: grid; grid-template-columns: 220px 1fr; gap: 12px; padding: 10px 12px; }
         .ns-org aside { max-height: 70vh; overflow: auto; border: 1px solid var(--border); border-radius: 6px; padding: 6px; }
         .ns-org aside input { width: 100%; margin-bottom: 6px; padding: 6px 8px; font-size: 13px; }

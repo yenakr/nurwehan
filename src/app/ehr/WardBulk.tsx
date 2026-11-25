@@ -3,12 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { notify } from '@/components/Dialog';
-import type { ChartData, Row } from './types';
+import { withBp, type ChartData, type Row } from './types';
 
 export type BulkPt = { self?: boolean; key: string; bed: string; name: string; ageSex: string; id?: string; make: () => { title: string; subject: string | null; data: unknown } };
 
 const COLS: { key: string; label: string; ph: string }[] = [
-  { key: 'bp', label: '혈압', ph: '120/80' },
+  { key: 'sbp', label: '수축기', ph: '120' },
+  { key: 'dbp', label: '이완기', ph: '80' },
   { key: 'hr', label: '맥박', ph: '72' },
   { key: 'rr', label: '호흡', ph: '18' },
   { key: 'bt', label: '체온', ph: '36.5' },
@@ -31,8 +32,8 @@ export default function WardBulk({ pts, onClose, onSelf }: { pts: BulkPt[]; onCl
     setBusy(true);
     try {
       let n = 0;
-      todo.filter(p => p.self).forEach(p => { onSelf?.({ time, ...vals[p.key] }); n++; });
-      const saved = todo.filter(p => p.id && !p.self).map(p => ({ id: p.id as string, row: { time, ...vals[p.key] } }));
+      todo.filter(p => p.self).forEach(p => { onSelf?.(withBp({ time, ...vals[p.key] })); n++; });
+      const saved = todo.filter(p => p.id && !p.self).map(p => ({ id: p.id as string, row: withBp({ time, ...vals[p.key] }) }));
       if (saved.length) {
         const r = await fetch('/api/ehr/bulk-vitals', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ items: saved }) });
         const j = await r.json().catch(() => ({}));
@@ -41,7 +42,7 @@ export default function WardBulk({ pts, onClose, onSelf }: { pts: BulkPt[]; onCl
       for (const p of todo.filter(p => !p.id && !p.self)) {
         const m = p.make();
         const d = m.data as ChartData;
-        const r = await fetch('/api/ehr', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...m, data: { ...d, vitals: [...(d.vitals || []), { time, ...vals[p.key] }] } }) });
+        const r = await fetch('/api/ehr', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ ...m, data: { ...d, vitals: [...(d.vitals || []), withBp({ time, ...vals[p.key] })] } }) });
         if (r.ok) n++;
       }
       notify(`${n}명 입력했어요.`);
@@ -78,7 +79,7 @@ export default function WardBulk({ pts, onClose, onSelf }: { pts: BulkPt[]; onCl
               <tr key={p.key}>
                 <td className="pt"><b>{p.bed}</b></td>
                 <td className="pt">{p.name} {p.ageSex}</td>
-                {COLS.map(c => <td key={c.key}><input value={vals[p.key]?.[c.key] || ''} inputMode={c.key === 'bp' ? 'text' : 'decimal'} onChange={e => set(p.key, c.key, e.target.value)} aria-label={`${p.bed} ${c.label}`} /></td>)}
+                {COLS.map(c => <td key={c.key}><input value={vals[p.key]?.[c.key] || ''} inputMode="decimal" onChange={e => set(p.key, c.key, e.target.value)} aria-label={`${p.bed} ${c.label}`} /></td>)}
               </tr>
             ))}
           </tbody>

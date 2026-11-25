@@ -65,7 +65,8 @@ export const COLS: Record<ListKey, Col[]> = {
   ],
   vitals: [
     { key: 'time', label: '시간', w: 80, ph: '08:00' },
-    { key: 'bp', label: '혈압 (mmHg)', w: 110, ph: '120/80' },
+    { key: 'sbp', label: '수축기 (mmHg)', w: 90, ph: '120' },
+    { key: 'dbp', label: '이완기 (mmHg)', w: 90, ph: '80' },
     { key: 'hr', label: '맥박 (/min)', w: 90 },
     { key: 'rr', label: '호흡 (/min)', w: 90 },
     { key: 'bt', label: '체온 (℃)', w: 80 },
@@ -363,10 +364,8 @@ export const COLS: Record<ListKey, Col[]> = {
 const num = (v: string) => parseFloat((v || '').replace(/[^0-9.\-]/g, ''));
 function vitalBad(key: string, v: string): boolean {
   if (!v) return false;
-  if (key === 'bp') {
-    const [s, d] = v.split('/').map(num);
-    return (!isNaN(s) && (s >= 140 || s < 90)) || (!isNaN(d) && (d >= 90 || d < 60));
-  }
+  if (key === 'sbp') { const n = num(v); return !isNaN(n) && (n >= 140 || n < 90); }
+  if (key === 'dbp') { const n = num(v); return !isNaN(n) && (n >= 90 || n < 60); }
   const n = num(v);
   if (isNaN(n)) return false;
   if (key === 'hr') return n > 100 || n < 60;
@@ -641,6 +640,7 @@ const PICKS: Record<string, PickItem[]> = {
 type RuleCtx = { user: string; dept: string; doctor: string };
 const todayYmd = () => { const t = new Date(); const p = (x: number) => String(x).padStart(2, '0'); return `${t.getFullYear()}-${p(t.getMonth() + 1)}-${p(t.getDate())}`; };
 function applyRules(lk: string, n: Row, k: string, v: string, ctx?: RuleCtx) {
+  if (lk === 'vitals' && (k === 'sbp' || k === 'dbp')) n.bp = n.sbp || n.dbp ? `${n.sbp || ''}/${n.dbp || ''}` : '';
   if (lk === 'ret') {
     if (k === 'name' && v) { if (!n.qty) n.qty = '1'; if (!n.st) n.st = '반납대기'; }
     if (k === 'st' && v === '반납완료') { if (!n.chk) n.chk = ctx?.user || ''; }

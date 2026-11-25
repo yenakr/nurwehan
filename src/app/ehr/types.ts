@@ -97,6 +97,14 @@ export function shiftChart(src: ChartData): ChartData {
 }
 
 // 예전 형식으로 저장된 차트도 열리도록 변환
+// 혈압은 수축기(sbp)·이완기(dbp)를 따로 저장하고, 호환용 bp("120/80")도 같이 맞춘다.
+export function withBp(r: Row): Row {
+  const [s0, d0] = (r.bp || '').split('/');
+  const sbp = r.sbp ?? (s0 || '');
+  const dbp = r.dbp ?? (d0 || '');
+  return { ...r, sbp, dbp, bp: sbp || dbp ? `${sbp}/${dbp}` : '' };
+}
+
 export function migrate(raw: unknown): ChartData {
   const r = (raw && typeof raw === 'object' ? raw : {}) as Record<string, unknown>;
   const base = emptyChart() as unknown as Record<string, unknown>;
@@ -108,6 +116,7 @@ export function migrate(raw: unknown): ChartData {
   if (info.history && !info.pmh) info.pmh = info.history;
   if (info.orders && !info.plan) info.plan = info.orders;
   const out = base as unknown as ChartData;
+  out.vitals = (out.vitals || []).map(withBp);
   out.info = info;
   out.forms = r.forms && typeof r.forms === 'object' && !Array.isArray(r.forms) ? (r.forms as Record<string, Row[]>) : {};
 
