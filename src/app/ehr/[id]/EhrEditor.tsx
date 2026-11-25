@@ -690,6 +690,7 @@ export default function EhrEditor({
   const [tab, setTab] = useState<TabId>('notes');
   const [noteQ, setNoteQ] = useState('');
   const [screen, setScreen] = useState<'main' | 'chart'>('main');
+  const [warnOpen, setWarnOpen] = useState(false);
   const [win, setWin] = useState<string | null>(null);
   const [menuOpen, setMenuOpen] = useState<string | null>(null);
   const navRef = useRef<HTMLDivElement>(null);
@@ -1253,12 +1254,17 @@ export default function EhrEditor({
     <div className="ehr">
       <div className="bar">
         <Link href="/" className="home" aria-label="홈">NUR위한</Link>
+        <span className="hsep">|</span>
+        <b className="hehr">EHR</b>
+        <span className="hwarn">
+          <button type="button" aria-label="이용 안내" aria-expanded={warnOpen} onClick={() => setWarnOpen(o => !o)}>!</button>
+          {warnOpen && <span className="hpop" role="note">실제 환자 정보(이름, 환자번호, 생년월일, 병실 등)는 쓰지 마세요. 가상 정보로 바꿔서 연습하세요.</span>}
+        </span>
         <span className="ttl" />
         <span className="who">{userName}</span>
         <LogoutButton />
       </div>
 
-      <p className="pvn">실제 환자 정보(이름, 환자번호, 생년월일, 병실 등)는 쓰지 마세요. 가상 정보로 바꿔서 연습하세요.</p>
       {screen === 'chart' && <div className="etool">{tools}</div>}
       {locked && <div className="lkb">{info.reviewed ? '교수님이 확인했어요' : '제출했어요. 교수님 확인 전에는 제출 취소로 고칠 수 있어요'}</div>}
       {info.comment && <div className="cmt"><b>교수님 의견</b><p>{info.comment}</p></div>}
@@ -1529,6 +1535,11 @@ export default function EhrEditor({
         .ehr .fmts .mic.on { background: #dc2626; border-color: #dc2626; color: #fff; }
         .ehr .ncGrid.six { grid-template-columns: repeat(3, minmax(0, 1fr)); }
         .ehr .ncGrid.one { grid-template-columns: 1fr; }
+        .ehr .hsep { color: var(--sub-text); }
+        .ehr .hehr { font-weight: 800; letter-spacing: .5px; }
+        .ehr .hwarn { position: relative; display: inline-flex; }
+        .ehr .hwarn button { width: 20px; height: 20px; border-radius: 50%; border: 1.5px solid #d97706; background: #fffbeb; color: #b45309; font-weight: 800; font-size: 12px; line-height: 1; padding: 0; cursor: pointer; display: inline-flex; align-items: center; justify-content: center; }
+        .ehr .hpop { position: absolute; top: 28px; left: -8px; z-index: 50; width: 260px; background: #fffbeb; border: 1px solid #f59e0b; color: #92400e; border-radius: 8px; padding: 8px 10px; font-size: 12px; font-weight: 600; line-height: 1.5; box-shadow: 0 4px 14px rgba(0,0,0,.18); }
         .ehr .pvn { margin: 0 0 8px; font-size: 0.6875rem; color: #b45309; font-weight: 600; }
         .ehr .lkb { margin-bottom: 8px; padding: 8px 12px; border-radius: 8px; background: color-mix(in srgb, var(--primary) 10%, transparent); color: var(--primary); font-size: 0.8125rem; font-weight: 700; }
         .ehr .cmt { position: relative; margin-bottom: 8px; padding: 12px 14px; border-radius: 10px; border: 1px solid var(--primary); background: var(--white); }

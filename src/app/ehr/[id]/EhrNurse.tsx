@@ -547,7 +547,7 @@ export default function EhrNurse({
               {dd(i.admit) && <><dt>입원일</dt><dd>{dd(i.admit)}{dayN(i.admit) && <em>HD#{dayN(i.admit).replace('일째', '')}</em>}</dd></>}
               {dd(i.disDate) && <><dt>퇴원예정</dt><dd>{dd(i.disDate)}</dd></>}
               {data.surgery[0] && dd(data.surgery[0].date) && <><dt>수술일</dt><dd>{dd(data.surgery[0].date)}{podN(data.surgery[0].date) && <em>{podN(data.surgery[0].date)}</em>}</dd></>}
-              {(dxMain || i.dx) && <><dt>진단</dt><dd>{dxMain ? dxMain.name : i.dx}</dd></>}
+              {(dxMain || i.dx) && <><dt>진단명</dt><dd>{dxMain ? dxMain.name : i.dx}</dd></>}
             </dl>
             <div className="ns-ngrp"><span>구분</span><div className="ns-nlinks">
               {[['외래', '외래'], ['병동', i.ward === '응급실' ? '응급' : i.ward || ''], ['응급', '응급']].map(([k, v]) => <button key={k} type="button" disabled={!v} onClick={() => router.push(`/ehr?view=${encodeURIComponent(v)}`)}>{k}</button>)}
