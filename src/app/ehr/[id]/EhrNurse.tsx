@@ -6,7 +6,7 @@ import NurseForm from './NurseForms';
 import { StaffWin, DocReqWin, RichMemo } from './NurseExtras';
 import { DEPTS } from '../directory';
 import { confirmDialog } from '@/components/Dialog';
-import { useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
+import { Fragment, useMemo, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
 import { useRouter } from 'next/navigation';
 import { migrate, shiftChart, type ChartData, type Row } from '../types';
 import WardBulk, { type BulkPt } from '../WardBulk';
@@ -17,6 +17,7 @@ const MENUS: { id: string; label: string }[] = [
   { id: 'todo', label: '오늘 할 일' },
   { id: 'notes', label: '간호기록' },
   { id: 'overview', label: '오버뷰' },
+  { id: 'flowsheet', label: 'Flowsheet' },
   { id: 'memos', label: '간호인수인계' },
   { id: 'vitals', label: '임상관찰' },
   { id: 'bst', label: '혈당·인슐린' },
@@ -222,6 +223,21 @@ export default function EhrNurse({
   };
   const dxMain = data.dxcode.find(r => r.kind === '주상병' && r.name);
   const [chip, setChip] = useState('');
+  const [fTab, setFTab] = useState<'obs' | 'state' | 'lab'>('obs');
+  const [fEdit, setFEdit] = useState<{ it: string; h: string } | null>(null);
+  const [fVal, setFVal] = useState('');
+  const [fCtx, setFCtx] = useState<{ x: number; y: number; it: string; h: string } | null>(null);
+  const FH = ['06', '07', '08', '09', '10', '11', '12', '13', '14', '15', '16', '17'];
+  const FG: { g: string; items: string[] }[] = [
+    { g: '활력징후', items: ['체온 (℃)', '수축기혈압', '이완기혈압', '맥박 (회/분)', '호흡 (회/분)', 'SpO2 (%)'] },
+    { g: '욕창예방 및 관리', items: ['욕창위험평가 (Braden)', '체위변경'] },
+    { g: '섭취·배설', items: ['섭취량 (mL)', '소변량 (mL)'] },
+  ];
+  const fGet = (it: string, h: string) => data.memos.find(m => m.type === 'flow' && m.date === date && m.item === it && m.hour === h);
+  const fSet = (it: string, h: string, v: string) => setData(d => {
+    const rest = d.memos.filter(m => !(m.type === 'flow' && m.date === date && m.item === it && m.hour === h));
+    return { ...d, memos: v.trim() ? [...rest, { type: 'flow', date, item: it, hour: h, text: v.trim(), author: userName }] : rest };
+  });
   const esc = (v: string) => v.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c] as string));
   const printDoc = (title: string, body: string) => {
     const w = window.open('', '_blank', 'width=720,height=900');
@@ -630,6 +646,48 @@ export default function EhrNurse({
                   </table>
                 )}
               </>
+            ) : win === 'flowsheet' ? (
+              <div className="ns-fl" onClick={() => setFCtx(null)}>
+                <div className="ns-fl-t">
+                  <table>
+                    <thead><tr><th>기간 · {date}</th>{FH.map(h => <th key={h}>{h}시</th>)}</tr></thead>
+                    <tbody>
+                      {FG.map(g => (
+                        <Fragment key={g.g}>
+                          <tr className="ns-fl-g"><td colSpan={FH.length + 1}>{g.g}</td></tr>
+                          {g.items.map(it => (
+                            <tr key={it}>
+                              <th>{it}</th>
+                              {FH.map(h => {
+                                const c = fGet(it, h);
+                                const on = fEdit?.it === it && fEdit.h === h;
+                                return (
+                                  <td key={h} className={c ? 'ns-fl-v' : ''} onDoubleClick={() => { setFEdit({ it, h }); setFVal(c?.text || ''); }} onContextMenu={e => { e.preventDefault(); e.stopPropagation(); setFCtx({ x: e.clientX, y: e.clientY, it, h }); }}>
+                                    {on ? <input autoFocus value={fVal} onChange={e => setFVal(e.target.value)} onBlur={() => { fSet(it, h, fVal); setFEdit(null); }} onKeyDown={e => { if (e.key === 'Enter') { fSet(it, h, fVal); setFEdit(null); } if (e.key === 'Escape') setFEdit(null); }} /> : <>{c?.text}{c?.memo && <sup title={c.memo}>●</sup>}</>}
+                                  </td>
+                                );
+                              })}
+                            </tr>
+                          ))}
+                        </Fragment>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+                <p className="ns-fl-h">칸을 더블클릭하면 입력, 우클릭하면 메뉴(메모 / 간호기록 / 그룹입력)</p>
+                {fCtx && (
+                  <div className="ns-fl-m" style={{ left: fCtx.x, top: fCtx.y }} onClick={e => e.stopPropagation()}>
+                    <button type="button" onClick={() => { const c = fGet(fCtx.it, fCtx.h); if (!c) { setFCtx(null); return; } const m = window.prompt('메모', c.memo || ''); if (m !== null) setData(d => ({ ...d, memos: d.memos.map(x => (x === c ? { ...x, memo: m } : x)) })); setFCtx(null); }}>메모</button>
+                    <button type="button" onClick={() => { const c = fGet(fCtx.it, fCtx.h); if (c) setData(d => ({ ...d, notes: [...d.notes, { time: `${date} ${fCtx.h}:00`, focus: fCtx.it.split(' (')[0], text: `D)\n${fCtx.h}시 ${fCtx.it} ${c.text}${c.memo ? ` (${c.memo})` : ''}`, author: userName, shift: duty }] })); setFCtx(null); }}>간호기록</button>
+                    <button type="button" onClick={() => { const c = fGet(fCtx.it, fCtx.h); if (c) { const i0 = FH.indexOf(fCtx.h); FH.slice(i0 + 1, i0 + 4).forEach(h => { if (!fGet(fCtx.it, h)) fSet(fCtx.it, h, c.text); }); } setFCtx(null); }}>그룹입력 (이후 3칸 동일값)</button>
+                  </div>
+                )}
+                <div className="ns-fl-b">
+                  {([['obs', '임상관찰'], ['state', '간호상태'], ['lab', 'LAB']] as const).map(([k, l]) => <button key={k} type="button" className={fTab === k ? 'ns-on' : ''} onClick={() => setFTab(k)}>{l}</button>)}
+                </div>
+                {fTab === 'state' && <div className="ns-fl-x">{data.care.length ? data.care.map((c, k) => <p key={k}>{c.dx}</p>) : <p className="ns-nnone">간호과정 없음</p>}</div>}
+                {fTab === 'lab' && <div className="ns-fl-x">{data.labs.length ? data.labs.slice(0, 12).map((l, k) => <p key={k}>{l.name} {l.value} {l.unit}</p>) : <p className="ns-nnone">검사결과 없음</p>}</div>}
+              </div>
             ) : win === 'overview' ? (
               (() => {
                 const dots: { x: number; y: number; c: string; t: string }[] = [];
@@ -759,6 +817,23 @@ export default function EhrNurse({
         .ns-nkv dd em { font-style: normal; margin-left: 6px; font-size: 11px; font-weight: 700; color: var(--primary); }
         .ns-lnk { border: 0; background: transparent; color: var(--primary); font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 0; text-align: left; }
         .ns-npt .ns-nflags { padding: 0 12px 10px; margin-top: 0; }
+        .ns-fl { padding: 10px 12px; position: relative; }
+        .ns-fl-t { overflow: auto; }
+        .ns-fl table { min-width: 0; border-collapse: collapse; font-size: 12.5px; width: 100%; }
+        .ns-fl th, .ns-fl td { border: 1px solid var(--border); padding: 4px 6px; text-align: center; height: 28px; white-space: nowrap; }
+        .ns-fl tbody th { text-align: left; background: #f6f8fb; font-weight: 600; }
+        .ns-fl td { min-width: 52px; cursor: cell; }
+        .ns-fl td input { width: 48px; padding: 2px 4px; font-size: 12.5px; }
+        .ns-fl-v { background: #eef6ff; font-weight: 700; }
+        .ns-fl-g td { background: #eaf0f7; text-align: left; font-weight: 700; cursor: default; }
+        .ns-fl-h { font-size: 12px; color: var(--sub-text); margin: 6px 0; }
+        .ns-fl-m { position: fixed; z-index: 90; background: #fff; border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 6px 20px rgba(0,0,0,.18); display: flex; flex-direction: column; min-width: 190px; }
+        .ns-fl-m button { text-align: left; border: 0; background: none; padding: 8px 12px; font: inherit; font-size: 13px; cursor: pointer; }
+        .ns-fl-m button:hover { background: #eef2f7; }
+        .ns-fl-b { display: flex; gap: 6px; margin-top: 8px; }
+        .ns-fl-b button { font: inherit; font-size: 12.5px; font-weight: 700; padding: 4px 12px; border: 1px solid var(--border); border-radius: 4px; background: #fff; cursor: pointer; }
+        .ns-fl-b button.ns-on { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .ns-fl-x p { margin: 3px 0; font-size: 13px; }
         .ns-ov { display: flex; gap: 20px; padding: 14px; align-items: flex-start; }
         .ns-ov h4 { margin: 12px 0 4px; font-size: 13px; }
         .ns-ov p { margin: 2px 0; font-size: 13px; }
