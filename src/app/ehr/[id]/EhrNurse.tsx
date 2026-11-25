@@ -18,6 +18,7 @@ const MENUS: { id: string; label: string }[] = [
   { id: 'notes', label: '간호기록' },
   { id: 'overview', label: '오버뷰' },
   { id: 'flowsheet', label: 'Flowsheet' },
+  { id: 'medrec', label: '투약기록' },
   { id: 'memos', label: '간호인수인계' },
   { id: 'vitals', label: '임상관찰' },
   { id: 'bst', label: '혈당·인슐린' },
@@ -223,6 +224,7 @@ export default function EhrNurse({
   };
   const dxMain = data.dxcode.find(r => r.kind === '주상병' && r.name);
   const [chip, setChip] = useState('');
+  const [mf, setMf] = useState<'all' | 'base' | 'med' | 'lab'>('med');
   const [rt, setRt] = useState<'meal' | 'sched' | 'cons' | 'appt'>('meal');
   const [fTab, setFTab] = useState<'obs' | 'state' | 'lab'>('obs');
   const [fEdit, setFEdit] = useState<{ it: string; h: string } | null>(null);
@@ -234,8 +236,15 @@ export default function EhrNurse({
   const FG: { g: string; items: string[] }[] = [
     { g: '활력징후', items: ['체온 (℃)', '수축기혈압', '이완기혈압', '맥박 (회/분)', '호흡 (회/분)', 'SpO2 (%)'] },
     { g: '욕창예방 및 관리', items: ['욕창위험평가 (Braden)', '체위변경'] },
-    { g: '섭취·배설', items: ['섭취량 (mL)', '소변량 (mL)'] },
+    { g: '신체계측', items: ['신장 (cm)', '체중 (kg)'] },
+    { g: 'Intake', items: ['IV (mL)', 'Diet (mL)', '기타 섭취 (mL)'] },
+    { g: 'Output', items: ['소변 (mL)', '배액 (mL)', '기타 배출 (mL)'] },
+    { g: 'I/O Total', items: ['I/O Total (mL)'] },
   ];
+  const IN = ['IV (mL)', 'Diet (mL)', '기타 섭취 (mL)'];
+  const OUT = ['소변 (mL)', '배액 (mL)', '기타 배출 (mL)'];
+  const fNum = (it: string, h: string) => Number(fGet(it, h)?.text) || 0;
+  const ioTotal = (h: string) => IN.reduce((a, it) => a + fNum(it, h), 0) - OUT.reduce((a, it) => a + fNum(it, h), 0);
   const fGet = (it: string, h: string) => data.memos.find(m => m.type === 'flow' && m.date === date && m.item === it && m.hour === h);
   const fSet = (it: string, h: string, v: string) => setData(d => {
     const rest = d.memos.filter(m => !(m.type === 'flow' && m.date === date && m.item === it && m.hour === h));
@@ -664,6 +673,36 @@ export default function EhrNurse({
                   </table>
                 )}
               </>
+            ) : win === 'medrec' ? (
+              (() => {
+                const rows: [string, Item][] = [
+                  ...(mf === 'all' || mf === 'base' ? g.base.map(x => ['기본', x] as [string, Item]) : []),
+                  ...(mf === 'all' || mf === 'med' ? [...g.med.map(x => ['투약', x] as [string, Item]), ...g.prn.map(x => ['PRN', x] as [string, Item])] : []),
+                  ...(mf === 'all' || mf === 'lab' ? g.lab.map(x => ['검사', x] as [string, Item]) : []),
+                ];
+                const kindOf = (r: Row) => (/주사|IV|IM|SC|inj/i.test(`${r.route || ''}${r.name || ''}`) ? '주사약' : /PO|경구/i.test(r.route || '') ? '먹는약' : '');
+                const tail = `출력일시 ${date} ${hm()} · 출력자 ${userName}`;
+                return (
+                  <div className="ns-mr">
+                    <div className="ns-fl-b">
+                      {([['all', '전체'], ['base', '기본'], ['med', '투약'], ['lab', '검사']] as const).map(([k, l]) => <button key={k} type="button" className={mf === k ? 'ns-on' : ''} onClick={() => setMf(k)}>{l}</button>)}
+                      <span style={{ marginLeft: 'auto', fontSize: 13 }}>처방일자 {date}</span>
+                    </div>
+                    <h4 style={{ textAlign: 'center', margin: '10px 0' }}>투약기록</h4>
+                    <table className="ns-rt">
+                      <thead><tr>{['병실', '환자번호', '환자명', '종류', '투약구분', '처방명', '용량', '용법'].map(h => <th key={h}>{h}</th>)}</tr></thead>
+                      <tbody>
+                        {rows.map(([k, it], n) => <tr key={n}><td>{[i.ward, i.bed].filter(Boolean).join(' ')}</td><td>{i.ptNo}</td><td>{i.name}</td><td>{k}</td><td>{kindOf(it.r)}</td><td>{it.r.name}</td><td>{it.r.dose}{it.r.unit}</td><td>{[it.r.route, it.r.cnt || it.r.q].filter(Boolean).join(' ')}</td></tr>)}
+                        {rows.length === 0 && <tr><td colSpan={8} className="ns-nnone">없음</td></tr>}
+                      </tbody>
+                    </table>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10, fontSize: 12.5 }}>
+                      <span>{tail}</span>
+                      <button type="button" className="ns-fl-pb" onClick={() => printDoc('투약기록', `${head()}<table><tr>${['종류', '투약구분', '처방명', '용량', '용법'].map(h => `<th>${h}</th>`).join('')}</tr>${rows.map(([k, it]) => `<tr><td>${k}</td><td>${kindOf(it.r)}</td><td>${esc(it.r.name || '')}</td><td>${esc(`${it.r.dose || ''}${it.r.unit || ''}`)}</td><td>${esc([it.r.route, it.r.cnt || it.r.q].filter(Boolean).join(' '))}</td></tr>`).join('')}</table><p>${esc(tail)}</p>`)}>인쇄</button>
+                    </div>
+                  </div>
+                );
+              })()
             ) : win === 'flowsheet' ? (
               <div className="ns-fl" onClick={() => setFCtx(null)}>
                 <div className="ns-fl-t">
@@ -679,6 +718,10 @@ export default function EhrNurse({
                               {FH.map(h => {
                                 const c = fGet(it, h);
                                 const on = fEdit?.it === it && fEdit.h === h;
+                                if (it === 'I/O Total (mL)') {
+                                  const anyIO = [...IN, ...OUT].some(x => fGet(x, h));
+                                  return <td key={h} style={{ cursor: 'default', background: '#f6f8fb', fontWeight: 700 }}>{anyIO ? ioTotal(h) : ''}</td>;
+                                }
                                 return (
                                   <td key={h} className={c ? 'ns-fl-v' : ''} onDoubleClick={() => { setFEdit({ it, h }); setFVal(c?.text || ''); }} onContextMenu={e => { e.preventDefault(); e.stopPropagation(); setFCtx({ x: e.clientX, y: e.clientY, it, h }); }}>
                                     {on ? <input autoFocus value={fVal} onChange={e => setFVal(e.target.value)} onBlur={() => { fSet(it, h, fVal); setFEdit(null); }} onKeyDown={e => { if (e.key === 'Enter') { fSet(it, h, fVal); setFEdit(null); } if (e.key === 'Escape') setFEdit(null); }} /> : <>{c?.text}{c?.memo && <sup title={c.memo}>●</sup>}</>}
@@ -835,6 +878,8 @@ export default function EhrNurse({
         .ns-nkv dd em { font-style: normal; margin-left: 6px; font-size: 11px; font-weight: 700; color: var(--primary); }
         .ns-lnk { border: 0; background: transparent; color: var(--primary); font: inherit; font-weight: 700; text-decoration: underline; cursor: pointer; padding: 0; text-align: left; }
         .ns-npt .ns-nflags { padding: 0 12px 10px; margin-top: 0; }
+        .ns-mr { padding: 10px 12px; }
+        .ns-fl-pb { font: inherit; font-size: 12.5px; font-weight: 700; padding: 4px 14px; border: 1px solid var(--border); border-radius: 4px; background: #fff; cursor: pointer; }
         .ns-fl { padding: 10px 12px; position: relative; }
         .ns-rt { min-width: 0 !important; width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 6px; }
         .ns-rt th, .ns-rt td { border: 1px solid var(--border); padding: 3px 5px; text-align: left; }
