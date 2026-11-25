@@ -249,6 +249,7 @@ export default function EhrNurse({
   const dxMain = data.dxcode.find(r => r.kind === '주상병' && r.name);
   const [chip, setChip] = useState('');
   const [cat, setCat] = useState('');
+  const [mOpen, setMOpen] = useState(0); // 0 닫힘, 1 메뉴, 2 메뉴 > 업무
   const [mq, setMq] = useState('');
   const [tabs, setTabs] = useState<string[]>([]);
   const [recent, setRecent] = useState<string[]>([]);
@@ -456,21 +457,34 @@ export default function EhrNurse({
     <div className={`ns-nu ${win ? 'ns-hasw' : ''}`}>
       <div className="ns-nmenu">
         <b>홈</b>
-        {CATS.map(c => <button key={c.name} type="button" disabled={c.name === '최근사용' ? recent.length === 0 : c.items.length === 0} className={cat === c.name ? 'ns-on' : ''} onClick={() => setCat(cat === c.name ? '' : c.name)}>{c.name}</button>)}
-        <label className="ns-mq">메뉴찾기<input value={mq} onChange={e => setMq(e.target.value)} /></label>
+        <button type="button" className={mOpen ? 'ns-on' : ''} onClick={() => { setMOpen(mOpen ? 0 : 1); setCat(''); setMq(''); }}>메뉴 ▾</button>
         <div className="ns-tools">{tools}</div>
       </div>
-      {mq.trim() && (
+      {mOpen === 1 && (
         <div className="ns-nsub">
-          {MENUS.filter(m => m.label.includes(mq.trim())).map(m => <button key={m.id} type="button" onClick={() => { openMenu(m.id); setMq(''); }}>{m.label}</button>)}
-          {MENUS.filter(m => m.label.includes(mq.trim())).length === 0 && <span className="ns-nnone">검색 결과가 없어요</span>}
+          <button type="button" onClick={() => setMOpen(2)}>업무</button>
         </div>
       )}
-      {!mq.trim() && cat && (
-        <div className="ns-nsub">
-          {(cat === '최근사용' ? recent.map(id => MENUS.find(m => m.id === id)).filter((m): m is { id: string; label: string } => !!m) : (CATS.find(c => c.name === cat)?.items || []).map(id => MENUS.find(m => m.id === id)).filter((m): m is { id: string; label: string } => !!m)).map(m => (
-            <button key={m.id} type="button" onClick={() => openMenu(m.id)}>{m.label}</button>
-          ))}
+      {mOpen === 2 && (
+        <div className="ns-wrk">
+          <div className="ns-nmenu ns-nmenu2">
+            <b>업무</b>
+            {CATS.map(c => <button key={c.name} type="button" disabled={c.name === '최근사용' ? recent.length === 0 : c.items.length === 0} className={cat === c.name ? 'ns-on' : ''} onClick={() => setCat(cat === c.name ? '' : c.name)}>{c.name}</button>)}
+            <label className="ns-mq">메뉴찾기<input value={mq} onChange={e => setMq(e.target.value)} /></label>
+          </div>
+          {mq.trim() && (
+            <div className="ns-nsub">
+              {MENUS.filter(m => m.label.includes(mq.trim())).map(m => <button key={m.id} type="button" onClick={() => { openMenu(m.id); setMq(''); setMOpen(0); }}>{m.label}</button>)}
+              {MENUS.filter(m => m.label.includes(mq.trim())).length === 0 && <span className="ns-nnone">검색 결과가 없어요</span>}
+            </div>
+          )}
+          {!mq.trim() && cat && (
+            <div className="ns-nsub">
+              {(cat === '최근사용' ? recent.map(id => MENUS.find(m => m.id === id)).filter((m): m is { id: string; label: string } => !!m) : (CATS.find(c => c.name === cat)?.items || []).map(id => MENUS.find(m => m.id === id)).filter((m): m is { id: string; label: string } => !!m)).map(m => (
+                <button key={m.id} type="button" onClick={() => { openMenu(m.id); setMOpen(0); setCat(''); }}>{m.label}</button>
+              ))}
+            </div>
+          )}
         </div>
       )}
       {tabs.length > 0 && (
