@@ -1029,7 +1029,7 @@ export default function EhrNurse({
                 <label className="ns-admw">병동
                   <select value={admW} onChange={e => setAdmW(e.target.value)}>
                     <option value="">전체</option>
-                    {Array.from(new Set(admRows(true).concat(admRows(false)).map(r => r.ward))).sort().map(w => <option key={w} value={w}>{w}</option>)}
+                    {Array.from(new Set(admRows(true).concat(admRows(false)).map(r => r.ward).filter((w): w is string => !!w))).sort().map(w => <option key={w} value={w}>{w}</option>)}
                   </select>
                 </label>
                 {([['입원', admRows(true).filter(r => !admW || r.ward === admW)], ['퇴원예정', admRows(false).filter(r => !admW || r.ward === admW)]] as const).map(([t, rows]) => (
