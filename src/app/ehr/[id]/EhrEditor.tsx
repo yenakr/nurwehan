@@ -1261,11 +1261,11 @@ export default function EhrEditor({
           {warnOpen && <span className="hpop" role="note">실제 환자 정보(이름, 환자번호, 생년월일, 병실 등)는 쓰지 마세요. 가상 정보로 바꿔서 연습하세요.</span>}
         </span>
         <span className="ttl" />
+        <span className="btools">{tools}</span>
         <span className="who">{userName}</span>
         <LogoutButton />
       </div>
 
-      <div className="etool">{tools}</div>
       {locked && <div className="lkb">{info.reviewed ? '교수님이 확인했어요' : '제출했어요. 교수님 확인 전에는 제출 취소로 고칠 수 있어요'}</div>}
       {info.comment && <div className="cmt"><b>교수님 의견</b><p>{info.comment}</p></div>}
       {fb && <div className="cmt ai"><b style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><AiMark size={14} />AI 피드백</b><button type="button" className="cx" aria-label="닫기" onClick={() => setFb('')}>&times;</button><p>{fb}</p></div>}
@@ -1452,6 +1452,9 @@ export default function EhrEditor({
         .ehr .etool .st { color: #cbd5e1; }
         .ehr .etool .mbtn { color: #fff; }
         .ehr .etool .st { margin-left: auto; }
+        .ehr .btools { display: inline-flex; align-items: center; gap: 8px; }
+        .ehr .btools .st { font-size: 0.8125rem; color: var(--sub-text); white-space: nowrap; }
+        .ehr .btools .mbtn { color: var(--text); }
         .ehr .bar { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; }
         .ehr .back { border: 1px solid var(--border); background: transparent; color: var(--text); border-radius: 999px; padding: 5px 12px; font: inherit; font-size: 0.8125rem; font-weight: 700; cursor: pointer; white-space: nowrap; }
         .ehr .home { font-weight: 800; color: var(--primary); text-decoration: none; letter-spacing: -0.5px; padding-right: 4px; }
