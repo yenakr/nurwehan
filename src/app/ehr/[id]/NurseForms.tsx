@@ -1,5 +1,6 @@
 'use client';
 
+import { vnow } from '../vclock';
 import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import type { ChartData, Row } from '../types';
 import SearchPick, { type PickItem } from './SearchPick';
@@ -7,8 +8,8 @@ import { ACTS, MATS, MAT_INFO, actMats } from '../codes';
 import { ACT_MASTER } from '../master';
 
 const p2 = (n: number) => String(n).padStart(2, '0');
-const todayStr = () => { const t = new Date(); return `${t.getFullYear()}-${p2(t.getMonth() + 1)}-${p2(t.getDate())}`; };
-const nowStr = () => { const t = new Date(); return `${p2(t.getHours())}:${p2(t.getMinutes())}`; };
+const todayStr = () => { const t = vnow(); return `${t.getFullYear()}-${p2(t.getMonth() + 1)}-${p2(t.getDate())}`; };
+const nowStr = () => { const t = vnow(); return `${p2(t.getHours())}:${p2(t.getMinutes())}`; };
 const stamp = (d: string, t: string) => `${d.slice(5)} ${t}`;
 
 type Kind = 'vitals' | 'bst' | 'mat' | 'nact';

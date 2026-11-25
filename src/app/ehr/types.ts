@@ -57,7 +57,7 @@ export type Sample = { key: string; subject: string; title: string; data: Partia
 
 // 미래 일정을 담는 항목은 기준일 계산에서 뺀다
 const FUTURE = new Set(['appts', 'chg', 'disDate']);
-
+// 샘플 차트는 가상 날짜에 고정한다. 가상 시계 시작 시각(vbase)만 정해 준다
 // 샘플 차트의 날짜를 오늘 기준으로 옮긴다 (가장 늦은 날짜가 오늘이 되도록)
 export function shiftChart(src: ChartData): ChartData {
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -74,26 +74,10 @@ export function shiftChart(src: ChartData): ChartData {
   };
   scan(src);
   if (!max) return src;
-  const now = new Date();
-  const delta = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()) - max;
-  if (delta === 0) return src;
-  const shift = (v: unknown): unknown => {
-    if (typeof v === 'string') {
-      let out = v.replace(FULL, (_, y, mo, d) => {
-        const t = new Date(Date.UTC(+y, +mo - 1, +d) + delta);
-        return `${t.getUTCFullYear()}-${pad(t.getUTCMonth() + 1)}-${pad(t.getUTCDate())}`;
-      });
-      out = out.replace(MD, (_, mo, d, rest) => {
-        const t = new Date(Date.UTC(2026, +mo - 1, +d) + delta);
-        return `${pad(t.getUTCMonth() + 1)}-${pad(t.getUTCDate())}${rest}`;
-      });
-      return out;
-    }
-    if (Array.isArray(v)) return v.map(shift);
-    if (v && typeof v === 'object') return Object.fromEntries(Object.entries(v).map(([k, x]) => [k, shift(x)]));
-    return v;
-  };
-  return shift(src) as ChartData;
+  // 시나리오는 가상 날짜에 고정한다. 날짜를 오늘로 옮기지 않고, 가상 시계를 그 날 09:00에서 시작한다.
+  const t0 = new Date(max);
+  const day = `${t0.getUTCFullYear()}-${pad(t0.getUTCMonth() + 1)}-${pad(t0.getUTCDate())}`;
+  return { ...src, info: { ...src.info, vbase: src.info.vbase || `${day} 09:00` } };
 }
 
 // 예전 형식으로 저장된 차트도 열리도록 변환

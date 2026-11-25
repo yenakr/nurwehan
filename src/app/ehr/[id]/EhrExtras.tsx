@@ -1,5 +1,6 @@
 'use client';
 
+import { vnow } from '../vclock';
 import { useEffect, useRef, useState } from 'react';
 import { withBp, type ChartData, type Row } from '../types';
 import { FORMS, formLine } from './EhrForms';
@@ -301,7 +302,7 @@ const LAB_SETS: { label: string; rows: Row[] }[] = [
 
 export function LabSets({ onApply }: { onApply: (rows: Row[]) => void }) {
   const pad = (n: number) => String(n).padStart(2, '0');
-  const stamp = () => { const d = new Date(); return `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+  const stamp = () => { const d = vnow(); return `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
   return (
     <div className="vbp" style={{ gap: 6 }}>
       <style>{BULK_CSS}</style>

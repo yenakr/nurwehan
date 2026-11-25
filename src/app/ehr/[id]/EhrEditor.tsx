@@ -1,5 +1,7 @@
 'use client';
 
+import { vnow, realNow, parseV, setVOffset } from '../vclock';
+import VClock from './VClock';
 import { findPhi } from '../phi';
 import { useEffect, useRef, useState } from 'react';
 import { useRouter } from 'next/navigation';
@@ -435,7 +437,7 @@ const ORDER_STATUS = ['', '집계완료', '접수', '추가', '완료', '취소'
 const ROUTES = ['', 'PO', 'IV', 'IM', 'SC', 'SL', 'Inh', 'CIV', 'Top'];
 
 const nowStamp = () => {
-  const d = new Date();
+  const d = vnow();
   const p = (n: number) => String(n).padStart(2, '0');
   return `${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 };
@@ -638,7 +640,7 @@ const PICKS: Record<string, PickItem[]> = {
 };
 
 type RuleCtx = { user: string; dept: string; doctor: string };
-const todayYmd = () => { const t = new Date(); const p = (x: number) => String(x).padStart(2, '0'); return `${t.getFullYear()}-${p(t.getMonth() + 1)}-${p(t.getDate())}`; };
+const todayYmd = () => { const t = vnow(); const p = (x: number) => String(x).padStart(2, '0'); return `${t.getFullYear()}-${p(t.getMonth() + 1)}-${p(t.getDate())}`; };
 function applyRules(lk: string, n: Row, k: string, v: string, ctx?: RuleCtx) {
   if (lk === 'vitals' && (k === 'sbp' || k === 'dbp')) n.bp = n.sbp || n.dbp ? `${n.sbp || ''}/${n.dbp || ''}` : '';
   if (lk === 'ret') {
@@ -762,6 +764,10 @@ export default function EhrEditor({
   }, []);
 
   const info = data.info;
+  const startRef = useRef(realNow());
+  const vbN = parseV(info.vbase);
+  setVOffset(vbN != null ? vbN - startRef.current : 0);
+  const setClock = (v: string) => { startRef.current = realNow(); setData(d => ({ ...d, info: { ...d.info, vbase: v } })); };
   const locked = !!info.submitted;
   const toggleAi = () => {
     const v = !aiOn;
@@ -803,7 +809,7 @@ export default function EhrEditor({
       if (j !== i) return r;
       const n = { ...r, [k]: v };
       if (lk === 'notes' && k === 'text' && r.text && r.text !== v) {
-        const t = new Date(); const p = (x: number) => String(x).padStart(2, '0');
+        const t = vnow(); const p = (x: number) => String(x).padStart(2, '0');
         n.mod = `${p(t.getMonth() + 1)}-${p(t.getDate())} ${p(t.getHours())}:${p(t.getMinutes())}`;
       }
       applyRules(lk, n, k, v, ruleCtx);
@@ -815,7 +821,7 @@ export default function EhrEditor({
   const toggleDischarge = async () => {
     const wasDischarged = !!data.info.discharged;
     if (!wasDischarged && !(await confirmDialog('퇴원 처리할까요? 기록은 그대로 남아요.'))) return;
-    const d = new Date();
+    const d = vnow();
     const today = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
     const next = { ...data, info: { ...data.info, discharged: wasDischarged ? '' : today } };
     setData(next);
@@ -1180,7 +1186,7 @@ export default function EhrEditor({
               <>
                 {tab === 'progress' && (
                   <div className="adds" style={{ marginBottom: 6 }}>
-                    <button type="button" className="add" onClick={() => { const t = new Date(); const p = (x: number) => String(x).padStart(2, '0'); addRow('progress', { time: `${t.getFullYear()}-${p(t.getMonth() + 1)}-${p(t.getDate())} ${p(t.getHours())}:${p(t.getMinutes())}`, text: '주관적 소견 (S)\n\n객관적 소견 (O)\n\n평가 (A)\n\n치료계획 (P)\n', author: userName || '' }); }}>+ SOAP 양식</button>
+                    <button type="button" className="add" onClick={() => { const t = vnow(); const p = (x: number) => String(x).padStart(2, '0'); addRow('progress', { time: `${t.getFullYear()}-${p(t.getMonth() + 1)}-${p(t.getDate())} ${p(t.getHours())}:${p(t.getMinutes())}`, text: '주관적 소견 (S)\n\n객관적 소견 (O)\n\n평가 (A)\n\n치료계획 (P)\n', author: userName || '' }); }}>+ SOAP 양식</button>
                   </div>
                 )}
                 {tbl(tab)}
@@ -1194,7 +1200,7 @@ export default function EhrEditor({
   const [inp, setInp] = useState(false);
   const [draft, setDraft] = useState<Row>({});
   const blank = (cols: Col[]): Row => {
-    const t = new Date(); const p = (x: number) => String(x).padStart(2, '0');
+    const t = vnow(); const p = (x: number) => String(x).padStart(2, '0');
     const r: Row = {};
     cols.forEach(c => {
       if (c.key === 'by' || c.key === 'author') r[c.key] = userName || '';
@@ -1219,6 +1225,7 @@ export default function EhrEditor({
   );
   const tools = (
     <>
+          <VClock base={info.vbase} onSet={setClock} />
           <span className={`st ${status}`}>{status === 'saved' ? '저장됨' : status === 'saving' ? '저장 중…' : '저장 실패'}</span>
           {ai && !locked && aiOn && <button type="button" className="aib" onClick={askFb} disabled={fbBusy || fbLeft <= 0}><AiMark size={14} />{fbBusy ? '살펴보는 중' : `AI 피드백 ${fbLeft}회`}</button>}
           {locked
@@ -1367,7 +1374,7 @@ export default function EhrEditor({
               </div>
             )}
             {info.admit && !editInfo && (() => {
-              const day = (v: string) => { const t = new Date(`${v.slice(0, 10)}T00:00:00`).getTime(); return Number.isFinite(t) ? Math.floor((Date.now() - t) / 86400000) : null; };
+              const day = (v: string) => { const t = new Date(`${v.slice(0, 10)}T00:00:00`).getTime(); return Number.isFinite(t) ? Math.floor((vnow().getTime() - t) / 86400000) : null; };
               const hd = day(info.admit);
               const ops = data.surgery.map(r => day(r.date || '')).filter((n): n is number => n !== null && n >= 0);
               const pod = ops.length ? Math.min(...ops) : null;

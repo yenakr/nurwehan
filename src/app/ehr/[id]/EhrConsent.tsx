@@ -1,5 +1,6 @@
 'use client';
 
+import { vnow } from '../vclock';
 import { useState } from 'react';
 import { DOCTORS } from '../directory';
 import type { Row } from '../types';
@@ -19,7 +20,7 @@ export const CONSENT_TPL: Tpl[] = [
 ];
 
 const CHECKS = ['환자 본인 확인 (이름·환자번호)', '설명 내용을 환자가 이해했는지 확인', '자발적으로 동의했는지 확인', '서명·일시·설명 의사 누락 여부 확인', '시술·수술명과 부위가 일치하는지 확인'];
-const today = () => { const d = new Date(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
+const today = () => { const d = vnow(); return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`; };
 const ckList = (r: Row) => (r.ck || '').split(',').filter(Boolean);
 
 export default function ConsentPanel({ rows, dept, onChange }: { rows: Row[]; dept?: string; onChange: (rows: Row[]) => void }) {

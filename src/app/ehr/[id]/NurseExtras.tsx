@@ -1,14 +1,15 @@
 'use client';
 
+import { vnow } from '../vclock';
 import { useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import type { ChartData, Row } from '../types';
 import { DEPTS, staffOf, type Staff } from '../directory';
 
 const p2 = (n: number) => String(n).padStart(2, '0');
-const stamp = () => { const d = new Date(); return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}`; };
+const stamp = () => { const d = vnow(); return `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}`; };
 
 // 실시간 연동이 아니므로 경과 시간으로 상태·답변을 모의한다
-const mins = (t?: string) => { const m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/.exec(t || ''); return m ? (Date.now() - new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]).getTime()) / 60000 : 0; };
+const mins = (t?: string) => { const m = /^(\d{4})-(\d{2})-(\d{2}) (\d{2}):(\d{2})/.exec(t || ''); return m ? (vnow().getTime() - new Date(+m[1], +m[2] - 1, +m[3], +m[4], +m[5]).getTime()) / 60000 : 0; };
 const useTick = () => { const [, set] = useState(0); useEffect(() => { const id = setInterval(() => set(x => x + 1), 20000); return () => clearInterval(id); }, []); };
 const notiState = (m: Row): { st: string; reply: string } => {
   const k = m.urgent ? 0.5 : 1;

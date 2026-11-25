@@ -1,5 +1,6 @@
 'use client';
 
+import { vnow } from '../vclock';
 import { useState } from 'react';
 import { shiftOf } from '../emr';
 import type { Row } from '../types';
@@ -7,7 +8,7 @@ import type { Row } from '../types';
 export const MEMO_TYPES = ['간호메모', '진료메모', '인수인계'] as const;
 
 const pad = (n: number) => String(n).padStart(2, '0');
-const stamp = () => { const d = new Date(); return `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const stamp = () => { const d = vnow(); return `${pad(d.getMonth() + 1)}-${pad(d.getDate())} ${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 
 export default function MemoPanel({ rows, author, onChange }: { rows: Row[]; author: string; onChange: (rows: Row[]) => void }) {
   const [type, setType] = useState<string>(MEMO_TYPES[0]);

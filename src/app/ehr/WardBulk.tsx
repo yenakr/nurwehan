@@ -1,5 +1,6 @@
 'use client';
 
+import { vnow } from './vclock';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { notify } from '@/components/Dialog';
@@ -16,7 +17,7 @@ const COLS: { key: string; label: string; ph: string }[] = [
   { key: 'spo2', label: 'SpO₂', ph: '98' },
   { key: 'pain', label: '통증', ph: '0' },
 ];
-const nowHM = () => { const d = new Date(); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
+const nowHM = () => { const d = vnow(); return `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`; };
 
 export default function WardBulk({ pts, onClose, onSelf }: { pts: BulkPt[]; onClose: () => void; onSelf?: (row: Row) => void }) {
   const router = useRouter();
