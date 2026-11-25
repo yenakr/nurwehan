@@ -286,6 +286,7 @@ export default function EhrNurse({
   const [chip, setChip] = useState('');
   const [cat, setCat] = useState('');
   const [admW, setAdmW] = useState('');
+  const [notifyDraft, setNotifyDraft] = useState('');
   const [orgSel, setOrgSel] = useState('순환기내과');
   const [mOpen, setMOpen] = useState(0); // 0 닫힘, 1 메뉴, 2 메뉴 > 업무
   const [mq, setMq] = useState('');
@@ -343,8 +344,30 @@ export default function EhrNurse({
   const IN = ['IV (mL)', 'Diet (mL)', '기타 섭취 (mL)'];
   const OUT = ['소변 (mL)', '배액 (mL)', '기타 배출 (mL)'];
   const VMAP: Record<string, string> = { '체온 (℃)': 'bt', '맥박 (회/분)': 'hr', '호흡 (회/분)': 'rr', 'SpO2 (%)': 'spo2' };
+  const lastV = [...data.vitals].filter(r => r.time).sort((a, b) => (a.time || '').localeCompare(b.time || '')).slice(-1)[0];
+  const abn: string[] = (() => {
+    if (!lastV) return [];
+    const out: string[] = [];
+    const [sb, db] = (lastV.bp || '').split('/').map(Number);
+    if (sb && (sb >= 160 || sb < 90)) out.push(`SBP ${sb}`);
+    if (db && (db >= 100 || db < 50)) out.push(`DBP ${db}`);
+    const hr = Number(lastV.hr), rr = Number(lastV.rr), bt = Number(lastV.bt), sp = Number(lastV.spo2);
+    if (hr && (hr > 110 || hr < 50)) out.push(`HR ${hr}`);
+    if (rr && (rr > 24 || rr < 10)) out.push(`RR ${rr}`);
+    if (bt && (bt >= 38 || bt < 35.5)) out.push(`BT ${bt}`);
+    if (sp && sp < 92) out.push(`SpO₂ ${sp}%`);
+    return out;
+  })();
+  const vitRow = (d: string, h: string) => data.vitals.find(v => {
+    const t = (v.time || '').trim();
+    const hh = /(\d{2}):\d{2}$/.exec(t)?.[1];
+    if (hh !== h) return false;
+    if (/^\d{4}-\d{2}-\d{2}/.test(t)) return t.slice(0, 10) === d;
+    if (/^\d{2}-\d{2}\s/.test(t)) return t.slice(0, 5) === d.slice(5);
+    return d === todayS;
+  });
   const vitAt = (it: string, d: string, h: string) => {
-    const r = data.vitals.find(v => (v.time || '').slice(0, 10) === d && (v.time || '').slice(11, 13) === h);
+    const r = vitRow(d, h);
     if (!r) return '';
     if (it === '수축기혈압') return (r.bp || '').split('/')[0] || '';
     if (it === '이완기혈압') return (r.bp || '').split('/')[1] || '';
@@ -355,7 +378,18 @@ export default function EhrNurse({
   const ioTotal = (d: string, h: string) => IN.reduce((a, it) => a + fNum(it, d, h), 0) - OUT.reduce((a, it) => a + fNum(it, d, h), 0);
   const fSet = (it: string, d: string, h: string, v: string) => setData(dd => {
     const rest = dd.memos.filter(m => !(m.type === 'flow' && m.date === d && m.item === it && m.hour === h));
-    return { ...dd, memos: v.trim() ? [...rest, { type: 'flow', date: d, item: it, hour: h, text: v.trim(), author: userName }] : rest };
+    const next = { ...dd, memos: v.trim() ? [...rest, { type: 'flow', date: d, item: it, hour: h, text: v.trim(), author: userName }] : rest };
+    const vk = it === '수축기혈압' || it === '이완기혈압' ? 'bp' : VMAP[it];
+    if (vk && v.trim()) {
+      const tm = `${d.slice(5)} ${h}:00`;
+      const idx = dd.vitals.findIndex(r => (r.time || '').startsWith(d.slice(5)) && (r.time || '').slice(6, 8) === h);
+      const old = idx >= 0 ? dd.vitals[idx] : ({ time: tm } as Row);
+      let val = v.trim();
+      if (vk === 'bp') { const [s0, d0] = (old.bp || '/').split('/'); val = it === '수축기혈압' ? `${val}/${d0 || ''}` : `${s0 || ''}/${val}`; }
+      const row = { ...old, [vk]: val };
+      next.vitals = idx >= 0 ? dd.vitals.map((r, j) => (j === idx ? row : r)) : [...dd.vitals, row];
+    }
+    return next;
   });
   const esc = (v: string) => v.replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c] as string));
   const printDoc = (title: string, body: string) => {
@@ -420,6 +454,9 @@ export default function EhrNurse({
   const sendDoc = () => addMemo('진료메모', dmsg, () => setDmsg(''));
   const ck = (label: string) => (i[`ck:${label}`] === '1') || (label.endsWith('/금식') && i.npo === '1' && i[`ck:${label}`] !== '0');
   const toggle = (label: string) => setData(d => ({ ...d, info: { ...d.info, [`ck:${label}`]: ck(label) ? '0' : '1' } }));
+  const wardList = roster.filter(r => r.ward === i.ward && r.bed && r.id).sort((a, b) => (a.bed || '').localeCompare(b.bed || '', 'ko', { numeric: true }));
+  const curIdx = wardList.findIndex(r => r.ptNo === i.ptNo);
+  const prevNext: [string, Roster | undefined][] = curIdx < 0 ? [] : [['◀', wardList[curIdx - 1]], ['▶', wardList[curIdx + 1]]];
   const find = () => {
     const t = q.trim();
     if (!t) return;
@@ -568,6 +605,7 @@ export default function EhrNurse({
           {qMsg && <p className="ns-nerr">{qMsg}</p>}
           <div className="ns-npt">
             <div className="ns-nph">
+              {prevNext.map(([lb, h]) => <button key={lb} type="button" className="ns-pn" disabled={!h} title={h ? `${h.bed} ${h.name}` : ''} onClick={() => h && router.push(`/ehr/${h.id}`)}>{lb}</button>)}
               <b>{i.name || '이름 없음'}</b>
               {i.ageSex && <span className="ns-nsx">{i.ageSex}</span>}
               {i.ptNo && <span className="ns-nno">{i.ptNo}</span>}
@@ -594,6 +632,13 @@ export default function EhrNurse({
               <button type="button" onClick={printBed}>침상카드</button>
               <button type="button" onClick={printWarn}>주의라벨</button>
             </div></div>
+            {abn.length > 0 && (
+              <div className="ns-abn">
+                <b>⚠ 활력징후 이상 ({lastV?.time})</b>
+                <span>{abn.join(' · ')}</span>
+                <button type="button" onClick={() => { setNotifyDraft(`활력징후 이상 보고: ${abn.join(', ')}. 확인 부탁드립니다.`); openMenu('staff'); }}>Notify 작성</button>
+              </div>
+            )}
             <div className="ns-nflags">
               {flags.map(f => <em key={f}>{f}</em>)}
               {i.allergy && !/^(없음|무|none|-)$/i.test(i.allergy.trim()) && <em className="ns-al">알러지 {i.allergy}</em>}
@@ -1033,7 +1078,7 @@ export default function EhrNurse({
             ) : win === 'bulk' ? (
               <WardBulk pts={bulkPts} onClose={onClose} onSelf={row => setData(d => ({ ...d, vitals: [...d.vitals, row] }))} />
             ) : win === 'staff' ? (
-              <StaffWin data={data} setData={setData} userName={userName} duty={duty} />
+              <Fragment key={notifyDraft}><StaffWin data={data} setData={setData} userName={userName} duty={duty} draft={notifyDraft} /></Fragment>
             ) : win === 'docreq' ? (
               <DocReqWin data={data} setData={setData} userName={userName} duty={duty} />
             ) : (win === 'vitals' || win === 'bst' || win === 'mat' || win === 'nact') ? (
@@ -1124,6 +1169,11 @@ export default function EhrNurse({
         .ns-fig { cursor: pointer; align-items: center; }
         .ns-figl { display: flex; flex-direction: column; gap: 2px; font-size: 12px; align-self: stretch; }
         .ns-figl i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
+        .ns-pn { border: 1px solid rgba(255,255,255,.4); background: transparent; color: #fff; border-radius: 4px; font-size: 11px; padding: 1px 6px; cursor: pointer; }
+        .ns-pn:disabled { opacity: .3; cursor: default; }
+        .ns-abn { margin: 0 12px 8px; padding: 6px 8px; border: 1px solid #ef4444; background: rgba(239,68,68,.08); border-radius: 6px; font-size: 12px; display: flex; flex-direction: column; gap: 4px; }
+        .ns-abn b { color: #dc2626; }
+        .ns-abn button { align-self: flex-start; border: 1px solid #dc2626; background: #fff; color: #dc2626; border-radius: 4px; padding: 2px 10px; font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
         .ns-org { display: grid; grid-template-columns: 220px 1fr; gap: 12px; padding: 10px 12px; }
         .ns-org aside { max-height: 70vh; overflow: auto; border: 1px solid var(--border); border-radius: 6px; padding: 6px; }
         .ns-org aside input { width: 100%; margin-bottom: 6px; padding: 6px 8px; font-size: 13px; }
