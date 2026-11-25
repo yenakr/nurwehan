@@ -24,12 +24,12 @@ const docState = (m: Row) => { const e = mins(m.time); return e < 2 ? '요청' :
 type P = { data: ChartData; setData: Dispatch<SetStateAction<ChartData>>; userName: string; duty: string };
 
 // 진료과 의료진 목록과 Notify 보내기
-export function StaffWin({ data, setData, userName, duty }: P) {
+export function StaffWin({ data, setData, userName, duty, draft }: P & { draft?: string }) {
   useTick();
   const code = data.info.dept || '';
   const [dept, setDept] = useState(DEPTS.some(d => d.code === code) ? code : DEPTS[0].code);
-  const [to, setTo] = useState<Staff | null>(null);
-  const [text, setText] = useState('');
+  const [to, setTo] = useState<Staff | null>(() => (draft ? staffOf(DEPTS.some(d => d.code === code) ? code : DEPTS[0].code).find(x => x.name === data.info.attending) || null : null));
+  const [text, setText] = useState(draft || '');
   const [urgent, setUrgent] = useState(false);
   const [msg, setMsg] = useState('');
   const staff = staffOf(dept).slice().sort((a, b) => Number(b.name === data.info.attending || b.name === data.info.doctor) - Number(a.name === data.info.attending || a.name === data.info.doctor));
