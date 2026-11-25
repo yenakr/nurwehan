@@ -205,12 +205,14 @@ export const COLS: Record<ListKey, Col[]> = {
     { key: 'author', label: '작성자', w: 80 },
   ],
   consult: [
-    { key: 'date', label: '의뢰일', w: 96 },
+    { key: 'date', label: '의뢰일자', w: 96 },
     { key: 'dept', label: '의뢰과', w: 64 },
     { key: 'doc', label: '의뢰의', w: 70 },
     { key: 'req', label: '의뢰내용', w: 260, type: 'area' },
     { key: 'rdept', label: '회신과', w: 64 },
+    { key: 'rdoc', label: '회신의', w: 70 },
     { key: 'reply', label: '회신내용', w: 260, type: 'area' },
+    { key: 'perf', label: '실시일자', w: 96 },
     { key: 'st', label: '상태', w: 84, type: 'select', opts: ['', '미회신', '회신완료'] },
   ],
   consent: [
