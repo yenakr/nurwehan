@@ -1226,10 +1226,6 @@ export default function EhrEditor({
               <>
                 <button type="button" className="mbk" aria-label="닫기" onClick={() => setMoreOpen(false)} />
                 <div className="mm">
-                  <button type="button" onClick={() => { setMoreOpen(false); printNameTag(info); }}>네임지 출력</button>
-                  {(['투약', '주사', '수액'] as const).map(k => <button key={k} type="button" onClick={() => { setMoreOpen(false); printTickets(data, k as TicketKind); }}>{k} 티켓 출력</button>)}
-                  <button type="button" onClick={() => { setMoreOpen(false); if (!printChart(title, data, userName || '')) notify('팝업을 허용해 주세요.'); }}>인쇄</button>
-                  <button type="button" disabled={locked} onClick={() => { setMoreOpen(false); toggleDischarge(); }}>{info.discharged ? '퇴원 취소' : '퇴원'}</button>
                   {ai && !locked && <button type="button" onClick={() => { toggleAi(); setMoreOpen(false); }}>AI 피드백 {aiOn ? '끄기' : '켜기'}</button>}
                   <button
                     type="button"
@@ -1265,7 +1261,7 @@ export default function EhrEditor({
         <LogoutButton />
       </div>
 
-      {screen === 'chart' && <div className="etool">{tools}</div>}
+      <div className="etool">{tools}</div>
       {locked && <div className="lkb">{info.reviewed ? '교수님이 확인했어요' : '제출했어요. 교수님 확인 전에는 제출 취소로 고칠 수 있어요'}</div>}
       {info.comment && <div className="cmt"><b>교수님 의견</b><p>{info.comment}</p></div>}
       {fb && <div className="cmt ai"><b style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><AiMark size={14} />AI 피드백</b><button type="button" className="cx" aria-label="닫기" onClick={() => setFb('')}>&times;</button><p>{fb}</p></div>}
@@ -1281,7 +1277,12 @@ export default function EhrEditor({
           onOpen={id => { if (MENU.some(g => g.items.some(it => it.id === id))) setTab(id as TabId); setWin(win === id ? null : id); }}
           onClose={() => setWin(null)}
           drawer={tabBody}
-          tools={tools}
+          actions={[
+            { label: '네임지 출력', run: () => printNameTag(info) },
+            ...(['투약', '주사', '수액'] as const).map(k => ({ label: `${k} 티켓 출력`, run: () => printTickets(data, k as TicketKind) })),
+            { label: '차트 인쇄', run: () => { if (!printChart(title, data, userName || '')) notify('팝업을 허용해 주세요.'); } },
+            { label: info.discharged ? '퇴원 취소' : '퇴원', run: () => toggleDischarge(), disabled: locked },
+          ]}
           onChart={() => setScreen('chart')}
           onLabel={() => printTickets(data, '전체')}
         />
@@ -1440,7 +1441,7 @@ export default function EhrEditor({
       <style>{FORM_CSS}</style>
       <style jsx global>{`
         .ehr { --nv1: #1c2f4b; --nv2: #13233a; --tl: #cfe5e6; --ln: #cfd5dc; }
-        .ehr .etool { display: flex; align-items: center; flex-wrap: wrap; gap: 10px; margin-bottom: 8px; padding: 6px 10px; border-radius: 6px; background: linear-gradient(#233a5c, #17283f); }
+        .ehr .etool { display: flex; align-items: center; justify-content: flex-end; flex-wrap: wrap; gap: 10px; margin-bottom: 8px; padding: 6px 10px; border-radius: 6px; background: linear-gradient(#233a5c, #17283f); }
         .ehr .etool .back { border-color: rgba(255,255,255,.35); color: #fff; }
         .ehr .etool .st { color: #cbd5e1; }
         .ehr .etool .mbtn { color: #fff; }
