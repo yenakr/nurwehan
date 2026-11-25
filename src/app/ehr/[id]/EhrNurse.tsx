@@ -4,6 +4,7 @@ import { SAMPLES } from '../samples';
 import { MATS, matsFor } from '../codes';
 import NurseForm from './NurseForms';
 import LabResults from './LabResults';
+import OrderCompare from './OrderCompare';
 import { StaffWin, DocReqWin, RichMemo } from './NurseExtras';
 import { DEPTS, buildDirectory } from '../directory';
 import { confirmDialog } from '@/components/Dialog';
@@ -729,7 +730,7 @@ export default function EhrNurse({
             <button type="button" className="ns-arw" onClick={() => shift(-1)} aria-label="전날">&lt;</button>
             <input type="date" value={date} onChange={e => setDate(e.target.value)} aria-label="처방조회일" />
             <button type="button" className="ns-arw" onClick={() => shift(1)} aria-label="다음날">&gt;</button>
-            <button type="button" className="ns-cmp" onClick={() => setCmp(true)}>전일처방비교</button>
+            <button type="button" className="ns-cmp" onClick={() => setCmp(true)}>처방비교</button>
           </div>
           {ordMsg && <p className="ns-nerr">{ordMsg}</p>}
           {sec('기본처방', g.base, 'base')}
@@ -772,25 +773,7 @@ export default function EhrNurse({
         </aside>
       </div>
 
-      {cmp && (
-        <div className="ns-nmd" role="dialog" aria-label="전일처방비교">
-          <button type="button" className="ns-nmk" aria-label="닫기" onClick={() => setCmp(false)} />
-          <div className="ns-nmb">
-            <header><b>전일처방비교</b><button type="button" onClick={() => setCmp(false)}>닫기</button></header>
-            <div className="ns-nmc">
-              {(['신규', '중지', '유지'] as const).map(s => {
-                const rows = all.filter(it => stat(it) === s);
-                return (
-                  <div key={s}>
-                    <h4>{s} ({rows.length})</h4>
-                    {rows.length === 0 ? <p className="ns-nnone">없음</p> : rows.map(it => <p key={it.i}>{it.r.name}</p>)}
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
+      {cmp && <OrderCompare data={data} today={date} onClose={() => setCmp(false)} />}
 
       {chk && (() => {
         const r = chk.r;
