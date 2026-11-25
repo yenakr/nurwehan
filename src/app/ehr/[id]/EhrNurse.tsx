@@ -811,16 +811,19 @@ export default function EhrNurse({
             ))}
             {data.history.length === 0 && !i.admit && <p className="ns-nnone">이력 없음</p>}
           </div>
-          <div className="ns-nbox ns-fig">
-            <h4 style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <span>오버뷰</span>
-              <span style={{ display: 'flex', gap: 4 }}>
-                <button type="button" className="ns-figb" onClick={() => openMenu('overview')}>열기</button>
-                <button type="button" className="ns-figb" aria-expanded={figOpen} onClick={() => setFigOpen(v => !v)}>{figOpen ? '접기' : '펼치기'}</button>
+        </aside>
+
+        <aside className={`ns-nf ${figOpen ? '' : 'ns-nfc'}`}>
+          <div className="ns-fig">
+            <div className="ns-fighd">
+              {figOpen && <b>오버뷰</b>}
+              <span>
+                {figOpen && <button type="button" className="ns-figb" onClick={() => openMenu('overview')}>열기</button>}
+                <button type="button" className="ns-figb" aria-expanded={figOpen} title={figOpen ? '접기' : '오버뷰 펼치기'} onClick={() => setFigOpen(v => !v)}>{figOpen ? '◀' : '▶'}</button>
               </span>
-            </h4>
+            </div>
             {figOpen && (<>
-              <BodyFig dots={bodyDots(data)} width={210} />
+              <BodyFig dots={bodyDots(data)} width={206} />
               <div className="ns-figl">{bodyDots(data).length ? bodyDots(data).map((d, k) => <span key={k}><i style={{ background: d.c }} />{d.t}</span>) : <span className="ns-nnone">삽입물·상처 없음</span>}</div>
             </>)}
           </div>
@@ -841,6 +844,7 @@ export default function EhrNurse({
         </main>
 
         <aside className="ns-nr">
+          {cl.length === 0 && <div className="ns-nbox"><h4>체크리스트</h4><p className="ns-nnone">예정된 수술·시술·검사 준비 항목이 없어요</p></div>}
           {cl.map(g => (
             <div key={g.title} className="ns-nbox">
               <h4>체크리스트 · {g.title}</h4>
@@ -1242,7 +1246,12 @@ export default function EhrNurse({
         .ns-dd button:disabled { opacity: .4; cursor: default; }
         .ns-ntabs button { border: 0; background: none; font: inherit; font-size: 12.5px; padding: 5px 8px; cursor: pointer; color: inherit; }
         .ns-nmenu .ns-ch { margin-left: auto; color: #e8c97a; }
-        .ns-ngrid { display: grid; grid-template-columns: 240px minmax(0, 1fr) 240px; min-height: 70vh; }
+        .ns-ngrid { display: grid; grid-template-columns: 240px auto minmax(0, 1fr) 240px; min-height: 70vh; }
+        .ns-nf { border-right: 1px solid var(--border); padding: 10px; width: 226px; box-sizing: border-box; }
+        .ns-nf.ns-nfc { width: 40px; padding: 10px 4px; }
+        .ns-fighd { display: flex; justify-content: space-between; align-items: center; gap: 4px; margin-bottom: 6px; font-size: 13px; color: var(--primary); }
+        .ns-fighd span { display: inline-flex; gap: 4px; }
+        .ns-nfc .ns-fighd { justify-content: center; }
         .ns-nl { border-right: 1px solid var(--border); padding: 10px; display: flex; flex-direction: column; gap: 10px; }
         .ns-nr { border-left: 1px solid var(--border); padding: 10px; display: flex; flex-direction: column; gap: 10px; }
         .ns-nc { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
@@ -1289,7 +1298,7 @@ export default function EhrNurse({
         .ns-admw { display: inline-flex; align-items: center; gap: 6px; margin: 6px 0; font-size: 13px; font-weight: 700; }
         .ns-sepv { width: 1px; height: 18px; background: rgba(255,255,255,.3); margin: 0 6px; }
         .ns-nmenu .ns-wk { color: #e8c97a; }
-        .ns-fig { align-items: center; }
+        .ns-fig { display: block; }
         .ns-figb { border: 1px solid var(--border); background: #fff; border-radius: 4px; font: inherit; font-size: 11.5px; padding: 0 7px; cursor: pointer; }
         .ns-figl { display: flex; flex-direction: column; gap: 2px; font-size: 12px; align-self: stretch; }
         .ns-figl i { display: inline-block; width: 8px; height: 8px; border-radius: 50%; margin-right: 6px; }
@@ -1432,6 +1441,7 @@ export default function EhrNurse({
         .ns-ndq { width: 100%; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; padding: 8px; font: inherit; margin-bottom: 8px; background: var(--background); color: var(--text); }
         @media (max-width: 980px) {
           .ns-ngrid { grid-template-columns: 1fr; }
+          .ns-nf, .ns-nf.ns-nfc { width: auto; border: 0; border-bottom: 1px solid var(--border); }
           .ns-nl, .ns-nr { border: 0; border-bottom: 1px solid var(--border); }
         }
       `}</style>
