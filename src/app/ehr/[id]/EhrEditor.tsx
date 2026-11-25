@@ -1072,6 +1072,30 @@ export default function EhrEditor({
             {(tab === 'admission' || tab === 'discharge') && (
               <div className="doc">
                 <div className="dh">{info.admit || '입원일'}<span>{tab === 'admission' ? '입원기록' : '퇴원계획'}</span></div>
+                {tab === 'discharge' && (() => {
+                  const eduN = (info.dcEdu || '').split(',').filter(Boolean).length;
+                  const note = data.dcnote[data.dcnote.length - 1];
+                  const meds = data.dcmed;
+                  const medOk = meds.filter(m => m.st === '확인').length;
+                  const appt = data.appts.find(a => a.st !== '취소');
+                  const items: [string, boolean, string][] = [
+                    ['퇴원예고', !!note, note ? `${(note.date || '').slice(0, 10)} ${note.plan || ''}` : '미등록'],
+                    ['미래 식이처방 확인', note?.diet === '확인', note?.diet || '미확인'],
+                    ['퇴원약 확인', meds.length > 0 && medOk === meds.length, meds.length ? `${medOk}/${meds.length}건` : '처방 없음'],
+                    ['퇴원 교육', eduN === DC_EDU.length, `${eduN}/${DC_EDU.length}항목`],
+                    ['외래 예약', !!appt, appt ? `${appt.date} ${appt.time || ''}` : '없음'],
+                    ['남은 라인·배액관', !data.lines.some(l => l.st !== '제거'), `${data.lines.filter(l => l.st !== '제거').length}건`],
+                  ];
+                  const left = items.filter(x => !x[1]).length;
+                  return (
+                    <div className="ds dcsum">
+                      <style>{`.dcsum .g { display: grid; grid-template-columns: repeat(auto-fill, minmax(190px, 1fr)); gap: 6px; } .dcsum .g div { border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; font-size: 13px; display: flex; justify-content: space-between; gap: 8px; } .dcsum .g .ok { background: rgba(16,185,129,.1); } .dcsum .g .no { background: rgba(245,158,11,.14); } .dcsum p { margin: 6px 0 0; font-weight: 700; }`}</style>
+                      <h4>■ 퇴원 준비 현황</h4>
+                      <div className="g">{items.map(([k, ok, v]) => <div key={k} className={ok ? 'ok' : 'no'}><span>{ok ? '✔' : '△'} {k}</span><b>{v}</b></div>)}</div>
+                      <p>{left === 0 ? '모든 퇴원 준비가 끝났어요.' : `미완료 ${left}항목 — 확인 후 퇴원 처리하세요.`}</p>
+                    </div>
+                  );
+                })()}
                 {(tab === 'admission' ? ADM : DIS).map(f => (
                   <div key={f.key} className="ds">
                     <h4>■ {f.label}</h4>
