@@ -224,7 +224,6 @@ export default function EhrNurse({
   const dxMain = data.dxcode.find(r => r.kind === '주상병' && r.name);
   const [chip, setChip] = useState('');
   const [rt, setRt] = useState<'meal' | 'sched' | 'cons' | 'appt'>('meal');
-  const [kb, setKb] = useState('');
   const [fTab, setFTab] = useState<'obs' | 'state' | 'lab'>('obs');
   const [fEdit, setFEdit] = useState<{ it: string; h: string } | null>(null);
   const [fVal, setFVal] = useState('');
@@ -427,8 +426,7 @@ export default function EhrNurse({
               {(dxMain || i.dx) && <><dt>진단</dt><dd>{dxMain ? dxMain.name : i.dx}</dd></>}
             </dl>
             <div className="ns-nlinks">
-              {[['외래', `외래 예약 ${data.appts.length}건`], ['병동', [i.ward, i.bed].filter(Boolean).join(' ') || '병동 정보 없음'], ['응급', data.cpr.length ? `응급 CPR ${data.cpr.length}건` : '응급 내원 기록 없음']].map(([k, v]) => <button key={k} type="button" className={kb === k ? 'ns-on' : ''} onClick={() => setKb(kb === k ? '' : k)}>{k}</button>)}
-              {kb && <p>{kb === '외래' ? `외래 예약 ${data.appts.length}건` : kb === '병동' ? [i.ward, i.bed].filter(Boolean).join(' ') || '병동 정보 없음' : data.cpr.length ? `응급 CPR ${data.cpr.length}건` : '응급 내원 기록 없음'}</p>}
+              {[['외래', '외래'], ['병동', i.ward === '응급실' ? '응급' : i.ward || ''], ['응급', '응급']].map(([k, v]) => <button key={k} type="button" disabled={!v} onClick={() => router.push(`/ehr?view=${encodeURIComponent(v)}`)}>{k}</button>)}
             </div>
             <div className="ns-nlinks">
               {[['CPR', data.cpr.length ? `CPR 기록 ${data.cpr.length}건` : 'CPR 기록 없음'], ['약물이상반응', i.allergy ? `알러지: ${i.allergy}` : '등록된 약물이상반응 없음'], ['건강보험', '건강보험 자격 확인됨 (모의 · 심평원 조회)']].map(([k, v]) => <button key={k} type="button" className={chip === k ? 'ns-on' : ''} onClick={() => setChip(chip === k ? '' : k)}>{k}</button>)}
