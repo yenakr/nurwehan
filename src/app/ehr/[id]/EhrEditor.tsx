@@ -112,7 +112,7 @@ export const COLS: Record<ListKey, Col[]> = {
   ret: [
     { key: 'time', label: '일시', w: 130, ph: '11-10 10:00' },
     { key: 'kind', label: '구분', w: 130, type: 'select', opts: ['', ...RET_KINDS] },
-    { key: 'name', label: '품목', w: 200 },
+    { key: 'name', label: '품목 (환자 처방)', w: 220, type: 'pick', list: 'dl-ptmed' },
     { key: 'qty', label: '수량·잔량', w: 90 },
     { key: 'reason', label: '사유', w: 180 },
     { key: 'by', label: '반납자', w: 80 },
@@ -127,7 +127,7 @@ export const COLS: Record<ListKey, Col[]> = {
     { key: 'note', label: '비고', w: 220 },
   ],
   dcmed: [
-    { key: 'name', label: '퇴원약', w: 220 },
+    { key: 'name', label: '퇴원약 (환자 처방)', w: 240, type: 'pick', list: 'dl-ptmed' },
     { key: 'dose', label: '용량', w: 80 },
     { key: 'cnt', label: '횟수/일', w: 80 },
     { key: 'days', label: '일수', w: 60 },
@@ -209,11 +209,11 @@ export const COLS: Record<ListKey, Col[]> = {
     { key: 'dept', label: '의뢰과', w: 64 },
     { key: 'doc', label: '의뢰의', w: 70 },
     { key: 'req', label: '의뢰내용', w: 260, type: 'area' },
-    { key: 'rdept', label: '회신과', w: 64 },
+    { key: 'rdept', label: '회신과', w: 110, type: 'select', opts: ['', ...DEPTS.map(d => d.code)] },
     { key: 'rdoc', label: '회신의', w: 70 },
     { key: 'reply', label: '회신내용', w: 260, type: 'area' },
     { key: 'perf', label: '실시일자', w: 96 },
-    { key: 'st', label: '상태', w: 84, type: 'select', opts: ['', '미회신', '회신완료'] },
+    { key: 'st', label: '상태', w: 84, type: 'select', opts: ['', '접수', '진행중', '회신완료'] },
   ],
   consent: [
     { key: 'name', label: '동의서명', w: 240 },
@@ -627,7 +627,9 @@ function CareComposer({ onAdd }: { onAdd: (r: Row) => void }) {
   );
 }
 
+let PICKS_ORD: { name: string; dose: string; cnt: string }[] = [];
 const PICKS: Record<string, PickItem[]> = {
+  'dl-ptmed': [],
   'dl-dxc': DX.map(d => [d[0], d[1]]),
   'dl-dxn': DX.map(d => [d[1], d[0]]),
   'dl-act': ACTS.map(a => [a[0], a[1]]),
@@ -636,7 +638,23 @@ const PICKS: Record<string, PickItem[]> = {
   'dl-doc': FORMS2.map(d => [d, '']),
 };
 
-function applyRules(lk: string, n: Row, k: string, v: string) {
+type RuleCtx = { user: string; dept: string; doctor: string };
+const todayYmd = () => { const t = new Date(); const p = (x: number) => String(x).padStart(2, '0'); return `${t.getFullYear()}-${p(t.getMonth() + 1)}-${p(t.getDate())}`; };
+function applyRules(lk: string, n: Row, k: string, v: string, ctx?: RuleCtx) {
+  if (lk === 'ret') {
+    if (k === 'name' && v) { if (!n.qty) n.qty = '1'; if (!n.st) n.st = '반납대기'; }
+    if (k === 'st' && v === '반납완료') { if (!n.chk) n.chk = ctx?.user || ''; }
+    if (k === 'st' && v === '반납대기') n.chk = '';
+  }
+  if (lk === 'consult') {
+    if (k === 'reply' && v.trim()) { n.st = '회신완료'; if (!n.perf) n.perf = todayYmd(); if (!n.rdoc) n.rdoc = '회신의'; }
+    if (k === 'rdept' && v && !n.st) n.st = '접수';
+    if (k === 'st' && v === '회신완료' && !n.perf) n.perf = todayYmd();
+  }
+  if (lk === 'dcmed' && k === 'name') {
+    const o = PICKS_ORD.find(x => x.name === v);
+    if (o) { if (!n.dose) n.dose = o.dose; if (!n.cnt) n.cnt = o.cnt; if (!n.days) n.days = '14'; if (!n.st) n.st = '미확인'; }
+  }
   if (lk === 'dxcode') {
     if (k === 'code') { const nm = dxName(v); if (nm) n.name = nm; }
     if (k === 'name') { const cd = dxCode(v); if (cd) n.code = cd; }
@@ -775,6 +793,9 @@ export default function EhrEditor({
     else notify('교수님이 이미 확인한 차트는 고칠 수 없어요.');
   };
   const setInfo = (k: string, v: string) => setData(d => ({ ...d, info: { ...d.info, [k]: v } }));
+  const ruleCtx: RuleCtx = { user: userName || '', dept: DEPTS.find(x => x.code === info.dept)?.name || info.dept || '', doctor: info.doctor || '' };
+  PICKS_ORD = data.orders.filter(o => o.kind !== 'sec' && o.kind !== 'memo' && o.name && o.pri !== 'D/C').map(o => ({ name: o.name || '', dose: `${o.dose || ''}${o.unit || ''}`, cnt: o.cnt || '' }));
+  PICKS['dl-ptmed'] = PICKS_ORD.map(o => [o.name, `${o.dose} ${o.cnt}`.trim()]);
   type AnyList = ListKey | 'orders';
   const setCell = (lk: AnyList, i: number, k: string, v: string) =>
     setData(d => ({ ...d, [lk]: d[lk].map((r, j) => {
@@ -784,7 +805,7 @@ export default function EhrEditor({
         const t = new Date(); const p = (x: number) => String(x).padStart(2, '0');
         n.mod = `${p(t.getMonth() + 1)}-${p(t.getDate())} ${p(t.getHours())}:${p(t.getMinutes())}`;
       }
-      applyRules(lk, n, k, v);
+      applyRules(lk, n, k, v, ruleCtx);
       return n;
     }) }));
   const addRow = (lk: AnyList, init: Row = {}) => setData(d => ({ ...d, [lk]: [...d[lk], { ...init }] }));
@@ -1157,10 +1178,12 @@ export default function EhrEditor({
         r[c.key] = /^\d{4}-/.test(ph) ? `${t.getFullYear()}-${p(t.getMonth() + 1)}-${p(t.getDate())}` : /^\d{2}:\d{2}/.test(ph) ? `${p(t.getHours())}:${p(t.getMinutes())}` : c.key === 'time' ? `${p(t.getMonth() + 1)}-${p(t.getDate())} ${p(t.getHours())}:${p(t.getMinutes())}` : `${t.getFullYear()}-${p(t.getMonth() + 1)}-${p(t.getDate())}`;
       } else if (c.type === 'select' && c.opts) r[c.key] = c.opts.find(o => o) && !c.opts[0] ? '' : c.opts[0] || '';
     });
+    if (tab === 'consult') { r.dept = r.dept || info.dept || ''; r.doc = r.doc || info.doctor || ''; r.st = r.st || '접수'; r.date = r.date || todayYmd(); }
+    if (tab === 'ret') r.st = '반납대기';
     return r;
   };
   const openInput = () => { setDraft(formCols ? blank(formCols) : {}); setInp(true); };
-  const setDraftVal = (k: string, v: string) => setDraft(d => { const n = { ...d, [k]: v }; applyRules(tab, n, k, v); return n; });
+  const setDraftVal = (k: string, v: string) => setDraft(d => { const n = { ...d, [k]: v }; applyRules(tab, n, k, v, ruleCtx); return n; });
   const saveDraft = () => { addRow(tab as AnyList, draft); setInp(false); };
 
   const tools = (
