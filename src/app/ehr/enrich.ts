@@ -21,7 +21,7 @@ const DXC: Record<string, [string, string, string][]> = {
 const ymd = (v?: string) => (v || '').slice(0, 10);
 
 // 샘플 데이터 버전: 올리면 이전 버전으로 저장된 미제출 샘플 차트는 정리되고 새 데이터로 다시 열린다.
-export const SAMPLE_VER = '10';
+export const SAMPLE_VER = '11';
 
 const CONSULT: Record<string, [string, string, string, string][]> = {
   adult: [['RM', '심장재활 교육 및 운동처방 의뢰', '퇴원 후 외래 재활 프로그램 등록 권고', '회신완료']],
@@ -67,7 +67,8 @@ export function enrich(s: Sample): Sample {
   const out: Partial<typeof d> = {};
   const day = ymd(info.orderDate) || ymd(info.admit);
   const key = s.key;
-  out.info = { ...info, dataVer: SAMPLE_VER, ...(inpatient && info.dept && !info.attending ? { attending: residentName(info.dept) } : {}) };
+  const hsh = [...(info.ptNo || info.name || 'x')].reduce((a, c) => a + c.charCodeAt(0), 0);
+  out.info = { ...info, blood: info.blood || ['A+', 'B+', 'O+', 'AB+', 'A-', 'O-'][hsh % 6], guardian: info.guardian || (key === 'child' ? '어머니 (가상)' : key === 'women' ? '배우자 (가상)' : '보호자 (가상)'), dataVer: SAMPLE_VER, ...(inpatient && info.dept && !info.attending ? { attending: residentName(info.dept) } : {}) };
 
   // 처방: 단독투여·비급여 표시
   if (orders.length && !orders.some(r => r.opt)) {
@@ -90,6 +91,14 @@ export function enrich(s: Sample): Sample {
   if (inpatient && !memos.some(m => m.type === '노티')) (NOTI[key] || []).forEach(([hm, text, u]) => add.push({ type: '노티', text, doctor: info.doctor || '', rank: '주치의', dept: info.dept || '', urgent: u, status: '발송', time: `${day} ${hm}`, author: '박간호', shift: 'D' }));
   if (inpatient && DOCREQ[key] && !memos.some(m => m.type === '서류요청')) add.push({ type: '서류요청', text: DOCREQ[key][0], copies: DOCREQ[key][1], how: DOCREQ[key][2], note: '', status: '요청', time: `${day} 09:20`, author: '박간호', shift: 'D' });
   if (inpatient && COMM[key] && !memos.some(m => m.type === '간호의사소통')) add.push({ type: '간호의사소통', text: COMM[key], time: `${day} 08:00`, author: '박간호', shift: 'D' });
+  // 방종이력
+  if (!memos.some(m => m.type === 'vacc')) {
+    const mo = (n: number) => { const t = new Date(`${day}T00:00:00`); t.setMonth(t.getMonth() - n); return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`; };
+    const V: [number, string, string, string][] = key === 'child'
+      ? [[6, 'B형간염 (HepB)', '2차', '대퇴부'], [6, 'DTaP', '2차', '대퇴부'], [6, 'IPV (폴리오)', '2차', '대퇴부'], [6, 'Hib', '2차', '대퇴부'], [6, 'PCV (폐렴구균)', '2차', '대퇴부'], [8, 'BCG', '1차', '우측 상완']]
+      : [[2, '인플루엔자 (독감)', '2026-27', '좌측 상완'], [96, 'Td (파상풍·디프테리아)', '추가', '좌측 상완'], [20, 'COVID-19', '추가', '좌측 상완']];
+    V.forEach(([m, name, dose, site]) => add.push({ type: 'vacc', name, date: mo(m), dose, site, note: '' }));
+  }
   // 처방 비교용 이력: 용량이 바뀐 약 1건, 전일에 중지된 처방 1건
   if (inpatient && orders.length && !memos.some(m => m.type === 'ordhist')) {
     const prevDay = (() => { const t = new Date(`${day}T00:00:00`); t.setDate(t.getDate() - 1); return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`; })();
