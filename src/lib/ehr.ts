@@ -4,7 +4,7 @@ import { prisma } from './prisma';
 export type EhrRow = { id: string; title: string; subject: string | null; updatedAt: Date };
 export type EhrListRow = EhrRow & {
   ward: string | null; bed: string | null; sampleKey: string | null;
-  ptNo: string | null; name: string | null; ageSex: string | null; dx: string | null; doctor: string | null; admit: string | null;
+  ptNo: string | null; name: string | null; ageSex: string | null; dx: string | null; doctor: string | null; attending: string | null; admit: string | null;
   dept: string | null; visitTime: string | null; vstatus: string | null; ktas: string | null; zone: string | null; cc: string | null; discharged: string | null;
   submitted: string | null; reviewed: string | null; badges: string | null; disDate: string | null;
 };
@@ -15,7 +15,7 @@ export async function listCases(userId: string): Promise<EhrListRow[]> {
       SELECT "id", "title", "subject", "updatedAt",
         "data"->'info'->>'ward' AS "ward", "data"->'info'->>'bed' AS "bed", "data"->'info'->>'sampleKey' AS "sampleKey",
         RIGHT("data"->'info'->>'ptNo', 4) AS "ptNo", "data"->'info'->>'name' AS "name", "data"->'info'->>'ageSex' AS "ageSex",
-        "data"->'info'->>'dx' AS "dx", "data"->'info'->>'doctor' AS "doctor", "data"->'info'->>'admit' AS "admit",
+        "data"->'info'->>'dx' AS "dx", "data"->'info'->>'doctor' AS "doctor", "data"->'info'->>'attending' AS "attending", "data"->'info'->>'admit' AS "admit",
         "data"->'info'->>'dept' AS "dept", "data"->'info'->>'visitTime' AS "visitTime", "data"->'info'->>'vstatus' AS "vstatus",
         "data"->'info'->>'ktas' AS "ktas", "data"->'info'->>'zone' AS "zone", "data"->'info'->>'cc' AS "cc",
         "data"->'info'->>'discharged' AS "discharged",

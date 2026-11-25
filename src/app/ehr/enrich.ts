@@ -1,4 +1,5 @@
 import type { Row, Sample } from './types';
+import { residentName } from './names';
 
 // 새 기능(상병코드, 식이처방, 중증도, 서식지, 퇴원예고 등)에 맞춰 예시 환자 자료를 채운다.
 // 이미 값이 있는 항목은 건드리지 않는다.
@@ -20,7 +21,7 @@ const DXC: Record<string, [string, string, string][]> = {
 const ymd = (v?: string) => (v || '').slice(0, 10);
 
 // 샘플 데이터 버전: 올리면 이전 버전으로 저장된 미제출 샘플 차트는 정리되고 새 데이터로 다시 열린다.
-export const SAMPLE_VER = '7';
+export const SAMPLE_VER = '8';
 
 const CONSULT: Record<string, [string, string, string, string][]> = {
   adult: [['RM', '심장재활 교육 및 운동처방 의뢰', '퇴원 후 외래 재활 프로그램 등록 권고', '회신완료']],
@@ -65,7 +66,7 @@ export function enrich(s: Sample): Sample {
   const out: Partial<typeof d> = {};
   const day = ymd(info.orderDate) || ymd(info.admit);
   const key = s.key;
-  out.info = { ...info, dataVer: SAMPLE_VER };
+  out.info = { ...info, dataVer: SAMPLE_VER, ...(inpatient && info.dept && !info.attending ? { attending: residentName(info.dept) } : {}) };
 
   // 처방: 단독투여·비급여 표시
   if (orders.length && !orders.some(r => r.opt)) {

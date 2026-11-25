@@ -329,7 +329,7 @@ export default function EhrNurse({
   };
   const head = () => `<h1>${esc(i.name || '')} (${esc(i.ageSex || '')}) · 환자번호 ${esc(i.ptNo || '')} · ${esc([i.ward, i.bed].filter(Boolean).join(' '))}</h1>`;
   const printOrders = () => printDoc('처방출력', `${head()}<p>${date} 처방</p><table><tr><th>처방명</th><th>용량</th><th>경로</th><th>횟수</th></tr>${data.orders.filter(o => o.name).map(o => `<tr><td>${esc(o.name || '')}</td><td>${esc(o.dose || '')}</td><td>${esc(o.route || '')}</td><td>${esc(o.cnt || o.q || '')}</td></tr>`).join('')}</table>`);
-  const printBed = () => printDoc('침상카드', `${head()}<div class="big">${esc(i.name || '')}</div><p>주치의 ${esc(i.doctor || '')} · 진단 ${esc(dxMain ? dxMain.name : i.dx || '')}</p><p>알러지: ${esc(i.allergy || '없음')} · 격리: ${esc(i.iso || '없음')} · ${i.npo === '1' ? '금식' : ''}</p>${flags.map(f => `<span class="tag">${esc(f)}</span>`).join('')}`);
+  const printBed = () => printDoc('침상카드', `${head()}<div class="big">${esc(i.name || '')}</div><p>지정의 ${esc(i.doctor || '')} · 주치의 ${esc(i.attending || '')} · 진단 ${esc(dxMain ? dxMain.name : i.dx || '')}</p><p>알러지: ${esc(i.allergy || '없음')} · 격리: ${esc(i.iso || '없음')} · ${i.npo === '1' ? '금식' : ''}</p>${flags.map(f => `<span class="tag">${esc(f)}</span>`).join('')}`);
   const printWarn = () => printDoc('주의라벨', `${head()}${[...flags, ...(i.npo === '1' ? ['금식'] : []), ...(i.allergy && !/^(없음|무|none|-)$/i.test(i.allergy.trim()) ? [`알러지 ${i.allergy}`] : [])].map(f => `<span class="tag">${esc(f)}</span>`).join('') || '<p>주의 항목 없음</p>'}`);
 
   const patch = (idx: number, p: Row) => setData(d => ({ ...d, orders: d.orders.map((o, j) => (j === idx ? { ...o, ...p } : o)) }));
@@ -541,7 +541,9 @@ export default function EhrNurse({
             </div>
             <dl className="ns-nkv">
               {i.ward && <><dt>병실</dt><dd>{[i.ward, i.bed].filter(Boolean).join(' ')}</dd></>}
-              {(i.dept || i.doctor) && <><dt>진료과</dt><dd><button type="button" className="ns-lnk" onClick={() => openMenu('staff')}>{[DEPTS.find(x => x.code === i.dept)?.name || i.dept, i.doctor].filter(Boolean).join(' · ')}</button></dd></>}
+              {(i.dept || i.doctor) && <><dt>진료과</dt><dd><button type="button" className="ns-lnk" onClick={() => openMenu('staff')}>{[DEPTS.find(x => x.code === i.dept)?.name || i.dept].filter(Boolean).join(' · ')}</button></dd></>}
+              {i.doctor && <><dt>지정의</dt><dd>{i.doctor}</dd></>}
+              {i.attending && <><dt>주치의</dt><dd>{i.attending}</dd></>}
               {dd(i.admit) && <><dt>입원일</dt><dd>{dd(i.admit)}{dayN(i.admit) && <em>HD#{dayN(i.admit).replace('일째', '')}</em>}</dd></>}
               {dd(i.disDate) && <><dt>퇴원예정</dt><dd>{dd(i.disDate)}</dd></>}
               {data.surgery[0] && dd(data.surgery[0].date) && <><dt>수술일</dt><dd>{dd(data.surgery[0].date)}{podN(data.surgery[0].date) && <em>{podN(data.surgery[0].date)}</em>}</dd></>}

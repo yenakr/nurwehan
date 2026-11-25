@@ -10,7 +10,7 @@ import { printNameTag } from './print';
 
 type Item = {
   id: string; ward: string | null; bed: string | null; sampleKey: string | null;
-  ptNo: string | null; name: string | null; ageSex: string | null; dx: string | null; doctor: string | null; admit: string | null;
+  ptNo: string | null; name: string | null; ageSex: string | null; dx: string | null; doctor: string | null; attending?: string | null; admit: string | null;
   dept: string | null; visitTime: string | null; vstatus: string | null; ktas: string | null; zone: string | null; cc: string | null; discharged: string | null;
   submitted?: string | null; reviewed?: string | null; badges?: string | null; title?: string | null;
 };
@@ -202,9 +202,9 @@ export default function EhrHome({ cases, initialView, ai, aiLeft, extra }: { cas
         <div className="tw">
           <table>
             <thead>
-              {view.kind === 'ward' && <tr><th>병실</th><th>병상</th><th>환자번호</th><th>이름</th><th>나이/성별</th><th>진료과</th><th className="dx">진단명</th><th>주치의</th><th>입원일</th><th>재원</th></tr>}
+              {view.kind === 'ward' && <tr><th>병실</th><th>병상</th><th>환자번호</th><th>이름</th><th>나이/성별</th><th>진료과</th><th className="dx">진단명</th><th>지정의</th><th>주치의</th><th>입원일</th><th>재원</th></tr>}
               {view.kind === 'op' && <tr><th>예약시간</th><th>환자번호</th><th>이름</th><th>나이/성별</th><th>진료과</th><th>주치의</th><th className="dx">내원사유</th><th>상태</th></tr>}
-              {view.kind === 'dc' && <tr><th>퇴원일</th><th>환자번호</th><th>이름</th><th>나이/성별</th><th>병동/병상</th><th>진료과</th><th className="dx">진단명</th><th>주치의</th></tr>}
+              {view.kind === 'dc' && <tr><th>퇴원일</th><th>환자번호</th><th>이름</th><th>나이/성별</th><th>병동/병상</th><th>진료과</th><th className="dx">진단명</th><th>지정의</th><th>주치의</th></tr>}
               {view.kind === 'er' && <tr><th>도착</th><th>KTAS</th><th>이름</th><th>나이/성별</th><th className="dx">주호소</th><th>구역</th><th>담당의</th><th>상태</th></tr>}
             </thead>
             <tbody>
@@ -232,13 +232,13 @@ export default function EhrHome({ cases, initialView, ai, aiLeft, extra }: { cas
                       <>
                         {roomCell}
                         <td className="bed">{e.label}</td><td>{p.ptNo}</td><td className="nm">{nm}{p.badges && p.badges.split(',').map(b => <i key={b} className={`bdg b_${b}`}>{b}</i>)}</td><td>{p.ageSex}</td><td>{p.dept}</td>
-                        <td className="dx">{p.dx}</td><td>{p.doctor}</td><td>{p.admit}</td><td>{stay(p.admit)}</td>
+                        <td className="dx">{p.dx}</td><td>{p.doctor}</td><td>{p.attending}</td><td>{p.admit}</td><td>{stay(p.admit)}</td>
                       </>
                     )}
                     {view.kind === 'dc' && (
                       <>
                         <td className="bed">{p.discharged}</td><td>{p.ptNo}</td><td className="nm">{nm}{p.badges && p.badges.split(',').map(b => <i key={b} className={`bdg b_${b}`}>{b}</i>)}</td><td>{p.ageSex}</td>
-                        <td>{p.ward} {p.bed}</td><td>{p.dept}</td><td className="dx">{p.dx}</td><td>{p.doctor}</td>
+                        <td>{p.ward} {p.bed}</td><td>{p.dept}</td><td className="dx">{p.dx}</td><td>{p.doctor}</td><td>{p.attending}</td>
                       </>
                     )}
                     {view.kind === 'op' && (

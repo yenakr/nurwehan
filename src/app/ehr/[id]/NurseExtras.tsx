@@ -32,7 +32,7 @@ export function StaffWin({ data, setData, userName, duty }: P) {
   const [text, setText] = useState('');
   const [urgent, setUrgent] = useState(false);
   const [msg, setMsg] = useState('');
-  const staff = staffOf(dept).slice().sort((a, b) => Number(b.name === data.info.doctor) - Number(a.name === data.info.doctor));
+  const staff = staffOf(dept).slice().sort((a, b) => Number(b.name === data.info.attending || b.name === data.info.doctor) - Number(a.name === data.info.attending || a.name === data.info.doctor));
   const sent = data.memos.filter(m => m.type === '노티');
 
   const send = () => {
@@ -57,7 +57,7 @@ export function StaffWin({ data, setData, userName, duty }: P) {
         <div className="nf-cards">
           {staff.map(s => (
             <div key={s.rank + s.name} className={`nf-c ${to?.name === s.name ? 'on' : ''}`}>
-              <div><b>{s.name}</b>{s.name === data.info.doctor && <em>주치의</em>}</div>
+              <div><b>{s.name}</b>{(s.name === data.info.attending || s.name === data.info.doctor) && <em>{s.name === data.info.attending ? '주치의' : '지정의'}</em>}</div>
               <span>{s.rank} · 내선 {s.ext}</span>
               <button type="button" onClick={() => { setTo(s); setMsg(''); }}>Notify</button>
             </div>
