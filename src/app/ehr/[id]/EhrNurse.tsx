@@ -313,6 +313,8 @@ export default function EhrNurse({
   const [mOpen, setMOpen] = useState(0); // 0 닫힘, 1 메뉴, 2 메뉴 > 업무
   const [mq, setMq] = useState('');
   const [figOpen, setFigOpen] = useState(true);
+  const [win2, setWin2] = useState<string | null>(null);
+  const OWN = ['todo', 'notes', 'patinfo', 'dxhist', 'surghist', 'vacc', 'labres', 'medrec', 'flowsheet', 'overview', 'adm', 'dir', 'bulk', 'staff', 'docreq', 'vitals', 'bst', 'mat', 'nact'];
   const [ddPos, setDdPos] = useState<{ left: number; top: number } | null>(null);
   const place = (el: HTMLElement) => { const r = el.getBoundingClientRect(); setDdPos({ left: Math.max(4, Math.min(r.left, window.innerWidth - 190)), top: r.bottom + 2 }); };
   const [tabs, setTabs] = useState<string[]>([]);
@@ -321,11 +323,13 @@ export default function EhrNurse({
     if (id === 'handover') { router.push(`/ehr/handover?ward=${encodeURIComponent(ward)}&team=${encodeURIComponent(team)}`); return; }
     setTabs(t => (t.includes(id) ? t : [...t, id]));
     setRecent(r => [id, ...r.filter(x => x !== id)].slice(0, 8));
+    if (win2 === id) setWin2(null);
     if (win !== id) onOpen(id);
   };
   const closeTab = (id: string) => {
     const rest = tabs.filter(x => x !== id);
     setTabs(rest);
+    if (win2 === id) setWin2(null);
     if (win === id) { if (rest.length) onOpen(rest[rest.length - 1]); else onClose(); }
   };
   const [mf, setMf] = useState<'all' | 'base' | 'med' | 'lab'>('med');
@@ -357,14 +361,23 @@ export default function EhrNurse({
     if (!el) return;
     const k = FCOLS.findIndex(c => c.d === todayS && c.h >= pad(new Date().getHours()));
     el.scrollLeft = Math.max(0, (k < 0 ? FCOLS.length : k) * 52 - el.clientWidth / 2);
-  }, [win, fShift, FCOLS.length, todayS]);
+  }, [win, win2, fShift, FCOLS.length, todayS]);
+  const CATALOG: { g: string; items: string[]; fixed?: boolean; def: boolean }[] = [
+    { g: '활력징후', items: ['체온 (℃)', '수축기혈압', '이완기혈압', '맥박 (회/분)', '호흡 (회/분)', 'SpO2 (%)'], fixed: true, def: true },
+    { g: '욕창예방 및 관리', items: ['욕창위험평가 (Braden)', '체위변경'], def: false },
+    { g: '신체계측', items: ['신장 (cm)', '체중 (kg)'], def: false },
+    { g: 'Intake', items: ['IV (mL)', 'Diet (mL)', '기타 섭취 (mL)'], def: true },
+    { g: 'Output', items: ['소변 (mL)', '배액 (mL)', '기타 배출 (mL)'], def: true },
+    { g: '선택 항목', items: ['통증 (NRS)', 'GCS', '혈당 (mg/dL)', 'O2 (L/min)', '낙상위험평가', '억제대 적용', 'CVP (mmHg)'], def: false },
+  ];
+  const cfgRow = data.memos.find(m => m.type === 'flowcfg');
+  const cfgOn: string[] = cfgRow ? (cfgRow.text || '').split('|').filter(Boolean) : CATALOG.filter(c => c.def).flatMap(c => c.items);
+  const itemOn = (it: string) => CATALOG.some(c => c.fixed && c.items.includes(it)) || cfgOn.includes(it);
+  const setCfg = (list: string[]) => setData(d => ({ ...d, memos: [...d.memos.filter(m => m.type !== 'flowcfg'), { type: 'flowcfg', text: list.join('|'), author: userName }] }));
+  const [fCfg, setFCfg] = useState(false);
   const FG: { g: string; items: string[] }[] = [
-    { g: '활력징후', items: ['체온 (℃)', '수축기혈압', '이완기혈압', '맥박 (회/분)', '호흡 (회/분)', 'SpO2 (%)'] },
-    { g: '욕창예방 및 관리', items: ['욕창위험평가 (Braden)', '체위변경'] },
-    { g: '신체계측', items: ['신장 (cm)', '체중 (kg)'] },
-    { g: 'Intake', items: ['IV (mL)', 'Diet (mL)', '기타 섭취 (mL)'] },
-    { g: 'Output', items: ['소변 (mL)', '배액 (mL)', '기타 배출 (mL)'] },
-    { g: 'I/O Total', items: ['I/O Total (mL)'] },
+    ...CATALOG.map(c => ({ g: c.g, items: c.items.filter(itemOn) })).filter(c => c.items.length > 0),
+    ...(cfgOn.some(x => ['IV (mL)', 'Diet (mL)', '기타 섭취 (mL)', '소변 (mL)', '배액 (mL)', '기타 배출 (mL)', '기타 배출 (mL)'].includes(x)) ? [{ g: 'I/O Total', items: ['I/O Total (mL)'] }] : []),
   ];
   const IN = ['IV (mL)', 'Diet (mL)', '기타 섭취 (mL)'];
   const OUT = ['소변 (mL)', '배액 (mL)', '기타 배출 (mL)'];
@@ -661,10 +674,10 @@ export default function EhrNurse({
       {mOpen === 2 && ddPos && (mq.trim() || cat) && (() => {
         const ms = (ids: string[]) => ids.map(id => MENUS.find(m => m.id === id)).filter((m): m is { id: string; label: string } => !!m);
         const list: { key: string; label: string; disabled?: boolean; run: () => void }[] = mq.trim()
-          ? MENUS.filter(m => m.label.includes(mq.trim())).map(m => ({ key: m.id, label: m.label, run: () => { openMenu(m.id); setMq(''); setMOpen(0); setCat(''); } }))
+          ? MENUS.filter(m => m.label.includes(mq.trim())).map(m => ({ key: m.id, label: m.label, run: () => { openMenu(m.id); setMq(''); setCat(''); } }))
           : cat === '출력·퇴원'
-            ? (actions || []).map(a => ({ key: a.label, label: a.label, disabled: a.disabled, run: () => { a.run(); setMOpen(0); setCat(''); } }))
-            : (cat === '최근사용' ? ms(recent) : ms(CATS.find(c => c.name === cat)?.items || [])).map(m => ({ key: m.id, label: m.label, run: () => { openMenu(m.id); setMOpen(0); setCat(''); } }));
+            ? (actions || []).map(a => ({ key: a.label, label: a.label, disabled: a.disabled, run: () => { a.run(); setCat(''); } }))
+            : (cat === '최근사용' ? ms(recent) : ms(CATS.find(c => c.name === cat)?.items || [])).map(m => ({ key: m.id, label: m.label, run: () => { openMenu(m.id); setCat(''); } }));
         return (
           <>
             <button type="button" className="ns-ddbk" style={{ top: ddPos.top - 2 }} aria-label="닫기" onClick={() => { setCat(''); setMq(''); }} />
@@ -678,8 +691,10 @@ export default function EhrNurse({
       {tabs.length > 0 && (
         <div className="ns-ntabs">
           {tabs.map(id => (
-            <span key={id} className={win === id ? 'ns-on' : ''}>
+            <span key={id} className={win === id || win2 === id ? 'ns-on' : ''}>
               <button type="button" title={win === id ? '누르면 최소화' : '누르면 열기'} onClick={() => { if (win === id) onClose(); else openMenu(id); }}>{id === 'staff' ? '의료진 · Notify' : MENUS.find(m => m.id === id)?.label}</button>
+              {win && win !== id && win2 !== id && OWN.includes(id) && OWN.includes(win) && <button type="button" aria-label="나란히 보기" title="현재 창 옆에 나란히 열기" onClick={() => setWin2(id)}>▯▯</button>}
+              {win2 === id && <button type="button" aria-label="분할 해제" title="분할 해제" onClick={() => setWin2(null)}>▢</button>}
               {win === id && <button type="button" aria-label="최소화" title="최소화" onClick={() => onClose()}>&minus;</button>}
               <button type="button" aria-label="탭 닫기" title="닫기" onClick={() => closeTab(id)}>&times;</button>
             </span>
@@ -913,8 +928,8 @@ export default function EhrNurse({
         );
       })()}
 
-      {win && (
-        <div className="ns-nwin" role="dialog" aria-label={win} style={pos ? { left: pos.x, top: pos.y, right: 'auto', bottom: 'auto', margin: 0 } : undefined}>
+      {[win, win2 && win && win2 !== win ? win2 : null].map((w, wi) => w && (
+        <div key={wi} className={`ns-nwin ${win2 && win ? (wi ? 'ns-sp-b' : 'ns-sp-a') : ''}`} role="dialog" aria-label={w} style={pos && !(win2 && win) ? { left: pos.x, top: pos.y, right: 'auto', bottom: 'auto', margin: 0 } : undefined}>
           <header
             onPointerDown={e => {
               if ((e.target as HTMLElement).closest('button')) return;
@@ -927,11 +942,11 @@ export default function EhrNurse({
               window.addEventListener('pointerup', up);
             }}
           >
-            <b>{win === 'staff' ? '의료진 · Notify' : MENUS.find(m => m.id === win)?.label}</b>
-            <button type="button" aria-label="닫기" onClick={() => closeTab(win)}>&times;</button>
+            <b>{w === 'staff' ? '의료진 · Notify' : MENUS.find(m => m.id === w)?.label}</b>
+            <button type="button" aria-label="닫기" onClick={() => closeTab(w)}>&times;</button>
           </header>
           <div className="ns-nwb">
-            {win === 'todo' ? (
+            {w === 'todo' ? (
               <>
                 <div className="ns-nhd">
                   <button type="button" className={`ns-arw ${scope === 'me' ? 'ns-sel' : ''}`} onClick={() => setScope('me')}>이 환자</button>
@@ -969,19 +984,19 @@ export default function EhrNurse({
                   </table>
                 )}
               </>
-            ) : win === 'notes' ? (
+            ) : w === 'notes' ? (
               <NursingRecord data={data} setData={setData} userName={userName} duty={duty} today={date} />
-            ) : win === 'patinfo' ? (
+            ) : w === 'patinfo' ? (
               <PatInfo data={data} />
-            ) : win === 'dxhist' ? (
+            ) : w === 'dxhist' ? (
               <DxHist data={data} />
-            ) : win === 'surghist' ? (
+            ) : w === 'surghist' ? (
               <SurgHist data={data} />
-            ) : win === 'vacc' ? (
+            ) : w === 'vacc' ? (
               <VaccHist data={data} />
-            ) : win === 'labres' ? (
+            ) : w === 'labres' ? (
               <LabResults data={data} setData={setData} userName={userName} />
-            ) : win === 'medrec' ? (
+            ) : w === 'medrec' ? (
               (() => {
                 const rows: [string, Item][] = [
                   ...(mf === 'all' || mf === 'base' ? g.base.map(x => ['기본', x] as [string, Item]) : []),
@@ -1011,7 +1026,7 @@ export default function EhrNurse({
                   </div>
                 );
               })()
-            ) : win === 'flowsheet' ? (
+            ) : w === 'flowsheet' ? (
               <div className="ns-fl" onClick={() => setFCtx(null)}>
                 <div className="ns-fl-t" ref={flowRef}
                   onMouseDown={e => { if ((e.target as HTMLElement).closest('input,button')) return; drag.current = { x: e.clientX, l: e.currentTarget.scrollLeft }; }}
@@ -1019,13 +1034,13 @@ export default function EhrNurse({
                   onMouseUp={() => { drag.current = null; }} onMouseLeave={() => { drag.current = null; }}>
                   <table>
                     <thead>
-                      <tr><th rowSpan={2} className="ns-fl-c"><div className="ns-fl-s">{([['all', '24시간'], ['D', 'Day'], ['E', 'Evening'], ['N', 'Night']] as const).map(([k, l]) => <button key={k} type="button" className={fShift === k ? 'ns-on' : ''} onClick={() => setFShift(k)}>{l}</button>)}</div></th>{FDAYS.map(d => <th key={d} colSpan={FH.length} className={d === todayS ? 'ns-fl-today' : 'ns-fl-day'}>{d.slice(5).replace('-', '/')} ({'일월화수목금토'[new Date(`${d}T00:00:00`).getDay()]}){d === todayS ? ' · 오늘' : ''}</th>)}</tr>
+                      <tr><th rowSpan={2} className="ns-fl-c"><div className="ns-fl-s">{([['all', '24시간'], ['D', 'Day'], ['E', 'Evening'], ['N', 'Night']] as const).map(([k, l]) => <button key={k} type="button" className={fShift === k ? 'ns-on' : ''} onClick={() => setFShift(k)}>{l}</button>)}<button type="button" className={fCfg ? 'ns-on' : ''} onClick={e => { e.stopPropagation(); setFCfg(v => !v); }}>항목 설정</button></div></th>{FDAYS.map(d => <th key={d} colSpan={FH.length} className={d === todayS ? 'ns-fl-today' : 'ns-fl-day'}>{d.slice(5).replace('-', '/')} ({'일월화수목금토'[new Date(`${d}T00:00:00`).getDay()]}){d === todayS ? ' · 오늘' : ''}</th>)}</tr>
                       <tr>{FCOLS.map(c => <th key={c.d + c.h}>{c.h}시</th>)}</tr>
                     </thead>
                     <tbody>
                       {FG.map(g => (
                         <Fragment key={g.g}>
-                          <tr className="ns-fl-g"><td className="ns-fl-c">{g.g}</td><td colSpan={FCOLS.length} /></tr>
+                          <tr className="ns-fl-g"><td colSpan={FCOLS.length + 1}><span className="ns-fl-gl">{g.g}</span></td></tr>
                           {g.items.map(it => (
                             <tr key={it}>
                               <th className="ns-fl-c">{it}</th>
@@ -1051,6 +1066,19 @@ export default function EhrNurse({
                     </tbody>
                   </table>
                 </div>
+                {fCfg && (
+                  <div className="ns-fl-cfg" style={{ left: 12, top: 56 }} onClick={e => e.stopPropagation()}>
+                    <b>이 환자의 Flowsheet 항목</b>
+                    {CATALOG.map(c => (
+                      <div key={c.g}>
+                        <h5>{c.g}{c.fixed ? ' (필수)' : ''}</h5>
+                        {c.items.map(it => <label key={it}><input type="checkbox" checked={itemOn(it)} disabled={c.fixed} onChange={() => setCfg(cfgOn.includes(it) ? cfgOn.filter(x => x !== it) : [...cfgOn, it])} />{it}</label>)}
+                      </div>
+                    ))}
+                    <p style={{ margin: '8px 0 0', color: 'var(--sub-text)' }}>활력징후는 항상 표시돼요. 환자 상태(욕창 위험 등)에 맞게 항목을 넣고 빼세요.</p>
+                    <button type="button" style={{ marginTop: 6 }} onClick={() => setFCfg(false)}>닫기</button>
+                  </div>
+                )}
                 <p className="ns-fl-h">표를 꾹 누른 채 좌우로 끌면 다른 시간대·날짜로 이동 · 칸 더블클릭=입력, 우클릭=메뉴(메모 / 간호기록 / 그룹입력) · 파란 글씨는 임상관찰 연동값</p>
                 {fCtx && (
                   <div className="ns-fl-m" style={{ left: fCtx.x, top: fCtx.y }} onClick={e => e.stopPropagation()}>
@@ -1065,7 +1093,7 @@ export default function EhrNurse({
                 {fTab === 'state' && <div className="ns-fl-x">{data.care.length ? data.care.map((c, k) => <p key={k}>{c.dx}</p>) : <p className="ns-nnone">간호과정 없음</p>}</div>}
                 {fTab === 'lab' && <div className="ns-fl-x">{data.labs.length ? data.labs.slice(0, 12).map((l, k) => <p key={k}>{l.name} {l.value} {l.unit}</p>) : <p className="ns-nnone">검사결과 없음</p>}</div>}
               </div>
-            ) : win === 'overview' ? (
+            ) : w === 'overview' ? (
               (() => {
                 const dots = bodyDots(data);
                 return (
@@ -1102,7 +1130,7 @@ export default function EhrNurse({
                   </div>
                 );
               })()
-            ) : win === 'adm' ? (
+            ) : w === 'adm' ? (
               <>
                 <div className="ns-nhd">
                   <button type="button" className="ns-arw" onClick={() => shiftA(-1)} aria-label="전날">&lt;</button>
@@ -1128,7 +1156,7 @@ export default function EhrNurse({
                   </div>
                 ))}
               </>
-            ) : win === 'dir' ? (
+            ) : w === 'dir' ? (
               <div className="ns-org">
                 <aside>
                   <input value={dq} onChange={e => setDq(e.target.value)} placeholder="이름·부서·내선 검색" aria-label="부서 검색" />
@@ -1162,18 +1190,18 @@ export default function EhrNurse({
                   })()}
                 </section>
               </div>
-            ) : win === 'bulk' ? (
+            ) : w === 'bulk' ? (
               <WardBulk pts={bulkPts} onClose={onClose} onSelf={row => setData(d => ({ ...d, vitals: [...d.vitals, row] }))} />
-            ) : win === 'staff' ? (
+            ) : w === 'staff' ? (
               <Fragment key={notifyDraft}><StaffWin data={data} setData={setData} userName={userName} duty={duty} draft={notifyDraft} /></Fragment>
-            ) : win === 'docreq' ? (
+            ) : w === 'docreq' ? (
               <DocReqWin data={data} setData={setData} userName={userName} duty={duty} />
-            ) : (win === 'vitals' || win === 'bst' || win === 'mat' || win === 'nact') ? (
-              <NurseForm kind={win} data={data} setData={setData} userName={userName} />
+            ) : (w === 'vitals' || w === 'bst' || w === 'mat' || w === 'nact') ? (
+              <NurseForm kind={w} data={data} setData={setData} userName={userName} />
             ) : drawer}
           </div>
         </div>
-      )}
+      ))}
 
       <style>{`
         .ns-nstep { display: flex; align-items: baseline; gap: 8px; margin-top: 6px; }
@@ -1243,7 +1271,7 @@ export default function EhrNurse({
         .ns-subh td { background: #f3f6fa; font-weight: 700; font-size: 12.5px; color: var(--primary); }
         .ns-nhi { color: #b91c1c !important; }
         .ns-alone { color: #1d4ed8 !important; }
-        .ns-fl { padding: 10px 12px; position: relative; }
+        .ns-fl { position: relative; padding: 10px 12px; position: relative; }
         .ns-rt { min-width: 0 !important; width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 6px; }
         .ns-rt th, .ns-rt td { border: 1px solid var(--border); padding: 3px 5px; text-align: left; }
         .ns-rt th { background: #f6f8fb; }
@@ -1296,7 +1324,11 @@ export default function EhrNurse({
         .ns-fl-s button { font: inherit; font-size: 11px; padding: 1px 6px; border: 1px solid var(--border); border-radius: 3px; background: #fff; cursor: pointer; }
         .ns-fl-s button.ns-on { background: var(--primary); color: #fff; border-color: var(--primary); }
         .ns-fl-v { background: #eef6ff; font-weight: 700; }
-        .ns-fl-g td { background: #eaf0f7; text-align: left; font-weight: 700; cursor: default; }
+        .ns-fl-g td { background: #c9d9ee; color: #17324f; text-align: left; font-weight: 800; cursor: default; border-top: 2px solid #8fa9c9; padding: 0; }
+        .ns-fl-gl { position: sticky; left: 0; display: inline-block; padding: 5px 10px; }
+        .ns-fl-cfg { position: absolute; z-index: 6; background: #fff; border: 1px solid var(--border); border-radius: 8px; box-shadow: 0 8px 24px rgba(0,0,0,.2); padding: 10px 12px; max-width: 320px; font-size: 12.5px; }
+        .ns-fl-cfg h5 { margin: 6px 0 2px; font-size: 12px; color: var(--primary); }
+        .ns-fl-cfg label { display: inline-flex; align-items: center; gap: 4px; margin: 2px 10px 2px 0; }
         .ns-fl-h { font-size: 12px; color: var(--sub-text); margin: 6px 0; }
         .ns-fl-m { position: fixed; z-index: 90; background: #fff; border: 1px solid var(--border); border-radius: 6px; box-shadow: 0 6px 20px rgba(0,0,0,.18); display: flex; flex-direction: column; min-width: 190px; }
         .ns-fl-m button { text-align: left; border: 0; background: none; padding: 8px 12px; font: inherit; font-size: 13px; cursor: pointer; }
@@ -1392,6 +1424,8 @@ export default function EhrNurse({
         .ns-nfa .ns-go { background: var(--primary); border-color: var(--primary); color: #fff; }
         .ns-nfa .ns-go:disabled { opacity: .4; }
         .ns-nwin { position: fixed; z-index: 55; inset: 0; margin: auto; width: min(920px, 94vw); height: min(680px, 86vh); min-width: 320px; min-height: 240px; resize: both; overflow: hidden; background: var(--background, #fff); color: var(--text); border: 1px solid #1c2f4b; box-shadow: 0 12px 40px rgba(0,0,0,.35); display: flex; flex-direction: column; border-radius: 6px; }
+        .ns-nwin.ns-sp-a { inset: auto; left: 0; top: 96px; width: 50vw; height: calc(100vh - 96px); margin: 0; resize: none; }
+        .ns-nwin.ns-sp-b { inset: auto; left: 50vw; top: 96px; width: 50vw; height: calc(100vh - 96px); margin: 0; resize: none; }
         .ns-nwin header button { color: #fff; font-size: 22px; line-height: 1; padding: 0 6px; }
         .ns-nwb .wbk { border: 0; padding: 0; margin: 0; }
         .ns-nwb { padding: 12px 14px 24px; overflow: auto; flex: 1; }
