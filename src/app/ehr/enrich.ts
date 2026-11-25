@@ -21,7 +21,7 @@ const DXC: Record<string, [string, string, string][]> = {
 const ymd = (v?: string) => (v || '').slice(0, 10);
 
 // 샘플 데이터 버전: 올리면 이전 버전으로 저장된 미제출 샘플 차트는 정리되고 새 데이터로 다시 열린다.
-export const SAMPLE_VER = '9';
+export const SAMPLE_VER = '10';
 
 const CONSULT: Record<string, [string, string, string, string][]> = {
   adult: [['RM', '심장재활 교육 및 운동처방 의뢰', '퇴원 후 외래 재활 프로그램 등록 권고', '회신완료']],
@@ -90,6 +90,19 @@ export function enrich(s: Sample): Sample {
   if (inpatient && !memos.some(m => m.type === '노티')) (NOTI[key] || []).forEach(([hm, text, u]) => add.push({ type: '노티', text, doctor: info.doctor || '', rank: '주치의', dept: info.dept || '', urgent: u, status: '발송', time: `${day} ${hm}`, author: '박간호', shift: 'D' }));
   if (inpatient && DOCREQ[key] && !memos.some(m => m.type === '서류요청')) add.push({ type: '서류요청', text: DOCREQ[key][0], copies: DOCREQ[key][1], how: DOCREQ[key][2], note: '', status: '요청', time: `${day} 09:20`, author: '박간호', shift: 'D' });
   if (inpatient && COMM[key] && !memos.some(m => m.type === '간호의사소통')) add.push({ type: '간호의사소통', text: COMM[key], time: `${day} 08:00`, author: '박간호', shift: 'D' });
+  // 처방 비교용 이력: 용량이 바뀐 약 1건, 전일에 중지된 처방 1건
+  if (inpatient && orders.length && !memos.some(m => m.type === 'ordhist')) {
+    const prevDay = (() => { const t = new Date(`${day}T00:00:00`); t.setDate(t.getDate() - 1); return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`; })();
+    const admitD = ymd(info.admit) || prevDay;
+    const idx = orders.findIndex(o => o.kind !== 'sec' && o.kind !== 'memo' && o.name && o.route && /^\d+(\.\d+)?$/.test(o.dose || '') && o.pri !== 'D/C' && o.st !== '추가');
+    if (idx >= 0) {
+      const o = orders[idx];
+      const half = String(Math.max(1, Math.round(Number(o.dose) * 0.5 * 10) / 10));
+      add.push({ type: 'ordhist', name: o.name || '', dose: half, unit: o.unit || '', cnt: o.cnt || '', route: o.route || '', sd: admitD, ed: prevDay });
+      out.orders = orders.map((r, j) => (j === idx ? { ...r, sd: prevDay } : r));
+    }
+    add.push({ type: 'ordhist', name: 'Normal saline 1000mL (수액)', dose: '1000', unit: 'mL', cnt: '1', route: 'IV', sd: admitD, ed: prevDay });
+  }
   // 검사 시계열용 과거 수치 (같은 검사의 이전 3일)
   if (inpatient && !memos.some(m => m.type === 'labhist') && labs.length) {
     const base = new Date(`${day}T00:00:00`);
