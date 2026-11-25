@@ -1,5 +1,6 @@
 'use client';
 
+import { vnow } from '../vclock';
 import type { ChartData, Row } from '../types';
 import { DEPTS } from '../directory';
 
@@ -78,7 +79,7 @@ export function DxHist({ data }: { data: ChartData }) {
 
 export function SurgHist({ data }: { data: ChartData }) {
   const rows = [...data.surgery].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-  const pod = (d?: string) => { const x = d10(d); if (!x) return ''; const n = Math.round((Date.now() - new Date(x).getTime()) / 86400000); return n >= 0 ? `POD#${n}` : ''; };
+  const pod = (d?: string) => { const x = d10(d); if (!x) return ''; const n = Math.round((vnow().getTime() - new Date(x).getTime()) / 86400000); return n >= 0 ? `POD#${n}` : ''; };
   return (
     <div className="pv">
       <style>{CSS}</style>

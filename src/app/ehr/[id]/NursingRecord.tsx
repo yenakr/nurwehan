@@ -1,5 +1,6 @@
 'use client';
 
+import { vnow } from '../vclock';
 import { useMemo, useState } from 'react';
 import type { ChartData, Row } from '../types';
 import { PHRASES } from '../phrases';
@@ -33,12 +34,12 @@ const CSS = `
   .nr-err { color: #c0152a; font-size: 12px; }
 `;
 const p2 = (n: number) => String(n).padStart(2, '0');
-const stamp = () => { const t = new Date(); return `${t.getFullYear()}-${p2(t.getMonth() + 1)}-${p2(t.getDate())} ${p2(t.getHours())}:${p2(t.getMinutes())}`; };
-const full = (s: string) => (/^\d{2}-\d{2} /.test(s) ? `${new Date().getFullYear()}-${s}` : s);
+const stamp = () => { const t = vnow(); return `${t.getFullYear()}-${p2(t.getMonth() + 1)}-${p2(t.getDate())} ${p2(t.getHours())}:${p2(t.getMinutes())}`; };
+const full = (s: string) => (/^\d{2}-\d{2} /.test(s) ? `${vnow().getFullYear()}-${s}` : s);
 const hourOf = (s: string) => Number((s.split(' ')[1] || '').slice(0, 2));
 const SPECIAL = /(낙상|출혈|notify|Notify|보고|보류|호흡곤란|발열|응급|rapid|CPR|억제|욕창|투약 보류|통증)/;
 const isRed = (r: Row) => { const h = hourOf(full(r.time || '')); return r.shift === 'N' || h >= 22 || (h >= 0 && h < 6) || SPECIAL.test(`${r.focus || ''} ${r.text || ''}`.slice(0, 120)); };
-const dutyOf = () => { const h = new Date().getHours(); return h >= 6 && h < 14 ? 'D' : h >= 14 && h < 22 ? 'E' : 'N'; };
+const dutyOf = () => { const h = vnow().getHours(); return h >= 6 && h < 14 ? 'D' : h >= 14 && h < 22 ? 'E' : 'N'; };
 
 export default function NursingRecord({ data, setData, userName, duty, today }: {
   data: ChartData; setData: (f: (d: ChartData) => ChartData) => void; userName: string; duty: string; today: string;

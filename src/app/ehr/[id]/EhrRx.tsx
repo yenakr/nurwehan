@@ -1,12 +1,13 @@
 'use client';
 
+import { vnow } from '../vclock';
 import { useState } from 'react';
 import type { ChartData, Row } from '../types';
 
 const FILTERS = ['전체', '미수행', '식이', 'PRN'] as const;
 type F = (typeof FILTERS)[number];
 const pad = (n: number) => String(n).padStart(2, '0');
-const hm = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const hm = () => { const d = vnow(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 const isDiet = (r: Row) => /식$|식이|npo|금식|diet|죽|미음/i.test(r.name || '');
 
 export default function RxPanel({ data, author, onChange }: { data: ChartData; author: string; onChange: (orders: Row[]) => void }) {

@@ -1,3 +1,4 @@
+import { vnow } from './vclock';
 import type { ChartData, Row } from './types';
 import { formScore } from './[id]/EhrForms';
 
@@ -62,7 +63,7 @@ export function badgesOf(d: ChartData): string {
 }
 
 // 근무조: D 07-15, E 15-23, N 23-07
-export const shiftOf = (d = new Date()) => { const h = d.getHours(); return h >= 7 && h < 15 ? 'D' : h >= 15 && h < 23 ? 'E' : 'N'; };
+export const shiftOf = (d = vnow()) => { const h = d.getHours(); return h >= 7 && h < 15 ? 'D' : h >= 15 && h < 23 ? 'E' : 'N'; };
 
 export const DC_EDU = ['복약 방법·부작용', '식이', '활동·운동', '상처·튜브 관리', '응급 증상과 내원 시점', '외래 예약'];
 export const ISO = ['없음', '접촉', '비말', '공기', '보호'];

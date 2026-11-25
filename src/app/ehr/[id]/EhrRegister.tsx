@@ -1,5 +1,6 @@
 'use client';
 
+import { vnow } from '../vclock';
 import { useState } from 'react';
 import { ALLERGIES, DEPTS, DOCTORS } from '../directory';
 
@@ -22,7 +23,7 @@ export default function RegisterCard({ info, onRegister }: { info: Record<string
     if (!ok) return;
     onRegister({
       name: name.trim(), ageSex: `${age.trim()}/${sex}`, dept, doctor, dx: dx.trim(), cc: cc.trim(), allergy, route,
-      ...(info.admit ? {} : { admit: new Date().toISOString().slice(0, 10) }),
+      ...(info.admit ? {} : { admit: vnow().toISOString().slice(0, 10) }),
     });
   };
 

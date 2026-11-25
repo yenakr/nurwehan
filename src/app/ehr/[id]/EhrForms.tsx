@@ -1,5 +1,6 @@
 'use client';
 
+import { vnow } from '../vclock';
 import type { Row } from '../types';
 
 export type FormKey = 'morse' | 'braden' | 'pain' | 'preop';
@@ -55,7 +56,7 @@ const morseLevel = (n: number) => (n >= 45 ? { t: '고위험', c: 'hi' } : n >= 
 const bradenLevel = (n: number) => (n <= 9 ? { t: '초고위험', c: 'hi' } : n <= 12 ? { t: '고위험', c: 'hi' } : n <= 14 ? { t: '중등도 위험', c: 'md' } : n <= 18 ? { t: '경미한 위험', c: '' } : { t: '위험 낮음', c: '' });
 
 const stamp = () => {
-  const d = new Date();
+  const d = vnow();
   const p = (n: number) => String(n).padStart(2, '0');
   return `${p(d.getMonth() + 1)}-${p(d.getDate())} ${p(d.getHours())}:${p(d.getMinutes())}`;
 };

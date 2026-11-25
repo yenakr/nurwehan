@@ -1,5 +1,6 @@
 'use client';
 
+import { vnow } from '../vclock';
 import { useMemo, useState, type Dispatch, type SetStateAction } from 'react';
 import type { ChartData, Row } from '../types';
 
@@ -36,7 +37,7 @@ export default function LabResults({ data, setData, userName }: Props) {
   const cur = sel && dates.includes(sel) ? sel : dates[dates.length - 1] || '';
   const rows = done.filter(r => md(r.time) === cur && (!abn || flagOf(r)));
   const unack = done.filter(r => flagOf(r) && !r.ack).length;
-  const ack = (r: Row) => setData(d => ({ ...d, labs: d.labs.map(x => (x === r ? { ...x, ack: `${new Date().toTimeString().slice(0, 5)} ${userName}` } : x)) }));
+  const ack = (r: Row) => setData(d => ({ ...d, labs: d.labs.map(x => (x === r ? { ...x, ack: `${vnow().toTimeString().slice(0, 5)} ${userName}` } : x)) }));
   const names = [...new Set([...done, ...hist].map(r => r.name || ''))].filter(Boolean);
   const tsAt = (name: string, d: string): Row | undefined => [...done, ...hist].filter(r => r.name === name && md(r.time) === d).slice(-1)[0];
 

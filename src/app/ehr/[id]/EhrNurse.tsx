@@ -1,5 +1,6 @@
 'use client';
 
+import { vnow } from '../vclock';
 import { SAMPLES } from '../samples';
 import { MATS, matsFor } from '../codes';
 import NurseForm from './NurseForms';
@@ -70,8 +71,8 @@ const CATS: { name: string; items: string[] }[] = [
 const ORG = buildDirectory();
 
 const pad = (n: number) => String(n).padStart(2, '0');
-const hm = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
-const dutyNow = () => { const h = new Date().getHours(); return h >= 6 && h < 14 ? 'D' : h >= 14 && h < 22 ? 'E' : 'N'; };
+const hm = () => { const d = vnow(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const dutyNow = () => { const h = vnow().getHours(); return h >= 6 && h < 14 ? 'D' : h >= 14 && h < 22 ? 'E' : 'N'; };
 const HIGH = /(insulin|인슐린|heparin|헤파린|potassium|kcl|칼륨|morphine|모르핀|fentanyl|펜타닐|midazolam|미다졸람|항암|digoxin|디곡신|warfarin|와파린|propofol|ketamine|마약)/i;
 // 병실 기준 담당 팀: 1~3호실 1팀, 4호실 이후 2팀
 const teamOf = (bed: string | null) => ((Number((bed || '').split('-')[0]) || 0) % 100 <= 3 ? '1팀' : '2팀');
@@ -117,7 +118,7 @@ function group(orders: Row[]): Groups {
 // 수술·시술·검사 예정마다 필요한 준비 항목. 해당 없으면 비어 있다.
 type CkGroup = { title: string; items: string[] };
 function checklist(d: ChartData): CkGroup[] {
-  const today = new Date();
+  const today = vnow();
   const ymd = `${today.getFullYear()}-${pad(today.getMonth() + 1)}-${pad(today.getDate())}`;
   // 수술·시술·침습적 검사 "전" 준비가 필요한 것만 대상으로 한다 (이미 끝난 수술, 수술 후 관찰·간호는 제외)
   const NOT = /수술\s*후|술\s*후|후\s|관찰|dressing|드레싱|보행|교육|POD|재료|상처|배액|조기|f\/u|추적/i;
@@ -240,7 +241,7 @@ export default function EhrNurse({
 }) {
   const router = useRouter();
   const i = data.info;
-  const [date, setDate] = useState(() => { const t = new Date(); return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`; });
+  const [date, setDate] = useState(() => { const t = vnow(); return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`; });
   const [ward, setWard] = useState(i.ward || '');
   const [team, setTeam] = useState(() => teamOf(i.bed || ''));
   const [dmsg, setDmsg] = useState('');
@@ -292,16 +293,18 @@ export default function EhrNurse({
     return rows.filter(r => (adm ? (r.admit || '') : (r.disDate || '')).slice(0, 10) === adate);
   };
   const dd = (v?: string) => (v || '').slice(0, 10);
+  const vToday = (() => { const t = vnow(); return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`; })();
+  useEffect(() => { setDate(vToday); }, [vToday]);
   const dayN = (from?: string) => {
     const f = dd(from);
     if (!f) return '';
-    const n = Math.round((new Date(date).getTime() - new Date(f).getTime()) / 86400000) + 1;
+    const n = Math.round((new Date(vToday).getTime() - new Date(f).getTime()) / 86400000) + 1;
     return n > 0 ? `${n}일째` : '';
   };
   const podN = (from?: string) => {
     const f = dd(from);
     if (!f) return '';
-    const n = Math.round((new Date(date).getTime() - new Date(f).getTime()) / 86400000);
+    const n = Math.round((new Date(vToday).getTime() - new Date(f).getTime()) / 86400000);
     return n > 0 ? `POD#${n}` : n === 0 ? '수술당일' : `D-${-n}`;
   };
   const dxMain = data.dxcode.find(r => r.kind === '주상병' && r.name);
@@ -341,7 +344,7 @@ export default function EhrNurse({
   const ALLH = Array.from({ length: 24 }, (_, k) => String(k).padStart(2, '0'));
   const [fShift, setFShift] = useState<'all' | 'D' | 'E' | 'N'>('all');
   const FH = fShift === 'D' ? ALLH.slice(7, 15) : fShift === 'E' ? ALLH.slice(15, 23) : fShift === 'N' ? [...ALLH.slice(23), ...ALLH.slice(0, 7)] : ALLH;
-  const todayS = (() => { const t = new Date(); return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`; })();
+  const todayS = (() => { const t = vnow(); return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`; })();
   const addD = (ds: string, n: number) => { const t = new Date(`${ds}T00:00:00`); t.setDate(t.getDate() + n); return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`; };
   const FDAYS = useMemo(() => {
     const a0 = (data.info.admit || '').slice(0, 10);
@@ -359,7 +362,7 @@ export default function EhrNurse({
     if (win !== 'flowsheet') return;
     const el = flowRef.current;
     if (!el) return;
-    const k = FCOLS.findIndex(c => c.d === todayS && c.h >= pad(new Date().getHours()));
+    const k = FCOLS.findIndex(c => c.d === todayS && c.h >= pad(vnow().getHours()));
     el.scrollLeft = Math.max(0, (k < 0 ? FCOLS.length : k) * 52 - el.clientWidth / 2);
   }, [win, win2, fShift, FCOLS.length, todayS]);
   const CATALOG: { g: string; items: string[]; fixed?: boolean; def: boolean }[] = [
@@ -476,7 +479,7 @@ export default function EhrNurse({
     if (!isMed(it.r)) {
       const tests = labTestsFor(it.r.name || '');
       if (tests.length) {
-        const now = Date.now();
+        const now = vnow().getTime();
         setData(d => {
           const keep = d.labs.filter(l => l.value || !tests.some(t => t.name === l.name));
           const add = tests.map((t): Row => ({ name: t.name, value: '', unit: t.unit, min: String(t.min), max: String(t.max), sample: t.sample, time: `${date.slice(5)} ${hm()}`, col: `${date} ${hm()}`, due: String(now + 45 * 1000), ord: it.r.name || '' }));
@@ -514,7 +517,7 @@ export default function EhrNurse({
   // 시간 경과 시뮬레이션: 검사 결과 자동 반영, 협진 접수 → 진행중 → 회신완료
   useEffect(() => {
     const tick = () => setData(d => {
-      const now = Date.now();
+      const now = vnow().getTime();
       const labs = resolveLabs(d.labs, now);
       let cch = false;
       const consult = d.consult.map(c => {
@@ -563,7 +566,7 @@ export default function EhrNurse({
     else setQMsg('없는 환자예요');
   };
 
-  const isToday = date === `${new Date().getFullYear()}-${pad(new Date().getMonth() + 1)}-${pad(new Date().getDate())}`;
+  const isToday = date === `${vnow().getFullYear()}-${pad(vnow().getMonth() + 1)}-${pad(vnow().getDate())}`;
   const todo = todoOf(g, duty, isToday);
   const [scope, setScope] = useState<'me' | 'ward'>('me');
   const wardTodo = (() => {

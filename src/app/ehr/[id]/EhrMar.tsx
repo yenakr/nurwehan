@@ -1,11 +1,12 @@
 'use client';
 
+import { vnow } from '../vclock';
 import { useState } from 'react';
 import type { ChartData, Row } from '../types';
 
 const pad = (n: number) => String(n).padStart(2, '0');
-const nowMD = () => { const d = new Date(); return `${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
-const nowHM = () => { const d = new Date(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
+const nowMD = () => { const d = vnow(); return `${pad(d.getMonth() + 1)}-${pad(d.getDate())}`; };
+const nowHM = () => { const d = vnow(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 
 const SLOTS: Record<number, string[]> = { 1: ['09:00'], 2: ['09:00', '21:00'], 3: ['08:00', '13:00', '18:00'], 4: ['06:00', '12:00', '18:00', '24:00'], 5: ['06:00', '10:00', '14:00', '18:00', '22:00'], 6: ['04:00', '08:00', '12:00', '16:00', '20:00', '24:00'] };
 const slotsOf = (cnt: string | undefined) => SLOTS[Math.min(6, Math.max(1, parseInt((cnt || '').replace(/\D/g, ''), 10) || 1))];
@@ -23,7 +24,7 @@ const REASONS = ['환자 거부', '금식', '검사 중', '처방 변경', '기�
 const lateMin = (slot: string) => {
   const m = /^(\d{1,2}):(\d{2})$/.exec(slot);
   if (!m) return 0;
-  const d = new Date();
+  const d = vnow();
   return d.getHours() * 60 + d.getMinutes() - (Number(m[1]) % 24) * 60 - Number(m[2]);
 };
 
