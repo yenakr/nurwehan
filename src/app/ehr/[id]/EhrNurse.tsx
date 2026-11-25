@@ -449,7 +449,7 @@ export default function EhrNurse({
     <div className={`ns-nu ${win ? 'ns-hasw' : ''}`}>
       <div className="ns-nmenu">
         <b>홈</b>
-        {CATS.map(c => <button key={c.name} type="button" className={cat === c.name ? 'ns-on' : ''} onClick={() => setCat(cat === c.name ? '' : c.name)}>{c.name}</button>)}
+        {CATS.map(c => <button key={c.name} type="button" disabled={c.name === '최근사용' ? recent.length === 0 : c.items.length === 0} className={cat === c.name ? 'ns-on' : ''} onClick={() => setCat(cat === c.name ? '' : c.name)}>{c.name}</button>)}
         <div className="ns-tools">{tools}</div>
       </div>
       {cat && (
@@ -457,7 +457,6 @@ export default function EhrNurse({
           {(cat === '최근사용' ? recent.map(id => MENUS.find(m => m.id === id)).filter((m): m is { id: string; label: string } => !!m) : (CATS.find(c => c.name === cat)?.items || []).map(id => MENUS.find(m => m.id === id)).filter((m): m is { id: string; label: string } => !!m)).map(m => (
             <button key={m.id} type="button" onClick={() => openMenu(m.id)}>{m.label}</button>
           ))}
-          {(cat === '최근사용' ? recent.length === 0 : (CATS.find(c => c.name === cat)?.items.length || 0) === 0) && <span className="ns-nnone">{cat === '최근사용' ? '최근 사용한 메뉴가 없어요' : '이 시뮬레이션에서는 지원하지 않는 메뉴예요'}</span>}
         </div>
       )}
       {tabs.length > 0 && (
@@ -910,6 +909,7 @@ export default function EhrNurse({
         .ns-nmenu { display: flex; flex-wrap: wrap; align-items: center; gap: 2px; padding: 0 8px; background: linear-gradient(#233a5c, #17283f); }
         .ns-nmenu b { color: #e8c97a; padding: 0 12px 0 6px; }
         .ns-nmenu button { border: 0; background: transparent; color: #e5ebf3; padding: 11px 12px; font: inherit; font-weight: 600; cursor: pointer; }
+        .ns-nmenu button:disabled { opacity: .45; cursor: default; }
         .ns-nmenu button.ns-on { color: #38d6ff; box-shadow: inset 0 -3px 0 #38d6ff; }
         .ns-nsub { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 10px; background: #eaf0f7; border-bottom: 1px solid var(--border); }
         .ns-nsub button { border: 1px solid var(--border); background: #fff; border-radius: 4px; padding: 5px 12px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
