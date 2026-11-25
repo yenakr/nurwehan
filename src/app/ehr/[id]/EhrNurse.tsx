@@ -35,6 +35,25 @@ const MENUS: { id: string; label: string }[] = [
   { id: 'dir', label: '원내번호조회' },
 ];
 
+const CATS: { name: string; items: string[] }[] = [
+  { name: '최근사용', items: [] },
+  { name: '환자선택', items: [] },
+  { name: '정보조회', items: ['todo', 'overview', 'dir'] },
+  { name: '의사소통', items: ['consult', 'docreq', 'staff'] },
+  { name: '기록', items: ['notes', 'flowsheet', 'vitals', 'bst', 'nurseinfo', 'care', 'nact', 'mat', 'memos'] },
+  { name: '처방', items: ['medrec', 'ret'] },
+  { name: '예약', items: ['adm'] },
+  { name: '병동', items: ['bulk', 'handover'] },
+  { name: '회송', items: [] },
+  { name: '의무기록', items: [] },
+  { name: '인력', items: [] },
+  { name: '교육', items: [] },
+  { name: '연결', items: [] },
+  { name: '원내공통', items: [] },
+  { name: 'QPS(공통)', items: [] },
+  { name: '원내전화번호', items: ['dir'] },
+];
+
 const DIR: [string, string][] = [
   ['응급실', '2119'], ['중환자실', '2301'], ['수술실', '2410'], ['마취과', '2415'], ['영상의학과 (CT·MRI)', '2520'], ['진단검사의학과', '2610'], ['약제부', '2710'],
   ['영양팀', '2750'], ['원무과 (입퇴원)', '2800'], ['의료정보팀 (EMR)', '2910'], ['감염관리실', '2930'], ['재활의학과 (PT)', '2560'], ['내시경실', '2480'], ['혈액은행', '2630'],
@@ -226,6 +245,20 @@ export default function EhrNurse({
   };
   const dxMain = data.dxcode.find(r => r.kind === '주상병' && r.name);
   const [chip, setChip] = useState('');
+  const [cat, setCat] = useState('');
+  const [tabs, setTabs] = useState<string[]>([]);
+  const [recent, setRecent] = useState<string[]>([]);
+  const openMenu = (id: string) => {
+    if (id === 'handover') { router.push(`/ehr/handover?ward=${encodeURIComponent(ward)}&team=${encodeURIComponent(team)}`); return; }
+    setTabs(t => (t.includes(id) ? t : [...t, id]));
+    setRecent(r => [id, ...r.filter(x => x !== id)].slice(0, 8));
+    if (win !== id) onOpen(id);
+  };
+  const closeTab = (id: string) => {
+    const rest = tabs.filter(x => x !== id);
+    setTabs(rest);
+    if (win === id) { if (rest.length) onOpen(rest[rest.length - 1]); else onClose(); }
+  };
   const [mf, setMf] = useState<'all' | 'base' | 'med' | 'lab'>('med');
   const [rt, setRt] = useState<'meal' | 'sched' | 'cons' | 'appt'>('meal');
   const [fTab, setFTab] = useState<'obs' | 'state' | 'lab'>('obs');
@@ -416,9 +449,27 @@ export default function EhrNurse({
     <div className={`ns-nu ${win ? 'ns-hasw' : ''}`}>
       <div className="ns-nmenu">
         <b>홈</b>
-        {MENUS.map(m => <button key={m.id} type="button" className={win === m.id ? 'ns-on' : ''} onClick={() => (m.id === 'handover' ? router.push(`/ehr/handover?ward=${encodeURIComponent(ward)}&team=${encodeURIComponent(team)}`) : onOpen(m.id))}>{m.label}</button>)}
+        {CATS.map(c => <button key={c.name} type="button" className={cat === c.name ? 'ns-on' : ''} onClick={() => setCat(cat === c.name ? '' : c.name)}>{c.name}</button>)}
         <div className="ns-tools">{tools}</div>
       </div>
+      {cat && (
+        <div className="ns-nsub">
+          {(cat === '최근사용' ? recent.map(id => MENUS.find(m => m.id === id)).filter((m): m is { id: string; label: string } => !!m) : (CATS.find(c => c.name === cat)?.items || []).map(id => MENUS.find(m => m.id === id)).filter((m): m is { id: string; label: string } => !!m)).map(m => (
+            <button key={m.id} type="button" onClick={() => openMenu(m.id)}>{m.label}</button>
+          ))}
+          {(cat === '최근사용' ? recent.length === 0 : (CATS.find(c => c.name === cat)?.items.length || 0) === 0) && <span className="ns-nnone">{cat === '최근사용' ? '최근 사용한 메뉴가 없어요' : '이 시뮬레이션에서는 지원하지 않는 메뉴예요'}</span>}
+        </div>
+      )}
+      {tabs.length > 0 && (
+        <div className="ns-ntabs">
+          {tabs.map(id => (
+            <span key={id} className={win === id ? 'ns-on' : ''}>
+              <button type="button" onClick={() => { if (win !== id) openMenu(id); }}>{id === 'staff' ? '의료진 · 노티' : MENUS.find(m => m.id === id)?.label}</button>
+              <button type="button" aria-label="탭 닫기" onClick={() => closeTab(id)}>&times;</button>
+            </span>
+          ))}
+        </div>
+      )}
 
       <div className="ns-ngrid">
         <aside className="ns-nl">
@@ -435,7 +486,7 @@ export default function EhrNurse({
             </div>
             <dl className="ns-nkv">
               {i.ward && <><dt>병실</dt><dd>{[i.ward, i.bed].filter(Boolean).join(' ')}</dd></>}
-              {(i.dept || i.doctor) && <><dt>진료과</dt><dd><button type="button" className="ns-lnk" onClick={() => onOpen('staff')}>{[DEPTS.find(x => x.code === i.dept)?.name || i.dept, i.doctor].filter(Boolean).join(' · ')}</button></dd></>}
+              {(i.dept || i.doctor) && <><dt>진료과</dt><dd><button type="button" className="ns-lnk" onClick={() => openMenu('staff')}>{[DEPTS.find(x => x.code === i.dept)?.name || i.dept, i.doctor].filter(Boolean).join(' · ')}</button></dd></>}
               {dd(i.admit) && <><dt>입원일</dt><dd>{dd(i.admit)}{dayN(i.admit) && <em>HD#{dayN(i.admit).replace('일째', '')}</em>}</dd></>}
               {dd(i.disDate) && <><dt>퇴원예정</dt><dd>{dd(i.disDate)}</dd></>}
               {data.surgery[0] && dd(data.surgery[0].date) && <><dt>수술일</dt><dd>{dd(data.surgery[0].date)}{podN(data.surgery[0].date) && <em>{podN(data.surgery[0].date)}</em>}</dd></>}
@@ -639,7 +690,7 @@ export default function EhrNurse({
             }}
           >
             <b>{win === 'staff' ? '의료진 · 노티' : MENUS.find(m => m.id === win)?.label}</b>
-            <button type="button" aria-label="닫기" onClick={onClose}>&times;</button>
+            <button type="button" aria-label="닫기" onClick={() => closeTab(win)}>&times;</button>
           </header>
           <div className="ns-nwb">
             {win === 'todo' ? (
@@ -860,6 +911,12 @@ export default function EhrNurse({
         .ns-nmenu b { color: #e8c97a; padding: 0 12px 0 6px; }
         .ns-nmenu button { border: 0; background: transparent; color: #e5ebf3; padding: 11px 12px; font: inherit; font-weight: 600; cursor: pointer; }
         .ns-nmenu button.ns-on { color: #38d6ff; box-shadow: inset 0 -3px 0 #38d6ff; }
+        .ns-nsub { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 10px; background: #eaf0f7; border-bottom: 1px solid var(--border); }
+        .ns-nsub button { border: 1px solid var(--border); background: #fff; border-radius: 4px; padding: 5px 12px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
+        .ns-ntabs { display: flex; gap: 2px; padding: 4px 8px 0; background: #dfe6ee; border-bottom: 1px solid var(--border); }
+        .ns-ntabs span { display: inline-flex; align-items: center; background: #f6f8fb; border: 1px solid var(--border); border-bottom: 0; border-radius: 6px 6px 0 0; }
+        .ns-ntabs span.ns-on { background: #fff; font-weight: 700; }
+        .ns-ntabs button { border: 0; background: none; font: inherit; font-size: 12.5px; padding: 5px 8px; cursor: pointer; color: inherit; }
         .ns-nmenu .ns-ch { margin-left: auto; color: #e8c97a; }
         .ns-ngrid { display: grid; grid-template-columns: 240px minmax(0, 1fr) 240px; min-height: 70vh; }
         .ns-nl { border-right: 1px solid var(--border); padding: 10px; display: flex; flex-direction: column; gap: 10px; }
