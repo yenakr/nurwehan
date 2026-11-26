@@ -828,6 +828,23 @@ export default function EhrNurse({
             {figOpen && (<>
               <BodyFig dots={bodyDots(data)} width={206} />
               <div className="ns-figl">{bodyDots(data).length ? bodyDots(data).map((d, k) => <span key={k}><i style={{ background: d.c }} />{d.t}</span>) : <span className="ns-nnone">삽입물·상처 없음</span>}</div>
+              <div className="ns-nfs">
+                <h4>간호진단 / 문제</h4>
+                {data.care.length === 0 ? <p className="ns-nnone">없음</p> : <ul>{data.care.map((c, k) => <li key={k}>{c.dx}</li>)}</ul>}
+                <h4>처방 메모</h4>
+                {(() => { const ms = data.orders.filter(o => o.kind === 'memo' && (o.name || '').replace('※', '').trim()); return ms.length ? <ul>{ms.map((o, k) => <li key={k}>{o.name}</li>)}</ul> : <p className="ns-nnone">없음</p>; })()}
+                <h4>7일 내 미실시 검사</h4>
+                {(() => {
+                  const labs = g.lab.filter(it => it.r.st !== '완료' && it.r.st !== '집계완료' && it.r.pri !== 'D/C');
+                  const ap = data.appts.filter(a2 => a2.st !== '취소' && a2.st !== '진료완료');
+                  return labs.length + ap.length === 0 ? <p className="ns-nnone">없음</p> : (
+                    <ul>
+                      {labs.map((it, k) => <li key={`l${k}`}>{it.r.name}<i>{it.r.t1 || date}</i></li>)}
+                      {ap.map((a2, k) => <li key={`a${k}`}>{a2.purpose || a2.dept}<i>{a2.date} {a2.time}</i></li>)}
+                    </ul>
+                  );
+                })()}
+              </div>
             </>)}
           </div>
         </aside>
@@ -1255,6 +1272,11 @@ export default function EhrNurse({
         .ns-fighd { display: flex; justify-content: space-between; align-items: center; gap: 4px; margin-bottom: 6px; font-size: 13px; color: var(--primary); }
         .ns-fighd span { display: inline-flex; gap: 4px; }
         .ns-nfc .ns-fighd { justify-content: center; }
+        .ns-nfs { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 4px; font-size: 12.5px; }
+        .ns-nfs h4 { margin: 10px 0 4px; font-size: 12.5px; color: var(--primary); }
+        .ns-nfs ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
+        .ns-nfs li { line-height: 1.45; display: flex; justify-content: space-between; gap: 6px; }
+        .ns-nfs li i { font-style: normal; color: var(--sub-text); white-space: nowrap; }
         .ns-nl { border-right: 1px solid var(--border); padding: 10px; display: flex; flex-direction: column; gap: 10px; }
         .ns-nr { border-left: 1px solid var(--border); padding: 10px; display: flex; flex-direction: column; gap: 10px; }
         .ns-nc { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
