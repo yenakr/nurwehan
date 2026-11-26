@@ -87,8 +87,8 @@ export const gs: Sample = {
       { time: '06:00', fluid: 'D5 0.45% N/S 1L', rate: '100', remain: '500', site: 'Rt. 손등 20G', st: '주입 중', by: '최간호' },
     ],
     wounds: [
-      { time: md(0, '09:00'), site: '배꼽 (12mm port)', kind: '수술 상처', size: '1.5', look: '삼출물·발적·부종 없음, 가장자리 접근 양호', dress: '방수 필름 드레싱', by: '박간호' },
-      { time: md(0, '09:00'), site: '좌하복부 (5mm port) x2', kind: '수술 상처', size: '0.7', look: '삼출물 없음, 소량 멍', dress: '방수 필름 드레싱', by: '박간호' },
+      { time: md(0, '09:00'), site: 'Umbilicus (12mm port)', kind: '수술 상처', size: '1.5', look: '삼출물·발적·부종 없음, 가장자리 접근 양호', dress: '방수 필름 드레싱', by: '박간호' },
+      { time: md(0, '09:00'), site: 'LLQ (5mm port) x2', kind: '수술 상처', size: '0.7', look: '삼출물 없음, 소량 멍', dress: '방수 필름 드레싱', by: '박간호' },
     ],
     edu: [
       { time: md(0, '11:00'), topic: '수술 후 복부 지지하며 기침하기와 조기 보행', target: '환자', method: '시범', under: '충분', by: '박간호' },

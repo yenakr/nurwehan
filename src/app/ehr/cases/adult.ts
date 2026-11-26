@@ -115,7 +115,7 @@ export const adult: Sample = {
       { time: '09:00', fluid: '0.9% N/S 50mL', rate: '12', remain: '38', site: 'Rt. 전완 22G', st: '주입 중', by: '박간호' },
     ],
     wounds: [
-      { time: md(-1, '10:00'), site: '천골', kind: '욕창', size: '2×2', look: '비창백성 발적 없음, 압박 해소 시 소실. 피부 건조.', dress: '예방적 폼 드레싱', by: '박간호' },
+      { time: md(-1, '10:00'), site: 'Sacrum', kind: '욕창', size: '2×2', look: '비창백성 발적 없음, 압박 해소 시 소실. 피부 건조.', dress: '예방적 폼 드레싱', by: '박간호' },
     ],
     edu: [
       { time: md(0, '10:30'), topic: '매일 체중 측정 방법과 기록', target: '환자·보호자', method: '시범', under: '충분', by: '박간호' },
