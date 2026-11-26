@@ -271,6 +271,7 @@ export default function EhrNurse({
     });
     return rows.filter(r => (adm ? (r.admit || '') : (r.disDate || '')).slice(0, 10) === adate);
   };
+  const visit = i.ward === '외래' || i.ward === '응급실';
   const dd = (v?: string) => (v || '').slice(0, 10);
   const vToday = (() => { const t = vnow(); return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`; })();
   useEffect(() => { setDate(vToday); }, [vToday]);
@@ -703,9 +704,10 @@ export default function EhrNurse({
               {(i.dept || i.doctor) && <><dt>진료과</dt><dd><button type="button" className="ns-lnk" onClick={() => openMenu('staff')}>{[DEPTS.find(x => x.code === i.dept)?.name || i.dept].filter(Boolean).join(' · ')}</button></dd></>}
               {i.doctor && <><dt>지정의</dt><dd>{i.doctor}</dd></>}
               {i.attending && <><dt>주치의</dt><dd>{i.attending}</dd></>}
-              {dd(i.admit) && <><dt>입원일</dt><dd>{dd(i.admit)}{dayN(i.admit) && <em>HD#{dayN(i.admit).replace('일째', '')}</em>}</dd></>}
-              {dd(i.admit) && <><dt>재원기간</dt><dd>{dd(i.admit).replace(/-/g, '.')}~{dd(i.disDate) ? dd(i.disDate).replace(/-/g, '.') : ''}</dd></>}
-              {dd(i.disDate) && <><dt>퇴원예정</dt><dd>{dd(i.disDate)}</dd></>}
+              {dd(i.admit) && !visit && <><dt>입원일</dt><dd>{dd(i.admit)}{dayN(i.admit) && <em>HD#{dayN(i.admit).replace('일째', '')}</em>}</dd></>}
+              {dd(i.admit) && visit && <><dt>{i.ward === '응급실' ? '내원일' : '진료일'}</dt><dd>{dd(i.admit)}</dd></>}
+              {dd(i.admit) && !visit && <><dt>재원기간</dt><dd>{dd(i.admit).replace(/-/g, '.')}~{dd(i.disDate) ? dd(i.disDate).replace(/-/g, '.') : ''}</dd></>}
+              {dd(i.disDate) && !visit && <><dt>퇴원예정</dt><dd>{dd(i.disDate)}</dd></>}
               {data.surgery[0] && dd(data.surgery[0].date) && <><dt>수술일</dt><dd>{dd(data.surgery[0].date)}{podN(data.surgery[0].date) && <em>{podN(data.surgery[0].date)}</em>}</dd></>}
               {(dxMain || i.dx) && <><dt>진단명</dt><dd>{dxMain ? dxMain.name : i.dx}</dd></>}
             </dl>
@@ -789,7 +791,7 @@ export default function EhrNurse({
           </div>
           <div className="ns-tl">
             <h4>진료이력</h4>
-            {[...(i.admit ? [{ date: dd(i.admit), kind: '입원', dept: DEPTS.find(x => x.code === i.dept)?.name || i.dept || '', dx: i.dx || '' }] : []), ...data.history.map(h => ({ date: dd(h.date), kind: h.kind || '외래', dept: DEPTS.find(x => x.code === h.dept)?.name || h.dept || '', dx: h.dx || '' }))].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8).map((h, k) => (
+            {[...(i.admit ? [{ date: dd(i.admit), kind: i.ward === '외래' ? '외래' : i.ward === '응급실' ? '응급' : '입원', dept: DEPTS.find(x => x.code === i.dept)?.name || i.dept || '', dx: i.dx || '' }] : []), ...data.history.map(h => ({ date: dd(h.date), kind: h.kind || '외래', dept: DEPTS.find(x => x.code === h.dept)?.name || h.dept || '', dx: h.dx || '' }))].sort((a, b) => b.date.localeCompare(a.date)).slice(0, 8).map((h, k) => (
               <div key={k} className="ns-tli">
                 <i className={`k_${h.kind}`} />
                 <div><b>{h.date.slice(5)}</b> <em className={`k_${h.kind}`}>{h.kind}</em> {h.dept}<br /><span>{h.dx}</span></div>
@@ -1493,46 +1495,10 @@ export default function EhrNurse({
         .ns-nwb .wbk { border: 0; padding: 0; margin: 0; }
         .ns-nwb { padding: 12px 14px 24px; overflow: auto; flex: 1; }
         .ns-ndq { width: 100%; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; padding: 8px; font: inherit; margin-bottom: 8px; background: var(--background); color: var(--text); }
-        /* ── 실제 병원 EMR 화면(연한 청회색 데스크톱 톤)에 맞춘 스킨 ── */
-        .ns-nu { background: #dfe6ef; border-color: #9fb0c8; border-radius: 3px; font-size: 12px; --border: #c3cddb; --muted-background: #eef2f7; }
-        .ns-nu .ns-nmenu { background: linear-gradient(#b4c6e3, #94abd2); }
-        .ns-nu .ns-nmenu b { color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,.25); }
-        .ns-nu .ns-nmenu button { background: linear-gradient(#7d9bc4, #6585b1); color: #fff; margin: 4px 1px; padding: 3px 11px; border-radius: 3px; font-size: 12px; font-weight: 600; box-shadow: inset 0 0 0 1px rgba(255,255,255,.25); }
-        .ns-nu .ns-nmenu button.ns-on { background: #fff; color: #1f4b8f; box-shadow: none; }
-        .ns-nu .ns-nmenu .ns-wk { color: #fff; }
-        .ns-nu .ns-nmenu .ns-nav .back { border-color: rgba(255,255,255,.7); }
-        .ns-nu .ns-ntabs { background: #c9d6ea; border-bottom-color: #9fb0c8; }
-        .ns-nu .ns-ntabs span { background: #e4ebf5; border-color: #9fb0c8; border-radius: 3px 3px 0 0; }
-        .ns-nu .ns-ntabs span.ns-on { background: #fff; }
-        .ns-nu .ns-ngrid { background: #dfe6ef; gap: 0; }
-        .ns-nu .ns-nl, .ns-nu .ns-nr { background: #e6eaee; padding: 6px; gap: 6px; }
-        .ns-nu .ns-nr { background: #eef1f5; }
-        .ns-nu .ns-npt { background: #e6eaee; border: 1px solid #aebbd0; border-radius: 4px; }
-        .ns-nu .ns-nph { background: linear-gradient(#4a78c4, #2f5ba6); padding: 7px 9px; }
-        .ns-nu .ns-nph b { font-size: 17px; }
-        .ns-nu .ns-nph .ns-nno { color: #fff; border-color: rgba(255,255,255,.6); }
-        .ns-nu .ns-nkv { font-size: 11.5px; }
-        .ns-nu .ns-ngrp { border-top-color: #c3cddb; background: #eef2f7; }
-        .ns-nu .ns-ngrp .ns-nlinks button { background: linear-gradient(#fff, #e8eef6); border-color: #9fb0c8; color: #1f3b66; border-radius: 3px; }
-        .ns-nu .ns-nbox { background: #fff; border: 1px solid #b4c1d4; border-radius: 3px; padding: 6px 8px; }
-        .ns-nu .ns-nbox h4 { color: #1f4b8f; font-size: 12px; margin: 0 0 4px; padding-bottom: 3px; border-bottom: 1px solid #c3cddb; }
-        .ns-nu .ns-nsr input { border-radius: 2px; padding: 3px 6px; font-size: 12px; }
-        .ns-nu .ns-nsr button { border-radius: 3px; padding: 3px 9px; font-size: 12px; background: #2f5ba6; border-color: #2f5ba6; }
-        .ns-nu .ns-ot, .ns-nu .ns-rt { font-size: 11.5px; }
-        .ns-nu .ns-ot th, .ns-nu .ns-rt th { background: #e8eef6; border: 1px solid #b4c1d4; padding: 2px 5px; font-size: 11.5px; color: #1f3b66; }
-        .ns-nu .ns-ot td, .ns-nu .ns-rt td { border: 1px solid #d0d8e4; padding: 2px 6px; line-height: 1.35; }
-        .ns-nu .ns-ot td.ns-otn b { font-weight: 600; }
-        .ns-nu .ns-ot tbody tr:hover td { background: #f0f5fb; }
-        .ns-nu .ns-ocb td { background: #cee7e4; color: #1f4a47; text-align: left; letter-spacing: 0; font-weight: 700; padding: 2px 8px; font-size: 11.5px; border-color: #b4d3cf; }
-        .ns-nu .ns-ocq { color: #475569; text-align: center; }
-        .ns-nu .ns-nmd, .ns-nu .ns-nmb { font-size: 13px; }
-        .ns-nu .ns-nbox:has(.ns-memo), .ns-nu .ns-nbox:has(.rm) { background: #fffbd1; border-color: #d9c97a; }
-        .ns-nu .rm-ed { background: #fffbd1; min-height: 110px; font-size: 12px; }
-        .ns-nu .ns-bbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 4px 6px; background: #c9d6ea; border-top: 1px solid #9fb0c8; }
-        .ns-nu .ns-bbar > div { display: flex; flex-wrap: wrap; gap: 3px; }
-        .ns-nu .ns-bbar button { font: inherit; font-size: 11.5px; padding: 2px 9px; border: 1px solid #8ea4c6; border-radius: 3px; background: linear-gradient(#fff, #e3ebf6); color: #1f3b66; cursor: pointer; white-space: nowrap; }
-        .ns-nu .ns-bbar .ns-bp { background: linear-gradient(#4a78c4, #2f5ba6); color: #fff; border-color: #2f5ba6; font-weight: 700; }
-        .ns-nu .ns-bbr button { border-color: #2f5ba6; }
+        .ns-bbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 10px; background: #dfe6ee; border-top: 1px solid var(--border); }
+        .ns-bbar > div { display: flex; flex-wrap: wrap; gap: 4px; }
+        .ns-bbar button { font: inherit; font-size: 12px; font-weight: 700; padding: 3px 10px; border: 1px solid var(--border); border-radius: 4px; background: #fff; color: var(--text); cursor: pointer; white-space: nowrap; }
+        .ns-bbar .ns-bp { background: var(--primary); color: #fff; border-color: var(--primary); }
         @media (max-width: 980px) {
           .ns-ngrid { grid-template-columns: 1fr; }
           .ns-nf, .ns-nf.ns-nfc { width: auto; border: 0; border-bottom: 1px solid var(--border); }
