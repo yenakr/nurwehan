@@ -226,7 +226,7 @@ export default function EhrNurse({
   const [dq, setDq] = useState('');
   const [pos, setPos] = useState<{ x: number; y: number } | null>(null);
   const [chk, setChk] = useState<Item | null>(null);
-  const [c5, setC5] = useState<Record<string, boolean>>({});
+  const [c5, setC5] = useState<Record<string, boolean>>({ g2: true, g3: true });
   const [dbl, setDbl] = useState('');
   const [pt, setPt] = useState('');
   const [hold, setHold] = useState<string | null>(null);
@@ -292,6 +292,8 @@ export default function EhrNurse({
   const [admW, setAdmW] = useState('');
   const [notifyDraft, setNotifyDraft] = useState('');
   const [orgSel, setOrgSel] = useState('순환기내과');
+  const [fold, setFold] = useState<Record<string, boolean>>({ g2: true, g3: true });
+  const tg = (k: string) => setFold(f => ({ ...f, [k]: !f[k] }));
   const [mOpen, setMOpen] = useState(0); // 0 닫힘, 1 메뉴, 2 메뉴 > 업무
   const [mq, setMq] = useState('');
   const [figOpen, setFigOpen] = useState(true);
@@ -708,24 +710,24 @@ export default function EhrNurse({
               {data.surgery[0] && dd(data.surgery[0].date) && <><dt>수술일</dt><dd>{dd(data.surgery[0].date)}{podN(data.surgery[0].date) && <em>{podN(data.surgery[0].date)}</em>}</dd></>}
               {(dxMain || i.dx) && <><dt>진단명</dt><dd>{dxMain ? dxMain.name : i.dx}</dd></>}
             </dl>
-            <div className="ns-ngrp"><span>구분</span><div className="ns-nlinks">
+            <div className="ns-ngrp"><button type="button" className="ns-gh" onClick={() => tg('g0')}>구분<em>{fold.g0 ? '▸' : '▾'}</em></button>{!fold.g0 && <div className="ns-nlinks">
               {[['외래', '외래'], ['병동', i.ward === '응급실' ? '응급' : i.ward || ''], ['응급', '응급']].map(([k, v]) => <button key={k} type="button" disabled={!v} onClick={() => router.push(`/ehr?view=${encodeURIComponent(v)}`)}>{k}</button>)}
               {['통합', '다학제'].map(k => <button key={k} type="button" disabled>{k}</button>)}
-            </div></div>
-            <div className="ns-ngrp"><span>메뉴</span><div className="ns-nlinks">
+            </div>}</div>
+            <div className="ns-ngrp"><button type="button" className="ns-gh" onClick={() => tg('g1')}>메뉴<em>{fold.g1 ? '▸' : '▾'}</em></button>{!fold.g1 && <div className="ns-nlinks">
               <button type="button" onClick={() => win && closeTab(win)}>OCS</button>
               {([['환자정보', 'patinfo'], ['QR', 'qr'], ['검사결과', 'labres'], ['상병이력', 'dxhist'], ['수술이력', 'surghist'], ['방종이력', 'vacc']] as const).map(([k, id]) => <button key={k} type="button" onClick={() => openMenu(id)}>{k}</button>)}
               {['PACS', 'CIS', '통합치료계획', '타병원', 'PROMS'].map(k => <button key={k} type="button" disabled>{k}</button>)}
-            </div></div>
-            <div className="ns-ngrp"><span>조회</span><div className="ns-nlinks">
+            </div>}</div>
+            <div className="ns-ngrp"><button type="button" className="ns-gh" onClick={() => tg('g2')}>조회<em>{fold.g2 ? '▸' : '▾'}</em></button>{!fold.g2 && <div className="ns-nlinks">
               {[['CPR', data.cpr.length ? `CPR 기록 ${data.cpr.length}건` : 'CPR 기록 없음'], ['약물이상반응', i.allergy ? `알러지: ${i.allergy}` : '등록된 약물이상반응 없음'], ['건강보험', '건강보험 자격 확인됨 (모의 · 심평원 조회)']].map(([k, v]) => <button key={k} type="button" className={chip === k ? 'ns-on' : ''} onClick={() => setChip(chip === k ? '' : k)}>{k}</button>)}
               {chip && <p>{[['CPR', data.cpr.length ? `CPR 기록 ${data.cpr.length}건` : 'CPR 기록 없음'], ['약물이상반응', i.allergy ? `알러지: ${i.allergy}` : '등록된 약물이상반응 없음'], ['건강보험', '건강보험 자격 확인됨 (모의 · 심평원 조회)']].find(x => x[0] === chip)?.[1]}</p>}
-            </div></div>
-            <div className="ns-ngrp"><span>출력</span><div className="ns-nlinks ns-nprt">
+            </div>}</div>
+            <div className="ns-ngrp"><button type="button" className="ns-gh" onClick={() => tg('g3')}>출력<em>{fold.g3 ? '▸' : '▾'}</em></button>{!fold.g3 && <div className="ns-nlinks ns-nprt">
               <button type="button" onClick={printOrders}>처방출력</button>
               <button type="button" onClick={printBed}>침상카드</button>
               <button type="button" onClick={printWarn}>주의라벨</button>
-            </div></div>
+            </div>}</div>
             {abn.length > 0 && (
               <div className="ns-abn">
                 <b>⚠ 활력징후 이상 ({lastV?.time})</b>
@@ -740,22 +742,27 @@ export default function EhrNurse({
               {i.npo === '1' && <em>금식</em>}
             </div>
           </div>
-          <div className="ns-nbox">
-            <h4>진료메모</h4>
-            {memoOf('진료메모').slice(-3).reverse().map((m, k) => <p key={k}>{m.text}<i>{(m.time || '').slice(-5)} {m.author}</i></p>)}
-            {memoOf('진료메모').length === 0 && <p className="ns-nnone">No data to display</p>}
-            <div className="ns-nsr">
-              <input value={dmsg} onChange={e => setDmsg(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendDoc()} aria-label="진료메모" />
-              <button type="button" onClick={sendDoc} disabled={!dmsg.trim()}>등록</button>
-            </div>
+          <div className="ns-nbox ns-mbox ns-mdoc">
+            <button type="button" className="ns-gh" onClick={() => tg('m1')}>진료메모<small>{memoOf('진료메모').length}</small><em>{fold.m1 ? '▸' : '▾'}</em></button>
+            {!fold.m1 && <>
+              {memoOf('진료메모').slice(-3).reverse().map((m, k) => <p key={k}>{m.text}<i>{(m.time || '').slice(-5)} {m.author}</i></p>)}
+              {memoOf('진료메모').length === 0 && <p className="ns-nnone">No data to display</p>}
+              <div className="ns-nsr">
+                <input value={dmsg} onChange={e => setDmsg(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendDoc()} aria-label="진료메모" />
+                <button type="button" onClick={sendDoc} disabled={!dmsg.trim()}>등록</button>
+              </div>
+            </>}
           </div>
-          <div className="ns-nbox">
-            <h4>간호의사소통</h4>
-            {memoOf('간호의사소통').slice(-3).reverse().map((m, k) => <p key={k}>{m.text}<i>{(m.time || '').slice(-5)} {m.author}</i></p>)}
-            <div className="ns-nsr">
-              <input value={msg} onChange={e => setMsg(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMsg()} aria-label="간호의사소통" />
-              <button type="button" onClick={sendMsg} disabled={!msg.trim()}>등록</button>
-            </div>
+          <div className="ns-nbox ns-mbox ns-mnur">
+            <button type="button" className="ns-gh" onClick={() => tg('m2')}>간호의사소통<small>{memoOf('간호의사소통').length}</small><em>{fold.m2 ? '▸' : '▾'}</em></button>
+            {!fold.m2 && <>
+              {memoOf('간호의사소통').slice(-3).reverse().map((m, k) => <p key={k}>{m.text}<i>{(m.time || '').slice(-5)} {m.author}</i></p>)}
+              {memoOf('간호의사소통').length === 0 && <p className="ns-nnone">No data to display</p>}
+              <div className="ns-nsr">
+                <input value={msg} onChange={e => setMsg(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMsg()} aria-label="간호의사소통" />
+                <button type="button" onClick={sendMsg} disabled={!msg.trim()}>등록</button>
+              </div>
+            </>}
           </div>
           <div className="ns-nbox ns-duty">
             <div className="ns-nd3">
@@ -1315,6 +1322,21 @@ export default function EhrNurse({
         .ns-ngrp { display: block; border-top: 1px solid var(--border); padding: 9px 12px 10px; }
         .ns-ngrp > span { display: block; padding: 0 0 5px; font-size: 11.5px; font-weight: 800; color: var(--sub-text); letter-spacing: .02em; }
         .ns-ngrp .ns-nlinks { margin: 0; padding: 0; }
+        .ns-nu .ns-gh { display: flex; align-items: center; gap: 6px; width: 100%; padding: 0; border: 0; background: transparent; font: inherit; font-size: 12px; font-weight: 800; color: var(--sub-text); cursor: pointer; text-align: left; }
+        .ns-nu .ns-gh em { margin-left: auto; font-style: normal; font-size: 10px; }
+        .ns-nu .ns-gh small { font-size: 10.5px; font-weight: 700; background: #e5ebf3; color: #475569; border-radius: 8px; padding: 0 6px; }
+        .ns-nu .ns-ngrp { padding: 6px 12px 6px; }
+        .ns-nu .ns-ngrp .ns-nlinks { gap: 3px; padding-top: 5px; }
+        .ns-nu .ns-ngrp .ns-nlinks button { padding: 1px 7px; font-size: 11.5px; line-height: 1.5; }
+        .ns-nu .ns-mbox { margin: 8px 0 0; padding: 7px 10px 8px; border: 1px solid var(--border); border-left-width: 4px; border-radius: 8px; background: #fff; }
+        .ns-nu .ns-mdoc { border-left-color: #2563eb; }
+        .ns-nu .ns-mdoc .ns-gh { color: #1d4ed8; }
+        .ns-nu .ns-mnur { border-left-color: #0d9488; }
+        .ns-nu .ns-mnur .ns-gh { color: #0f766e; }
+        .ns-nu .ns-mbox p { margin: 6px 0 0; font-size: 12.5px; padding-bottom: 5px; border-bottom: 1px dashed var(--border); }
+        .ns-nu .ns-mbox .ns-nsr { margin-top: 6px; }
+        .ns-nu .ns-mbox .ns-nsr input { padding: 4px 8px; }
+        .ns-nu .ns-mbox .ns-nsr button { padding: 3px 10px; }
         .ns-admw { display: inline-flex; align-items: center; gap: 6px; margin: 6px 0; font-size: 13px; font-weight: 700; }
         .ns-sepv { width: 1px; height: 18px; background: rgba(255,255,255,.3); margin: 0 6px; }
         .ns-nmenu .ns-wk { color: #e8c97a; }
