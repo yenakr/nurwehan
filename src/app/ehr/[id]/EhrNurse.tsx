@@ -975,7 +975,10 @@ export default function EhrNurse({
             }}
           >
             <b>{w === 'staff' ? '의료진 · Notify' : MENUS.find(m => m.id === w)?.label}</b>
-            <button type="button" aria-label="닫기" onClick={() => closeTab(w)}>&times;</button>
+            <span className="ns-wbtn">
+              <button type="button" aria-label="최소화" title="최소화 (아래 탭으로)" onClick={() => (w === win ? onClose() : setWin2(null))}>&minus;</button>
+              <button type="button" aria-label="닫기" title="닫기" onClick={() => closeTab(w)}>&times;</button>
+            </span>
           </header>
           <div className="ns-nwb">
             {w === 'todo' ? (
@@ -1493,9 +1496,10 @@ export default function EhrNurse({
         .ns-nfa button { border: 1px solid var(--border); background: transparent; color: inherit; border-radius: 8px; padding: 8px 18px; font: inherit; font-weight: 600; cursor: pointer; }
         .ns-nfa .ns-go { background: var(--primary); border-color: var(--primary); color: #fff; }
         .ns-nfa .ns-go:disabled { opacity: .4; }
-        .ns-nwin { position: fixed; z-index: 55; inset: 0; margin: auto; width: min(920px, 94vw); height: min(680px, 86vh); min-width: 320px; min-height: 240px; resize: both; overflow: hidden; background: var(--background, #fff); color: var(--text); border: 1px solid #1c2f4b; box-shadow: 0 12px 40px rgba(0,0,0,.35); display: flex; flex-direction: column; border-radius: 6px; }
+        .ns-nwin { position: fixed; z-index: 55; inset: 0; margin: auto; width: min(1320px, 96vw); height: min(880px, 92vh); min-width: 320px; min-height: 240px; resize: both; overflow: hidden; background: var(--background, #fff); color: var(--text); border: 1px solid #1c2f4b; box-shadow: 0 12px 40px rgba(0,0,0,.35); display: flex; flex-direction: column; border-radius: 6px; }
         .ns-nwin.ns-sp-a { inset: auto; left: 0; top: 96px; width: 50vw; height: calc(100vh - 96px); margin: 0; resize: none; }
         .ns-nwin.ns-sp-b { inset: auto; left: 50vw; top: 96px; width: 50vw; height: calc(100vh - 96px); margin: 0; resize: none; }
+        .ns-wbtn { display: inline-flex; gap: 2px; }
         .ns-nwin header button { color: #fff; font-size: 22px; line-height: 1; padding: 0 6px; }
         .ns-nwb .wbk { border: 0; padding: 0; margin: 0; }
         .ns-nwb { padding: 12px 14px 24px; overflow: auto; flex: 1; }
