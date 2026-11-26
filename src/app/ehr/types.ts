@@ -1,3 +1,4 @@
+import { SCENARIO_DAY } from './ordday';
 export type Row = Record<string, string>;
 
 export type ChartData = {
@@ -58,27 +59,24 @@ export type Sample = { key: string; subject: string; title: string; data: Partia
 
 // 미래 일정을 담는 항목은 기준일 계산에서 뺀다
 const FUTURE = new Set(['appts', 'chg', 'disDate']);
-// 샘플 차트는 가상 날짜에 고정한다. 가상 시계 시작 시각(vbase)만 정해 준다
-// 샘플 차트의 날짜를 오늘 기준으로 옮긴다 (가장 늦은 날짜가 오늘이 되도록)
+// 샘플 차트는 모두 같은 가상 날짜(SCENARIO_DAY)에 고정한다. 날짜는 옮기지 않고, 가상 시계만 그날 마지막 기록 직후로 정해 준다.
+// 외래·응급 환자는 진료 시각이 입원 환자와 다르므로, 시계는 환자마다 그날의 마지막 기록 시각을 따른다.
 export function shiftChart(src: ChartData): ChartData {
-  const pad = (n: number) => String(n).padStart(2, '0');
-  const FULL = /\b(\d{4})-(\d{2})-(\d{2})\b/g;
-  const MD = /^(\d{2})-(\d{2})( \d{2}:\d{2})/;
-  let max = 0;
+  const day = SCENARIO_DAY;
+  const md = day.slice(5);
+  let last = -1;
   const scan = (v: unknown) => {
     if (typeof v === 'string') {
-      for (const m of v.matchAll(FULL)) max = Math.max(max, Date.UTC(+m[1], +m[2] - 1, +m[3]));
-      const mm = v.match(MD);
-      if (mm) max = Math.max(max, Date.UTC(2026, +mm[1] - 1, +mm[2]));
+      const m = v.match(/(?:^|\s)(?:\d{4}-)?(\d{2}-\d{2}) (\d{2}):(\d{2})/);
+      if (m && m[1] === md) last = Math.max(last, Number(m[2]) * 60 + Number(m[3]));
     } else if (Array.isArray(v)) v.forEach(scan);
     else if (v && typeof v === 'object') Object.entries(v).forEach(([k, x]) => !FUTURE.has(k) && scan(x));
   };
-  scan(src);
-  if (!max) return src;
-  // 시나리오는 가상 날짜에 고정한다. 날짜를 오늘로 옮기지 않고, 가상 시계를 그 날 09:00에서 시작한다.
-  const t0 = new Date(max);
-  const day = `${t0.getUTCFullYear()}-${pad(t0.getUTCMonth() + 1)}-${pad(t0.getUTCDate())}`;
-  return { ...src, info: { ...src.info, vbase: src.info.vbase || `${day} 09:00` } };
+  // 이미 일어난 일의 기록만 본다 (예정된 교육·이송·검체 등은 제외)
+  ['vitals', 'notes', 'progress', 'mar', 'nact', 'mat', 'wounds', 'lines', 'iv', 'bst', 'transfusion', 'cpr', 'anes', 'handover', 'memos'].forEach(k => scan((src as unknown as Record<string, unknown>)[k]));
+  const at = last < 0 ? 9 * 60 : Math.min(23 * 60 + 55, Math.ceil((last + 10) / 5) * 5);
+  const hm = `${String(Math.floor(at / 60)).padStart(2, '0')}:${String(at % 60).padStart(2, '0')}`;
+  return { ...src, info: { ...src.info, vbase: src.info.vbase || `${day} ${hm}`, slotDay: src.info.slotDay || day } };
 }
 
 // 예전 형식으로 저장된 차트도 열리도록 변환

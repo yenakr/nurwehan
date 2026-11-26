@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { ChartData, Row } from '../types';
-import { group, slotsOf, timesFor, type Item } from '../[id]/EhrNurse';
+import { group, slotsOf, timesFor, viewOrders, rollover, type Item } from '../ordday';
 import { medQr, parseQr, patientQr } from '../pda';
 import { qrSvg } from '../qr';
 import { offsetOf, setVOffset, vnow } from '../vclock';
@@ -66,7 +66,9 @@ export default function PdaApp({ roster, userName }: { roster: R[]; userName: st
 
   const now = vnow();
   const info = chart?.info;
-  const items = chart ? group(chart.orders) : null;
+  // 날이 바뀌었으면 PC와 같이 지난 수행을 기록으로 넘긴 뒤 오늘 처방만 보여 준다
+  const view = chart ? rollover(chart, ymd(now)) : null;
+  const items = view ? group(viewOrders(view, ymd(now), ymd(now))) : null;
   const ok = (r: Row) => r.pri !== 'D/C' && r.st !== '취소';
   const meds = items ? items.med.filter(it => ok(it.r)) : [];
   const prns = items ? items.prn.filter(it => ok(it.r)) : [];
@@ -75,7 +77,7 @@ export default function PdaApp({ roster, userName }: { roster: R[]; userName: st
   // 5 Right 확인
   const check = (() => {
     if (!res || !chart) return null;
-    const o = chart.orders[res.idx];
+    const o = view?.orders[res.idx];
     const patientOk = res.patientId === pid;
     const drugOk = !!o && (o.name || '') === res.name;
     const due = o ? timesFor(o, 'med')[slotsOf(o).length] || '' : '';

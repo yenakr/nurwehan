@@ -1,5 +1,6 @@
 import type { Row, Sample } from './types';
 import { residentName } from './names';
+import { buildHistory } from './history';
 
 // 새 기능(상병코드, 식이처방, 중증도, 서식지, 퇴원예고 등)에 맞춰 예시 환자 자료를 채운다.
 // 이미 값이 있는 항목은 건드리지 않는다.
@@ -21,7 +22,7 @@ const DXC: Record<string, [string, string, string][]> = {
 const ymd = (v?: string) => (v || '').slice(0, 10);
 
 // 샘플 데이터 버전: 올리면 이전 버전으로 저장된 미제출 샘플 차트는 정리되고 새 데이터로 다시 열린다.
-export const SAMPLE_VER = '14';
+export const SAMPLE_VER = '15';
 
 const CONSULT: Record<string, [string, string, string, string][]> = {
   adult: [['RM', '심장재활 교육 및 운동처방 의뢰', '퇴원 후 외래 재활 프로그램 등록 권고', '회신완료']],
@@ -107,14 +108,14 @@ export function enrich(s: Sample): Sample {
   if (inpatient && orders.length && !memos.some(m => m.type === 'ordhist')) {
     const prevDay = (() => { const t = new Date(`${day}T00:00:00`); t.setDate(t.getDate() - 1); return `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`; })();
     const admitD = ymd(info.admit) || prevDay;
-    const idx = orders.findIndex(o => o.kind !== 'sec' && o.kind !== 'memo' && o.name && o.route && /^\d+(\.\d+)?$/.test(o.dose || '') && o.pri !== 'D/C' && o.st !== '추가');
+    const idx = orders.findIndex(o => o.kind !== 'sec' && o.kind !== 'memo' && o.name && o.route && /^\d+(\.\d+)?$/.test(o.dose || '') && o.pri !== 'D/C' && o.st !== '추가' && (!o.sd || o.sd === prevDay) && !orders.some(x => x.pri === 'D/C' && x.name && (x.name.split(/[\s(]/)[0] || '').toLowerCase() === (o.name || '').split(/[\s(]/)[0].toLowerCase()) && /furosemide|risperidone|carvedilol|spironolactone|oseltamivir|acetylcysteine|pantoprazole|enalapril/i.test(o.name));
     if (idx >= 0) {
       const o = orders[idx];
-      const half = String(Math.max(1, Math.round(Number(o.dose) * 0.5 * 10) / 10));
+      const hv = Number(o.dose) * 0.5; const half = String(hv >= 10 ? Math.round(hv) : Math.max(0.5, Math.round(hv * 2) / 2));
       add.push({ type: 'ordhist', name: o.name || '', dose: half, unit: o.unit || '', cnt: o.cnt || '', route: o.route || '', sd: admitD, ed: prevDay });
       out.orders = orders.map((r, j) => (j === idx ? { ...r, sd: prevDay } : r));
     }
-    add.push({ type: 'ordhist', name: 'Normal saline 1000mL (수액)', dose: '1000', unit: 'mL', cnt: '1', route: 'IV', sd: admitD, ed: prevDay });
+    if (orders.some(o => /^IV$/i.test(o.route || '') && o.pri !== 'D/C')) add.push({ type: 'ordhist', name: 'Normal saline 1000mL (수액)', dose: '1000', unit: 'mL', cnt: '1', route: 'IV', sd: admitD, ed: prevDay });
   }
   // 검사 시계열용 과거 수치 (같은 검사의 이전 3일)
   if (inpatient && !memos.some(m => m.type === 'labhist') && labs.length) {
@@ -176,6 +177,11 @@ export function enrich(s: Sample): Sample {
       if (lab && r.kind !== 'memo' && (r.name || '').trim() && (r.st === '접수' || !r.st)) rows.push({ time: '', kind: '검사', name: r.name || '', prep: '', st: '예정' });
     });
     if (rows.length) out.sched = rows;
+  }
+  // 입원일~가상 오늘 전날까지의 일별 처방·투약·활력·I&O·기록
+  if (inpatient) {
+    const h = buildHistory({ key, info: out.info || info, orders: out.orders || orders, memos: out.memos || memos, vitals: d.vitals || [], io: d.io || [], notes: d.notes || [], progress: d.progress || [], mar: d.mar || [], surgery: d.surgery || [] });
+    Object.assign(out, { orders: h.orders, memos: h.memos, vitals: h.vitals, io: h.io, notes: h.notes, progress: h.progress, mar: h.mar, info: h.info });
   }
   return Object.keys(out).length ? { ...s, data: { ...d, ...out } } : s;
 }
