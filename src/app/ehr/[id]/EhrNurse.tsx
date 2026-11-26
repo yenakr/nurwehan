@@ -4,11 +4,13 @@ import { vnow } from '../vclock';
 import { SAMPLES } from '../samples';
 import { MATS, matsFor } from '../codes';
 import NurseForm from './NurseForms';
+import ProcInput from './ProcInput';
+import DxReg from './DxReg';
 import LabResults from './LabResults';
 import OrderCompare from './OrderCompare';
 import NursingRecord from './NursingRecord';
 import { labTestsFor, resolveLabs } from '../labref';
-import { PatInfo, DxHist, SurgHist, VaccHist, QrView } from './PatientViews';
+import { PatInfo, SurgHist, VaccHist, QrView } from './PatientViews';
 import { StaffWin, DocReqWin, RichMemo } from './NurseExtras';
 import { DEPTS, buildDirectory } from '../directory';
 import { confirmDialog } from '@/components/Dialog';
@@ -33,7 +35,7 @@ const MENUS: { id: string; label: string }[] = [
   { id: 'nurseinfo', label: '간호정보조사지' },
   { id: 'care', label: '간호과정' },
   { id: 'nact', label: '간호행위' },
-  { id: 'mat', label: '처치재료' },
+  { id: 'mat', label: '처치/재료 입력' },
   { id: 'ret', label: '약·주사 반납' },
   { id: 'consult', label: '협진' },
   { id: 'bulk', label: '활력징후 일괄' },
@@ -45,7 +47,7 @@ const MENUS: { id: string; label: string }[] = [
   { id: 'staff', label: '의료진 · Notify' },
   { id: 'patinfo', label: '환자정보' },
   { id: 'qr', label: 'QR 보기 (팔찌·약포지)' },
-  { id: 'dxhist', label: '상병이력' },
+  { id: 'dxhist', label: '상병등록' },
   { id: 'surghist', label: '수술이력' },
   { id: 'vacc', label: '방종이력' },
 ];
@@ -73,6 +75,7 @@ const CATS: { name: string; items: string[] }[] = [
 const ORG = buildDirectory();
 
 const pad = (n: number) => String(n).padStart(2, '0');
+const SCR: Record<string, string> = { todo: 'MNR101F1', notes: 'MNR210F1', patinfo: 'MNR120F1', dxhist: 'MNR130F1', surghist: 'MNR131F1', vacc: 'MNR132F1', labres: 'MNR310F1', medrec: 'MNR410F1', flowsheet: 'MNR281F1', overview: 'MNR110F1', vitals: 'MNR281F2', bst: 'MNR281F3', mat: 'MNR520F1', nact: 'MNR510F1', qr: 'MNR900F1', staff: 'MNR700F1' };
 const hm = () => { const d = vnow(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 const dutyNow = () => { const h = vnow().getHours(); return h >= 6 && h < 14 ? 'D' : h >= 14 && h < 22 ? 'E' : 'N'; };
 const HIGH = /(insulin|인슐린|heparin|헤파린|potassium|kcl|칼륨|morphine|모르핀|fentanyl|펜타닐|midazolam|미다졸람|항암|digoxin|디곡신|warfarin|와파린|propofol|ketamine|마약)/i;
@@ -216,6 +219,7 @@ export default function EhrNurse({
   const i = data.info;
   const [date, setDate] = useState(() => { const t = vnow(); return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`; });
   const [ward, setWard] = useState(i.ward || '');
+  const [maxed, setMaxed] = useState(false);
   const [team, setTeam] = useState(() => teamOf(i.bed || ''));
   const [dmsg, setDmsg] = useState('');
   const [duty, setDuty] = useState(dutyNow());
@@ -319,7 +323,8 @@ export default function EhrNurse({
   };
   const [mf, setMf] = useState<'all' | 'base' | 'med' | 'lab'>('med');
   const [rt, setRt] = useState<'meal' | 'sched' | 'cons' | 'appt'>('meal');
-  const [fTab, setFTab] = useState<'obs' | 'state' | 'lab'>('obs');
+  const [fTab, setFTab] = useState<'obs' | 'state' | 'lab' | 'io'>('obs');
+  const [fColl, setFColl] = useState<string[]>([]);
   const [fEdit, setFEdit] = useState<{ it: string; d: string; h: string } | null>(null);
   const [fVal, setFVal] = useState('');
   const [fCtx, setFCtx] = useState<{ x: number; y: number; it: string; d: string; h: string } | null>(null);
@@ -399,6 +404,13 @@ export default function EhrNurse({
   const fGet = (it: string, d: string, h: string) => data.memos.find(m => m.type === 'flow' && m.date === d && m.item === it && m.hour === h);
   const fNum = (it: string, d: string, h: string) => Number(fGet(it, d, h)?.text) || 0;
   const ioTotal = (d: string, h: string) => IN.reduce((a, it) => a + fNum(it, d, h), 0) - OUT.reduce((a, it) => a + fNum(it, d, h), 0);
+  const SHIFT_H: Record<'D' | 'E' | 'N', string[]> = { D: ALLH.slice(7, 15), E: ALLH.slice(15, 23), N: [ALLH[23], ...ALLH.slice(0, 7)] };
+  const SUM_AT: Record<string, 'D' | 'E' | 'N'> = fShift === 'all' ? { '14': 'D', '22': 'E', '23': 'N' } : fShift === 'D' ? { '14': 'D' } : fShift === 'E' ? { '22': 'E' } : { '06': 'N' };
+  type FRc = { d: string; h: string; sum?: 'D' | 'E' | 'N' };
+  const FR: FRc[] = FDAYS.flatMap(d => FH.flatMap(h => [{ d, h } as FRc, ...(SUM_AT[h] ? [{ d, h, sum: SUM_AT[h] } as FRc] : [])]));
+  const sumItem = (it: string, d: string, sh: 'D' | 'E' | 'N') => SHIFT_H[sh].reduce((a, h) => a + fNum(it, d, h), 0);
+  const sumAny = (it: string, d: string, sh: 'D' | 'E' | 'N') => SHIFT_H[sh].some(h => fGet(it, d, h));
+  const hdOf = (d: string) => { const a0 = (data.info.admit || '').slice(0, 10); if (!/^\d{4}-\d{2}-\d{2}$/.test(a0) || visit || d < a0) return 0; return Math.round((new Date(`${d}T00:00:00`).getTime() - new Date(`${a0}T00:00:00`).getTime()) / 864e5) + 1; };
   const fSet = (it: string, d: string, h: string, v: string) => setData(dd => {
     const rest = dd.memos.filter(m => !(m.type === 'flow' && m.date === d && m.item === it && m.hour === h));
     const next = { ...dd, memos: v.trim() ? [...rest, { type: 'flow', date: d, item: it, hour: h, text: v.trim(), author: userName }] : rest };
@@ -722,7 +734,7 @@ export default function EhrNurse({
             </div>}</div>
             <div className="ns-ngrp"><button type="button" className="ns-gh" onClick={() => tg('g1')}>메뉴<em>{fold.g1 ? '▸' : '▾'}</em></button>{!fold.g1 && <div className="ns-nlinks">
               <button type="button" onClick={() => win && closeTab(win)}>OCS</button>
-              {([['환자정보', 'patinfo'], ['QR', 'qr'], ['검사결과', 'labres'], ['상병이력', 'dxhist'], ['수술이력', 'surghist'], ['방종이력', 'vacc']] as const).map(([k, id]) => <button key={k} type="button" onClick={() => openMenu(id)}>{k}</button>)}
+              {([['환자정보', 'patinfo'], ['QR', 'qr'], ['검사결과', 'labres'], ['상병등록', 'dxhist'], ['수술이력', 'surghist'], ['방종이력', 'vacc']] as const).map(([k, id]) => <button key={k} type="button" onClick={() => openMenu(id)}>{k}</button>)}
               {['PACS', 'CIS', '통합치료계획', '타병원', 'PROMS'].map(k => <button key={k} type="button" disabled>{k}</button>)}
             </div>}</div>
             <div className="ns-ngrp"><button type="button" className="ns-gh" onClick={() => tg('g2')}>조회<em>{fold.g2 ? '▸' : '▾'}</em></button>{!fold.g2 && <div className="ns-nlinks">
@@ -890,7 +902,7 @@ export default function EhrNurse({
 
       <div className="ns-bbar">
         <div>
-          {([['환자정보', 'patinfo'], ['검사결과', 'labres'], ['간호기록', 'notes'], ['Flowsheet', 'flowsheet'], ['투약기록', 'medrec'], ['협진', 'consult'], ['상병이력', 'dxhist'], ['수술이력', 'surghist'], ['퇴원정보', 'discharge'], ['의료진', 'staff']] as const).map(([k, id]) => <button key={id} type="button" onClick={() => openMenu(id)}>{k} ›</button>)}
+          {([['환자정보', 'patinfo'], ['검사결과', 'labres'], ['간호기록', 'notes'], ['Flowsheet', 'flowsheet'], ['투약기록', 'medrec'], ['협진', 'consult'], ['상병등록', 'dxhist'], ['수술이력', 'surghist'], ['퇴원정보', 'discharge'], ['의료진', 'staff']] as const).map(([k, id]) => <button key={id} type="button" onClick={() => openMenu(id)}>{k} ›</button>)}
         </div>
         <div className="ns-bbr">
           <button type="button" className="ns-bp" onClick={() => openMenu('notes')}>간호활동</button>
@@ -961,7 +973,7 @@ export default function EhrNurse({
       })()}
 
       {[win, win2 && win && win2 !== win ? win2 : null].map((w, wi) => w && (
-        <div key={wi} className={`ns-nwin ${win2 && win ? (wi ? 'ns-sp-b' : 'ns-sp-a') : ''}`} role="dialog" aria-label={w} style={pos && !(win2 && win) ? { left: pos.x, top: pos.y, right: 'auto', bottom: 'auto', margin: 0 } : undefined}>
+        <div key={wi} className={`ns-nwin ${win2 && win ? (wi ? 'ns-sp-b' : 'ns-sp-a') : maxed ? 'ns-max' : ''}`} role="dialog" aria-label={w} style={pos && !(win2 && win) ? { left: pos.x, top: pos.y, right: 'auto', bottom: 'auto', margin: 0 } : undefined}>
           <header
             onPointerDown={e => {
               if ((e.target as HTMLElement).closest('button')) return;
@@ -977,6 +989,7 @@ export default function EhrNurse({
             <b>{w === 'staff' ? '의료진 · Notify' : MENUS.find(m => m.id === w)?.label}</b>
             <span className="ns-wbtn">
               <button type="button" aria-label="최소화" title="최소화 (아래 탭으로)" onClick={() => (w === win ? onClose() : setWin2(null))}>&minus;</button>
+              <button type="button" aria-label="최대화" title={maxed ? '이전 크기' : '최대화'} onClick={() => { setMaxed(m => !m); setPos(null); }}>{maxed ? '❐' : '□'}</button>
               <button type="button" aria-label="닫기" title="닫기" onClick={() => closeTab(w)}>&times;</button>
             </span>
           </header>
@@ -1026,7 +1039,7 @@ export default function EhrNurse({
             ) : w === 'patinfo' ? (
               <PatInfo data={data} />
             ) : w === 'dxhist' ? (
-              <DxHist data={data} />
+              <DxReg data={data} setData={setData} userName={userName} onClose={onClose} />
             ) : w === 'surghist' ? (
               <SurgHist data={data} />
             ) : w === 'vacc' ? (
@@ -1071,35 +1084,55 @@ export default function EhrNurse({
                   onMouseUp={() => { drag.current = null; }} onMouseLeave={() => { drag.current = null; }}>
                   <table>
                     <thead>
-                      <tr><th rowSpan={2} className="ns-fl-c"><div className="ns-fl-s">{([['all', '24시간'], ['D', 'Day'], ['E', 'Evening'], ['N', 'Night']] as const).map(([k, l]) => <button key={k} type="button" className={fShift === k ? 'ns-on' : ''} onClick={() => setFShift(k)}>{l}</button>)}<button type="button" className={fCfg ? 'ns-on' : ''} onClick={e => { e.stopPropagation(); setFCfg(v => !v); }}>항목 설정</button></div></th>{FDAYS.map(d => <th key={d} colSpan={FH.length} className={d === todayS ? 'ns-fl-today' : 'ns-fl-day'}>{d.slice(5).replace('-', '/')} ({'일월화수목금토'[new Date(`${d}T00:00:00`).getDay()]}){d === todayS ? ' · 오늘' : ''}</th>)}</tr>
-                      <tr>{FCOLS.map(c => <th key={c.d + c.h}>{c.h}시</th>)}</tr>
+                      <tr><th rowSpan={2} colSpan={2} className="ns-fl-c"><div className="ns-fl-s">{([['all', '24시간'], ['D', 'Day'], ['E', 'Evening'], ['N', 'Night']] as const).map(([k, l]) => <button key={k} type="button" className={fShift === k ? 'ns-on' : ''} onClick={() => setFShift(k)}>{l}</button>)}<button type="button" className={fCfg ? 'ns-on' : ''} onClick={e => { e.stopPropagation(); setFCfg(v => !v); }}>항목 설정</button></div></th>{FDAYS.map(d => <th key={d} colSpan={FR.filter(c => c.d === d).length} className={d === todayS ? 'ns-fl-today' : 'ns-fl-day'}>{d.slice(5).replace('-', '/')} ({'일월화수목금토'[new Date(`${d}T00:00:00`).getDay()]}){d === todayS ? ' · 오늘' : ''}{hdOf(d) > 0 && <span className="ns-hd">HD#{hdOf(d)}</span>}</th>)}</tr>
+                      <tr>{FR.map(c => c.sum ? <th key={c.d + c.h + 's'} className="ns-fl-sum">{{ D: 'Day', E: 'Eve', N: 'Night' }[c.sum]}<br />합계</th> : <th key={c.d + c.h}>{c.h}시</th>)}</tr>
                     </thead>
                     <tbody>
-                      {FG.map(g => (
-                        <Fragment key={g.g}>
-                          <tr className="ns-fl-g"><td colSpan={FCOLS.length + 1}><span className="ns-fl-gl">{g.g}</span></td></tr>
-                          {g.items.map(it => (
-                            <tr key={it}>
-                              <th className="ns-fl-c">{it}</th>
-                              {FCOLS.map(({ d, h }) => {
-                                const c = fGet(it, d, h);
-                                const key = d + h;
-                                const on = fEdit?.it === it && fEdit.h === h && fEdit.d === d;
-                                if (it === 'I/O Total (mL)') {
-                                  const anyIO = [...IN, ...OUT].some(x => fGet(x, d, h));
-                                  return <td key={key} style={{ cursor: 'default', background: '#f6f8fb', fontWeight: 700 }}>{anyIO ? ioTotal(d, h) : ''}</td>;
-                                }
-                                const auto = !c ? vitAt(it, d, h) : '';
-                                return (
-                                  <td key={key} className={c ? 'ns-fl-v' : auto ? 'ns-fl-a' : ''} onDoubleClick={() => { setFEdit({ it, d, h }); setFVal(c?.text || auto); }} onContextMenu={e => { e.preventDefault(); e.stopPropagation(); setFCtx({ x: e.clientX, y: e.clientY, it, d, h }); }}>
-                                    {on ? <input autoFocus value={fVal} onChange={e => setFVal(e.target.value)} onBlur={() => { fSet(it, d, h, fVal); setFEdit(null); }} onKeyDown={e => { if (e.key === 'Enter') { fSet(it, d, h, fVal); setFEdit(null); } if (e.key === 'Escape') setFEdit(null); }} /> : <>{c?.text || auto}{c?.memo && <sup title={c.memo}>●</sup>}</>}
-                                  </td>
-                                );
-                              })}
+                      {FG.map(g => {
+                        const closed = fColl.includes(g.g);
+                        const isIO = g.g === 'I/O Total' || g.items.some(x => IN.includes(x) || OUT.includes(x));
+                        const tog = <button type="button" className="ns-fl-tg" onClick={() => setFColl(c => (c.includes(g.g) ? c.filter(x => x !== g.g) : [...c, g.g]))}>{closed ? '⊕' : '⊖'} {g.g}</button>;
+                        if (closed) {
+                          return (
+                            <tr key={g.g}>
+                              <th className="ns-fl-g1">{tog}</th>
+                              <th className="ns-fl-c ns-fl-c2">{g.items.length}개 항목 (접힘)</th>
+                              <td colSpan={FR.length} style={{ cursor: 'default' }} />
                             </tr>
-                          ))}
-                        </Fragment>
-                      ))}
+                          );
+                        }
+                        return (
+                          <Fragment key={g.g}>
+                            {g.items.map((it, ix) => (
+                              <tr key={it}>
+                                {ix === 0 && <th className="ns-fl-g1" rowSpan={g.items.length}>{tog}</th>}
+                                <th className="ns-fl-c ns-fl-c2">{it}</th>
+                                {FR.map(({ d, h, sum }) => {
+                                  const key = d + h + (sum || '');
+                                  if (sum) {
+                                    let v = '';
+                                    if (it === 'I/O Total (mL)') v = [...IN, ...OUT].some(x => sumAny(x, d, sum)) ? String(IN.reduce((a, x) => a + sumItem(x, d, sum), 0) - OUT.reduce((a, x) => a + sumItem(x, d, sum), 0)) : '';
+                                    else if (IN.includes(it) || OUT.includes(it)) v = sumAny(it, d, sum) ? String(sumItem(it, d, sum)) : '';
+                                    return <td key={key} className={isIO ? 'ns-fl-sumc' : 'ns-fl-sumg'} style={{ cursor: 'default' }}>{v}</td>;
+                                  }
+                                  const c = fGet(it, d, h);
+                                  const on = fEdit?.it === it && fEdit.h === h && fEdit.d === d;
+                                  if (it === 'I/O Total (mL)') {
+                                    const anyIO = [...IN, ...OUT].some(x => fGet(x, d, h));
+                                    return <td key={key} style={{ cursor: 'default', background: '#f6f8fb', fontWeight: 700 }}>{anyIO ? ioTotal(d, h) : ''}</td>;
+                                  }
+                                  const auto = !c ? vitAt(it, d, h) : '';
+                                  return (
+                                    <td key={key} className={c ? 'ns-fl-v' : auto ? 'ns-fl-a' : ''} onDoubleClick={() => { setFEdit({ it, d, h }); setFVal(c?.text || auto); }} onContextMenu={e => { e.preventDefault(); e.stopPropagation(); setFCtx({ x: e.clientX, y: e.clientY, it, d, h }); }}>
+                                      {on ? <input autoFocus value={fVal} onChange={e => setFVal(e.target.value)} onBlur={() => { fSet(it, d, h, fVal); setFEdit(null); }} onKeyDown={e => { if (e.key === 'Enter') { fSet(it, d, h, fVal); setFEdit(null); } if (e.key === 'Escape') setFEdit(null); }} /> : <>{c?.text || auto}{c?.memo && <sup title={c.memo}>●</sup>}</>}
+                                    </td>
+                                  );
+                                })}
+                              </tr>
+                            ))}
+                          </Fragment>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
@@ -1125,8 +1158,13 @@ export default function EhrNurse({
                   </div>
                 )}
                 <div className="ns-fl-b">
-                  {([['obs', '임상관찰'], ['state', '간호상태'], ['lab', 'LAB']] as const).map(([k, l]) => <button key={k} type="button" className={fTab === k ? 'ns-on' : ''} onClick={() => setFTab(k)}>{l}</button>)}
+                  {([['obs', '임상관찰'], ['io', 'I/O'], ['state', '간호상태'], ['lab', 'LAB']] as const).map(([k, l]) => <button key={k} type="button" className={fTab === k ? 'ns-on' : ''} onClick={() => setFTab(k)}>{l}</button>)}
                 </div>
+                {fTab === 'io' && <div className="ns-fl-x">{(() => {
+                  const tr = FDAYS.slice(-3).map(d => ({ d, rows: (['D', 'E', 'N'] as const).map(sh => { const i1 = IN.reduce((a, x) => a + sumItem(x, d, sh), 0); const o1 = OUT.reduce((a, x) => a + sumItem(x, d, sh), 0); return { sh, i1, o1 }; }) }));
+                  return <table style={{ minWidth: 0 }}><thead><tr><th>일자</th><th>근무</th><th>Intake</th><th>Output</th><th>I/O Total</th></tr></thead><tbody>{tr.flatMap(t => t.rows.map(r => <tr key={t.d + r.sh}><td>{t.d.slice(5)}</td><td>{r.sh}</td><td>{r.i1}</td><td>{r.o1}</td><td style={{ background: '#fff7c2', fontWeight: 700 }}>{r.i1 - r.o1}</td></tr>))}</tbody></table>;
+                })()}</div>}
+                <div className="ns-fl-sc">{([['vitals', '환자 V/S'], ['bst', '혈당'], ['labres', '검사결과'], ['notes', '간호기록']] as const).map(([k, l]) => <button key={k} type="button" onClick={() => openMenu(k)}>{l}</button>)}<button type="button" onClick={() => setFCfg(v => !v)}>항목 설정</button></div>
                 {fTab === 'state' && <div className="ns-fl-x">{data.care.length ? data.care.map((c, k) => <p key={k}>{c.dx}</p>) : <p className="ns-nnone">No data to display</p>}</div>}
                 {fTab === 'lab' && <div className="ns-fl-x">{data.labs.length ? data.labs.slice(0, 12).map((l, k) => <p key={k}>{l.name} {l.value} {l.unit}</p>) : <p className="ns-nnone">No data to display</p>}</div>}
               </div>
@@ -1233,10 +1271,13 @@ export default function EhrNurse({
               <Fragment key={notifyDraft}><StaffWin data={data} setData={setData} userName={userName} duty={duty} draft={notifyDraft} /></Fragment>
             ) : w === 'docreq' ? (
               <DocReqWin data={data} setData={setData} userName={userName} duty={duty} />
-            ) : (w === 'vitals' || w === 'bst' || w === 'mat' || w === 'nact') ? (
+            ) : w === 'mat' ? (
+              <ProcInput data={data} setData={setData} userName={userName} onClose={onClose} />
+            ) : (w === 'vitals' || w === 'bst' || w === 'nact') ? (
               <NurseForm kind={w} data={data} setData={setData} userName={userName} />
             ) : drawer}
           </div>
+          <footer className="ns-wst"><span>{SCR[w] || 'MNR000F1'}</span><span className="ok">★ 정상적으로 실행되었습니다.</span><span className="ns-wst-t">{(() => { const t = vnow(); return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())} ${pad(t.getHours())}:${pad(t.getMinutes())}`; })()}</span></footer>
         </div>
       ))}
 
@@ -1395,6 +1436,16 @@ export default function EhrNurse({
         .ns-fl-s { display: flex; gap: 3px; margin-top: 3px; }
         .ns-fl-s button { font: inherit; font-size: 11px; padding: 1px 6px; border: 1px solid var(--border); border-radius: 3px; background: #fff; cursor: pointer; }
         .ns-fl-s button.ns-on { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .ns-hd { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 8px; background: #fde68a; color: #7c4a03; font-size: 11px; font-weight: 800; }
+        .ns-fl-sum { background: #fff2a8 !important; font-size: 11px; line-height: 1.2; }
+        .ns-fl-sumc { background: #fff7c2; font-weight: 700; }
+        .ns-fl-sumg { background: #f3f4f6; }
+        .ns-fl-g1 { position: sticky; left: 0; z-index: 2; background: #c9d9ee !important; min-width: 96px; vertical-align: top; text-align: left !important; }
+        .ns-fl-tg { border: 0; background: transparent; font: inherit; font-weight: 800; color: #17324f; cursor: pointer; padding: 0; }
+        .ns-fl .ns-fl-c2 { left: 96px; }
+        .ns-fl-sc { display: flex; gap: 6px; margin-top: 8px; }
+        .ns-fl-sc button { font: inherit; font-size: 12px; padding: 3px 10px; border: 1px solid var(--border); border-radius: 4px; background: #f6f8fb; cursor: pointer; }
+        .ns-fl-x table { border-collapse: collapse; } .ns-fl-x th, .ns-fl-x td { border: 1px solid var(--border); padding: 3px 10px; }
         .ns-fl-v { background: #eef6ff; font-weight: 700; }
         .ns-fl-g td { background: #c9d9ee; color: #17324f; text-align: left; font-weight: 800; cursor: default; border-top: 2px solid #8fa9c9; padding: 0; }
         .ns-fl-gl { position: sticky; left: 0; display: inline-block; padding: 5px 10px; }
@@ -1497,6 +1548,11 @@ export default function EhrNurse({
         .ns-nfa .ns-go { background: var(--primary); border-color: var(--primary); color: #fff; }
         .ns-nfa .ns-go:disabled { opacity: .4; }
         .ns-nwin { position: fixed; z-index: 55; inset: 0; margin: auto; width: min(1320px, 96vw); height: min(880px, 92vh); min-width: 320px; min-height: 240px; resize: both; overflow: hidden; background: var(--background, #fff); color: var(--text); border: 1px solid #1c2f4b; box-shadow: 0 12px 40px rgba(0,0,0,.35); display: flex; flex-direction: column; border-radius: 6px; }
+        .ns-nwin.ns-max { width: 100vw; height: 100vh; resize: none; border-radius: 0; }
+        .ns-nwin { display: flex; flex-direction: column; }
+        .ns-nwin .ns-nwb { flex: 1; min-height: 0; }
+        .ns-wst { display: flex; gap: 16px; align-items: center; padding: 3px 12px; font-size: 11.5px; background: #eef2f7; border-top: 1px solid var(--border); color: var(--sub-text); }
+        .ns-wst .ok { color: #1a7f4b; font-weight: 700; flex: 1; }
         .ns-nwin.ns-sp-a { inset: auto; left: 0; top: 96px; width: 50vw; height: calc(100vh - 96px); margin: 0; resize: none; }
         .ns-nwin.ns-sp-b { inset: auto; left: 50vw; top: 96px; width: 50vw; height: calc(100vh - 96px); margin: 0; resize: none; }
         .ns-wbtn { display: inline-flex; gap: 2px; }
