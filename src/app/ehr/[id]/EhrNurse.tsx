@@ -881,6 +881,18 @@ export default function EhrNurse({
         </aside>
       </div>
 
+      <div className="ns-bbar">
+        <div>
+          {([['환자정보', 'patinfo'], ['검사결과', 'labres'], ['간호기록', 'notes'], ['Flowsheet', 'flowsheet'], ['투약기록', 'medrec'], ['협진', 'consult'], ['상병이력', 'dxhist'], ['수술이력', 'surghist'], ['퇴원정보', 'discharge'], ['의료진', 'staff']] as const).map(([k, id]) => <button key={id} type="button" onClick={() => openMenu(id)}>{k} ›</button>)}
+        </div>
+        <div className="ns-bbr">
+          <button type="button" className="ns-bp" onClick={() => openMenu('notes')}>간호활동</button>
+          <button type="button" onClick={printOrders}>처방출력</button>
+          <button type="button" onClick={printBed}>침상카드</button>
+          <button type="button" onClick={printWarn}>주의라벨</button>
+        </div>
+      </div>
+
       {cmp && <OrderCompare data={data} today={date} onClose={() => setCmp(false)} />}
 
       {chk && (() => {
@@ -1481,6 +1493,46 @@ export default function EhrNurse({
         .ns-nwb .wbk { border: 0; padding: 0; margin: 0; }
         .ns-nwb { padding: 12px 14px 24px; overflow: auto; flex: 1; }
         .ns-ndq { width: 100%; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; padding: 8px; font: inherit; margin-bottom: 8px; background: var(--background); color: var(--text); }
+        /* ── 실제 병원 EMR 화면(연한 청회색 데스크톱 톤)에 맞춘 스킨 ── */
+        .ns-nu { background: #dfe6ef; border-color: #9fb0c8; border-radius: 3px; font-size: 12px; --border: #c3cddb; --muted-background: #eef2f7; }
+        .ns-nu .ns-nmenu { background: linear-gradient(#b4c6e3, #94abd2); }
+        .ns-nu .ns-nmenu b { color: #fff; text-shadow: 0 1px 0 rgba(0,0,0,.25); }
+        .ns-nu .ns-nmenu button { background: linear-gradient(#7d9bc4, #6585b1); color: #fff; margin: 4px 1px; padding: 3px 11px; border-radius: 3px; font-size: 12px; font-weight: 600; box-shadow: inset 0 0 0 1px rgba(255,255,255,.25); }
+        .ns-nu .ns-nmenu button.ns-on { background: #fff; color: #1f4b8f; box-shadow: none; }
+        .ns-nu .ns-nmenu .ns-wk { color: #fff; }
+        .ns-nu .ns-nmenu .ns-nav .back { border-color: rgba(255,255,255,.7); }
+        .ns-nu .ns-ntabs { background: #c9d6ea; border-bottom-color: #9fb0c8; }
+        .ns-nu .ns-ntabs span { background: #e4ebf5; border-color: #9fb0c8; border-radius: 3px 3px 0 0; }
+        .ns-nu .ns-ntabs span.ns-on { background: #fff; }
+        .ns-nu .ns-ngrid { background: #dfe6ef; gap: 0; }
+        .ns-nu .ns-nl, .ns-nu .ns-nr { background: #e6eaee; padding: 6px; gap: 6px; }
+        .ns-nu .ns-nr { background: #eef1f5; }
+        .ns-nu .ns-npt { background: #e6eaee; border: 1px solid #aebbd0; border-radius: 4px; }
+        .ns-nu .ns-nph { background: linear-gradient(#4a78c4, #2f5ba6); padding: 7px 9px; }
+        .ns-nu .ns-nph b { font-size: 17px; }
+        .ns-nu .ns-nph .ns-nno { color: #fff; border-color: rgba(255,255,255,.6); }
+        .ns-nu .ns-nkv { font-size: 11.5px; }
+        .ns-nu .ns-ngrp { border-top-color: #c3cddb; background: #eef2f7; }
+        .ns-nu .ns-ngrp .ns-nlinks button { background: linear-gradient(#fff, #e8eef6); border-color: #9fb0c8; color: #1f3b66; border-radius: 3px; }
+        .ns-nu .ns-nbox { background: #fff; border: 1px solid #b4c1d4; border-radius: 3px; padding: 6px 8px; }
+        .ns-nu .ns-nbox h4 { color: #1f4b8f; font-size: 12px; margin: 0 0 4px; padding-bottom: 3px; border-bottom: 1px solid #c3cddb; }
+        .ns-nu .ns-nsr input { border-radius: 2px; padding: 3px 6px; font-size: 12px; }
+        .ns-nu .ns-nsr button { border-radius: 3px; padding: 3px 9px; font-size: 12px; background: #2f5ba6; border-color: #2f5ba6; }
+        .ns-nu .ns-ot, .ns-nu .ns-rt { font-size: 11.5px; }
+        .ns-nu .ns-ot th, .ns-nu .ns-rt th { background: #e8eef6; border: 1px solid #b4c1d4; padding: 2px 5px; font-size: 11.5px; color: #1f3b66; }
+        .ns-nu .ns-ot td, .ns-nu .ns-rt td { border: 1px solid #d0d8e4; padding: 2px 6px; line-height: 1.35; }
+        .ns-nu .ns-ot td.ns-otn b { font-weight: 600; }
+        .ns-nu .ns-ot tbody tr:hover td { background: #f0f5fb; }
+        .ns-nu .ns-ocb td { background: #cee7e4; color: #1f4a47; text-align: left; letter-spacing: 0; font-weight: 700; padding: 2px 8px; font-size: 11.5px; border-color: #b4d3cf; }
+        .ns-nu .ns-ocq { color: #475569; text-align: center; }
+        .ns-nu .ns-nmd, .ns-nu .ns-nmb { font-size: 13px; }
+        .ns-nu .ns-nbox:has(.ns-memo), .ns-nu .ns-nbox:has(.rm) { background: #fffbd1; border-color: #d9c97a; }
+        .ns-nu .rm-ed { background: #fffbd1; min-height: 110px; font-size: 12px; }
+        .ns-nu .ns-bbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 4px 6px; background: #c9d6ea; border-top: 1px solid #9fb0c8; }
+        .ns-nu .ns-bbar > div { display: flex; flex-wrap: wrap; gap: 3px; }
+        .ns-nu .ns-bbar button { font: inherit; font-size: 11.5px; padding: 2px 9px; border: 1px solid #8ea4c6; border-radius: 3px; background: linear-gradient(#fff, #e3ebf6); color: #1f3b66; cursor: pointer; white-space: nowrap; }
+        .ns-nu .ns-bbar .ns-bp { background: linear-gradient(#4a78c4, #2f5ba6); color: #fff; border-color: #2f5ba6; font-weight: 700; }
+        .ns-nu .ns-bbr button { border-color: #2f5ba6; }
         @media (max-width: 980px) {
           .ns-ngrid { grid-template-columns: 1fr; }
           .ns-nf, .ns-nf.ns-nfc { width: auto; border: 0; border-bottom: 1px solid var(--border); }
