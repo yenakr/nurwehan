@@ -83,7 +83,7 @@ export function StaffWin({ data, setData, userName, duty, draft }: P & { draft?:
           <thead><tr><th>일시</th><th>대상</th><th>내용</th><th>상태</th><th>답변</th></tr></thead>
           <tbody>
             {sent.slice().reverse().map((m, k) => <tr key={k}><td>{(m.time || '').slice(5)}</td><td>{m.rank} {m.doctor}</td><td style={{ textAlign: 'left' }}>{m.urgent && <b className="u">[긴급] </b>}{m.text}</td><td>{notiState(m).st}</td><td style={{ textAlign: 'left' }}>{notiState(m).reply}</td></tr>)}
-            {sent.length === 0 && <tr><td colSpan={5} className="none">내역 없음</td></tr>}
+            {sent.length === 0 && <tr><td colSpan={5} className="none">No data to display</td></tr>}
           </tbody>
         </table>
       </section>
@@ -149,7 +149,7 @@ export function DocReqWin({ data, setData, userName, duty }: P) {
         <thead><tr><th>일시</th><th>서류</th><th>부수</th><th>수령 방법</th><th>비고</th><th>상태</th></tr></thead>
         <tbody>
           {list.slice().reverse().map((m, k) => <tr key={k}><td>{(m.time || '').slice(5)}</td><td>{m.text}</td><td>{m.copies}</td><td>{m.how}</td><td>{m.note}</td><td>{docState(m)}</td></tr>)}
-          {list.length === 0 && <tr><td colSpan={6} className="none">내역 없음</td></tr>}
+          {list.length === 0 && <tr><td colSpan={6} className="none">No data to display</td></tr>}
         </tbody>
       </table>
       <NxCss />

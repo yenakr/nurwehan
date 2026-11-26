@@ -81,7 +81,7 @@ export default function MarPanel({ data, author, onChange }: { data: ChartData; 
         .mr h5 { margin: 6px 0 0; font-size: 13px; }
         .mr .lg { font-size: 13px; line-height: 1.7; border-bottom: 1px solid var(--border); padding: 4px 0; }
       `}</style>
-      {meds.length === 0 && <p className="none">투약 처방이 없어요. 의사처방에 약물을 먼저 입력하세요.</p>}
+      {meds.length === 0 && <p className="none">No data to display</p>}
       {meds.map(med => {
         const slots = med.r.pri === 'PRN' ? ['PRN'] : med.r.pri === 'STAT' ? ['STAT'] : slotsOf(med.r.cnt);
         const high = HIGH.test(med.r.name || '');

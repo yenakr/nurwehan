@@ -134,7 +134,7 @@ export default function PdaApp({ roster, userName }: { roster: R[]; userName: st
           <h2 className="pd-h sm">샘플 스캔 · 카메라 없이 연습</h2>
           <div className="pd-list">
             {roster.map(x => <button key={x.id} type="button" onClick={() => scan(patientQr(x.id))}><span className="pd-bedtag">{x.ward} {x.bed}</span><b>{x.name}</b><em>{x.ptNo}</em></button>)}
-            {roster.length === 0 && <p className="pd-sub">병동 환자가 없어요. EHR에서 환자를 먼저 열어 주세요.</p>}
+            {roster.length === 0 && <p className="pd-sub">No data to display</p>}
           </div>
         </section>
       )}
@@ -156,7 +156,7 @@ export default function PdaApp({ roster, userName }: { roster: R[]; userName: st
           </div>
           <h2 className="pd-h">투약 <small>{meds.length}건</small></h2>
           {meds.map(it => medCard(it))}
-          {meds.length === 0 && <p className="pd-sub">예정된 투약이 없어요.</p>}
+          {meds.length === 0 && <p className="pd-sub">No data to display</p>}
           {prns.length > 0 && <h2 className="pd-h">PRN <small>{prns.length}건</small></h2>}
           {prns.map(it => medCard(it, true))}
           {other && meds[0] && (

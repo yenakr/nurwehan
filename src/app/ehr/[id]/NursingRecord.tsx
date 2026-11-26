@@ -109,7 +109,7 @@ export default function NursingRecord({ data, setData, userName, duty, today }: 
               out.push(<tr key={i} className={isRed(r) ? 'red' : ''} onDoubleClick={() => del(i)} title={r.author === userName ? '더블클릭: 삭제' : ''}><td>{t.slice(5)}</td><td>{r.focus}</td><td className="c">{r.text}</td><td>{r.author}{r.shift ? ` (${r.shift})` : ''}</td></tr>);
               return out;
             })}
-            {rows.length === 0 && <tr><td colSpan={4} className="none">간호기록이 없어요</td></tr>}
+            {rows.length === 0 && <tr><td colSpan={4} className="none">No data to display</td></tr>}
           </tbody>
         </table>
       </div>

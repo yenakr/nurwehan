@@ -87,7 +87,7 @@ export default function FormPanel({ kind, rows, onChange }: { kind: FormKey; row
         <h4 className="ph">{meta.title}</h4>
         <button type="button" className="add" onClick={add}>+ 평가 추가</button>
       </div>
-      {rows.length === 0 && <p className="none">평가 기록이 없어요. 평가 추가를 눌러 시작하세요.</p>}
+      {rows.length === 0 && <p className="none">No data to display</p>}
       {rows.map((r, i) => {
         const head = (
           <div className="fmt">

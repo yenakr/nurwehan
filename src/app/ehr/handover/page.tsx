@@ -60,7 +60,7 @@ export default async function HandoverPage({ searchParams }: { searchParams: Pro
           <b style={{ marginLeft: 8 }}>{w} {tm === '전체' ? '' : tm} 간호업무일지 ({duty} 근무 · ★낙상위험 ♡욕창위험 Ⓒ CP적용, {rows.length}명)</b>
           <PrintBtn />
         </div>
-        {rows.length === 0 && <div className="hp">입원 중인 환자가 없어요.</div>}
+        {rows.length === 0 && <div className="hp">No data to display</div>}
         {pages.map((pg, pi) => (
           <section key={pi} className="hp">
             <h2>{w} {tm === '전체' ? '' : tm} 인수인계지 {pi + 1}/{pages.length}</h2>
@@ -98,7 +98,7 @@ export default async function HandoverPage({ searchParams }: { searchParams: Pro
                     {row('검사', labs.join(', '))}
                     {v && <div><span className="lb">V/S</span> {vit(v)}</div>}
                     {h && <div><span className="lb">SBAR</span> {[h.s && `S ${h.s}`, h.b && `B ${h.b}`, h.a && `A ${h.a}`, h.r && `R ${h.r}`].filter(Boolean).join(' / ')}</div>}
-                    <div className="mm"><span className="lb">[기타]</span> {memo?.text ? <Rich text={memo.text} /> : <span className="none">간호메모 없음</span>}</div>
+                    <div className="mm"><span className="lb">[기타]</span> {memo?.text ? <Rich text={memo.text} /> : <span className="none">No data to display</span>}</div>
                   </div>
                 );
               })}

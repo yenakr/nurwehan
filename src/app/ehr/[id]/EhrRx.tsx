@@ -27,7 +27,7 @@ export default function RxPanel({ data, author, onChange }: { data: ChartData; a
       {f === '식이' && data.dietord.length > 0 && (
         <div className="rxd">식이처방: {data.dietord.map(d => `${d.type || ''}${d.start ? ` (${d.start}~)` : ''}`).join(', ')}</div>
       )}
-      {shown.length === 0 && <p className="rxn">해당하는 처방이 없어요.</p>}
+      {shown.length === 0 && <p className="rxn">No data to display</p>}
       {shown.map(({ r, i }) => (
         <div key={i} className={`rxr ${live(r) ? '' : 'x'}`}>
           <div className="rxm">

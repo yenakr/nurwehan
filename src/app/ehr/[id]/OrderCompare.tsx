@@ -104,7 +104,7 @@ export default function OrderCompare({ data, today, onClose }: { data: ChartData
                   {cell(x.r, x.l)}
                 </tr>
               ))}
-              {shown.length === 0 && <tr><td colSpan={11} className="none">{rows.length ? '변경된 처방이 없어요' : '해당 날짜에 유효한 처방이 없어요'}</td></tr>}
+              {shown.length === 0 && <tr><td colSpan={11} className="none">No data to display</td></tr>}
             </tbody>
           </table>
         </div>
