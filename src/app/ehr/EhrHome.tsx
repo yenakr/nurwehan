@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { SAMPLES, WARDS, bedLabel, roomNo } from './samples';
 import { emptyChart, migrate, shiftChart, type Sample } from './types';
@@ -70,6 +70,7 @@ export default function EhrHome({ cases, initialView, ai, aiLeft, extra }: { cas
   const [err, setErr] = useState('');
   const [ctx, setCtx] = useState<{ x: number; y: number; saved?: Item; p: P } | null>(null);
   const view = VIEWS[vi];
+  useEffect(() => { if (view.kind === 'ward') { try { localStorage.setItem('ehr.lastWard', view.name); } catch { /* 저장 불가 */ } } }, [view]);
   const wardName = view.kind === 'op' ? '외래' : view.kind === 'er' ? '응급실' : view.name;
   const active = cases.filter(c => !c.discharged);
 

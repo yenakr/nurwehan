@@ -712,7 +712,12 @@ export default function EhrNurse({
               {(dxMain || i.dx) && <><dt>진단명</dt><dd>{dxMain ? dxMain.name : i.dx}</dd></>}
             </dl>
             <div className="ns-ngrp"><button type="button" className="ns-gh" onClick={() => tg('g0')}>구분<em>{fold.g0 ? '▸' : '▾'}</em></button>{!fold.g0 && <div className="ns-nlinks">
-              {[['외래', '외래'], ['병동', i.ward === '응급실' ? '응급' : i.ward || ''], ['응급', '응급']].map(([k, v]) => <button key={k} type="button" disabled={!v} onClick={() => router.push(`/ehr?view=${encodeURIComponent(v)}`)}>{k}</button>)}
+              {(() => {
+                const cur = i.ward === '외래' ? '외래' : i.ward === '응급실' ? '응급' : '병동';
+                const lastW = (() => { try { return localStorage.getItem('ehr.lastWard') || ''; } catch { return ''; } })();
+                const wardTo = cur === '병동' ? i.ward || '41병동' : lastW || '41병동';
+                return [['외래', '외래'], ['병동', wardTo], ['응급', '응급']].map(([k, v]) => <button key={k} type="button" className={cur === k ? 'ns-on' : ''} aria-pressed={cur === k} onClick={() => router.push(`/ehr?view=${encodeURIComponent(v)}`)}>{k}</button>);
+              })()}
               {['통합', '다학제'].map(k => <button key={k} type="button" disabled>{k}</button>)}
             </div>}</div>
             <div className="ns-ngrp"><button type="button" className="ns-gh" onClick={() => tg('g1')}>메뉴<em>{fold.g1 ? '▸' : '▾'}</em></button>{!fold.g1 && <div className="ns-nlinks">
