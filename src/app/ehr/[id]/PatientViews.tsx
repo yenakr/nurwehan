@@ -37,7 +37,7 @@ export function PatInfo({ data }: { data: ChartData }) {
     ['키 / 체중', [i.height && `${i.height}cm`, i.weight && `${i.weight}kg`].filter(Boolean).join(' / ')], ['BMI', bmi],
     ['진료과', dn(i.dept)], ['병실', [i.ward, i.bed].filter(Boolean).join(' ')],
     ['지정의', i.doctor || ''], ['주치의', i.attending || ''],
-    ['입원일', d10(i.admit)], ['퇴원예정일', d10(i.disDate)],
+    ...(i.ward === '외래' || i.ward === '응급실' ? [[i.ward === '응급실' ? '내원일' : '진료일', d10(i.admit)] as [string, string]] : [['입원일', d10(i.admit)] as [string, string], ['퇴원예정일', d10(i.disDate)] as [string, string]]),
     ['건강보험', '건강보험 (모의 자격 확인)'], ['보호자', i.guardian || ''],
     ['알러지', i.allergy || ''], ['격리', i.iso || ''],
   ];
@@ -55,7 +55,7 @@ export function PatInfo({ data }: { data: ChartData }) {
 export function DxHist({ data }: { data: ChartData }) {
   const dxs: Row[] = [...data.dxcode].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
   const hist: Row[] = [...data.history].sort((a, b) => (b.date || '').localeCompare(a.date || ''));
-  const cur = data.info.admit ? [{ date: d10(data.info.admit), kind: '입원', dept: data.info.dept || '', dx: data.info.dx || '', code: '' }] : [];
+  const cur = data.info.admit ? [{ date: d10(data.info.admit), kind: data.info.ward === '외래' ? '외래' : data.info.ward === '응급실' ? '응급' : '입원', dept: data.info.dept || '', dx: data.info.dx || '', code: '' }] : [];
   const all = [...cur, ...hist];
   return (
     <div className="pv">
@@ -68,7 +68,7 @@ export function DxHist({ data }: { data: ChartData }) {
           {all.length === 0 && <tr><td colSpan={5} className="none">No data to display</td></tr>}
         </tbody>
       </table>
-      <h4>이번 입원 상병</h4>
+      <h4>{data.info.ward === '외래' || data.info.ward === '응급실' ? '이번 진료 상병' : '이번 입원 상병'}</h4>
       <table>
         <thead><tr><th>구분</th><th>상병코드</th><th>상병명</th><th>진단일</th><th>진단의</th></tr></thead>
         <tbody>
