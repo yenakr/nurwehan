@@ -1306,6 +1306,7 @@ export default function EhrEditor({
           onClose={() => setWin(null)}
           drawer={tabBody}
           nav={navBtns}
+          caseId={id}
           actions={[
             { label: '네임지 출력', run: () => printNameTag(info, id) },
             ...(['투약', '주사', '수액'] as const).map(k => ({ label: `${k} 티켓 출력`, run: () => printTickets(data, k as TicketKind, id) })),
