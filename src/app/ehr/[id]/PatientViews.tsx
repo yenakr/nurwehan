@@ -5,6 +5,7 @@ import type { ChartData, Row } from '../types';
 import { DEPTS } from '../directory';
 import { qrSvg } from '../qr';
 import { medQr, patientQr, isMedRow } from '../pda';
+import { activeOn } from '../ordday';
 
 // 병동뷰 측면 메뉴: 환자정보 · 상병이력 · 수술이력 · 방종이력
 const CSS = `
@@ -118,7 +119,9 @@ export function VaccHist({ data }: { data: ChartData }) {
 // 환자 팔찌·약포지 QR: 여기서 만들고(보기·인쇄), PDA(/ehr/pda)에서 카메라로 읽는다
 export function QrView({ data, caseId }: { data: ChartData; caseId: string }) {
   const i = data.info;
-  const meds = data.orders.map((r, idx) => ({ r, idx })).filter(({ r }) => r.kind !== 'sec' && r.kind !== 'memo' && r.name && r.pri !== 'D/C' && r.st !== '취소' && isMedRow(r));
+  const t = vnow();
+  const day = `${t.getFullYear()}-${String(t.getMonth() + 1).padStart(2, '0')}-${String(t.getDate()).padStart(2, '0')}`;
+  const meds = data.orders.map((r, idx) => ({ r, idx })).filter(({ r }) => r.kind !== 'sec' && r.kind !== 'memo' && r.name && r.pri !== 'D/C' && r.st !== '취소' && isMedRow(r) && activeOn(r, day, (i.admit || '').slice(0, 10), day, false));
   const grp = (re: RegExp, inv = false) => meds.filter(({ r }) => (re.test(r.route || '') !== inv));
   const oral = grp(/^(PO|SL|PR)$/i);
   const rest = grp(/^(PO|SL|PR)$/i, true);

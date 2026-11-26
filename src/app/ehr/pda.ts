@@ -1,4 +1,5 @@
 import type { ChartData, Row } from './types';
+import { rollover } from './ordday';
 
 // PDA(바코드/QR) 연동: QR 내용 규칙과 수행 이벤트 적용 (PC와 서버가 같은 함수를 쓴다)
 export const patientQr = (id: string) => `NURW|P|${id}`;
@@ -21,9 +22,10 @@ export function ivMlOf(r: Row): number {
 }
 
 // ev: { id, type:'give', idx, name, date:'YYYY-MM-DD', time:'HH:MM', duty, by }
-export function applyPda(d: ChartData, ev: Row): ChartData {
-  const have = d.pda || [];
-  if (ev.type !== 'give' || !ev.id || have.some(e => e.id === ev.id)) return d;
+export function applyPda(d0: ChartData, ev: Row): ChartData {
+  const have = d0.pda || [];
+  if (ev.type !== 'give' || !ev.id || have.some(e => e.id === ev.id)) return d0;
+  const d = rollover(d0.info.slotDay ? d0 : { ...d0, info: { ...d0.info, slotDay: ev.date } }, ev.date);
   const out: ChartData = { ...d, pda: [...have, ev] };
   const idx = Number(ev.idx);
   const o = d.orders[idx];

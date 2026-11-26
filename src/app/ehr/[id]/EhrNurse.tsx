@@ -14,6 +14,7 @@ import { DEPTS, buildDirectory } from '../directory';
 import { confirmDialog } from '@/components/Dialog';
 import { Fragment, useEffect, useMemo, useRef, useState, type Dispatch, type ReactNode, type SetStateAction } from 'react';
 import { useRouter } from 'next/navigation';
+import { isMed, slotsOf, timesFor, group, viewOrders, rollover, type Item, type Groups } from '../ordday';
 import { migrate, shiftChart, withBp, type ChartData, type Row } from '../types';
 import WardBulk, { type BulkPt } from '../WardBulk';
 
@@ -79,42 +80,8 @@ const HIGH = /(insulin|인슐린|heparin|헤파린|potassium|kcl|칼륨|morphine
 const teamOf = (bed: string | null) => ((Number((bed || '').split('-')[0]) || 0) % 100 <= 3 ? '1팀' : '2팀');
 const SUBS = ['먹는약', '주사약', '기타'];
 const subOf = (r: Row) => (/주사|IV|IM|SC|inj/i.test(`${r.route || ''}`) ? 1 : /PO|경구/i.test(r.route || '') ? 0 : 2);
-const isMed = (r: Row) => (r.dose || r.route) && !/^check/i.test(r.name || '');
-
-export type Item = { i: number; r: Row; notes: string[] };
-// 처방 횟수와 주기로 하루 수행 시각을 만든다
-export const slotsOf = (r: Row) => Object.keys(r).filter(k => /^t\d+$/.test(k) && r[k]).sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
-const hhmm = (h: number) => `${String(h % 24).padStart(2, '0')}:00`;
-export function timesFor(r: Row, kind: 'med' | 'base' | 'lab'): string[] {
-  const nm = r.name || '';
-  const q = /q\s*\[?\s*(\d+)\s*\]?\s*hr/i.exec(nm);
-  if (q) { const n = Number(q[1]); if (n >= 1 && n <= 24) { const out: string[] = []; for (let h = 6; h < 30; h += n) out.push(hhmm(h)); return out; } }
-  if (kind === 'lab') return ['07:00'];
-  const c = Number((/(\d+)\s*회/.exec(r.cnt || '') || [])[1] || '1');
-  if (kind === 'base') return /BW|체중|weight/i.test(nm) ? ['07:00'] : ['09:00'];
-  const map: Record<number, number[]> = { 1: [9], 2: [9, 21], 3: [9, 13, 18], 4: [9, 13, 17, 21] };
-  return (map[c] || map[1]).map(hhmm);
-}
-
-export type Groups = { base: Item[]; med: Item[]; prn: Item[]; lab: Item[] };
-
-export function group(orders: Row[]): Groups {
-  const g: Groups = { base: [], med: [], prn: [], lab: [] };
-  let sec = '';
-  let last: Item | null = null;
-  orders.forEach((r, i) => {
-    if (r.kind === 'sec') { sec = r.name || ''; last = null; return; }
-    if (r.kind === 'memo') { last?.notes.push(r.name || r.text || ''); return; }
-    if (!(r.name || '').trim()) return;
-    const it: Item = { i, r, notes: [] };
-    last = it;
-    if (r.pri === 'PRN') g.prn.push(it);
-    else if (/검\s*사/.test(sec)) g.lab.push(it);
-    else if (isMed(r)) g.med.push(it);
-    else g.base.push(it);
-  });
-  return g;
-}
+export { slotsOf, timesFor, group } from '../ordday';
+export type { Item, Groups } from '../ordday';
 
 // 수술·시술·검사 예정마다 필요한 준비 항목. 해당 없으면 비어 있다.
 type CkGroup = { title: string; items: string[] };
@@ -264,7 +231,13 @@ export default function EhrNurse({
   const [pt, setPt] = useState('');
   const [hold, setHold] = useState<string | null>(null);
   const [holdNote, setHoldNote] = useState('');
-  const g = useMemo(() => group(data.orders), [data.orders]);
+  const todayStr = (() => { const t = vnow(); return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`; })();
+  const live = date === (i.slotDay || todayStr);
+  const vo = useMemo(() => viewOrders(data, date, todayStr), [data, date, todayStr]);
+  const g = useMemo(() => group(vo), [vo]);
+  const ordNotes = [...g.base, ...g.med, ...g.prn, ...g.lab].flatMap(it => it.notes).filter(n => n.replace('※', '').trim());
+  // 날이 바뀌면(가상 시계 포함) 지난 날의 수행 도장을 기록으로 옮기고 새 날을 비운다
+  useEffect(() => { if (i.slotDay && i.slotDay < todayStr) setData(d => rollover(d, todayStr)); }, [todayStr, i.slotDay]); // eslint-disable-line react-hooks/exhaustive-deps
   const wards = Array.from(new Set(roster.map(r => r.ward).filter((w): w is string => !!w)));
   const list = roster.filter(r => r.ward === ward && (team === '전체' || teamOf(r.bed) === team)).sort((a, b) => (a.bed || '').localeCompare(b.bed || '', 'ko', { numeric: true }));
   const flags = Array.from(new Set([...data.acu.map(r => r.risk), ...data.risk.filter(r => /고위험/.test(r.level || '')).map(r => (r.kind || '').split('(')[0])].filter(Boolean)));
@@ -448,7 +421,7 @@ export default function EhrNurse({
     w.print();
   };
   const head = () => `<h1>${esc(i.name || '')} (${esc(i.ageSex || '')}) · 환자번호 ${esc(i.ptNo || '')} · ${esc([i.ward, i.bed].filter(Boolean).join(' '))}</h1>`;
-  const printOrders = () => printDoc('처방출력', `${head()}<p>${date} 처방</p><table><tr><th>처방명</th><th>용량</th><th>경로</th><th>횟수</th></tr>${data.orders.filter(o => o.name).map(o => `<tr><td>${esc(o.name || '')}</td><td>${esc(o.dose || '')}</td><td>${esc(o.route || '')}</td><td>${esc(o.cnt || o.q || '')}</td></tr>`).join('')}</table>`);
+  const printOrders = () => printDoc('처방출력', `${head()}<p>${date} 처방</p><table><tr><th>처방명</th><th>용량</th><th>경로</th><th>횟수</th></tr>${vo.filter(o => o.name && o.kind !== 'sec' && o.kind !== 'memo' && o.kind !== 'hid').map(o => `<tr><td>${esc(o.name || '')}</td><td>${esc(o.dose || '')}</td><td>${esc(o.route || '')}</td><td>${esc(o.cnt || o.q || '')}</td></tr>`).join('')}</table>`);
   const printBed = () => printDoc('침상카드', `${head()}<div class="big">${esc(i.name || '')}</div><p>지정의 ${esc(i.doctor || '')} · 주치의 ${esc(i.attending || '')} · 진단 ${esc(dxMain ? dxMain.name : i.dx || '')}</p><p>알러지: ${esc(i.allergy || '없음')} · 격리: ${esc(i.iso || '없음')} · ${i.npo === '1' ? '금식' : ''}</p>${flags.map(f => `<span class="tag">${esc(f)}</span>`).join('')}`);
   const printWarn = () => printDoc('주의라벨', `${head()}${[...flags, ...(i.npo === '1' ? ['금식'] : []), ...(i.allergy && !/^(없음|무|none|-)$/i.test(i.allergy.trim()) ? [`알러지 ${i.allergy}`] : [])].map(f => `<span class="tag">${esc(f)}</span>`).join('') || '<p>주의 항목 없음</p>'}`);
 
@@ -469,7 +442,7 @@ export default function EhrNurse({
     const nv = Math.max(0, (Number(cur?.text) || 0) + delta);
     return { ...d, memos: nv > 0 ? [...rest, { type: 'flow', date, item: 'IV (mL)', hour: hh, text: String(nv), author: userName }] : rest };
   });
-  const patch = (idx: number, p: Row) => setData(d => ({ ...d, orders: d.orders.map((o, j) => (j === idx ? { ...o, ...p } : o)) }));
+  const patch = (idx: number, p: Row) => setData(d => ({ ...d, orders: d.orders.map((o, j) => (j === idx ? { ...o, ...p } : o)), info: d.info.slotDay ? d.info : { ...d.info, slotDay: todayStr } }));
   const slots = slotsOf;
   const perform = (it: Item) => {
     const used = slots(it.r);
@@ -506,11 +479,13 @@ export default function EhrNurse({
   };
   const [ordMsg, setOrdMsg] = useState('');
   const ask = (it: Item) => {
+    if (!live) { setOrdMsg('조회일이 오늘이 아니라 수행 처리할 수 없습니다'); return; }
     if (it.r.st === '추가') { setOrdMsg(`'${it.r.name}' 처방을 먼저 접수하세요`); return; }
     setOrdMsg('');
     if (isMed(it.r)) { setC5({}); setDbl(''); setPt(''); setHold(null); setHoldNote(''); setChk(it); } else perform(it);
   };
   const undo = (it: Item) => {
+    if (!live) { setOrdMsg('조회일이 오늘이 아니라 수행 취소할 수 없습니다'); return; }
     const used = slots(it.r);
     // 마지막 투약을 취소하면 Flowsheet Intake(IV)에서 같은 양을 뺀다
     if (used.length) { const ml = ivMl(it.r); const hh = (it.r[used[used.length - 1]] || '').slice(0, 2); if (ml > 0 && /^\d{2}$/.test(hh)) flowAdd(hh, -ml); }
@@ -841,7 +816,7 @@ export default function EhrNurse({
                 </section>
                 <section className="ns-nfsec memo">
                   <h4>처방 메모</h4>
-                  {(() => { const ms = data.orders.filter(o => o.kind === 'memo' && (o.name || '').replace('※', '').trim()); return ms.length ? <ul>{ms.map((o, k) => <li key={k}>{(o.name || '').replace(/^※\s*/, '')}</li>)}</ul> : <p className="ns-nnone">No data to display</p>; })()}
+                  {(() => { const ms = ordNotes; return ms.length ? <ul>{ms.map((o, k) => <li key={k}>{o.replace(/^※\s*/, '')}</li>)}</ul> : <p className="ns-nnone">No data to display</p>; })()}
                 </section>
                 <section className="ns-nfsec lab">
                   <h4>7일 내 미실시 검사</h4>
@@ -1154,7 +1129,7 @@ export default function EhrNurse({
                     <h4>간호진단 / 문제</h4>
                     {data.care.length === 0 ? <p className="ns-nnone">No data to display</p> : <ul>{data.care.map((c, k) => <li key={k}>{c.dx}</li>)}</ul>}
                     <h4>처방 메모</h4>
-                    {(() => { const ms = data.orders.filter(o => o.kind === 'memo' && (o.name || '').replace('※', '').trim()); return ms.length ? <ul>{ms.map((o, k) => <li key={k}>{o.name}</li>)}</ul> : <p className="ns-nnone">No data to display</p>; })()}
+                    {(() => { const ms = ordNotes; return ms.length ? <ul>{ms.map((o, k) => <li key={k}>{o}</li>)}</ul> : <p className="ns-nnone">No data to display</p>; })()}
                     <h4>7일 내 미실시 검사</h4>
                     <table className="ns-rt">
                       <thead><tr><th>검사명</th><th>채혈일</th><th>예약일시</th></tr></thead>
