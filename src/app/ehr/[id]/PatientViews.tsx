@@ -62,7 +62,7 @@ export function DxHist({ data }: { data: ChartData }) {
         <thead><tr><th>일자</th><th>구분</th><th>진료과</th><th>상병코드</th><th>상병명</th></tr></thead>
         <tbody>
           {all.map((r, k) => <tr key={k}><td>{d10(r.date)}</td><td><span className={`tg ${r.kind === '입원' ? 'in' : r.kind === '응급' ? 'er' : ''}`}>{r.kind || '외래'}</span></td><td>{dn(r.dept)}</td><td>{r.code}</td><td>{r.dx}</td></tr>)}
-          {all.length === 0 && <tr><td colSpan={5} className="none">상병이력이 없어요</td></tr>}
+          {all.length === 0 && <tr><td colSpan={5} className="none">No data to display</td></tr>}
         </tbody>
       </table>
       <h4>이번 입원 상병</h4>
@@ -70,7 +70,7 @@ export function DxHist({ data }: { data: ChartData }) {
         <thead><tr><th>구분</th><th>상병코드</th><th>상병명</th><th>진단일</th><th>진단의</th></tr></thead>
         <tbody>
           {dxs.map((r, k) => <tr key={k}><td className={r.kind === '주상병' ? 'mn' : ''}>{r.kind}</td><td>{r.code}</td><td>{r.name}</td><td>{d10(r.date)}</td><td>{r.doc}</td></tr>)}
-          {dxs.length === 0 && <tr><td colSpan={5} className="none">등록된 상병이 없어요</td></tr>}
+          {dxs.length === 0 && <tr><td colSpan={5} className="none">No data to display</td></tr>}
         </tbody>
       </table>
     </div>
@@ -88,7 +88,7 @@ export function SurgHist({ data }: { data: ChartData }) {
         <thead><tr><th>수술일자</th><th>경과</th><th>진료과</th><th>수술명</th><th>마취</th><th>비고</th></tr></thead>
         <tbody>
           {rows.map((r, k) => <tr key={k}><td>{d10(r.date)}</td><td>{pod(r.date)}</td><td>{dn(r.dept)}</td><td>{r.name}</td><td>{r.anes}</td><td>{r.note}</td></tr>)}
-          {rows.length === 0 && <tr><td colSpan={6} className="none">수술이력이 없어요</td></tr>}
+          {rows.length === 0 && <tr><td colSpan={6} className="none">No data to display</td></tr>}
         </tbody>
       </table>
       {data.info.pmh && (<><h4>과거력</h4><p style={{ margin: 0, whiteSpace: 'pre-wrap' }}>{data.info.pmh}</p></>)}
@@ -106,7 +106,7 @@ export function VaccHist({ data }: { data: ChartData }) {
         <thead><tr><th>접종일</th><th>백신</th><th>차수</th><th>접종부위</th><th>비고</th></tr></thead>
         <tbody>
           {rows.map((r, k) => <tr key={k}><td>{r.date}</td><td>{r.name}</td><td>{r.dose}</td><td>{r.site}</td><td>{r.note}</td></tr>)}
-          {rows.length === 0 && <tr><td colSpan={5} className="none">방종이력이 없어요</td></tr>}
+          {rows.length === 0 && <tr><td colSpan={5} className="none">No data to display</td></tr>}
         </tbody>
       </table>
     </div>

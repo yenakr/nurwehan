@@ -605,7 +605,7 @@ export default function EhrNurse({
             {parts.map(({ label, items, kind }) => (
               <Fragment key={label}>
                 <tr className="ns-ocb"><td colSpan={COLS}>▶ {label} ◀</td></tr>
-                {items.length === 0 && <tr><td colSpan={COLS} className="ns-nnone">처방이 없어요.</td></tr>}
+                {items.length === 0 && <tr><td colSpan={COLS} className="ns-nnone">No data to display</td></tr>}
                 {(kind === 'med' ? [...items].sort((a, b) => subOf(a.r) - subOf(b.r)) : items).map((it, idx, arr) => {
                   const r = it.r;
                   const subHead = kind === 'med' && (idx === 0 || subOf(arr[idx - 1].r) !== subOf(r)) ? <tr key={`sh${it.i}`} className="ns-subh"><td colSpan={COLS}>[{SUBS[subOf(r)]}]</td></tr> : null;
@@ -686,7 +686,7 @@ export default function EhrNurse({
             <button type="button" className="ns-ddbk" style={{ top: ddPos.top - 2 }} aria-label="닫기" onClick={() => { setCat(''); setMq(''); }} />
             <div className="ns-dd" style={{ left: ddPos.left, top: ddPos.top }}>
               {list.map(x => <button key={x.key} type="button" disabled={x.disabled} onClick={x.run}>{x.label}</button>)}
-              {list.length === 0 && <span className="ns-nnone">검색 결과가 없어요</span>}
+              {list.length === 0 && <span className="ns-nnone">No data to display</span>}
             </div>
           </>
         );
@@ -766,7 +766,7 @@ export default function EhrNurse({
           <div className="ns-nbox">
             <h4>진료메모</h4>
             {memoOf('진료메모').slice(-3).reverse().map((m, k) => <p key={k}>{m.text}<i>{(m.time || '').slice(-5)} {m.author}</i></p>)}
-            {memoOf('진료메모').length === 0 && <p className="ns-nnone">없음</p>}
+            {memoOf('진료메모').length === 0 && <p className="ns-nnone">No data to display</p>}
             <div className="ns-nsr">
               <input value={dmsg} onChange={e => setDmsg(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendDoc()} aria-label="진료메모" />
               <button type="button" onClick={sendDoc} disabled={!dmsg.trim()}>등록</button>
@@ -800,7 +800,7 @@ export default function EhrNurse({
                     <td>{r.bed}</td><td>{r.name}</td><td>{r.ptNo}</td><td>{r.doctor}</td>
                   </tr>
                 ))}
-                {list.length === 0 && <tr><td colSpan={4} className="ns-nnone">열어 둔 환자가 없어요</td></tr>}
+                {list.length === 0 && <tr><td colSpan={4} className="ns-nnone">No data to display</td></tr>}
               </tbody>
             </table>
           </div>
@@ -812,7 +812,7 @@ export default function EhrNurse({
                 <div><b>{h.date.slice(5)}</b> <em className={`k_${h.kind}`}>{h.kind}</em> {h.dept}<br /><span>{h.dx}</span></div>
               </div>
             ))}
-            {data.history.length === 0 && !i.admit && <p className="ns-nnone">이력 없음</p>}
+            {data.history.length === 0 && !i.admit && <p className="ns-nnone">No data to display</p>}
           </div>
         </aside>
 
@@ -827,17 +827,17 @@ export default function EhrNurse({
             </div>
             {figOpen && (<>
               <BodyFig dots={bodyDots(data)} width={206} />
-              <div className="ns-figl">{bodyDots(data).length ? bodyDots(data).map((d, k) => <span key={k}><i style={{ background: d.c }} />{d.t}</span>) : <span className="ns-nnone">삽입물·상처 없음</span>}</div>
+              <div className="ns-figl">{bodyDots(data).length ? bodyDots(data).map((d, k) => <span key={k}><i style={{ background: d.c }} />{d.t}</span>) : <span className="ns-nnone">No data to display</span>}</div>
               <div className="ns-nfs">
                 <h4>간호진단 / 문제</h4>
-                {data.care.length === 0 ? <p className="ns-nnone">없음</p> : <ul>{data.care.map((c, k) => <li key={k}>{c.dx}</li>)}</ul>}
+                {data.care.length === 0 ? <p className="ns-nnone">No data to display</p> : <ul>{data.care.map((c, k) => <li key={k}>{c.dx}</li>)}</ul>}
                 <h4>처방 메모</h4>
-                {(() => { const ms = data.orders.filter(o => o.kind === 'memo' && (o.name || '').replace('※', '').trim()); return ms.length ? <ul>{ms.map((o, k) => <li key={k}>{o.name}</li>)}</ul> : <p className="ns-nnone">없음</p>; })()}
+                {(() => { const ms = data.orders.filter(o => o.kind === 'memo' && (o.name || '').replace('※', '').trim()); return ms.length ? <ul>{ms.map((o, k) => <li key={k}>{o.name}</li>)}</ul> : <p className="ns-nnone">No data to display</p>; })()}
                 <h4>7일 내 미실시 검사</h4>
                 {(() => {
                   const labs = g.lab.filter(it => it.r.st !== '완료' && it.r.st !== '집계완료' && it.r.pri !== 'D/C');
                   const ap = data.appts.filter(a2 => a2.st !== '취소' && a2.st !== '진료완료');
-                  return labs.length + ap.length === 0 ? <p className="ns-nnone">없음</p> : (
+                  return labs.length + ap.length === 0 ? <p className="ns-nnone">No data to display</p> : (
                     <ul>
                       {labs.map((it, k) => <li key={`l${k}`}>{it.r.name}<i>{it.r.t1 || date}</i></li>)}
                       {ap.map((a2, k) => <li key={`a${k}`}>{a2.purpose || a2.dept}<i>{a2.date} {a2.time}</i></li>)}
@@ -864,7 +864,7 @@ export default function EhrNurse({
         </main>
 
         <aside className="ns-nr">
-          {cl.length === 0 && <div className="ns-nbox"><h4>체크리스트</h4><p className="ns-nnone">예정된 수술·시술·검사 준비 항목이 없어요</p></div>}
+          {cl.length === 0 && <div className="ns-nbox"><h4>체크리스트</h4><p className="ns-nnone">No data to display</p></div>}
           {cl.map(g => (
             <div key={g.title} className="ns-nbox">
               <h4>체크리스트 · {g.title}</h4>
@@ -881,7 +881,7 @@ export default function EhrNurse({
               <thead><tr>{(rt === 'meal' ? ['구분', '식이', '시작일', '종료일'] : rt === 'sched' ? ['시간', '구분', '내용'] : rt === 'cons' ? ['의뢰일자', '회신과', '회신의', '실시일자'] : ['예약일', '진료과', '의사']).map(h => <th key={h}>{h}</th>)}</tr></thead>
               <tbody>
                 {(rt === 'meal' ? data.dietord.map(r => [r.kind || '환자', r.type, r.start, r.end]) : rt === 'sched' ? data.sched.map(r => [r.time, r.kind, r.name]) : rt === 'cons' ? data.consult.map(r => [r.date, r.rdept, r.rdoc, r.perf]) : data.appts.map(r => [r.date, r.dept, r.doc])).map((r, k) => <tr key={k}>{r.map((c, j) => <td key={j}>{c || ''}</td>)}</tr>)}
-                {(rt === 'meal' ? data.dietord : rt === 'sched' ? data.sched : rt === 'cons' ? data.consult : data.appts).length === 0 && <tr><td colSpan={4} className="ns-nnone">없음</td></tr>}
+                {(rt === 'meal' ? data.dietord : rt === 'sched' ? data.sched : rt === 'cons' ? data.consult : data.appts).length === 0 && <tr><td colSpan={4} className="ns-nnone">No data to display</td></tr>}
               </tbody>
             </table>
           </div>
@@ -988,7 +988,7 @@ export default function EhrNurse({
                           <td>{isToday && t.state !== '완료' && t.first && t.label !== '검사' && <button type="button" className="ns-go" onClick={() => ask(t.it)}>수행</button>}</td>
                         </tr>
                       ))}
-                      {todo.length === 0 && <tr><td colSpan={5} className="ns-nnone">할 일이 없어요</td></tr>}
+                      {todo.length === 0 && <tr><td colSpan={5} className="ns-nnone">No data to display</td></tr>}
                     </tbody>
                   </table>
                 ) : (
@@ -1003,7 +1003,7 @@ export default function EhrNurse({
                           <td>{t.p.id && t.p.name !== i.name && <button type="button" className="ns-go" onClick={() => router.push(`/ehr/${t.p.id}`)}>열기</button>}</td>
                         </tr>
                       ))}
-                      {wardTodo.length === 0 && <tr><td colSpan={7} className="ns-nnone">남은 할 일이 없어요</td></tr>}
+                      {wardTodo.length === 0 && <tr><td colSpan={7} className="ns-nnone">No data to display</td></tr>}
                     </tbody>
                   </table>
                 )}
@@ -1040,7 +1040,7 @@ export default function EhrNurse({
                       <thead><tr>{['병실', '환자번호', '환자명', '종류', '투약구분', '처방명', '용량', '용법'].map(h => <th key={h}>{h}</th>)}</tr></thead>
                       <tbody>
                         {rows.map(([k, it], n) => <tr key={n}><td>{[i.ward, i.bed].filter(Boolean).join(' ')}</td><td>{i.ptNo}</td><td>{i.name}</td><td>{k}</td><td>{kindOf(it.r)}</td><td>{it.r.name}</td><td>{it.r.dose}{it.r.unit}</td><td>{[it.r.route, it.r.cnt || it.r.q].filter(Boolean).join(' ')}</td></tr>)}
-                        {rows.length === 0 && <tr><td colSpan={8} className="ns-nnone">없음</td></tr>}
+                        {rows.length === 0 && <tr><td colSpan={8} className="ns-nnone">No data to display</td></tr>}
                       </tbody>
                     </table>
                     <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: 10, fontSize: 12.5 }}>
@@ -1114,8 +1114,8 @@ export default function EhrNurse({
                 <div className="ns-fl-b">
                   {([['obs', '임상관찰'], ['state', '간호상태'], ['lab', 'LAB']] as const).map(([k, l]) => <button key={k} type="button" className={fTab === k ? 'ns-on' : ''} onClick={() => setFTab(k)}>{l}</button>)}
                 </div>
-                {fTab === 'state' && <div className="ns-fl-x">{data.care.length ? data.care.map((c, k) => <p key={k}>{c.dx}</p>) : <p className="ns-nnone">간호과정 없음</p>}</div>}
-                {fTab === 'lab' && <div className="ns-fl-x">{data.labs.length ? data.labs.slice(0, 12).map((l, k) => <p key={k}>{l.name} {l.value} {l.unit}</p>) : <p className="ns-nnone">검사결과 없음</p>}</div>}
+                {fTab === 'state' && <div className="ns-fl-x">{data.care.length ? data.care.map((c, k) => <p key={k}>{c.dx}</p>) : <p className="ns-nnone">No data to display</p>}</div>}
+                {fTab === 'lab' && <div className="ns-fl-x">{data.labs.length ? data.labs.slice(0, 12).map((l, k) => <p key={k}>{l.name} {l.value} {l.unit}</p>) : <p className="ns-nnone">No data to display</p>}</div>}
               </div>
             ) : w === 'overview' ? (
               (() => {
@@ -1125,29 +1125,29 @@ export default function EhrNurse({
                   <div className="ns-ov">
                     <BodyFig dots={dots} width={300} />
                     <div>
-                      <div className="ns-nflags">{flags.length ? flags.map(f => <em key={f}>{f}</em>) : <em>위험 태그 없음</em>}</div>
+                      <div className="ns-nflags">{flags.length ? flags.map(f => <em key={f}>{f}</em>) : <em>No flags</em>}</div>
                       <h4>간호진단 · {data.care.length}문제</h4>
                       {data.care.map((c, k) => <p key={k}>{c.dx}</p>)}
                       <h4>삽입물·라인</h4>
                       {data.lines.filter(l => l.st !== '제거').map((l, k) => <p key={k}>{l.kind} {l.site} {l.ins && `(${l.ins})`}</p>)}
-                      {data.lines.filter(l => l.st !== '제거').length === 0 && <p className="ns-nnone">없음</p>}
+                      {data.lines.filter(l => l.st !== '제거').length === 0 && <p className="ns-nnone">No data to display</p>}
                       <h4>상처·욕창</h4>
                       {data.wounds.map((w, k) => <p key={k}>{w.kind} {w.site}</p>)}
-                      {data.wounds.length === 0 && <p className="ns-nnone">없음</p>}
+                      {data.wounds.length === 0 && <p className="ns-nnone">No data to display</p>}
                     </div>
                   </div>
                   <div className="ns-ovd">
                     <h4>간호진단 / 문제</h4>
-                    {data.care.length === 0 ? <p className="ns-nnone">등록된 간호진단이 없어요</p> : <ul>{data.care.map((c, k) => <li key={k}>{c.dx}</li>)}</ul>}
+                    {data.care.length === 0 ? <p className="ns-nnone">No data to display</p> : <ul>{data.care.map((c, k) => <li key={k}>{c.dx}</li>)}</ul>}
                     <h4>처방 메모</h4>
-                    {(() => { const ms = data.orders.filter(o => o.kind === 'memo' && (o.name || '').replace('※', '').trim()); return ms.length ? <ul>{ms.map((o, k) => <li key={k}>{o.name}</li>)}</ul> : <p className="ns-nnone">없음</p>; })()}
+                    {(() => { const ms = data.orders.filter(o => o.kind === 'memo' && (o.name || '').replace('※', '').trim()); return ms.length ? <ul>{ms.map((o, k) => <li key={k}>{o.name}</li>)}</ul> : <p className="ns-nnone">No data to display</p>; })()}
                     <h4>7일 내 미실시 검사</h4>
                     <table className="ns-rt">
                       <thead><tr><th>검사명</th><th>채혈일</th><th>예약일시</th></tr></thead>
                       <tbody>
                         {g.lab.filter(it => it.r.st !== '완료' && it.r.st !== '집계완료' && it.r.pri !== 'D/C').map((it, k) => <tr key={`l${k}`}><td>{it.r.name}</td><td>{date}</td><td>{it.r.t1 || ''}</td></tr>)}
                         {data.appts.filter(a2 => a2.st !== '취소' && a2.st !== '진료완료').map((a2, k) => <tr key={`a${k}`}><td>{a2.purpose || a2.dept}</td><td /><td>{a2.date} {a2.time}</td></tr>)}
-                        {g.lab.filter(it => it.r.st !== '완료' && it.r.st !== '집계완료').length === 0 && data.appts.length === 0 && <tr><td colSpan={3} className="ns-nnone">없음</td></tr>}
+                        {g.lab.filter(it => it.r.st !== '완료' && it.r.st !== '집계완료').length === 0 && data.appts.length === 0 && <tr><td colSpan={3} className="ns-nnone">No data to display</td></tr>}
                       </tbody>
                     </table>
                   </div>
@@ -1174,7 +1174,7 @@ export default function EhrNurse({
                       <thead><tr><th>병동</th><th>병상</th><th>환자명</th><th>환자번호</th><th>주치의</th></tr></thead>
                       <tbody>
                         {rows.slice().sort((a, b) => `${a.ward || ''}${a.bed || ''}`.localeCompare(`${b.ward || ''}${b.bed || ''}`, 'ko', { numeric: true })).map(r => <tr key={r.ptNo + t} style={{ cursor: r.id ? 'pointer' : 'default' }} onClick={() => r.id && router.push(`/ehr/${r.id}`)}><td>{r.ward}</td><td>{r.bed}</td><td>{r.name}</td><td>{r.ptNo}</td><td>{r.doctor}</td></tr>)}
-                        {rows.length === 0 && <tr><td colSpan={5} className="ns-nnone">없음</td></tr>}
+                        {rows.length === 0 && <tr><td colSpan={5} className="ns-nnone">No data to display</td></tr>}
                       </tbody>
                     </table>
                   </div>
@@ -1306,6 +1306,11 @@ export default function EhrNurse({
         .ns-nhi { color: #b91c1c !important; }
         .ns-alone { color: #1d4ed8 !important; }
         .ns-fl { position: relative; padding: 10px 12px; position: relative; }
+        .ns-nbox button, .ns-nmenu button, .ns-fl-b button, .ns-nwin button, .ns-ntabs button, .ns-ngrp button, .ns-nf button, .ns-dd button { white-space: nowrap; word-break: keep-all; }
+        .ns-fl-b { display: flex; flex-wrap: wrap; gap: 4px; }
+        .ns-fl-b button { flex: 0 0 auto; }
+        .ns-rt th, .ns-nwin th { white-space: nowrap; }
+        .ns-nbox h4, .ns-nf h4, .ns-nwin header { word-break: keep-all; }
         .ns-rt { min-width: 0 !important; width: 100%; border-collapse: collapse; font-size: 12px; margin-top: 6px; }
         .ns-rt th, .ns-rt td { border: 1px solid var(--border); padding: 3px 5px; text-align: left; }
         .ns-rt th { background: #f6f8fb; }

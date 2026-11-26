@@ -254,7 +254,7 @@ export default function NurseForm({ kind, data, setData, userName }: Props) {
               {kind === 'nact' && <><td>{r.time}</td><td>{r.act}</td><td>{r.mat}</td><td>{r.by}</td><td>{r.st}</td></>}
             </tr>
           ))}
-          {recent.length === 0 && <tr><td colSpan={8} className="nf-none">기록 없음</td></tr>}
+          {recent.length === 0 && <tr><td colSpan={8} className="nf-none">No data to display</td></tr>}
         </tbody>
       </table>
 

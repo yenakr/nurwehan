@@ -82,7 +82,7 @@ export default function LabResults({ data, setData, userName }: Props) {
                   <td>{r.time ? `${md(r.time)} ${addMin(hmOf(r.time), -30)}` : ''}</td><td>{r.value ? '조회 가능' : ''}</td>
                 </tr>
               ))}
-              {data.labs.length === 0 && <tr><td colSpan={6} className="none">검사 처방이 없어요</td></tr>}
+              {data.labs.length === 0 && <tr><td colSpan={6} className="none">No data to display</td></tr>}
             </tbody>
           </table>
         </div>
@@ -115,7 +115,7 @@ export default function LabResults({ data, setData, userName }: Props) {
                     </tr>
                   );
                 })}
-                {rows.length === 0 && <tr><td colSpan={13} className="none">{done.length ? '조회된 결과가 없어요' : '검사결과 없음'}</td></tr>}
+                {rows.length === 0 && <tr><td colSpan={13} className="none">No data to display</td></tr>}
               </tbody>
             </table>
           </div>
@@ -136,7 +136,7 @@ export default function LabResults({ data, setData, userName }: Props) {
                   </tr>
                 );
               })}
-              {names.length === 0 && <tr><td colSpan={2 + dates.length} className="none">검사결과 없음</td></tr>}
+              {names.length === 0 && <tr><td colSpan={2 + dates.length} className="none">No data to display</td></tr>}
             </tbody>
           </table>
         </div>

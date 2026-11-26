@@ -601,7 +601,7 @@ function CareComposer({ onAdd }: { onAdd: (r: Row) => void }) {
         <table>
           <thead><tr><th>간호진단</th><th>영문</th><th>영역</th></tr></thead>
           <tbody>
-            {dxRows.length === 0 && <tr><td colSpan={3} className="hint">일치하는 진단이 없어요</td></tr>}
+            {dxRows.length === 0 && <tr><td colSpan={3} className="hint">No data to display</td></tr>}
             {dxRows.map(r => (
               <tr key={r.ko} className={dx === r.ko ? 'on' : ''} onClick={() => setDx(r.ko)}>
                 <td>{r.ko}{r.tpl && <b>예시 문구</b>}</td><td className="en">{r.en}</td><td className="dm">{r.dom}</td>
@@ -919,7 +919,7 @@ export default function EhrEditor({
           </thead>
           <tbody>
             {rows.length === 0 && (
-              <tr><td colSpan={cols.length + 1} className="none">내용이 없어요</td></tr>
+              <tr><td colSpan={cols.length + 1} className="none">No data to display</td></tr>
             )}
             {rows.map((row, i) => {
               if (keep && !keep(row)) return null;
@@ -987,7 +987,7 @@ export default function EhrEditor({
                     </tr>
                   </thead>
                   <tbody>
-                    {orders.length === 0 && <tr><td colSpan={16} className="none">처방이 없어요</td></tr>}
+                    {orders.length === 0 && <tr><td colSpan={16} className="none">No data to display</td></tr>}
                     {orders.map((r, i) => {
                       if (r.kind === 'sec') {
                         return (

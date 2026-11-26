@@ -75,7 +75,7 @@ export default function ConsentPanel({ rows, dept, onChange }: { rows: Row[]; de
         .cs .warn { color: #b91c1c; font-weight: 700; font-size: 13px; }
       `}</style>
       <div className="tp">{CONSENT_TPL.map(t => <button key={t.name} type="button" onClick={() => add(t)}>+ {t.name}</button>)}</div>
-      {rows.length === 0 && <p style={{ color: 'var(--sub-text)', fontSize: 13 }}>동의서가 없어요. 위에서 서식을 골라 추가하세요.</p>}
+      {rows.length === 0 && <p style={{ color: 'var(--sub-text)', fontSize: 13 }}>No data to display</p>}
       {rows.map((r, i) => {
         const t = CONSENT_TPL.find(x => x.name === r.name);
         const done = r.st === '서명완료';
