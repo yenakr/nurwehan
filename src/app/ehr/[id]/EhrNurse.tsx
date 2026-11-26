@@ -80,11 +80,11 @@ const SUBS = ['먹는약', '주사약', '기타'];
 const subOf = (r: Row) => (/주사|IV|IM|SC|inj/i.test(`${r.route || ''}`) ? 1 : /PO|경구/i.test(r.route || '') ? 0 : 2);
 const isMed = (r: Row) => (r.dose || r.route) && !/^check/i.test(r.name || '');
 
-type Item = { i: number; r: Row; notes: string[] };
+export type Item = { i: number; r: Row; notes: string[] };
 // 처방 횟수와 주기로 하루 수행 시각을 만든다
-const slotsOf = (r: Row) => Object.keys(r).filter(k => /^t\d+$/.test(k) && r[k]).sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
+export const slotsOf = (r: Row) => Object.keys(r).filter(k => /^t\d+$/.test(k) && r[k]).sort((a, b) => Number(a.slice(1)) - Number(b.slice(1)));
 const hhmm = (h: number) => `${String(h % 24).padStart(2, '0')}:00`;
-function timesFor(r: Row, kind: 'med' | 'base' | 'lab'): string[] {
+export function timesFor(r: Row, kind: 'med' | 'base' | 'lab'): string[] {
   const nm = r.name || '';
   const q = /q\s*\[?\s*(\d+)\s*\]?\s*hr/i.exec(nm);
   if (q) { const n = Number(q[1]); if (n >= 1 && n <= 24) { const out: string[] = []; for (let h = 6; h < 30; h += n) out.push(hhmm(h)); return out; } }
@@ -95,9 +95,9 @@ function timesFor(r: Row, kind: 'med' | 'base' | 'lab'): string[] {
   return (map[c] || map[1]).map(hhmm);
 }
 
-type Groups = { base: Item[]; med: Item[]; prn: Item[]; lab: Item[] };
+export type Groups = { base: Item[]; med: Item[]; prn: Item[]; lab: Item[] };
 
-function group(orders: Row[]): Groups {
+export function group(orders: Row[]): Groups {
   const g: Groups = { base: [], med: [], prn: [], lab: [] };
   let sec = '';
   let last: Item | null = null;

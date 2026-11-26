@@ -1,6 +1,7 @@
 'use client';
 
-import { vnow, realNow, parseV, setVOffset } from '../vclock';
+import { vnow, realNow, offsetOf, clockFresh, setVOffset } from '../vclock';
+import { applyPda } from '../pda';
 import VClock from './VClock';
 import { findPhi } from '../phi';
 import { useEffect, useRef, useState } from 'react';
@@ -765,9 +766,24 @@ export default function EhrEditor({
 
   const info = data.info;
   const startRef = useRef(realNow());
-  const vbN = parseV(info.vbase);
-  setVOffset(vbN != null ? vbN - startRef.current : 0);
-  const setClock = (v: string) => { startRef.current = realNow(); setData(d => ({ ...d, info: { ...d.info, vbase: v } })); };
+  setVOffset(offsetOf(info, startRef.current));
+  const setClock = (v: string) => { startRef.current = realNow(); setData(d => ({ ...d, info: { ...d.info, vbase: v, vreal: String(realNow()) } })); };
+  // 열 때 가상 시계가 오래됐으면 시나리오 시각에서 다시 시작한다 (PDA 등 다른 기기와 같은 시각을 보도록 vreal을 남긴다)
+  useEffect(() => { if (info.vbase && !clockFresh(info)) setClock(info.vbase.slice(0, 16)); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+  // PDA에서 수행한 투약을 PC 화면에 반영한다
+  useEffect(() => {
+    let alive = true;
+    const pull = async () => {
+      try {
+        const r = await fetch(`/api/ehr/${id}/pda?events=1`, { cache: 'no-store' });
+        if (!r.ok || !alive) return;
+        const j = await r.json() as { pda?: Record<string, string>[] };
+        setData(d => { const miss = (j.pda || []).filter(e => !(d.pda || []).some(x => x.id === e.id)); return miss.length ? miss.reduce((a, e) => applyPda(a, e), d) : d; });
+      } catch { /* 오프라인이면 다음 주기에 다시 */ }
+    };
+    const t = setInterval(pull, 7000);
+    return () => { alive = false; clearInterval(t); };
+  }, [id]);
   const locked = !!info.submitted;
   const toggleAi = () => {
     const v = !aiOn;
@@ -1220,6 +1236,7 @@ export default function EhrEditor({
   const navBtns = (
     <>
         <button type="button" className="back" onClick={() => router.push(`/ehr?view=${encodeURIComponent(info.ward === '응급실' ? '응급' : info.ward || '')}`)}>&larr; {info.ward === '응급실' ? '응급' : info.ward || '목록'}</button>
+        <button type="button" className="back" onClick={() => router.push('/ehr/pda')} title="바코드·QR로 투약 확인하는 PDA 화면">PDA</button>
           <button type="button" className="back" onClick={() => { setWin(null); setScreen(screen === 'main' ? 'chart' : 'main'); }}>{screen === 'main' ? '전체 차트' : '간호 화면'}</button>
     </>
   );
@@ -1290,13 +1307,13 @@ export default function EhrEditor({
           drawer={tabBody}
           nav={navBtns}
           actions={[
-            { label: '네임지 출력', run: () => printNameTag(info) },
-            ...(['투약', '주사', '수액'] as const).map(k => ({ label: `${k} 티켓 출력`, run: () => printTickets(data, k as TicketKind) })),
+            { label: '네임지 출력', run: () => printNameTag(info, id) },
+            ...(['투약', '주사', '수액'] as const).map(k => ({ label: `${k} 티켓 출력`, run: () => printTickets(data, k as TicketKind, id) })),
             { label: '차트 인쇄', run: () => { if (!printChart(title, data, userName || '')) notify('팝업을 허용해 주세요.'); } },
             { label: info.discharged ? '퇴원 취소' : '퇴원', run: () => toggleDischarge(), disabled: locked },
           ]}
           onChart={() => setScreen('chart')}
-          onLabel={() => printTickets(data, '전체')}
+          onLabel={() => printTickets(data, '전체', id)}
         />
       ) : (
       <div className="shell">
