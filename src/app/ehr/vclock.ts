@@ -11,3 +11,12 @@ export const parseV = (s?: string): number | null => {
 };
 export const fmtV = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())} ${p2(d.getHours())}:${p2(d.getMinutes())}`;
 export const toInput = (d: Date) => fmtV(d).replace(' ', 'T');
+
+// 기기(PC·PDA)가 같은 가상 시각을 보도록, 설정 시 실제 시각(vreal)을 함께 저장한다. 12시간이 지나면 시나리오 시각에서 다시 시작한다.
+export const VFRESH_MS = 12 * 3600 * 1000;
+export const clockFresh = (info: Record<string, string>) => { const r = Number(info.vreal); return !!parseV(info.vbase) && !!r && realNow() - r < VFRESH_MS && realNow() >= r; };
+export const offsetOf = (info: Record<string, string>, fallbackStart: number) => {
+  const b = parseV(info.vbase);
+  if (b == null) return 0;
+  return b - (clockFresh(info) ? Number(info.vreal) : fallbackStart);
+};
