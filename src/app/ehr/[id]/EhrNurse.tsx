@@ -8,7 +8,7 @@ import LabResults from './LabResults';
 import OrderCompare from './OrderCompare';
 import NursingRecord from './NursingRecord';
 import { labTestsFor, resolveLabs } from '../labref';
-import { PatInfo, DxHist, SurgHist, VaccHist } from './PatientViews';
+import { PatInfo, DxHist, SurgHist, VaccHist, QrView } from './PatientViews';
 import { StaffWin, DocReqWin, RichMemo } from './NurseExtras';
 import { DEPTS, buildDirectory } from '../directory';
 import { confirmDialog } from '@/components/Dialog';
@@ -43,6 +43,7 @@ const MENUS: { id: string; label: string }[] = [
   { id: 'dir', label: '원내번호조회' },
   { id: 'staff', label: '의료진 · Notify' },
   { id: 'patinfo', label: '환자정보' },
+  { id: 'qr', label: 'QR 보기 (팔찌·약포지)' },
   { id: 'dxhist', label: '상병이력' },
   { id: 'surghist', label: '수술이력' },
   { id: 'vacc', label: '방종이력' },
@@ -53,7 +54,7 @@ const CATS: { name: string; items: string[] }[] = [
   { name: '환자선택', items: [] },
   { name: '정보조회', items: ['todo', 'overview', 'labres', 'patinfo', 'dxhist', 'surghist', 'vacc', 'dir'] },
   { name: '의사소통', items: ['consult', 'docreq', 'staff'] },
-  { name: '출력·퇴원', items: [] },
+  { name: '출력·퇴원', items: ['qr'] },
   { name: '기록', items: ['notes', 'labres', 'flowsheet', 'vitals', 'bst', 'nurseinfo', 'care', 'nact', 'mat', 'memos'] },
   { name: '처방', items: ['medrec', 'ret'] },
   { name: '예약', items: ['adm', 'discharge'] },
@@ -175,32 +176,36 @@ function todoOf(g: Groups, duty: string, isToday: boolean): Todo[] {
 
 
 type Dot = { v: 'front' | 'back'; x: number; y: number; c: string; t: string };
-// 좌표는 한 쪽 그림(폭 220 × 높이 480) 기준. 앞면에서는 환자의 오른쪽이 화면 왼쪽, 뒷면은 반대.
+// 좌표는 신체 그림 이미지(앞면 224×480) 픽셀 기준: 실제 실루엣을 측정해 정했다.
+// 앞면에서는 환자의 오른쪽(Rt.)이 화면 왼쪽, 뒷면은 좌우가 반대라 가운데(112)를 기준으로 뒤집는다.
 function bodyPlace(kind: string, site: string): { v: 'front' | 'back'; x: number; y: number } {
   const t = `${kind} ${site}`;
   const R = /우|rt|right/i.test(site), L = /좌|lt|left/i.test(site);
   const back = /천골|엉덩|sacr|둔|회음|(?<!손)등|배면|견갑|후두|뒤꿈치|발뒤꿈|heel|back|occip/i.test(t) && !/foley|도뇨|요도/i.test(t);
-  const sx = (x: number) => (back ? 220 - x : x); // 뒷면은 좌우 반전
+  const sx = (x: number) => (back ? 223 - x : x);
   const side = (r: number, l: number, mid: number) => (R ? r : L ? l : mid);
   const at = (x: number, y: number) => ({ v: back ? ('back' as const) : ('front' as const), x: sx(x), y });
-  if (/foley|도뇨|요도|방광|urethra|bladder/i.test(t)) return at(110, 270);
-  if (/l-tube|ng tube|비위관|경관|nasogastric|위관/i.test(t)) return at(110, 56);
-  if (/t-cannula|tracheo|기관/i.test(t)) return at(110, 96);
-  if (/chest tube|흉관/i.test(t)) return at(side(78, 142, 110), 168);
-  if (/후두|occip/i.test(t)) return at(110, 36);
-  if (/두|머리|head|비강|코|얼굴/i.test(t)) return at(110, 40);
-  if (/central|c-line|중심정맥|picc|port|쇄골|경부|목|jugular|subclav/i.test(t)) return at(side(90, 130, 110), 102);
-  if (/천골|sacr|엉덩|둔/i.test(t)) return at(110, 272);
-  if (/회음/i.test(t)) return at(110, 290);
-  if (/(?<!손)등|배면|견갑|back/i.test(t)) return at(110, 175);
-  if (/흉|가슴|chest/i.test(t)) return at(side(82, 138, 110), 145);
-  if (/복|abd|jp|drain|배액|위루|장루|stoma|배꼽/i.test(t)) return at(side(86, 134, 110), 215);
-  if (/손|수부|hand|손목|wrist/i.test(t)) return at(side(30, 190, 30), 300);
-  if (/전완|팔|상지|arm|iv|정맥|말초|peripheral|a-line|동맥|주관절/i.test(t)) return at(side(45, 175, 45), 235);
-  if (/뒤꿈치|발뒤꿈|heel/i.test(t)) return at(side(92, 128, 92), 455);
-  if (/발|foot|족/i.test(t)) return at(side(92, 128, 92), 455);
-  if (/대퇴|허벅|무릎|다리|하지|leg|thigh|knee/i.test(t)) return at(side(90, 130, 90), 360);
-  return at(side(86, 134, 110), 190);
+  if (/foley|도뇨|요도|방광|urethra|bladder/i.test(t)) return at(112, 264);
+  if (/l-tube|ng tube|비위관|경관|nasogastric|위관/i.test(t)) return at(112, 54);
+  if (/t-cannula|tracheo|기관/i.test(t)) return at(112, 84);
+  if (/chest tube|흉관/i.test(t)) return at(side(86, 138, 112), 160);
+  if (/후두|occip/i.test(t)) return at(112, 34);
+  if (/두|머리|head|비강|코|얼굴/i.test(t)) return at(112, 40);
+  if (/central|c-line|중심정맥|picc|port|쇄골|경부|목|jugular|subclav/i.test(t)) return at(side(92, 132, 112), 98);
+  if (/천골|sacr|엉덩|둔/i.test(t)) return at(112, 258);
+  if (/회음/i.test(t)) return at(112, 284);
+  if (/견갑/i.test(t)) return at(side(92, 132, 112), 130);
+  if (/(?<!손)등|배면|back/i.test(t)) return at(112, 165);
+  if (/흉|가슴|chest/i.test(t)) return at(side(92, 132, 112), 145);
+  if (/복|abd|jp|drain|배액|위루|장루|stoma|배꼽/i.test(t)) return at(side(98, 126, 112), /하복|suprapubic|치골/i.test(t) ? 238 : /상복|epigas|명치/i.test(t) ? 190 : 214);
+  if (/손|수부|hand|손목|wrist/i.test(t)) return at(side(28, 196, 28), 268);
+  if (/전완|팔|상지|arm|iv|정맥|말초|peripheral|a-line|동맥|주관절/i.test(t)) return at(side(48, 176, 48), 205);
+  if (/뒤꿈치|발뒤꿈|heel/i.test(t)) return at(side(75, 160, 75), 456);
+  if (/발|foot|족/i.test(t)) return at(side(75, 160, 75), 458);
+  if (/무릎|knee/i.test(t)) return at(side(86, 147, 86), 395);
+  if (/대퇴|허벅|thigh/i.test(t)) return at(side(89, 142, 89), 335);
+  if (/다리|하지|종아리|leg|calf/i.test(t)) return at(side(87, 147, 87), 430);
+  return at(side(98, 126, 112), 214);
 }
 const lr = (x: string) => x.replace(/우측\s*/g, 'Rt. ').replace(/좌측\s*/g, 'Lt. ').replace(/양측\s*/g, 'Both ');
 export function bodyDots(data: ChartData): Dot[] {
@@ -224,12 +229,13 @@ function BodyFig({ dots, width }: { dots: Dot[]; width: number }) {
 }
 
 export default function EhrNurse({
-  data, setData, userName, roster, win, onOpen, onClose, drawer, nav, actions, onChart, onLabel,
+  data, setData, userName, roster, caseId, win, onOpen, onClose, drawer, nav, actions, onChart, onLabel,
 }: {
   data: ChartData;
   setData: Dispatch<SetStateAction<ChartData>>;
   userName: string;
   roster: Roster[];
+  caseId: string;
   win: string | null;
   onOpen: (id: string) => void;
   onClose: () => void;
@@ -317,7 +323,7 @@ export default function EhrNurse({
   const [mq, setMq] = useState('');
   const [figOpen, setFigOpen] = useState(true);
   const [win2, setWin2] = useState<string | null>(null);
-  const OWN = ['todo', 'notes', 'patinfo', 'dxhist', 'surghist', 'vacc', 'labres', 'medrec', 'flowsheet', 'overview', 'adm', 'dir', 'bulk', 'staff', 'docreq', 'vitals', 'bst', 'mat', 'nact'];
+  const OWN = ['todo', 'notes', 'patinfo', 'dxhist', 'surghist', 'vacc', 'labres', 'medrec', 'flowsheet', 'overview', 'adm', 'dir', 'bulk', 'staff', 'docreq', 'vitals', 'bst', 'mat', 'nact', 'qr'];
   const [ddPos, setDdPos] = useState<{ left: number; top: number } | null>(null);
   const place = (el: HTMLElement) => { const r = el.getBoundingClientRect(); setDdPos({ left: Math.max(4, Math.min(r.left, window.innerWidth - 190)), top: r.bottom + 2 }); };
   const [tabs, setTabs] = useState<string[]>([]);
@@ -679,7 +685,7 @@ export default function EhrNurse({
         const list: { key: string; label: string; disabled?: boolean; run: () => void }[] = mq.trim()
           ? MENUS.filter(m => m.label.includes(mq.trim())).map(m => ({ key: m.id, label: m.label, run: () => { openMenu(m.id); setMq(''); setCat(''); } }))
           : cat === '출력·퇴원'
-            ? (actions || []).map(a => ({ key: a.label, label: a.label, disabled: a.disabled, run: () => { a.run(); setCat(''); } }))
+            ? [...ms(['qr']).map(m => ({ key: m.id, label: m.label, run: () => { openMenu(m.id); setCat(''); } })), ...(actions || []).map(a => ({ key: a.label, label: a.label, disabled: a.disabled, run: () => { a.run(); setCat(''); } }))]
             : (cat === '최근사용' ? ms(recent) : ms(CATS.find(c => c.name === cat)?.items || [])).map(m => ({ key: m.id, label: m.label, run: () => { openMenu(m.id); setCat(''); } }));
         return (
           <>
@@ -737,7 +743,7 @@ export default function EhrNurse({
             </div></div>
             <div className="ns-ngrp"><span>메뉴</span><div className="ns-nlinks">
               <button type="button" onClick={() => win && closeTab(win)}>OCS</button>
-              {([['환자정보', 'patinfo'], ['검사결과', 'labres'], ['상병이력', 'dxhist'], ['수술이력', 'surghist'], ['방종이력', 'vacc']] as const).map(([k, id]) => <button key={k} type="button" onClick={() => openMenu(id)}>{k}</button>)}
+              {([['환자정보', 'patinfo'], ['QR', 'qr'], ['검사결과', 'labres'], ['상병이력', 'dxhist'], ['수술이력', 'surghist'], ['방종이력', 'vacc']] as const).map(([k, id]) => <button key={k} type="button" onClick={() => openMenu(id)}>{k}</button>)}
               {['PACS', 'CIS', '통합치료계획', '타병원', 'PROMS'].map(k => <button key={k} type="button" disabled>{k}</button>)}
             </div></div>
             <div className="ns-ngrp"><span>조회</span><div className="ns-nlinks">
@@ -829,21 +835,27 @@ export default function EhrNurse({
               <BodyFig dots={bodyDots(data)} width={206} />
               <div className="ns-figl">{bodyDots(data).length ? bodyDots(data).map((d, k) => <span key={k}><i style={{ background: d.c }} />{d.t}</span>) : <span className="ns-nnone">No data to display</span>}</div>
               <div className="ns-nfs">
-                <h4>간호진단 / 문제</h4>
-                {data.care.length === 0 ? <p className="ns-nnone">No data to display</p> : <ul>{data.care.map((c, k) => <li key={k}>{c.dx}</li>)}</ul>}
-                <h4>처방 메모</h4>
-                {(() => { const ms = data.orders.filter(o => o.kind === 'memo' && (o.name || '').replace('※', '').trim()); return ms.length ? <ul>{ms.map((o, k) => <li key={k}>{o.name}</li>)}</ul> : <p className="ns-nnone">No data to display</p>; })()}
-                <h4>7일 내 미실시 검사</h4>
-                {(() => {
-                  const labs = g.lab.filter(it => it.r.st !== '완료' && it.r.st !== '집계완료' && it.r.pri !== 'D/C');
-                  const ap = data.appts.filter(a2 => a2.st !== '취소' && a2.st !== '진료완료');
-                  return labs.length + ap.length === 0 ? <p className="ns-nnone">No data to display</p> : (
-                    <ul>
-                      {labs.map((it, k) => <li key={`l${k}`}>{it.r.name}<i>{it.r.t1 || date}</i></li>)}
-                      {ap.map((a2, k) => <li key={`a${k}`}>{a2.purpose || a2.dept}<i>{a2.date} {a2.time}</i></li>)}
-                    </ul>
-                  );
-                })()}
+                <section className="ns-nfsec dx">
+                  <h4>간호진단 / 문제<b>{data.care.length}</b></h4>
+                  {data.care.length === 0 ? <p className="ns-nnone">No data to display</p> : <ul>{data.care.map((c, k) => <li key={k}>{c.dx}</li>)}</ul>}
+                </section>
+                <section className="ns-nfsec memo">
+                  <h4>처방 메모</h4>
+                  {(() => { const ms = data.orders.filter(o => o.kind === 'memo' && (o.name || '').replace('※', '').trim()); return ms.length ? <ul>{ms.map((o, k) => <li key={k}>{(o.name || '').replace(/^※\s*/, '')}</li>)}</ul> : <p className="ns-nnone">No data to display</p>; })()}
+                </section>
+                <section className="ns-nfsec lab">
+                  <h4>7일 내 미실시 검사</h4>
+                  {(() => {
+                    const labs = g.lab.filter(it => it.r.st !== '완료' && it.r.st !== '집계완료' && it.r.pri !== 'D/C');
+                    const ap = data.appts.filter(a2 => a2.st !== '취소' && a2.st !== '진료완료');
+                    return labs.length + ap.length === 0 ? <p className="ns-nnone">No data to display</p> : (
+                      <ul>
+                        {labs.map((it, k) => <li key={`l${k}`}><span>{it.r.name}</span><i>{it.r.t1 || date}</i></li>)}
+                        {ap.map((a2, k) => <li key={`a${k}`}><span>{a2.purpose || a2.dept}</span><i>{a2.date} {a2.time}</i></li>)}
+                      </ul>
+                    );
+                  })()}
+                </section>
               </div>
             </>)}
           </div>
@@ -1008,6 +1020,8 @@ export default function EhrNurse({
                   </table>
                 )}
               </>
+            ) : w === 'qr' ? (
+              <QrView data={data} caseId={caseId} />
             ) : w === 'notes' ? (
               <NursingRecord data={data} setData={setData} userName={userName} duty={duty} today={date} />
             ) : w === 'patinfo' ? (
@@ -1272,11 +1286,17 @@ export default function EhrNurse({
         .ns-fighd { display: flex; justify-content: space-between; align-items: center; gap: 4px; margin-bottom: 6px; font-size: 13px; color: var(--primary); }
         .ns-fighd span { display: inline-flex; gap: 4px; }
         .ns-nfc .ns-fighd { justify-content: center; }
-        .ns-nfs { margin-top: 12px; border-top: 1px solid var(--border); padding-top: 4px; font-size: 12.5px; }
-        .ns-nfs h4 { margin: 10px 0 4px; font-size: 12.5px; color: var(--primary); }
-        .ns-nfs ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 3px; }
-        .ns-nfs li { line-height: 1.45; display: flex; justify-content: space-between; gap: 6px; }
-        .ns-nfs li i { font-style: normal; color: var(--sub-text); white-space: nowrap; }
+        .ns-nfs { margin-top: 14px; display: flex; flex-direction: column; gap: 8px; }
+        .ns-nfsec { border: 1px solid var(--border); border-left: 4px solid var(--primary); border-radius: 4px; background: #fff; padding: 7px 9px 8px; font-size: 12.5px; }
+        .ns-nfsec.memo { border-left-color: #d97706; background: #fffcf5; }
+        .ns-nfsec.lab { border-left-color: #64748b; }
+        .ns-nfsec h4 { margin: 0 0 5px !important; font-size: 12px !important; font-weight: 800; color: var(--text) !important; display: flex; justify-content: space-between; align-items: center; }
+        .ns-nfsec h4 b { font-size: 11px; background: #e8f0f9; color: var(--primary); border-radius: 999px; padding: 0 7px; }
+        .ns-nfsec ul { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; }
+        .ns-nfsec li { line-height: 1.45; display: flex; justify-content: space-between; gap: 8px; padding: 3px 0; border-top: 1px solid #eef2f6; }
+        .ns-nfsec li:first-child { border-top: 0; padding-top: 0; }
+        .ns-nfsec li i { font-style: normal; color: var(--sub-text); font-size: 11.5px; white-space: nowrap; }
+        .ns-nfsec li span { min-width: 0; }
         .ns-nl { border-right: 1px solid var(--border); padding: 10px; display: flex; flex-direction: column; gap: 10px; }
         .ns-nr { border-left: 1px solid var(--border); padding: 10px; display: flex; flex-direction: column; gap: 10px; }
         .ns-nc { padding: 10px 12px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
@@ -1322,9 +1342,9 @@ export default function EhrNurse({
         .ns-fl thead tr:nth-child(2) th { top: 29px; }
         .ns-fl-day { background: #dfe6ee !important; border-left: 2px solid #94a3b8 !important; }
         .ns-fl-today { background: var(--primary) !important; color: #fff; border-left: 2px solid #94a3b8 !important; }
-        .ns-ngrp { display: flex; align-items: flex-start; gap: 8px; border-top: 1px dashed var(--border); padding: 5px 0; }
-        .ns-ngrp > span { flex: none; width: 30px; padding-top: 5px; font-size: 11.5px; font-weight: 700; color: var(--sub-text); }
-        .ns-ngrp .ns-nlinks { flex: 1; margin: 0; }
+        .ns-ngrp { display: block; border-top: 1px solid var(--border); padding: 9px 12px 10px; }
+        .ns-ngrp > span { display: block; padding: 0 0 5px; font-size: 11.5px; font-weight: 800; color: var(--sub-text); letter-spacing: .02em; }
+        .ns-ngrp .ns-nlinks { margin: 0; padding: 0; }
         .ns-admw { display: inline-flex; align-items: center; gap: 6px; margin: 6px 0; font-size: 13px; font-weight: 700; }
         .ns-sepv { width: 1px; height: 18px; background: rgba(255,255,255,.3); margin: 0 6px; }
         .ns-nmenu .ns-wk { color: #e8c97a; }

@@ -3,6 +3,8 @@
 import { vnow } from '../vclock';
 import type { ChartData, Row } from '../types';
 import { DEPTS } from '../directory';
+import { qrSvg } from '../qr';
+import { medQr, patientQr, isMedRow } from '../pda';
 
 // 병동뷰 측면 메뉴: 환자정보 · 상병이력 · 수술이력 · 방종이력
 const CSS = `
@@ -109,6 +111,53 @@ export function VaccHist({ data }: { data: ChartData }) {
           {rows.length === 0 && <tr><td colSpan={5} className="none">No data to display</td></tr>}
         </tbody>
       </table>
+    </div>
+  );
+}
+
+// 환자 팔찌·약포지 QR: 여기서 만들고(보기·인쇄), PDA(/ehr/pda)에서 카메라로 읽는다
+export function QrView({ data, caseId }: { data: ChartData; caseId: string }) {
+  const i = data.info;
+  const meds = data.orders.map((r, idx) => ({ r, idx })).filter(({ r }) => r.kind !== 'sec' && r.kind !== 'memo' && r.name && r.pri !== 'D/C' && r.st !== '취소' && isMedRow(r));
+  const grp = (re: RegExp, inv = false) => meds.filter(({ r }) => (re.test(r.route || '') !== inv));
+  const oral = grp(/^(PO|SL|PR)$/i);
+  const rest = grp(/^(PO|SL|PR)$/i, true);
+  const sec = (title: string, list: typeof meds) => list.length > 0 && (
+    <>
+      <h4>{title} <small>{list.length}</small></h4>
+      <div className="qrg">
+        {list.map(({ r, idx }) => (
+          <div key={idx} className="qrc">
+            <div dangerouslySetInnerHTML={{ __html: qrSvg(medQr(caseId, idx, r.name || ''), 112) }} />
+            <b>{r.name}</b>
+            <span>{[r.dose && `${r.dose}${r.unit || ''}`, r.route].filter(Boolean).join(' · ')}</span>
+          </div>
+        ))}
+      </div>
+    </>
+  );
+  return (
+    <div className="pv">
+      <style>{CSS}{`
+        .qrg { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px, 1fr)); gap: 8px; }
+        .qrc { border: 1px solid var(--border); border-radius: 4px; padding: 8px; display: flex; flex-direction: column; align-items: center; text-align: center; gap: 2px; font-size: 12px; background: #fff; }
+        .qrc span { color: var(--sub-text); }
+        .qrw { display: flex; gap: 14px; align-items: center; border: 1px solid var(--border); border-left: 4px solid var(--primary); padding: 10px 12px; background: #fff; }
+        .qrw b { font-size: 15px; } .qrw p { margin: 2px 0 0; color: var(--sub-text); font-size: 12.5px; }
+        .pv h4 small { font-weight: 600; color: var(--sub-text); margin-left: 4px; }
+      `}</style>
+      <h4>환자 팔찌 QR</h4>
+      <div className="qrw">
+        <div dangerouslySetInnerHTML={{ __html: qrSvg(patientQr(caseId), 140) }} />
+        <div>
+          <b>{i.name}</b> {i.ageSex}
+          <p>{[i.ward, i.bed].filter(Boolean).join(' ')} · 환자번호 {i.ptNo}</p>
+          <p>PDA(/ehr/pda)에서 이 QR을 찍으면 환자가 확인돼요.</p>
+        </div>
+      </div>
+      {sec('약포지 QR · 먹는약', oral)}
+      {sec('약포지 QR · 주사/수액', rest)}
+      {meds.length === 0 && <p className="none">No data to display</p>}
     </div>
   );
 }

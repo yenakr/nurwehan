@@ -129,7 +129,7 @@ export default function PdaApp({ roster, userName }: { roster: R[]; userName: st
       {mode === 'home' && (
         <section className="pd-sec">
           <h2 className="pd-h">환자 팔찌 스캔</h2>
-          <p className="pd-sub">투약 전에 환자 팔찌의 QR을 먼저 찍어 환자를 확인해요.</p>
+          <p className="pd-sub">투약 전에 환자 팔찌의 QR을 먼저 찍어 환자를 확인해요. QR은 EHR의 환자 카드 메뉴 'QR' 또는 업무 → 출력·퇴원 → QR 보기에서 확인·출력해요.</p>
           <button type="button" className="pd-scanbtn" onClick={() => { setMsg(null); setMode('scanP'); }}><CamIcon />환자 팔찌 QR 스캔</button>
           <h2 className="pd-h sm">샘플 스캔 · 카메라 없이 연습</h2>
           <div className="pd-list">
