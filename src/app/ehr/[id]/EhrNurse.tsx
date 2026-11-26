@@ -536,9 +536,6 @@ export default function EhrNurse({
   const sendDoc = () => addMemo('진료메모', dmsg, () => setDmsg(''));
   const ck = (label: string) => (i[`ck:${label}`] === '1') || (label.endsWith('/금식') && i.npo === '1' && i[`ck:${label}`] !== '0');
   const toggle = (label: string) => setData(d => ({ ...d, info: { ...d.info, [`ck:${label}`]: ck(label) ? '0' : '1' } }));
-  const wardList = roster.filter(r => r.ward === i.ward && r.bed && r.id).sort((a, b) => (a.bed || '').localeCompare(b.bed || '', 'ko', { numeric: true }));
-  const curIdx = wardList.findIndex(r => r.ptNo === i.ptNo);
-  const prevNext: [string, Roster | undefined][] = curIdx < 0 ? [] : [['◀', wardList[curIdx - 1]], ['▶', wardList[curIdx + 1]]];
   const find = () => {
     const t = q.trim();
     if (!t) return;
@@ -695,7 +692,6 @@ export default function EhrNurse({
           {qMsg && <p className="ns-nerr">{qMsg}</p>}
           <div className="ns-npt">
             <div className="ns-nph">
-              {prevNext.map(([lb, h]) => <button key={lb} type="button" className="ns-pn" disabled={!h} title={h ? `${h.bed} ${h.name}` : ''} onClick={() => h && router.push(`/ehr/${h.id}`)}>{lb}</button>)}
               <b>{i.name || '이름 없음'}</b>
               {i.ageSex && <span className="ns-nsx">{i.ageSex}</span>}
               {i.blood && <span className="ns-nsx" title="혈액형">{i.blood}</span>}
