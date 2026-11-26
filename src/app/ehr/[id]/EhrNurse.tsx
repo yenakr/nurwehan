@@ -646,10 +646,10 @@ export default function EhrNurse({
       <div className="ns-nmenu">
         <b>홈</b>
         <button type="button" className={mOpen ? 'ns-on' : ''} onClick={() => { setMOpen(mOpen ? 0 : 1); setCat(''); setMq(''); }}>메뉴 ▾</button>
+        <input className="ns-mq" placeholder="메뉴찾기" aria-label="메뉴찾기" value={mq} onFocus={e => place(e.currentTarget)} onChange={e => { place(e.currentTarget); setMq(e.target.value); if (mOpen !== 2) setMOpen(2); }} />
         {mOpen >= 1 && <button type="button" className={`ns-wk ${mOpen === 2 ? 'ns-on' : ''}`} onClick={() => setMOpen(mOpen === 2 ? 1 : 2)}>업무</button>}
         {mOpen === 2 && <span className="ns-sepv" />}
         {mOpen === 2 && CATS.map(c => <button key={c.name} type="button" disabled={c.name === '최근사용' ? recent.length === 0 : c.name === '출력·퇴원' ? false : c.items.length === 0} className={cat === c.name ? 'ns-on' : ''} onClick={e => { place(e.currentTarget); setMq(''); setCat(cat === c.name ? '' : c.name); }}>{c.name}</button>)}
-        {mOpen === 2 && <label className="ns-mq">메뉴찾기<input value={mq} onFocus={e => place(e.currentTarget)} onChange={e => { place(e.currentTarget); setMq(e.target.value); }} /></label>}
         <div className="ns-nav">{nav}</div>
       </div>
       {mOpen === 2 && ddPos && (mq.trim() || cat) && (() => {
@@ -1234,8 +1234,7 @@ export default function EhrNurse({
         .ns-nmenu { display: flex; flex-wrap: nowrap; overflow-x: auto; align-items: center; gap: 2px; padding: 0 8px; background: linear-gradient(#233a5c, #17283f); }
         .ns-nmenu b { color: #e8c97a; padding: 0 12px 0 6px; }
         .ns-nmenu button { border: 0; background: transparent; color: #e5ebf3; padding: 11px 12px; font: inherit; font-weight: 600; cursor: pointer; }
-        .ns-mq { display: inline-flex; align-items: center; gap: 6px; color: #c9d6e8; font-size: 12px; margin-left: 10px; }
-        .ns-mq input { width: 110px; padding: 3px 6px; font-size: 12.5px; }
+        .ns-mq { width: 110px; flex: none; padding: 3px 6px; font-size: 12.5px; margin-left: 4px; }
         .ns-nmenu button:disabled { opacity: .45; cursor: default; }
         .ns-nmenu button.ns-on { color: #38d6ff; box-shadow: inset 0 -3px 0 #38d6ff; }
         .ns-nsub { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 10px; background: #eaf0f7; border-bottom: 1px solid var(--border); }
