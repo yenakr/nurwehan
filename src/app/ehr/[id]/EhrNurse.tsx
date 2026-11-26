@@ -621,13 +621,12 @@ export default function EhrNurse({
                       {subHead}
                       <tr className={stop ? 'ns-x' : ''}>
                         <td className="ns-ocq">{seq}</td>
-                        <td className="ns-otn"><b>{r.name}</b></td>
+                        <td className="ns-otn"><b>{r.name}</b>{it.notes.map((m, k) => <span key={k} className="ns-onote">※ {m.replace(/^※\s*/, '')}</span>)}</td>
                         <td>{r.dose ? `${r.dose}${r.unit || ''}` : ''}</td><td>{r.route}</td><td>{r.cnt}</td>
                         <td className="ns-ocg">{r.pri && r.pri !== 'D/C' ? <i>{r.pri}</i> : null}{(r.opt || '').split(' ').filter(Boolean).map(o => <i key={o} className={o === '비급여' ? 'ns-nhi' : 'ns-alone'}>[{o}]</i>)}{r.hold && <span className="ns-sl ns-hold" title={r.hold}>보류</span>}</td>
                         <td className="ns-otst">{status}{isChanged(r) && <button type="button" className="ns-sl ns-sl-late" title={`이전 ${ackOf(r.name || '')?.text || ''} → 현재 ${ordTxt(r)}`} onClick={() => ordAck(r)}>변경됨 · 확인</button>}</td>
                         {Array.from({ length: N }, (_, k) => <td key={k} className="ns-ocs-c">{cellFor(k)}</td>)}
                       </tr>
-                      {it.notes.map((m, k) => <tr key={`n${it.i}-${k}`} className="ns-ocm"><td /><td colSpan={COLS - 1}>※ {m.replace(/^※\s*/, '')}</td></tr>)}
                     </Fragment>
                   );
                 })}
@@ -1427,6 +1426,7 @@ export default function EhrNurse({
         .ns-ocn { min-width: 74px; }
         .ns-ocs-c { text-align: center; white-space: nowrap; padding: 3px 4px !important; }
         .ns-ocg i { display: block; font-style: normal; font-size: 11px; font-weight: 700; }
+        .ns-ot td.ns-otn .ns-onote { display: block; margin-top: 2px; color: #c0267c; font-size: 12.5px; font-weight: 400; }
         .ns-ocm td { border-top: 0 !important; color: #c0267c; font-size: 12.5px; padding-top: 0 !important; }
         .ns-ocs .ns-subh td { background: #f2f6f8; font-weight: 700; color: #0e4a84; }
         .ns-ot { width: 100%; min-width: 560px; table-layout: auto; border-collapse: collapse; font-size: 13px; }
