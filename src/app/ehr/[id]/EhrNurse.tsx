@@ -466,6 +466,16 @@ export default function EhrNurse({
   const sumItem = (it: string, d: string, sh: 'D' | 'E' | 'N') => SHIFT_H[sh].reduce((a, h) => a + fNum(it, d, h), 0);
   const sumAny = (it: string, d: string, sh: 'D' | 'E' | 'N') => SHIFT_H[sh].some(h => fGet(it, d, h));
   const hdOf = (d: string) => { const a0 = (data.info.admit || '').slice(0, 10); if (!/^\d{4}-\d{2}-\d{2}$/.test(a0) || visit || d < a0) return 0; return Math.round((new Date(`${d}T00:00:00`).getTime() - new Date(`${a0}T00:00:00`).getTime()) / 864e5) + 1; };
+  // 같은 평가도구의 가장 최근 기록(이 칸 이전)을 불러온다. 저장된 답이 없으면 undefined
+  const scalePrev = (it: string, d: string, h: string) => {
+    const cur = `${d} ${h}`;
+    const cand = data.memos.filter(m => m.type === 'scale' && m.item === it && `${m.date} ${m.hour}` !== cur).sort((a, b) => `${b.date} ${b.hour}`.localeCompare(`${a.date} ${a.hour}`));
+    const own = data.memos.find(m => m.type === 'scale' && m.item === it && `${m.date} ${m.hour}` === cur);
+    const m = own || cand.find(x => `${x.date} ${x.hour}` < cur) || cand[0];
+    if (!m) return undefined;
+    const [ans, why] = (m.text || '').split('|');
+    return { ans, why: why || '', at: `${(m.date || '').slice(5)} ${m.hour}시` };
+  };
   const fSet = (it: string, d: string, h: string, v: string) => setData(dd => {
     const rest = dd.memos.filter(m => !(m.type === 'flow' && m.date === d && m.item === it && m.hour === h));
     const next = { ...dd, memos: v.trim() ? [...rest, { type: 'flow', date: d, item: it, hour: h, text: v.trim(), author: userName }] : rest };
@@ -1270,7 +1280,14 @@ export default function EhrNurse({
                   </div>
                 )}
                 <p className="ns-fl-h" hidden={fTab === 'io' || fTab === 'lab'}>표를 꾹 누른 채 좌우로 끌면 다른 시간대·날짜로 이동 · 칸 더블클릭=입력, 우클릭=메뉴(메모 / 간호기록 / 그룹기록) · 파란 글씨는 임상관찰 연동값</p>
-                {fScale && SCALE_ITEMS[fScale.it] && <ScalePick kind={SCALE_ITEMS[fScale.it]} onClose={() => setFScale(null)} onPick={t => { fSet(fScale.it, fScale.d, fScale.h, t); setFScale(null); }} />}
+                {fScale && SCALE_ITEMS[fScale.it] && <ScalePick kind={SCALE_ITEMS[fScale.it]} prev={scalePrev(fScale.it, fScale.d, fScale.h)} onClose={() => setFScale(null)} onPick={(t, ans, why) => {
+                  const f = fScale;
+                  const reasonIt = SCALE_ITEMS[f.it] === 'morse' ? '낙상 평가 사유' : '욕창 평가 사유';
+                  fSet(f.it, f.d, f.h, t);
+                  fSet(reasonIt, f.d, f.h, why);
+                  setData(dd => ({ ...dd, memos: [...dd.memos.filter(m => !(m.type === 'scale' && m.item === f.it && m.date === f.d && m.hour === f.h)), { type: 'scale', date: f.d, item: f.it, hour: f.h, text: `${ans}|${why}`, author: userName }] }));
+                  setFScale(null);
+                }} />}
                 {fCtx && (
                   <div className="ns-fl-m" style={{ left: fCtx.x, top: fCtx.y }} onClick={e => e.stopPropagation()}>
                     <button type="button" onClick={() => { const c = fGet(fCtx.it, fCtx.d, fCtx.h); if (!c) { setFCtx(null); return; } const m = window.prompt('메모', c.memo || ''); if (m !== null) setData(d => ({ ...d, memos: d.memos.map(x => (x === c ? { ...x, memo: m } : x)) })); setFCtx(null); }}>메모</button>

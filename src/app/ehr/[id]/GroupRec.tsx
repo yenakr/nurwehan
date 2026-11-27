@@ -4,13 +4,13 @@ import { useMemo, useState } from 'react';
 
 type Sub = { s: string; items: string[] };
 type Kind = { t: 'sel'; o: string[] } | { t: 'num'; u?: string } | { t: 'txt' };
-const REASON = ['입원 시', '상태 변화 시', '수술·시술 후', '정기 평가', '낙상 발생 후'];
+const REASON = ['입원 시', '고위험', '정기적 재평가', '수술·시술(OP) 후', '상태 변화 시', '낙상 발생 후'];
 const SITES = ['머리', '목', '어깨', '가슴', '복부', '허리', '엉덩이', '팔', '다리', '수술부위'];
 // 항목별 입력 방식. 없는 항목은 체크만 하면 '시행'으로 기록된다.
 const KIND: Record<string, Kind> = {
   '낙상 평가 사유': { t: 'sel', o: REASON },
-  '욕창 평가 사유': { t: 'sel', o: REASON.slice(0, 4) },
-  '통증 평가 사유': { t: 'sel', o: REASON.slice(0, 4) },
+  '욕창 평가 사유': { t: 'sel', o: REASON.slice(0, 5) },
+  '통증 평가 사유': { t: 'sel', o: REASON.slice(0, 5) },
   '욕창위험 평가도구(Braden)': { t: 'num', u: '점 (6~23)' },
   '낙상위험 평가도구(Morse)': { t: 'num', u: '점 (0~125)' },
   '통증유무': { t: 'sel', o: ['있음', '없음'] },
