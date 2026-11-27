@@ -1103,7 +1103,7 @@ export default function EhrNurse({
               })()
             ) : w === 'flowsheet' ? (
               <div className="ns-fl" onClick={() => setFCtx(null)}>
-                <div className="ns-fl-t" ref={flowRef}
+                <div className="ns-fl-t" ref={flowRef} hidden={fTab === 'io' || fTab === 'lab'}
                   onMouseDown={e => { if ((e.target as HTMLElement).closest('input,button')) return; drag.current = { x: e.clientX, l: e.currentTarget.scrollLeft }; }}
                   onMouseMove={e => { if (drag.current && e.buttons === 1) e.currentTarget.scrollLeft = drag.current.l - (e.clientX - drag.current.x); }}
                   onMouseUp={() => { drag.current = null; }} onMouseLeave={() => { drag.current = null; }}>
@@ -1209,7 +1209,7 @@ export default function EhrNurse({
                     <button type="button" style={{ marginTop: 6 }} onClick={() => setFCfg(false)}>닫기</button>
                   </div>
                 )}
-                <p className="ns-fl-h">표를 꾹 누른 채 좌우로 끌면 다른 시간대·날짜로 이동 · 칸 더블클릭=입력, 우클릭=메뉴(메모 / 간호기록 / 그룹입력) · 파란 글씨는 임상관찰 연동값</p>
+                <p className="ns-fl-h" hidden={fTab === 'io' || fTab === 'lab'}>표를 꾹 누른 채 좌우로 끌면 다른 시간대·날짜로 이동 · 칸 더블클릭=입력, 우클릭=메뉴(메모 / 간호기록 / 그룹입력) · 파란 글씨는 임상관찰 연동값</p>
                 {fCtx && (
                   <div className="ns-fl-m" style={{ left: fCtx.x, top: fCtx.y }} onClick={e => e.stopPropagation()}>
                     <button type="button" onClick={() => { const c = fGet(fCtx.it, fCtx.d, fCtx.h); if (!c) { setFCtx(null); return; } const m = window.prompt('메모', c.memo || ''); if (m !== null) setData(d => ({ ...d, memos: d.memos.map(x => (x === c ? { ...x, memo: m } : x)) })); setFCtx(null); }}>메모</button>
@@ -1234,8 +1234,15 @@ export default function EhrNurse({
                   {([['obs', '임상관찰'], ['io', 'I/O'], ['state', '간호사정'], ['lab', 'LAB']] as const).map(([k, l]) => <button key={k} type="button" className={fTab === k ? 'ns-on' : ''} onClick={() => setFTab(k)}>{l}</button>)}
                 </div>
                 {fTab === 'io' && <div className="ns-fl-x">{(() => {
-                  const tr = FDAYS.slice(-3).map(d => ({ d, rows: (['D', 'E', 'N'] as const).map(sh => { const i1 = IN.reduce((a, x) => a + sumItem(x, d, sh), 0); const o1 = OUT.reduce((a, x) => a + sumItem(x, d, sh), 0); return { sh, i1, o1 }; }) }));
-                  return <table style={{ minWidth: 0 }}><thead><tr><th>일자</th><th>근무</th><th>Intake</th><th>Output</th><th>I/O Total</th></tr></thead><tbody>{tr.flatMap(t => t.rows.map(r => <tr key={t.d + r.sh}><td>{t.d.slice(5)}</td><td>{r.sh}</td><td>{r.i1}</td><td>{r.o1}</td><td style={{ background: '#fff7c2', fontWeight: 700 }}>{r.i1 - r.o1}</td></tr>))}</tbody></table>;
+                  const num = (t?: string) => (t || '').match(/\d+(?:\.\d+)?/g)?.reduce((a, x) => a + Number(x), 0) || 0;
+                  const days = FDAYS.slice(-7);
+                  const rows = days.flatMap(d => (['D', 'E', 'N'] as const).map(sh => {
+                    const rec = data.io.filter(r => (r.time || '').slice(0, 10) === d && (r.time || '').trim().slice(-1) === sh);
+                    const i1 = rec.reduce((a, r) => a + num(r.intake), 0) + IN.reduce((a, x) => a + sumItem(x, d, sh), 0);
+                    const o1 = rec.reduce((a, r) => a + num(r.output), 0) + OUT.reduce((a, x) => a + sumItem(x, d, sh), 0);
+                    return { d, sh, i1, o1, has: rec.length > 0 || sumAny('IV (mL)', d, sh) };
+                  }));
+                  return <table style={{ minWidth: 0, width: '100%' }}><thead><tr><th>일자</th><th>근무</th><th>Intake (mL)</th><th>Output (mL)</th><th>I/O Total (mL)</th></tr></thead><tbody>{rows.map(r => <tr key={r.d + r.sh}><td>{r.d.slice(5)}</td><td>{r.sh}</td><td>{r.has ? r.i1 : ''}</td><td>{r.has ? r.o1 : ''}</td><td style={{ background: '#fff7c2', fontWeight: 700 }}>{r.has ? r.i1 - r.o1 : ''}</td></tr>)}</tbody></table>;
                 })()}</div>}
                 <div className="ns-fl-sc">{([['vitals', '환자 V/S'], ['bst', '혈당'], ['labres', '검사결과'], ['notes', '간호기록']] as const).map(([k, l]) => <button key={k} type="button" onClick={() => openMenu(k)}>{l}</button>)}<button type="button" onClick={() => setFCfg(v => !v)}>항목 설정</button></div>
                 {fTab === 'lab' && <div className="ns-fl-x">{data.labs.length ? data.labs.slice(0, 12).map((l, k) => <p key={k}>{l.name} {l.value} {l.unit}</p>) : <p className="ns-nnone">No data to display</p>}</div>}
