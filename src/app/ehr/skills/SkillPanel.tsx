@@ -22,6 +22,7 @@ export default function SkillPanel({ id, data, ai, aiLeft, onSubmit }: { id: str
   const [left, setLeft] = useState(aiLeft);
   useEffect(() => { try { if (!localStorage.getItem(seenKey) && !data.info.submitted) setIntro(true); } catch { /* 저장 불가 */ } }, [seenKey, data.info.submitted]);
   const items = useMemo(() => (cfg ? gradeChart(key, cfg, data) : []), [key, cfg, data]);
+  useEffect(() => { if (!open) return; const f = (e: KeyboardEvent) => { if (e.key === 'Escape') setOpen(false); }; window.addEventListener('keydown', f); return () => window.removeEventListener('keydown', f); }, [open]);
   if (!sc || !cfg) return null;
   const real = items.filter(i => !i.manual);
   const okN = real.filter(i => i.ok).length;
@@ -91,6 +92,7 @@ export default function SkillPanel({ id, data, ai, aiLeft, onSubmit }: { id: str
       {open && (
         <div className="skp-sheet">
           <div className="skp-tabs">
+            <button type="button" aria-label="닫기" onClick={() => setOpen(false)} style={{ flex: '0 0 40px', fontSize: 18 }}>✕</button>
             <button type="button" className={tab === 'info' ? 'on' : ''} onClick={() => setTab('info')}>상황</button>
             {!exam && <button type="button" className={tab === 'check' ? 'on' : ''} onClick={() => setTab('check')}>기록 확인 {okN}/{real.length}</button>}
             {ai && !exam && <button type="button" className={tab === 'ask' ? 'on' : ''} onClick={() => setTab('ask')}>사용법 질문</button>}
