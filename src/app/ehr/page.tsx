@@ -23,13 +23,12 @@ export default async function EhrPage({ searchParams }: { searchParams: Promise<
     return (
       <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', display: 'grid', alignItems: 'center', padding: '28px 0' }}>
         <div className="container" style={{ maxWidth: 980 }}>
-          <h1 style={{ margin: '0 0 6px', fontSize: 24, textAlign: 'center' }}>어떤 EHR로 연습할까요?</h1>
-          <p style={{ margin: '0 0 22px', textAlign: 'center', color: 'var(--muted-foreground)', fontSize: 14 }}>두 모드의 차트와 환자는 서로 완전히 분리돼 있어요.</p>
+          <h1 style={{ margin: '0 0 22px', fontSize: 24, textAlign: 'center' }}>어떤 EHR로 연습할까요?</h1>
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(300px,1fr))', gap: 18 }}>
             <a href="/ehr?go=1" style={{ ...card, borderColor: '#2563eb' }}>
               <span style={{ fontSize: 40 }}>🏥</span>
-              <b style={{ fontSize: 22 }}>자유 연습 EHR</b>
-              <span style={{ color: 'var(--muted-foreground)', lineHeight: 1.6 }}>병동·외래·응급 환자를 마음대로 열어 처방, 간호기록, 투약, Flowsheet 같은 실제 EHR 화면을 익히는 프로그램 연습 모드예요.</span>
+              <b style={{ fontSize: 22 }}>널위한병원 EHR</b>
+              <span style={{ color: 'var(--muted-foreground)', lineHeight: 1.6 }}>가상의 병원 '널위한병원'의 병동·외래·응급 환자를 마음대로 열어 처방, 간호기록, 투약, Flowsheet 같은 EHR 화면을 익혀요.</span>
             </a>
             <a href="/ehr/skills" style={{ ...card, borderColor: '#16a34a' }}>
               <span style={{ fontSize: 40 }}>🎯</span>
