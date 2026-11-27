@@ -1380,7 +1380,7 @@ export default function EhrNurse({
         .ns-tools .st { color: #cbd5e1; font-size: 12px; }
         .ns-tools .subm { border-radius: 4px; padding: 5px 12px; }
         .ns-tools .mbtn { color: #fff; }
-        .ns-nu { border: 1px solid #94a3b8; background: var(--background, #fff); color: var(--text); border-radius: 6px; overflow: hidden; font-size: 13px; position: relative; }
+        .ns-nu { border: 1px solid #94a3b8; background: var(--background, #fff); color: var(--text); border-radius: 6px; overflow: clip; font-size: 13px; position: relative; }
         .ns-nmenu { display: flex; flex-wrap: nowrap; overflow-x: auto; align-items: center; gap: 2px; padding: 0 8px; background: linear-gradient(#233a5c, #17283f); }
         .ns-nmenu b { color: #e8c97a; padding: 0 12px 0 6px; }
         .ns-nmenu button { border: 0; background: transparent; color: #e5ebf3; padding: 11px 12px; font: inherit; font-weight: 600; cursor: pointer; }
@@ -1645,12 +1645,13 @@ export default function EhrNurse({
         .ns-nwb .wbk { border: 0; padding: 0; margin: 0; }
         .ns-nwb { padding: 12px 14px 24px; overflow: auto; flex: 1; }
         .ns-ndq { width: 100%; box-sizing: border-box; border: 1px solid var(--border); border-radius: 6px; padding: 8px; font: inherit; margin-bottom: 8px; background: var(--background); color: var(--text); }
-        .ns-bbar { display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 10px; background: #dfe6ee; border-top: 1px solid var(--border); }
+        .ns-bbar { position: sticky; bottom: 0; z-index: 40; margin-left: 240px; box-shadow: 0 -2px 6px rgba(0,0,0,.08); display: flex; justify-content: space-between; align-items: center; gap: 8px; padding: 6px 10px; background: #dfe6ee; border-top: 1px solid var(--border); }
         .ns-bbar > div { display: flex; flex-wrap: wrap; gap: 4px; }
         .ns-bbar button { font: inherit; font-size: 12px; font-weight: 700; padding: 3px 10px; border: 1px solid var(--border); border-radius: 4px; background: #fff; color: var(--text); cursor: pointer; white-space: nowrap; }
         .ns-bbar .ns-bp { background: var(--primary); color: #fff; border-color: var(--primary); }
         @media (max-width: 980px) {
           .ns-ngrid { grid-template-columns: 1fr; }
+          .ns-bbar { margin-left: 0; }
           .ns-nf, .ns-nf.ns-nfc { width: auto; border: 0; border-bottom: 1px solid var(--border); }
           .ns-nl, .ns-nr { border: 0; border-bottom: 1px solid var(--border); }
         }
