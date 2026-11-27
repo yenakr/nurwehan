@@ -242,10 +242,12 @@ export default function EhrNurse({
 }) {
   const router = useRouter();
   const i = data.info;
+  const skillMode = i.mode === 'skill';
+  const SMP: typeof SAMPLES = skillMode ? [] : SAMPLES; // 핵심술기 EHR은 자율 EHR 환자와 섞이지 않는다
   const [date, setDate] = useState(() => { const t = vnow(); return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`; });
   const [ward, setWard] = useState(i.ward || '');
   const [maxed, setMaxed] = useState(false);
-  useEffect(() => { try { if (caseId) localStorage.setItem('ehr.lastPt', String(caseId)); } catch { /* 저장 불가 */ } }, [caseId]);
+  useEffect(() => { try { if (caseId && !skillMode) localStorage.setItem('ehr.lastPt', String(caseId)); } catch { /* 저장 불가 */ } }, [caseId]);
   const [team, setTeam] = useState(() => teamOf(i.bed || ''));
   const [dmsg, setDmsg] = useState('');
   const [duty, setDuty] = useState(dutyNow());
@@ -273,7 +275,7 @@ export default function EhrNurse({
   const flags = Array.from(new Set([...data.acu.map(r => r.risk), ...data.risk.filter(r => /고위험/.test(r.level || '')).map(r => (r.kind || '').split('(')[0])].filter(Boolean)));
   const bulkPts: BulkPt[] = [
     ...list.map(r => ({ self: r.ptNo === i.ptNo, key: r.id, bed: r.bed || '', name: r.name || '', ageSex: r.ageSex || '', id: r.id, make: () => ({ title: '', subject: null, data: {} }) })),
-    ...SAMPLES.filter(sp => {
+    ...SMP.filter(sp => {
       const x = sp.data.info;
       return x.ward === ward && !roster.some(r => r.ptNo === x.ptNo) && (team === '전체' || teamOf(x.bed || '') === team);
     }).map(sp => ({ key: sp.key, bed: sp.data.info.bed || '', name: sp.data.info.name || '', ageSex: sp.data.info.ageSex || '', make: () => ({ title: sp.title, subject: sp.subject, data: shiftChart(migrate(sp.data)) }) })),
@@ -294,7 +296,7 @@ export default function EhrNurse({
   const admRows = (adm: boolean) => {
     const rows: Roster[] = [...roster];
     const have = new Set(roster.map(r => r.ptNo));
-    SAMPLES.forEach(sp => {
+    SMP.forEach(sp => {
       const x = sp.data.info;
       if (!x.ward || x.ward === '외래' || x.ward === '응급실' || have.has(x.ptNo || '')) return;
       rows.push({ id: '', ward: x.ward, bed: x.bed || '', name: x.name || '', ageSex: x.ageSex || '', ptNo: x.ptNo || '', doctor: x.doctor || '', admit: x.admit, disDate: x.disDate });
@@ -590,7 +592,7 @@ export default function EhrNurse({
     const hit = roster.find(r => (r.ptNo || '').includes(t)) || roster.find(r => (r.name || '').includes(t));
     if (hit) { router.push(`/ehr/${hit.id}`); return; }
     // 병원 전체 검색: 아직 열어 본 적 없는 환자(샘플)도 찾아서 차트를 만들어 연다
-    const sp = SAMPLES.find(x => (x.data.info.ptNo || '').includes(t)) || SAMPLES.find(x => (x.data.info.name || '').includes(t));
+    const sp = SMP.find(x => (x.data.info.ptNo || '').includes(t)) || SMP.find(x => (x.data.info.name || '').includes(t));
     if (!sp) { setQMsg('없는 환자예요'); return; }
     setQMsg('차트 여는 중…');
     fetch('/api/ehr', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: sp.title, subject: sp.subject, data: shiftChart(migrate(sp.data)) }) })
@@ -605,7 +607,7 @@ export default function EhrNurse({
   const wardTodo = (() => {
     const pts: { id: string; bed: string; name: string; orders: Row[] }[] = list.map(r => ({ id: r.id, bed: r.bed || '', name: r.name || '', orders: r.ptNo === i.ptNo ? data.orders : r.orders || [] }));
     const have = new Set(roster.map(r => r.ptNo));
-    SAMPLES.forEach(sp => {
+    SMP.forEach(sp => {
       const x = sp.data.info;
       if (x.ward !== ward || have.has(x.ptNo || '') || (team !== '전체' && teamOf(x.bed || '') !== team)) return;
       pts.push({ id: '', bed: x.bed || '', name: x.name || '', orders: sp.data.orders || [] });
@@ -777,7 +779,7 @@ export default function EhrNurse({
                 const cur = i.ward === '외래' ? '외래' : i.ward === '응급실' ? '응급' : '병동';
                 const lastW = (() => { try { return localStorage.getItem('ehr.lastWard') || ''; } catch { return ''; } })();
                 const wardTo = cur === '병동' ? i.ward || '41병동' : lastW || '41병동';
-                return [['외래', '외래'], ['병동', wardTo], ['응급', '응급']].map(([k, v]) => <button key={k} type="button" className={cur === k ? 'ns-on' : ''} aria-pressed={cur === k} onClick={() => router.push(`/ehr?view=${encodeURIComponent(v)}`)}>{k}</button>);
+                return [['외래', '외래'], ['병동', wardTo], ['응급', '응급']].map(([k, v]) => <button key={k} type="button" className={cur === k ? 'ns-on' : ''} aria-pressed={cur === k} onClick={() => router.push(skillMode ? '/ehr/skills' : `/ehr?view=${encodeURIComponent(v)}`)}>{k}</button>);
               })()}
               {['통합', '다학제'].map(k => <button key={k} type="button" disabled>{k}</button>)}
             </div>}</div>

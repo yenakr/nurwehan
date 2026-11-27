@@ -9,7 +9,11 @@ export type EhrListRow = EhrRow & {
   submitted: string | null; reviewed: string | null; badges: string | null; disDate: string | null;
 };
 
-export async function listCases(userId: string): Promise<EhrListRow[]> {
+export type EhrMode = 'free' | 'skill';
+
+// 자율 EHR과 핵심술기 EHR은 같은 표를 쓰되 차트 info.mode로 완전히 나눈다
+export async function listCases(userId: string, mode: EhrMode = 'free'): Promise<EhrListRow[]> {
+  const sk = mode === 'skill';
   try {
     return await prisma.$queryRaw<EhrListRow[]>`
       SELECT "id", "title", "subject", "updatedAt",
@@ -21,7 +25,7 @@ export async function listCases(userId: string): Promise<EhrListRow[]> {
         "data"->'info'->>'discharged' AS "discharged",
         "data"->'info'->>'submitted' AS "submitted", "data"->'info'->>'reviewed' AS "reviewed", "data"->'info'->>'badges' AS "badges", "data"->'info'->>'disDate' AS "disDate"
       FROM "EhrCase"
-      WHERE "userId" = ${userId} ORDER BY "updatedAt" DESC LIMIT 100`;
+      WHERE "userId" = ${userId} AND (COALESCE("data"->'info'->>'mode', '') = 'skill') = ${sk} ORDER BY "updatedAt" DESC LIMIT 100`;
   } catch {
     return [];
   }
@@ -165,11 +169,12 @@ export async function findActiveDuplicate(userId: string, info: Record<string, u
   const ward = typeof info?.ward === 'string' ? info.ward : '';
   const bed = typeof info?.bed === 'string' ? info.bed : '';
   const key = typeof info?.sampleKey === 'string' ? info.sampleKey : '';
+  if (info?.mode === 'skill') return null;
   if (!(ward && bed) && !key) return null;
   try {
     const rows = await prisma.$queryRaw<Array<{ id: string }>>`
       SELECT "id" FROM "EhrCase"
-      WHERE "userId" = ${userId} AND COALESCE("data"->'info'->>'discharged', '') = ''
+      WHERE "userId" = ${userId} AND COALESCE("data"->'info'->>'discharged', '') = '' AND COALESCE("data"->'info'->>'mode', '') <> 'skill'
         AND ((${ward} <> '' AND ${bed} <> '' AND "data"->'info'->>'ward' = ${ward} AND "data"->'info'->>'bed' = ${bed})
           OR (${key} <> '' AND "data"->'info'->>'sampleKey' = ${key}))
       ORDER BY "updatedAt" DESC LIMIT 1`;
@@ -180,11 +185,12 @@ export async function findActiveDuplicate(userId: string, info: Record<string, u
 }
 
 // 병동 전체 할 일 목록용: 진행 중인 차트의 처방만 가져온다
-export async function ordersByCase(userId: string): Promise<Record<string, unknown[]>> {
+export async function ordersByCase(userId: string, mode: EhrMode = 'free'): Promise<Record<string, unknown[]>> {
+  const sk = mode === 'skill';
   try {
     const rows = await prisma.$queryRaw<{ id: string; orders: unknown }[]>`
       SELECT "id", "data"->'orders' AS "orders" FROM "EhrCase"
-      WHERE "userId" = ${userId} AND COALESCE("data"->'info'->>'discharged', '') = ''`;
+      WHERE "userId" = ${userId} AND COALESCE("data"->'info'->>'discharged', '') = '' AND (COALESCE("data"->'info'->>'mode', '') = 'skill') = ${sk}`;
     return Object.fromEntries(rows.map(r => [r.id, Array.isArray(r.orders) ? r.orders : []]));
   } catch {
     return {};
@@ -197,12 +203,13 @@ export async function cleanupCases(userId: string, ver: string): Promise<number>
   try {
     const n = await prisma.$executeRaw`
       DELETE FROM "EhrCase"
-      WHERE "userId" = ${userId} AND "data"->'info'->>'submitted' IS NULL AND COALESCE("data"->'info'->>'discharged', '') = ''
+      WHERE "userId" = ${userId} AND "data"->'info'->>'submitted' IS NULL AND COALESCE("data"->'info'->>'discharged', '') = '' AND COALESCE("data"->'info'->>'mode', '') <> 'skill'
         AND COALESCE("data"->'info'->>'sampleKey', '') <> '' AND COALESCE("data"->'info'->>'sampleKey', '') NOT LIKE 'v:%'
         AND COALESCE("data"->'info'->>'dataVer', '') <> ${ver}`;
     const m = await prisma.$executeRaw`
       DELETE FROM "EhrCase" c USING "EhrCase" k
       WHERE c."userId" = ${userId} AND k."userId" = ${userId} AND c."id" <> k."id"
+        AND COALESCE(c."data"->'info'->>'mode', '') <> 'skill' AND COALESCE(k."data"->'info'->>'mode', '') <> 'skill'
         AND c."data"->'info'->>'submitted' IS NULL AND k."data"->'info'->>'submitted' IS NULL
         AND COALESCE(c."data"->'info'->>'discharged', '') = '' AND COALESCE(k."data"->'info'->>'discharged', '') = ''
         AND ((COALESCE(c."data"->'info'->>'sampleKey', '') <> '' AND c."data"->'info'->>'sampleKey' = k."data"->'info'->>'sampleKey')
