@@ -30,9 +30,9 @@ export async function POST(req: Request, { params }: { params: Promise<{ id: str
   const { id } = await params;
   const body = await req.json().catch(() => ({}));
   const ev = body?.event as Record<string, string> | undefined;
-  if (!ev || typeof ev.id !== 'string' || ev.type !== 'give') return NextResponse.json({ error: 'bad request' }, { status: 400 });
+  if (!ev || typeof ev.id !== 'string' || !['give', 'spec', 'blood', 'vit'].includes(ev.type)) return NextResponse.json({ error: 'bad request' }, { status: 400 });
   const clean: Record<string, string> = {};
-  for (const k of ['id', 'type', 'idx', 'name', 'date', 'time', 'duty', 'by']) clean[k] = String(ev[k] ?? '').slice(0, 120);
+  for (const k of ['id', 'type', 'idx', 'name', 'date', 'time', 'duty', 'by', 'bno', 'cosign', 'sbp', 'dbp', 'hr', 'rr', 'bt', 'spo2']) clean[k] = String(ev[k] ?? '').slice(0, 120);
   const row = await getCase(user.id, id);
   if (!row) return NextResponse.json({ error: 'not found' }, { status: 404 });
   const data = applyPda(migrate(row.data), clean);
