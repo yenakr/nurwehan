@@ -588,8 +588,15 @@ export default function EhrNurse({
     const t = q.trim();
     if (!t) return;
     const hit = roster.find(r => (r.ptNo || '').includes(t)) || roster.find(r => (r.name || '').includes(t));
-    if (hit) router.push(`/ehr/${hit.id}`);
-    else setQMsg('없는 환자예요');
+    if (hit) { router.push(`/ehr/${hit.id}`); return; }
+    // 병원 전체 검색: 아직 열어 본 적 없는 환자(샘플)도 찾아서 차트를 만들어 연다
+    const sp = SAMPLES.find(x => (x.data.info.ptNo || '').includes(t)) || SAMPLES.find(x => (x.data.info.name || '').includes(t));
+    if (!sp) { setQMsg('없는 환자예요'); return; }
+    setQMsg('차트 여는 중…');
+    fetch('/api/ehr', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: sp.title, subject: sp.subject, data: shiftChart(migrate(sp.data)) }) })
+      .then(r => r.json().catch(() => ({})))
+      .then((j: { id?: string }) => { if (j.id) router.push(`/ehr/${j.id}`); else setQMsg('열 수 없어요'); })
+      .catch(() => setQMsg('열 수 없어요'));
   };
 
   const isToday = date === `${vnow().getFullYear()}-${pad(vnow().getMonth() + 1)}-${pad(vnow().getDate())}`;
@@ -739,11 +746,13 @@ export default function EhrNurse({
 
       <div className="ns-ngrid">
         <aside className="ns-nl">
-          <div className="ns-nsr">
-            <input value={q} onChange={e => { setQ(e.target.value); setQMsg(''); }} onKeyDown={e => e.key === 'Enter' && find()} aria-label="환자번호 검색" placeholder="환자번호" />
-            <button type="button" onClick={find}>검색</button>
+          <div className="ns-qs">
+            <div className="ns-nsr">
+              <input value={q} onChange={e => { setQ(e.target.value); setQMsg(''); }} onKeyDown={e => e.key === 'Enter' && find()} aria-label="환자 검색 (병원 전체)" placeholder="환자번호·이름 (병원 전체)" />
+              <button type="button" onClick={find}>검색</button>
+            </div>
+            {qMsg && <p className="ns-nerr ns-qerr" role="status">{qMsg}</p>}
           </div>
-          {qMsg && <p className="ns-nerr">{qMsg}</p>}
           <div className="ns-npt">
             <div className="ns-nph">
               <b>{i.name || '이름 없음'}</b>
@@ -1468,6 +1477,8 @@ export default function EhrNurse({
         .ns-nsr input { flex: 1; min-width: 0; border: 1px solid var(--border); border-radius: 6px; padding: 7px 8px; font: inherit; background: var(--background); color: var(--text); }
         .ns-nsr button, .ns-nd3 + * button { border: 1px solid var(--primary); background: var(--primary); color: #fff; border-radius: 6px; padding: 6px 10px; font: inherit; font-weight: 700; cursor: pointer; white-space: nowrap; }
         .ns-nsr button:disabled { opacity: .4; }
+        .ns-qs { position: relative; }
+        .ns-qerr { position: absolute; left: 0; top: calc(100% + 2px); z-index: 7; background: #fff; border: 1px solid #fca5a5; border-radius: 4px; padding: 2px 8px; box-shadow: 0 2px 8px rgba(0,0,0,.12); }
         .ns-nerr { margin: 0; color: #dc2626; font-size: 12px; }
         .ns-npt { background: var(--muted-background); border: 1px solid var(--border); border-radius: 8px; padding: 12px; display: flex; flex-direction: column; gap: 3px; }
         .ns-arw { padding: 4px 10px; border: 1px solid var(--border); background: var(--background); color: var(--primary); font-weight: 700; border-radius: 4px; }
