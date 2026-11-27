@@ -62,7 +62,7 @@ export default function RegisterPage() {
     <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '60px 20px' }}>
         <div className="card" style={{ width: '100%', maxWidth: '500px', padding: '40px' }}>
           <div style={{ textAlign: 'center', marginBottom: '32px' }}>
-            <h1 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--primary)', marginBottom: '8px' }}>학생 회원가입</h1>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: '800', color: 'var(--primary)', marginBottom: '8px' }}>{formData.kind === 'PROF' ? '교수·조교 회원가입' : '학생 회원가입'}</h1>
             
           </div>
           
@@ -80,11 +80,11 @@ export default function RegisterPage() {
             </div>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
               <div>
-                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: '600', marginBottom: '6px' }}>학번</label>
+                <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: '600', marginBottom: '6px' }}>{formData.kind === 'PROF' ? '아이디' : '학번'}</label>
                 <input 
                   type="text" 
                   required
-                  placeholder="202XXXXXXX" 
+                  placeholder={formData.kind === 'PROF' ? '영문·숫자 4자 이상' : '202XXXXXXX'} 
                   value={formData.studentId}
                   onChange={(e) => setFormData({ ...formData, studentId: e.target.value })}
                   style={{ width: '100%' }} 
@@ -103,7 +103,7 @@ export default function RegisterPage() {
               </div>
             </div>
 
-            <div>
+            {formData.kind !== 'PROF' && <div>
               <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: '600', marginBottom: '6px' }}>학년</label>
               <select 
                 value={formData.grade}
@@ -115,7 +115,7 @@ export default function RegisterPage() {
                 <option value="3">3학년</option>
                 <option value="4">4학년</option>
               </select>
-            </div>
+            </div>}
 
             <div>
               <label style={{ display: 'block', fontSize: '0.8125rem', fontWeight: '600', marginBottom: '6px' }}>이메일</label>
