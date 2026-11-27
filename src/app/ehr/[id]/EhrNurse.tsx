@@ -1586,7 +1586,7 @@ export default function EhrNurse({
         .ns-fl tbody th { text-align: left; background: #f6f8fb; font-weight: 600; }
         .ns-fl td { min-width: 52px; cursor: cell; }
         .ns-fl td input { width: 48px; padding: 2px 4px; font-size: 12.5px; }
-        .ns-fl-s { display: flex; gap: 3px; margin-top: 3px; }
+        .ns-fl-s { display: flex; flex-wrap: wrap; gap: 3px; margin-top: 3px; max-width: 170px; white-space: normal; }
         .ns-fl-s button { font: inherit; font-size: 11px; padding: 1px 6px; border: 1px solid var(--border); border-radius: 3px; background: #fff; cursor: pointer; }
         .ns-fl-s button.ns-on { background: var(--primary); color: #fff; border-color: var(--primary); }
         .ns-hd { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 8px; background: #fde68a; color: #7c4a03; font-size: 11px; font-weight: 800; }
