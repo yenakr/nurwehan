@@ -276,9 +276,19 @@ export const FORM_CSS = `
 
 // Flowsheet 칸에서 바로 점수를 계산해 입력하는 작은 창
 export const SCALE_ITEMS: Record<string, 'morse' | 'braden'> = { '낙상위험 평가도구(Morse)': 'morse', '욕창위험 평가도구(Braden)': 'braden' };
-export function ScalePick({ kind, onPick, onClose }: { kind: 'morse' | 'braden'; onPick: (text: string) => void; onClose: () => void }) {
+export const SCALE_WHY: Record<'morse' | 'braden', string[]> = {
+  morse: ['입원 시', '낙상 고위험', '정기적 재평가', '수술·시술(OP) 후', '상태 변화 시', '낙상 발생 후'],
+  braden: ['입원 시', '욕창 고위험', '정기적 재평가', '수술·시술(OP) 후', '상태 변화 시'],
+};
+// prev: 직전 평가에서 불러온 답 ("0,1,2,…")과 사유. 그대로 불러와 바뀐 부분만 고쳐 저장한다.
+export function ScalePick({ kind, prev, onPick, onClose }: { kind: 'morse' | 'braden'; prev?: { ans: string; why: string; at?: string }; onPick: (text: string, ans: string, why: string) => void; onClose: () => void }) {
   const items = kind === 'morse' ? MORSE : BRADEN;
-  const [sel, setSel] = useState<Record<number, number>>({});
+  const [sel, setSel] = useState<Record<number, number>>(() => {
+    const o: Record<number, number> = {};
+    (prev?.ans || '').split(',').forEach((v, i) => { if (v !== '' && items[i] && items[i].opts[Number(v)]) o[i] = Number(v); });
+    return o;
+  });
+  const [why, setWhy] = useState(prev?.why || SCALE_WHY[kind][2]);
   const total = items.reduce((a, it, i) => a + (sel[i] === undefined ? 0 : it.opts[sel[i]].s), 0);
   const ok = items.every((_, i) => sel[i] !== undefined);
   const lv = kind === 'morse' ? morseLevel(total) : bradenLevel(total);
@@ -289,6 +299,11 @@ export function ScalePick({ kind, onPick, onClose }: { kind: 'morse' | 'braden';
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
           <b style={{ fontSize: 14 }}>{kind === 'morse' ? '낙상위험 평가도구 (Morse Fall Scale)' : '욕창위험 평가도구 (Braden Scale)'}</b>
           <button type="button" onClick={onClose} aria-label="닫기" style={{ border: 0, background: 'none', fontSize: 18, cursor: 'pointer' }}>×</button>
+        </div>
+        {prev?.ans && <p style={{ margin: '0 0 6px', color: '#0f4c81', fontSize: 12 }}>직전 평가{prev.at ? ` (${prev.at})` : ''} 내용을 불러왔어요. 바뀐 항목만 고쳐서 저장하세요.</p>}
+        <div style={{ display: 'flex', gap: 8, alignItems: 'center', margin: '6px 0' }}>
+          <b>평가 사유</b>
+          <select value={why} onChange={e => setWhy(e.target.value)} style={{ padding: '4px 8px', border: '1px solid #cbd5e1', borderRadius: 6 }}>{SCALE_WHY[kind].map(w => <option key={w} value={w}>{w}</option>)}</select>
         </div>
         {items.map((it, qi) => (
           <div key={qi} style={{ margin: '8px 0' }}>
@@ -306,7 +321,7 @@ export function ScalePick({ kind, onPick, onClose }: { kind: 'morse' | 'braden';
         <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12, borderTop: '1px solid #e2e8f0', paddingTop: 10 }}>
           <span>합계 <b style={{ fontSize: 16 }}>{total}</b>점</span>
           {ok ? <em style={{ fontStyle: 'normal', fontWeight: 700, color: lv.c === 'hi' ? '#dc2626' : lv.c === 'md' ? '#ca8a04' : '#16a34a' }}>{lv.t}</em> : <em style={{ fontStyle: 'normal', color: '#94a3b8' }}>모든 항목을 선택하세요</em>}
-          <button type="button" disabled={!ok} onClick={() => onPick(`${total}점 (${lv.t})`)} style={{ marginLeft: 'auto', padding: '6px 16px', borderRadius: 6, border: 0, background: ok ? '#0f4c81' : '#cbd5e1', color: '#fff', fontWeight: 700, cursor: ok ? 'pointer' : 'not-allowed' }}>입력</button>
+          <button type="button" disabled={!ok} onClick={() => onPick(`${total}점 (${lv.t})`, items.map((_, i) => String(sel[i])).join(','), why)} style={{ marginLeft: 'auto', padding: '6px 16px', borderRadius: 6, border: 0, background: ok ? '#0f4c81' : '#cbd5e1', color: '#fff', fontWeight: 700, cursor: ok ? 'pointer' : 'not-allowed' }}>저장</button>
         </div>
         <p style={{ margin: '8px 0 0', color: '#64748b', fontSize: 12 }}>{kind === 'morse' ? '고위험 45점 이상 · 중위험 25~44점 · 저위험 0~24점' : '초고위험 9점 이하 · 고위험 10~12점 · 중등도 13~14점 · 경미 15~18점'}</p>
       </div>
