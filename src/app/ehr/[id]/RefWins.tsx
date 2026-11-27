@@ -5,6 +5,7 @@ import { vnow } from '../vclock';
 import type { ChartData, Row } from '../types';
 import { group, viewOrders, type Item } from '../ordday';
 import { USAGE, KIND_LABEL } from '../usage';
+import { WARDS, bedLabel } from '../samples';
 
 const p2 = (n: number) => String(n).padStart(2, '0');
 const ymd = (t: Date) => `${t.getFullYear()}-${p2(t.getMonth() + 1)}-${p2(t.getDate())}`;
@@ -452,6 +453,71 @@ export function UsageWin({ onClose }: { onClose: () => void }) {
         </table>
       </div>
       <div className="bar"><button type="button" onClick={onClose}>종료</button></div>
+    </div>
+  );
+}
+
+// ─── 전과전실 (병상배정) ───
+type RosterRow = { id: string; ward: string | null; bed: string | null; name: string | null; ptNo: string | null };
+export function BedTransfer({ data, setData, roster, caseId, userName }: { data: ChartData; setData: SD; roster: RosterRow[]; caseId: string; userName: string }) {
+  const i = data.info;
+  const today = ymd(vnow());
+  const rsv = (i.bedRsv || '').split('|'); // 병동|병상|예약일
+  const live = rsv[2] === today && rsv[0] && rsv[1] ? { ward: rsv[0], bed: rsv[1] } : null; // 예약 당일에 전실이 안 되면 자정에 초기화
+  const [tw, setTw] = useState(live?.ward || i.ward || WARDS[0].name);
+  const [tb, setTb] = useState(live?.bed || '');
+  const [msg, setMsg] = useState<{ t: string; ok: boolean } | null>(null);
+  const w = WARDS.find(x => x.name === tw);
+  const beds = w ? w.rooms.flatMap((n, r) => Array.from({ length: n }, (_, b) => bedLabel(w, r + 1, b + 1))) : [];
+  const who = (ward: string, bed: string) => roster.find(r => r.ward === ward && r.bed === bed && r.id !== caseId);
+  const set = (patch: Record<string, string>) => setData(d => ({ ...d, info: { ...d.info, ...patch } }));
+  const reserve = () => {
+    if (!tb) { setMsg({ t: '전실 병상을 선택하세요', ok: false }); return; }
+    const o = who(tw, tb);
+    if (o) { setMsg({ t: `이미 사용 중인 병상입니다 (${o.name})`, ok: false }); return; }
+    set({ bedRsv: `${tw}|${tb}|${today}` });
+    setMsg({ t: `${tw} ${tb} 전실 예약 완료 (여러 번 예약하면 가장 최근 1건만 유지, 당일 전실이 없으면 자정에 초기화)`, ok: true });
+  };
+  const cancel = () => { set({ bedRsv: '' }); setMsg({ t: '전실 예약을 취소했습니다', ok: true }); };
+  const transfer = () => {
+    if (!tb) { setMsg({ t: '전과전실 병상을 선택하세요', ok: false }); return; }
+    const o = who(tw, tb);
+    if (o) { setMsg({ t: `이미 사용 중인 병상입니다 (${o.name})`, ok: false }); return; }
+    const from = [i.ward, i.bed].filter(Boolean).join(' ');
+    const to = `${tw} ${tb}`;
+    const t = vnow();
+    const dept = w?.dept || i.dept || '';
+    setData(d => ({
+      ...d,
+      info: { ...d.info, ward: tw, bed: tb, bedRsv: '' },
+      moves: [...d.moves, { time: `${ymd(t)} ${p2(t.getHours())}:${p2(t.getMinutes())}`, type: tw === i.ward ? '전실' : '전동', from, to, reason: live ? '전실예약 시행' : '전과전실', by: userName }],
+      notes: [...d.notes, { time: `${ymd(t)} ${p2(t.getHours())}:${p2(t.getMinutes())}`, focus: '전동', text: `D)\n${from} → ${to} ${tw === i.ward ? '병실 이동' : '전동'}함. ${dept ? `(${dept})` : ''}`, author: userName, shift: '' }],
+    }));
+    setMsg({ t: `${to} 전과전실 처리되었습니다. 기존 예약은 초기화됩니다`, ok: true });
+  };
+  return (
+    <div className="rw" style={{ marginTop: 14, borderTop: '2px solid var(--primary)', paddingTop: 8, height: 'auto' }}>
+      <style>{CSS}</style>
+      <b className="l1">전과전실 (병상배정)</b>
+      <div className="rw-q">
+        <label><b>현재 병상</b><input type="text" readOnly value={[i.ward, i.bed].filter(Boolean).join(' ')} style={{ width: 130 }} /></label>
+        <label><b>전실 병동</b><select value={tw} onChange={e => { setTw(e.target.value); setTb(''); }}>{WARDS.map(x => <option key={x.name} value={x.name}>{x.name} {x.dept}</option>)}</select></label>
+        <label><b>병상</b><select value={tb} onChange={e => setTb(e.target.value)}><option value="" />{beds.map(b => { const o = who(tw, b); return <option key={b} value={b} disabled={!!o}>{b}{o ? ` (사용중 ${o.name})` : ''}</option>; })}</select></label>
+      </div>
+      <div className="bar" style={{ justifyContent: 'flex-start' }}>
+        <button type="button" onClick={reserve}>전실예약</button>
+        <button type="button" onClick={cancel} disabled={!live}>전실취소</button>
+        <button type="button" className="p" onClick={transfer}>전과전실 처리</button>
+      </div>
+      {msg && <p style={{ margin: 0, fontWeight: 700, color: msg.ok ? '#1a7f4b' : '#b45309' }}>{msg.t}</p>}
+      <b>전실예약 목록</b>
+      <table>
+        <thead><tr><th>환자</th><th>현재 병상</th><th>예약 병상</th><th>예약일</th></tr></thead>
+        <tbody>
+          {live ? <tr style={{ cursor: 'pointer' }} onDoubleClick={() => { setTw(live.ward); setTb(live.bed); }} title="더블클릭하면 예약 정보가 입력돼요"><td className="c">{i.name}</td><td className="c">{[i.ward, i.bed].filter(Boolean).join(' ')}</td><td className="c">{live.ward} {live.bed}</td><td className="c">{rsv[2]}</td></tr>
+            : <tr><td colSpan={4} className="none">No data to display</td></tr>}
+        </tbody>
+      </table>
     </div>
   );
 }

@@ -7,7 +7,7 @@ import NurseForm from './NurseForms';
 import ProcInput from './ProcInput';
 import DxReg from './DxReg';
 import { USAGE_MAP, usageOf } from '../usage';
-import { RxCompare, FutureSched, Sticker, CommonReq, DcPlan, UsageWin } from './RefWins';
+import { RxCompare, FutureSched, Sticker, CommonReq, DcPlan, UsageWin, BedTransfer } from './RefWins';
 import LabResults from './LabResults';
 import OrderCompare from './OrderCompare';
 import NursingRecord from './NursingRecord';
@@ -1319,6 +1319,7 @@ export default function EhrNurse({
                     </table>
                   </div>
                 ))}
+                <BedTransfer data={data} setData={setData} roster={roster} caseId={caseId} userName={userName} />
               </>
             ) : w === 'dir' ? (
               <div className="ns-org">
