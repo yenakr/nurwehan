@@ -3,7 +3,7 @@ import { getCurrentUser } from '@/lib/auth';
 import { isAdminRole } from '@/lib/auth-core';
 import { hasEhrAccess } from '@/lib/ehr-access';
 import { listCases } from '@/lib/ehr';
-import { resolveScn } from '@/lib/ehr-skill';
+import { resolveScn, isExamUser } from '@/lib/ehr-skill';
 import { notFound, redirect } from 'next/navigation';
 import { scenarioOf } from '../data';
 import SkillStart from '../SkillStart';
@@ -16,6 +16,7 @@ export default async function SkillPage({ params }: { params: Promise<{ key: str
   const user = await getCurrentUser();
   if (!user) redirect(`/login?redirect=/ehr/skills/${key}`);
   if (!(await hasEhrAccess(user))) notFound();
+  if (isExamUser(user)) redirect('/ehr/exam');
   const sc = await resolveScn(key, user.id, isAdminRole(user.role));
   if (!sc) return notFound();
   const sk = `sk:${sc.skill}:${sc.scnId || 'def'}`;

@@ -6,6 +6,7 @@ import { isAdminRole } from '@/lib/auth-core';
 import type { Sample } from './types';
 import { notFound, redirect } from 'next/navigation';
 import EhrHome from './EhrHome';
+import { isExamUser } from '@/lib/ehr-skill';
 import { aiConfigured } from '@/lib/ai';
 import { hasEhrAccess, EHR_CASE_LIMIT } from '@/lib/ehr-access';
 import { aiQuotaLeft } from '@/lib/practicum-ai';
@@ -18,6 +19,7 @@ export default async function EhrPage({ searchParams }: { searchParams: Promise<
   const user = await getCurrentUser();
   if (!user) redirect('/login?redirect=/ehr');
   if (!(await hasEhrAccess(user))) notFound();
+  if (isExamUser(user)) redirect('/ehr/exam');
   if (!view && !go) {
     const card = { display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 10, minHeight: 280, padding: 32, borderRadius: 16, background: 'var(--background)', border: '2px solid var(--border)', textDecoration: 'none', color: 'inherit' } as const;
     return (

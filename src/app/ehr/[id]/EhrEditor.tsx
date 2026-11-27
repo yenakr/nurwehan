@@ -1246,7 +1246,7 @@ export default function EhrEditor({
   const navBtns = (
     <>
         <button type="button" className="back" onClick={() => router.push(info.mode === 'skill' ? '/ehr/skills' : `/ehr?view=${encodeURIComponent(info.ward === '응급실' ? '응급' : info.ward || '')}`)}>&larr; {info.mode === 'skill' ? '핵심술기' : info.ward === '응급실' ? '응급' : info.ward || '목록'}</button>
-        <button type="button" className="back" onClick={() => router.push(info.mode === 'skill' ? '/ehr/pda?mode=skill' : '/ehr/pda')} title="바코드·QR로 투약 확인하는 PDA 화면">PDA</button>
+        <button type="button" className="back" onClick={() => router.push(info.mode === 'skill' ? `/ehr/pda?mode=skill&only=${id}` : '/ehr/pda')} title="바코드·QR로 투약 확인하는 PDA 화면">PDA</button>
           <button type="button" className="back" onClick={() => { setWin(null); setScreen(screen === 'main' ? 'chart' : 'main'); }}>{screen === 'main' ? '전체 차트' : '간호 화면'}</button>
     </>
   );

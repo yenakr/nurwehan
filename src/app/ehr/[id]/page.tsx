@@ -6,6 +6,7 @@ import { migrate } from '../types';
 import { hasEhrAccess, EHR_FEEDBACK_LIMIT } from '@/lib/ehr-access';
 import { aiQuotaLeft } from '@/lib/practicum-ai';
 import { aiConfigured } from '@/lib/ai';
+import { isExamUser } from '@/lib/ehr-skill';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: 'EHR' };
@@ -20,8 +21,8 @@ export default async function EhrCasePage({ params, searchParams }: { params: Pr
   if (!row) notFound();
   const data = migrate(row.data);
   const mode = data.info.mode === 'skill' ? 'skill' : 'free';
-  const ordMap = await ordersByCase(user.id, mode);
-  const roster = (await listCases(user.id, mode)).filter(c => !c.discharged).map(c => ({ id: c.id, ward: c.ward, bed: c.bed, name: c.name, ageSex: c.ageSex, ptNo: c.ptNo, doctor: c.doctor, admit: c.admit, disDate: c.disDate, orders: (ordMap[c.id] || []) as Record<string, string>[] }));
+  const ordMap = isExamUser(user) ? {} : await ordersByCase(user.id, mode);
+  const roster = (await listCases(user.id, mode)).filter(c => !c.discharged && (!isExamUser(user) || c.id === id)).map(c => ({ id: c.id, ward: c.ward, bed: c.bed, name: c.name, ageSex: c.ageSex, ptNo: c.ptNo, doctor: c.doctor, admit: c.admit, disDate: c.disDate, orders: (ordMap[c.id] || []) as Record<string, string>[] }));
   const ai = aiConfigured();
   const aiLeft = ai ? await aiQuotaLeft(user.id, '#ehrfb', EHR_FEEDBACK_LIMIT) : 0;
   const skillLeft = ai && mode === 'skill' ? await aiQuotaLeft(user.id, '#ehrhelp', 30) : 0;

@@ -2,6 +2,7 @@ import Link from 'next/link';
 import { getCurrentUser } from '@/lib/auth';
 import { hasEhrAccess } from '@/lib/ehr-access';
 import { notFound, redirect } from 'next/navigation';
+import { isExamUser } from '@/lib/ehr-skill';
 import { SCENARIOS } from './data';
 import { studentSkillScns } from '@/lib/ehr-class';
 import { SKILLS } from './scn';
@@ -13,7 +14,8 @@ export default async function SkillsPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login?redirect=/ehr/skills');
   if (!(await hasEhrAccess(user))) notFound();
-  const custom = await studentSkillScns(user.id);
+  if (isExamUser(user)) redirect('/ehr/exam');
+  const custom = (await studentSkillScns(user.id)).filter(c => !c.data.exam);
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '28px 0' }}>
       <div className="container" style={{ maxWidth: 860 }}>
