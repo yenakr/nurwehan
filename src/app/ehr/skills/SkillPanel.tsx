@@ -3,25 +3,27 @@
 import { useMemo, useState } from 'react';
 import AiMark from '@/components/AiMark';
 import type { ChartData } from '../types';
-import { scenarioOf } from './data';
-import { gradeChart } from './grade';
+import { SKILLS, briefOf, cfgOf, gradeChart } from './scn';
 import { GUIDE } from './guide';
 
 // 실제 EHR 화면 위에 떠 있는 술기 가이드: 상황 브리핑 + 차트 기준 실시간 체크리스트 + AI 기록 피드백
-export default function SkillPanel({ id, data, ai, aiLeft }: { id: string; data: ChartData; ai: boolean; aiLeft: number }) {
+export default function SkillPanel({ id, data, ai, aiLeft, onSubmit }: { id: string; data: ChartData; ai: boolean; aiLeft: number; onSubmit: (score: string, miss: string[]) => void }) {
   const key = data.info.skill || '';
-  const sc = scenarioOf(key);
+  const sc = SKILLS.find(x => x.key === key);
+  const cfg = cfgOf(data.info);
+  const exam = data.info.skExam === '1';
+  const locked = !!data.info.submitted;
   const [open, setOpen] = useState(true);
   const [fb, setFb] = useState('');
   const [busy, setBusy] = useState(false);
   const [left, setLeft] = useState(aiLeft);
-  const items = useMemo(() => gradeChart(key, data), [key, data]);
-  if (!sc) return null;
+  const items = useMemo(() => (cfg ? gradeChart(key, cfg, data) : []), [key, cfg, data]);
+  if (!sc || !cfg) return null;
   const real = items.filter(i => !i.avoid);
   const bad = items.filter(i => i.avoid && !i.ok);
   const okN = real.filter(i => i.ok).length;
   const groups = Array.from(new Set(items.map(i => i.group)));
-  const brief = sc.steps.filter(s => s.t === 'info').flatMap(s => (s.t === 'info' ? s.tables : [])).filter(t => !(key === 'med' && /처방|활력징후/.test(t.cap)));
+  const brief = briefOf(key, cfg);
   const ask = async () => {
     setBusy(true); setFb('');
     try {
@@ -57,22 +59,22 @@ export default function SkillPanel({ id, data, ai, aiLeft }: { id: string; data:
         @media (max-width:900px){.skp{top:auto;bottom:8px;max-height:60vh}}
       `}</style>
       <div className={open ? 'h' : 'h'} onClick={() => setOpen(o => !o)}>
-        🎯 {sc.title} 연습<span>{okN}/{real.length} {open ? '▾' : '▸'}</span>
+        🎯 {sc.title} {exam ? '시험' : '연습'}<span>{exam ? '' : `${okN}/${real.length} `}{open ? '▾' : '▸'}</span>
       </div>
       {open && (
         <div className="b">
-          <div><b>{sc.patient.name}</b> {sc.patient.line}<br />{sc.patient.dx} · 알레르기 {sc.patient.allergy}</div>
+          <div><b>{cfg.name}</b> {cfg.age}/{cfg.sex} · {cfg.ward} {cfg.bed}<br />{cfg.dx} · 알레르기 {cfg.allergy}</div>
           {brief.length > 0 && <h4>상황</h4>}
           {brief.map(t => (
             <div key={t.cap}><b style={{ fontSize: 12 }}>{t.cap}</b>
-              <table><thead><tr>{t.table.head.map(h => <th key={h}>{h}</th>)}</tr></thead><tbody>{t.table.rows.map((r, i) => <tr key={i}>{r.map((c, j) => <td key={j}>{c}</td>)}</tr>)}</tbody></table>
+              <table><thead><tr>{t.head.map(h => <th key={h}>{h}</th>)}</tr></thead><tbody>{t.rows.map((r, i) => <tr key={i}>{r.map((c, j) => <td key={j}>{c}</td>)}</tr>)}</tbody></table>
             </div>
           ))}
           <h4>순서</h4>
           <ol>{GUIDE[key].map((g, i) => <li key={i}>{g}</li>)}</ol>
           {key === 'med' && <p style={{ margin: '6px 0 0' }}><a href="/ehr/pda?mode=skill" target="_blank" rel="noreferrer">PDA 열기 ↗</a></p>}
-          {bad.map(i => <div className="warn" key={i.id}>⚠ {i.label.replace('투약하지 않기', '투약했어요')} — {i.tip}</div>)}
-          {groups.map(g => (
+          {!exam && bad.map(i => <div className="warn" key={i.id}>⚠ {i.label.replace('투약하지 않기', '투약했어요')} — {i.tip}</div>)}
+          {!exam && groups.map(g => (
             <div key={g}>
               <h4>{g}</h4>
               <ul>{items.filter(i => i.group === g).map(i => (
@@ -80,7 +82,12 @@ export default function SkillPanel({ id, data, ai, aiLeft }: { id: string; data:
               ))}</ul>
             </div>
           ))}
-          {ai && (
+          {exam && (
+            <div style={{ marginTop: 12 }}>
+              {locked ? <p style={{ margin: 0 }}>제출했어요. 교수님이 확인해요.</p> : <button type="button" className="btn" onClick={() => { const real2 = items.filter(i => !i.avoid || true); onSubmit(`${real2.filter(i => i.ok).length}/${real2.length}`, real2.filter(i => !i.ok).map(i => i.label)); }}>시험 제출</button>}
+            </div>
+          )}
+          {!exam && ai && (
             <div style={{ marginTop: 10 }}>
               <button type="button" className="btn" disabled={busy || left <= 0} onClick={ask}><AiMark size={13} />{busy ? '보는 중…' : 'AI 기록 피드백'}</button>
               <span style={{ marginLeft: 6, fontSize: 11, color: 'var(--muted-foreground)' }}>오늘 {left}회</span>

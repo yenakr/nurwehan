@@ -813,6 +813,15 @@ export default function EhrEditor({
     if (r.ok) { setData(d => ({ ...d, info: { ...d.info, submitted: new Date().toISOString() } })); notify('제출했어요.'); }
     else notify('제출하지 못했어요.');
   };
+  // 시험 모드 제출: 채점 결과를 차트와 제목에 남기고 교수님께 제출한다
+  const skillSubmit = async (score: string, miss: string[]) => {
+    if (!(await confirmDialog('시험을 제출할까요? 제출하면 고칠 수 없어요.'))) return;
+    const next = { ...data, info: { ...data.info, skScore: score, skMiss: miss.join(' / ').slice(0, 800), submitted: new Date().toISOString() } };
+    const t = `${title.replace(/ \(\d+\/\d+\)$/, '')} (${score})`;
+    const sv = await fetch(`/api/ehr/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title: t, subject, data: { ...next, info: { ...next.info, submitted: undefined } } }) });
+    const r = sv.ok ? await fetch(`/api/ehr/${id}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ on: true }) }) : sv;
+    if (r.ok) { setData(next); setTitle(t); notify('제출했어요.'); } else notify('제출하지 못했어요.');
+  };
   const unsubmit = async () => {
     const r = await fetch(`/api/ehr/${id}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ on: false }) });
     if (r.ok) setData(d => { const { submitted: _s, ...rest } = d.info; return { ...d, info: rest }; });
@@ -1292,7 +1301,7 @@ export default function EhrEditor({
         <span className="who">{userName}</span>
         <LogoutButton />
       </div>
-      {info.mode === 'skill' && info.skill && <SkillPanel id={id} data={data} ai={ai} aiLeft={skillLeft ?? 0} />}
+      {info.mode === 'skill' && info.skill && <SkillPanel id={id} data={data} ai={ai} aiLeft={skillLeft ?? 0} onSubmit={skillSubmit} />}
 
       {locked && <div className="lkb">{info.reviewed ? '교수님이 확인했어요' : '제출했어요. 교수님 확인 전에는 제출 취소로 고칠 수 있어요'}</div>}
       {info.comment && <div className="cmt"><b>교수님 의견</b><p>{info.comment}</p></div>}
