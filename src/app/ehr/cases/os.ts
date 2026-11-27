@@ -84,6 +84,12 @@ export const os: Sample = {
     notes: [
       { time: md(0, '11:00'), focus: '수혈', text: 'S)\n"수혈하고 나서 어지럽거나 가렵지는 않아요."\n\nO)\n수혈 전 BP 118/70, HR 82, BT 37.4. pRBC 1 unit 10:30 시작, 15분 후 BP 116/70, HR 84, BT 37.5, 발진·호흡곤란 없음.\n\nA)\n수혈 반응 없음. 속도 시작 후 15분간 천천히 주입함.\n\nI)\n2인 확인(환자명, 환자번호, 혈액형, 혈액번호) 후 수혈 시작, 수혈 중 활력징후 측정함.\n\nE)\n수혈 반응 증상(오한, 가려움, 호흡곤란) 있으면 즉시 알리도록 설명함.', author: '박간호', shift: 'D' },
       { time: md(0, '02:15'), focus: '급성 통증', text: 'D)\n수술 부위 통증 NRS 7 호소, 얼굴 찡그리고 식은땀. BP 110/66, HR 90.\n\nA)\nPRN tramadol 50mg IV 투여함. Rt. 하지 거상, 냉찜질 적용함.\n\nR)\n03:15 NRS 4로 감소, 잠듦.', author: '최간호', shift: 'N' },
+      { time: md(-1, '16:40'), focus: '수술 후 간호', text: 'OP 후 눕는 차 타고 올라옴. imp) Primary osteoarthritis of right knee, op name) Total knee arthroplasty (Rt), anesthesia) Spinal. mental) alert, motor) Rt. 발가락 움직임 가능, dorsiflexion 가능함. Rt. knee op site dressing 유지중이며 oozing 없음. Hemovac negative pressure로 bloody하게 drainage중임. Hemovac positive pressure되거나, 양이 갑자기 많아질 시 알리도록 함. 배액관 꼬이지 않도록 교육함. Foley catheter 없음, S.V 시 알리도록 설명함. PCA keep중이며 nausea, vomiting 없음. PCA 사용법 교육함. nasal O2 2L/min apply함. NPO, ABR 설명함. EDBC함. Both leg DVT apply함.', author: '김간호', shift: 'E' },
+      { time: md(-1, '16:50'), focus: '배액관', text: 'Hemovac negative pressure로 유지중이며, bloody color로 drainage중임. Hemovac positive pressure되거나, 양이 갑자기 많아질 시 알리도록 함. 배액관 꼬이지 않도록 교육함.', author: '김간호', shift: 'E' },
+      { time: md(-1, '16:55'), focus: 'IV site', text: 'Lt. 전완 IV site 부종, 발적, 통증 없음. 부작용 시 알리도록 함.', author: '김간호', shift: 'E' },
+      { time: md(-1, '08:20'), focus: '수술 전 간호', text: '금일 수술 예정임. Dr. 수술 설명 후 보호자에게 동의서를 받음. 환자 팔찌 확인함. NPO 설명함. 수술 후 폐 합병증을 예방하기 위해서 EDBC 교육함. 속옷, 양말 탈의하고 보조기구 제거와 귀중품 보관 설명함. Hair shampoo 시행함.', author: '박간호', shift: 'D' },
+      { time: md(-1, '12:30'), focus: '수술 직전 간호', text: 'Full voiding 후 prep 물품 챙겨 눕는 차 타고 기능원과 OR방으로 감.', author: '박간호', shift: 'D' },
+      { time: md(0, '03:00'), focus: '수면', text: '수면중임. side rail kept. 간병인 상주중임.', author: '최간호', shift: 'N' },
       { time: md(-1, '20:30'), focus: '신경혈관 사정', text: 'D)\nRt. 하지: 발등 맥박 촉지됨(+), 모세혈관 재충혈 2초, 발가락 움직임·감각 정상, 발가락 온도 따뜻함. Hemovac 80mL 혈성.\n\nA)\n하지 거상 유지, 배액관 꺾임 없는지 확인, Elastic stocking (T.E.D) apply 확인함.\n\nR)\n신경혈관 이상 소견 없음.', author: '김간호', shift: 'E' },
     ],
     care: [
