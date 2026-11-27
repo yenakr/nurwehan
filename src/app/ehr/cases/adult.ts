@@ -96,7 +96,7 @@ export const adult: Sample = {
       { name: 'Troponin I', value: '0.02', unit: 'ng/mL', min: '0', max: '0.04', sample: 'Blood', time: md(-4, '05:30') },
     ],
     notes: [
-      { time: md(0, '09:20'), focus: '체액과다', text: 'S)\n"어제보다 숨쉬기 편해요."\n\nO)\nBP 128/76, HR 82, SpO2 96% (room air), 체중 61.5kg (입원 시 64.0kg), 하지 부종 trace, 폐 청진 시 crackles 감소.\n\nA)\n체액과다 호전됨. 경구 이뇨제로 전환 처방 확인함.\n\nI)\n수분 1,000mL 제한 및 저염식 유지 격려, 체중·I&O 기록함.\n\nE)\n환자가 하루 수분 섭취량을 정확히 말함.', author: '박간호', shift: 'D' },
+      { time: md(0, '09:20'), focus: '체액과다', text: 'D)\n"어제보다 숨쉬기 편해요" 함. BP 128/76, HR 82, SpO2 96% (room air), 체중 61.5kg (입원 시 64.0kg), 하지 부종 trace, 양측 폐 crackles 감소됨.\n\nA)\n경구 이뇨제 전환 처방 확인함. 수분 1,000mL 제한 및 저염식 유지 격려하고 체중·I&O 기록함.\n\nR)\n환자가 하루 수분 섭취량을 정확히 말함. 호흡곤란 호소 없음.', author: '박간호', shift: 'D' },
       { time: md(0, '03:45'), focus: '호흡곤란', text: 'D)\n03:30 누워 있다 숨이 차다며 깸. RR 28, SpO2 88%, 기좌호흡.\n\nA)\n반 좌위 취해주고 O2 4L NC 적용, 주치의에게 notify 후 처방에 따라 furosemide 20mg IV 투여함.\n\nR)\n04:15 RR 22, SpO2 94%, 호흡곤란 완화됨. 이후 소변 700mL 배출. O2 2L로 감량함.', author: '최간호', shift: 'N' },
       { time: md(-1, '16:30'), focus: '배뇨', text: 'D)\nFoley catheter removal 후 첫 자가 배뇨 시도, 3시간 만에 소변 250mL 배출, 잔뇨감 없음.\n\nA)\n처방에 따라 Foley 제거함. 배뇨 시 소변량 측정하도록 소변 통 제공 및 교육함.\n\nR)\n배뇨 곤란이나 요통 없음.', author: '김간호', shift: 'E' },
       { time: md(-1, '09:20'), focus: '활동 지속성 장애', text: 'D)\n병실 안에서 화장실까지 걷고 나서 숨이 차 쉬었다 걷는다고 함. 보행 후 SpO2 92%, HR 104.\n\nA)\n휴식 후 회복 확인. 활동 간 휴식 계획 교육, 낙상 위험도 높아 보행 시 호출하도록 교육함.\n\nR)\n휴식 5분 후 SpO2 95%, 환자가 호출벨 위치와 사용법을 말함.', author: '박간호', shift: 'D' },

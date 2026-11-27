@@ -22,7 +22,7 @@ const DXC: Record<string, [string, string, string][]> = {
 const ymd = (v?: string) => (v || '').slice(0, 10);
 
 // 샘플 데이터 버전: 올리면 이전 버전으로 저장된 미제출 샘플 차트는 정리되고 새 데이터로 다시 열린다.
-export const SAMPLE_VER = '15';
+export const SAMPLE_VER = '16';
 
 const CONSULT: Record<string, [string, string, string, string][]> = {
   adult: [['RM', '심장재활 교육 및 운동처방 의뢰', '퇴원 후 외래 재활 프로그램 등록 권고', '회신완료']],
