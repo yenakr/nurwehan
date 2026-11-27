@@ -121,10 +121,10 @@ export async function getCaseAny(id: string) {
   }
 }
 
-export async function setReview(id: string, comment: string): Promise<boolean> {
+export async function setReview(id: string, comment: string, score = ''): Promise<boolean> {
   try {
     const n = await prisma.$executeRaw`
-      UPDATE "EhrCase" SET "data" = jsonb_set(jsonb_set("data", '{info,comment}', to_jsonb(${comment}::text), true), '{info,reviewed}', to_jsonb(${new Date().toISOString()}::text), true)
+      UPDATE "EhrCase" SET "data" = jsonb_set(jsonb_set(jsonb_set("data", '{info,comment}', to_jsonb(${comment}::text), true), '{info,profScore}', to_jsonb(${score}::text), true), '{info,reviewed}', to_jsonb(${new Date().toISOString()}::text), true)
       WHERE "id" = ${id} AND "data"->'info'->>'submitted' IS NOT NULL`;
     return n > 0;
   } catch {
@@ -239,7 +239,7 @@ export async function listExamCases(): Promise<ExamRow[]> {
   try {
     return await prisma.$queryRaw<ExamRow[]>`
       SELECT "id", "title", "data"->'info'->>'examNo' AS "examNo", "data"->'info'->>'examName' AS "examName", "data"->'info'->>'skScn' AS "scn",
-        "data"->'info'->>'skScore' AS "score", "data"->'info'->>'submitted' AS "submitted", "updatedAt"
+        "data"->'info'->>'profScore' AS "score", "data"->'info'->>'submitted' AS "submitted", "updatedAt"
       FROM "EhrCase" WHERE "data"->'info'->>'examNo' IS NOT NULL ORDER BY "updatedAt" DESC LIMIT 500`;
   } catch {
     return [];
