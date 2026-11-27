@@ -1,5 +1,6 @@
 'use client';
 
+import { ScalePick, SCALE_ITEMS } from './EhrForms';
 import { vnow } from '../vclock';
 import { SAMPLES } from '../samples';
 import { MATS, matsFor } from '../codes';
@@ -90,7 +91,7 @@ const DOC_CATS = ['진료', '식이', '상처관리/적용기구', '환자정보
 const NUR_CATS = ['주요정보', '진료', '검사', '투약', '특수치료', '항암치료', '수혈', '기타'];
 const NFG: { g: string; guide: string; subs: { s: string; items: string[] }[] }[] = [
   { g: '낙상예방 및 관리', guide: '입원 시 및 상태 변화 시 낙상위험도를 평가하고, 고위험군은 낙상 예방 중재를 시행한 뒤 해당 시간 칸에 기록합니다.', subs: [
-    { s: '낙상위험평가', items: ['제외대상(고위험중재 대상)', '낙상 평가 사유'] },
+    { s: '낙상위험평가', items: ['제외대상(고위험중재 대상)', '낙상 평가 사유', '낙상위험 평가도구(Morse)'] },
     { s: '낙상예방교육 위험간호중재(성인)', items: ['환경 및 시설 관리', '낙상에 대한 직원들의 정보 공유', '환자·보호자에게 낙상 예방교육', '수면 전 배뇨 확인 및 화장실 다녀오기', '의식이 불안정한 환자는 보호자 상주', '신체보호대 적용(의사 order 시)', '환자 이송 시 기능원에게 낙상 주의사항 설명'] },
   ] },
   { g: '욕창예방 및 관리', guide: 'Braden Scale로 욕창 위험을 평가하고 고위험군은 2시간마다 체위변경 후 피부 상태를 확인해 기록합니다.', subs: [
@@ -375,6 +376,7 @@ export default function EhrNurse({
   const [fHidOpen, setFHidOpen] = useState<string | null>(null);
   const [fGuide, setFGuide] = useState<string | null>(null);
   const [fHist, setFHist] = useState<string | null>(null);
+  const [fScale, setFScale] = useState<{ it: string; d: string; h: string } | null>(null);
   const [fEdit, setFEdit] = useState<{ it: string; d: string; h: string } | null>(null);
   const [fVal, setFVal] = useState('');
   const [grpH, setGrpH] = useState('');
@@ -1188,7 +1190,7 @@ export default function EhrNurse({
                           }
                           const auto = !c ? vitAt(it, d, h) : '';
                           return (
-                            <td key={key} className={`${c ? 'ns-fl-v' : auto ? 'ns-fl-a' : ''} ${isNow(d, h) ? 'ns-fl-now' : ''} ${!c && auto && vitRow(d, h)?.auth === '미인증' ? 'ns-fl-un' : ''}`} title={!c && auto && vitRow(d, h)?.auth === '미인증' ? '미인증 기록 (PDA) — 우클릭 → 인증저장' : undefined} onDoubleClick={() => { setFEdit({ it, d, h }); setFVal(c?.text || auto); }} onContextMenu={e => { e.preventDefault(); e.stopPropagation(); setFCtx({ x: e.clientX, y: e.clientY, it, d, h }); }}>
+                            <td key={key} className={`${c ? 'ns-fl-v' : auto ? 'ns-fl-a' : ''} ${isNow(d, h) ? 'ns-fl-now' : ''} ${!c && auto && vitRow(d, h)?.auth === '미인증' ? 'ns-fl-un' : ''}`} title={!c && auto && vitRow(d, h)?.auth === '미인증' ? '미인증 기록 (PDA) — 우클릭 → 인증저장' : undefined} onDoubleClick={() => { if (SCALE_ITEMS[it]) { setFScale({ it, d, h }); return; } setFEdit({ it, d, h }); setFVal(c?.text || auto); }} onContextMenu={e => { e.preventDefault(); e.stopPropagation(); setFCtx({ x: e.clientX, y: e.clientY, it, d, h }); }}>
                               {on ? <input autoFocus value={fVal} onChange={e => setFVal(e.target.value)} onBlur={() => { fSet(it, d, h, fVal); setFEdit(null); }} onKeyDown={e => { if (e.key === 'Enter') { fSet(it, d, h, fVal); setFEdit(null); } if (e.key === 'Escape') setFEdit(null); }} /> : <>{c?.text || auto}{c?.memo && <sup title={c.memo}>●</sup>}</>}
                             </td>
                           );
@@ -1268,6 +1270,7 @@ export default function EhrNurse({
                   </div>
                 )}
                 <p className="ns-fl-h" hidden={fTab === 'io' || fTab === 'lab'}>표를 꾹 누른 채 좌우로 끌면 다른 시간대·날짜로 이동 · 칸 더블클릭=입력, 우클릭=메뉴(메모 / 간호기록 / 그룹기록) · 파란 글씨는 임상관찰 연동값</p>
+                {fScale && SCALE_ITEMS[fScale.it] && <ScalePick kind={SCALE_ITEMS[fScale.it]} onClose={() => setFScale(null)} onPick={t => { fSet(fScale.it, fScale.d, fScale.h, t); setFScale(null); }} />}
                 {fCtx && (
                   <div className="ns-fl-m" style={{ left: fCtx.x, top: fCtx.y }} onClick={e => e.stopPropagation()}>
                     <button type="button" onClick={() => { const c = fGet(fCtx.it, fCtx.d, fCtx.h); if (!c) { setFCtx(null); return; } const m = window.prompt('메모', c.memo || ''); if (m !== null) setData(d => ({ ...d, memos: d.memos.map(x => (x === c ? { ...x, memo: m } : x)) })); setFCtx(null); }}>메모</button>
