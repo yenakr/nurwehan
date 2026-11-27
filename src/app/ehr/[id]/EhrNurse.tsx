@@ -100,6 +100,21 @@ const NFG: { g: string; guide: string; subs: { s: string; items: string[] }[] }[
     { s: '통증평가', items: ['통증 평가 사유', '통증유무', '통증 시작시기', '통증강도(척도)', '통증위치', '통증강도(점수)', '통증양상'] },
     { s: '통증완화중재', items: ['비약물요법', '약물요법'] },
   ] },
+  { g: '신체억제대 적용 및 관리', guide: '의사 처방에 따라 신체억제대를 적용하고, 적용 중에는 2시간마다 순환·피부 상태를 확인하며 해제 가능 여부를 평가합니다.', subs: [
+    { s: '억제대 적용', items: ['억제대 적용 사유', '억제대 종류', '적용 부위', '보호자 설명 및 동의'] },
+    { s: '억제대 관리', items: ['말초순환 확인', '피부 상태 확인', '관절운동 및 체위변경', '해제 가능 여부 평가'] },
+  ] },
+  { g: '감염관리', guide: '격리 대상 환자는 격리 종류에 맞는 표지·보호구·환경관리를 시행하고 환자·보호자 교육 후 기록합니다.', subs: [
+    { s: '격리 및 예방', items: ['격리 종류', '격리 표지 부착', '개인보호구 착용 확인', '손위생 교육', '환경 소독'] },
+  ] },
+  { g: '산소요법 관리', guide: '산소 공급 방법과 유량을 확인하고 호흡 상태를 평가하여 기록합니다.', subs: [
+    { s: '산소 공급', items: ['산소 공급 방법', '산소 유량(L/min)', '가습기 물 확인'] },
+    { s: '호흡 평가', items: ['호흡음 청진', '호흡 양상', '기침·가래 배출 격려'] },
+  ] },
+  { g: '튜브·배액관 관리', guide: '삽입된 튜브와 배액관의 고정 상태, 개방성, 배액량과 삽입 부위를 확인하여 기록합니다.', subs: [
+    { s: '튜브 관리', items: ['튜브 종류', '고정 상태 확인', '삽입 부위 피부 확인', '개방성 확인'] },
+    { s: '배액 확인', items: ['배액 양상', '배액량(mL)', '배액관 비움'] },
+  ] },
 ];
 const SCR: Record<string, string> = { todo: 'MNR101F1', notes: 'MNR210F1', patinfo: 'MNR120F1', dxhist: 'MNR130F1', surghist: 'MNR131F1', vacc: 'MNR132F1', labres: 'MNR310F1', medrec: 'MNR410F1', flowsheet: 'MNR281F1', overview: 'MNR110F1', vitals: 'MNR281F2', bst: 'MNR281F3', mat: 'MNR520F1', nact: 'MNR510F1', qr: 'MNR900F1', staff: 'MNR700F1', rxcmp: 'MDI604F1', futsch: 'SWF380F1', sticker: 'MNZ939F1', cmnreq: 'MDM610F1', dcplan: 'MNR320F1', usage: 'MDI120F1', unauth: 'MNR260F1' };
 const hm = () => { const d = vnow(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
