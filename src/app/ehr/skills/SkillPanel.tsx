@@ -7,7 +7,7 @@ import { SKILLS, briefOf, cfgOf, gradeChart } from './scn';
 import { GUIDE } from './guide';
 
 // 핵심술기 EHR: 처음 열 때 상황 안내 창 + 오른쪽 아래 동그라미 버튼(상황·체크리스트·사용법 질문·제출)
-export default function SkillPanel({ id, data, ai, aiLeft, onSubmit }: { id: string; data: ChartData; ai: boolean; aiLeft: number; onSubmit: (score: string, miss: string[]) => void }) {
+export default function SkillPanel({ id, data, ai, aiLeft, onSubmit }: { id: string; data: ChartData; ai: boolean; aiLeft: number; onSubmit: () => void }) {
   const key = data.info.skill || '';
   const sc = SKILLS.find(x => x.key === key);
   const cfg = cfgOf(data.info);
@@ -40,7 +40,7 @@ export default function SkillPanel({ id, data, ai, aiLeft, onSubmit }: { id: str
     } catch { setAns('답을 가져오지 못했어요.'); }
     setBusy(false);
   };
-  const submit = () => onSubmit(`${items.filter(i => i.ok).length}/${items.length}`, items.filter(i => !i.ok).map(i => i.label));
+  const submit = () => onSubmit();
   const Situation = () => (
     <>
       <div><b>{cfg.name}</b> {cfg.age}/{cfg.sex} · {cfg.ward} {cfg.bed}<br />{cfg.dx} · 알레르기 {cfg.allergy}</div>

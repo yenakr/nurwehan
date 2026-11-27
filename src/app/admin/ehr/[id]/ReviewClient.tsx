@@ -5,6 +5,7 @@ import { COLS } from '@/app/ehr/[id]/EhrEditor';
 import type { ChartData, Row } from '@/app/ehr/types';
 import { FORMS, formLine } from '@/app/ehr/[id]/EhrForms';
 import { notify } from '@/components/Dialog';
+import { cfgOf, gradeChart } from '@/app/ehr/skills/scn';
 
 const SECTIONS = ([
   { key: 'notes', label: '간호기록' },
@@ -62,6 +63,9 @@ function Table({ rows, cols }: { rows: Row[]; cols: { key: string; label: string
 
 export default function ReviewClient({ id, data }: { id: string; data: ChartData }) {
   const [text, setText] = useState(data.info.comment || '');
+  const [score, setScore] = useState(data.info.profScore || '');
+  const cfg = cfgOf(data.info);
+  const auto = cfg ? gradeChart(data.info.skill || '', cfg, data) : [];
   const [busy, setBusy] = useState(false);
   const [from, setFrom] = useState('');
   const [to, setTo] = useState('');
@@ -84,7 +88,7 @@ export default function ReviewClient({ id, data }: { id: string; data: ChartData
   const save = async () => {
     setBusy(true);
     try {
-      const r = await fetch(`/api/admin/ehr/${id}`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ comment: text }) });
+      const r = await fetch(`/api/admin/ehr/${id}`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ comment: text, score }) });
       notify(r.ok ? '저장했어요. 학생에게 확인 완료로 보여요.' : '저장하지 못했어요.');
     } finally { setBusy(false); }
   };
@@ -97,6 +101,12 @@ export default function ReviewClient({ id, data }: { id: string; data: ChartData
         {info.cc && <div>주호소: {info.cc}</div>}
         {info.pmh && <div>과거력: {info.pmh}</div>}
       </div>
+      {auto.length > 0 && (
+        <details className="card" style={{ padding: 16, fontSize: 13 }}>
+          <summary style={{ cursor: 'pointer', fontWeight: 800, fontSize: 14 }}>참고 체크리스트 (자동 확인 · 채점은 직접)</summary>
+          <ul style={{ listStyle: 'none', padding: 0, margin: '8px 0 0', lineHeight: 1.8 }}>{auto.map(i => <li key={i.id}>{i.avoid ? (i.ok ? '🛡️' : '❌') : i.ok ? '✅' : '⬜'} {i.label}</li>)}</ul>
+        </details>
+      )}
       <div className="card" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
         <style>{`@media print { .noprint { display: none !important; } }`}</style>
         <div className="noprint" style={{ display: 'flex', flexWrap: 'wrap', gap: 8, alignItems: 'center', fontSize: 13 }}>
@@ -144,6 +154,7 @@ export default function ReviewClient({ id, data }: { id: string; data: ChartData
       </div>
       <div className="card" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 8 }}>
         <b style={{ fontSize: 14 }}>교수님 의견</b>
+        <label style={{ display: 'flex', gap: 8, alignItems: 'center', fontSize: 14 }}>점수<input value={score} onChange={e => setScore(e.target.value)} maxLength={20} placeholder="예: 8/10" style={{ border: '1px solid var(--border)', borderRadius: 8, padding: '6px 10px', width: 120, background: 'var(--background)', color: 'inherit' }} /></label>
         <textarea value={text} onChange={e => setText(e.target.value)} rows={5} maxLength={1500} style={{ width: '100%', boxSizing: 'border-box', border: '1px solid var(--border)', borderRadius: 10, padding: 10, font: 'inherit', background: 'transparent', color: 'inherit' }} />
         <button type="button" onClick={save} disabled={busy} style={{ alignSelf: 'flex-end', border: 0, borderRadius: 999, padding: '10px 20px', background: 'var(--primary)', color: '#fff', font: 'inherit', fontWeight: 700, cursor: 'pointer' }}>{busy ? '저장 중' : '저장'}</button>
       </div>
