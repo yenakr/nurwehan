@@ -807,7 +807,7 @@ export default function EhrEditor({
   const submit = async () => {
     const phi = findPhi(data);
     if (phi.length) { notify(`${phi.join(', ')}으로 보이는 내용이 있어요. 가상 정보로 바꾼 뒤 제출하세요.`); return; }
-    if (!(await confirmDialog('제출하면 교수님이 볼 수 있고, 확인 전까지만 취소할 수 있어요. 제출할까요?'))) return;
+    if (!(await confirmDialog('제출하면 확인 전까지만 취소할 수 있어요. 제출할까요?'))) return;
     const sv = await fetch(`/api/ehr/${id}`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, subject, data }) });
     const r = sv.ok ? await fetch(`/api/ehr/${id}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ on: true }) }) : sv;
     if (r.ok) { setData(d => ({ ...d, info: { ...d.info, submitted: new Date().toISOString() } })); notify('제출했어요.'); }
@@ -825,7 +825,7 @@ export default function EhrEditor({
   const unsubmit = async () => {
     const r = await fetch(`/api/ehr/${id}/submit`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ on: false }) });
     if (r.ok) setData(d => { const { submitted: _s, ...rest } = d.info; return { ...d, info: rest }; });
-    else notify('교수님이 이미 확인한 차트는 고칠 수 없어요.');
+    else notify('이미 확인된 차트는 고칠 수 없어요.');
   };
   const setInfo = (k: string, v: string) => setData(d => ({ ...d, info: { ...d.info, [k]: v } }));
   const ruleCtx: RuleCtx = { user: userName || '', dept: DEPTS.find(x => x.code === info.dept)?.name || info.dept || '', doctor: info.doctor || '' };
@@ -1090,7 +1090,7 @@ export default function EhrEditor({
                 {data.notes.some(n => n.fb) && (
                   <div className="pfb">
                     <style>{`.pfb { border: 1px solid var(--border); border-left: 4px solid var(--primary); border-radius: 8px; padding: 10px 12px; margin: 8px 0; font-size: 13.5px; line-height: 1.6; } .pfb p { margin: 2px 0 6px; white-space: pre-wrap; } .pfb small { color: var(--sub-text); }`}</style>
-                    <b>교수님 코멘트</b>
+                    <b>코멘트</b>
                     {data.notes.filter(n => n.fb).map((n, i) => <div key={i}><small>{n.time} {n.focus}</small><p>{n.fb}</p></div>)}
                   </div>
                 )}
@@ -1304,8 +1304,8 @@ export default function EhrEditor({
       </div>
       {info.mode === 'skill' && info.skill && <SkillPanel id={id} data={data} ai={ai} aiLeft={skillLeft ?? 0} onSubmit={skillSubmit} />}
 
-      {locked && <div className="lkb">{info.reviewed ? '교수님이 확인했어요' : '제출했어요. 교수님 확인 전에는 제출 취소로 고칠 수 있어요'}</div>}
-      {info.comment && <div className="cmt"><b>교수님 의견</b><p>{info.comment}</p></div>}
+      {locked && <div className="lkb">{info.reviewed ? '확인 완료' : '제출했어요. 확인 전에는 제출 취소로 고칠 수 있어요'}</div>}
+      {info.comment && <div className="cmt"><b>의견</b><p>{info.comment}</p></div>}
       {fb && <div className="cmt ai"><b style={{ display: 'inline-flex', alignItems: 'center', gap: 5 }}><AiMark size={14} />AI 피드백</b><button type="button" className="cx" aria-label="닫기" onClick={() => setFb('')}>&times;</button><p>{fb}</p></div>}
 
       <fieldset disabled={locked} style={{ border: 0, padding: 0, margin: 0, minWidth: 0 }}>
