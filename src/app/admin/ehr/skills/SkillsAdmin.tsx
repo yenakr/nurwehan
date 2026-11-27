@@ -171,14 +171,16 @@ export default function SkillsAdmin({ rows: init, classes }: { rows: Row[]; clas
       };
       const known = new Set(SKILLS.map(x => x.key));
       const groups = [...SKILLS.map((sk, i) => ({ key: sk.key, title: `${i + 1}. ${sk.title}`, list: rows.filter(r => r.skill === sk.key), add: true })), { key: '_old', title: '이전 술기 (더 이상 열리지 않음)', list: rows.filter(r => !known.has(r.skill)), add: false }].filter(g => g.add || g.list.length > 0);
-      return groups.map(g => {
+      return <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(260px, 1fr))', gap: 10, alignItems: 'start' }}>{groups.map(g => {
         const isOpen = openSk === g.key;
         const pub = g.list.filter(r => r.published).length;
         return (
-          <div key={g.key} style={{ background: 'var(--background)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+          <div key={g.key} style={{ background: 'var(--background)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden', gridColumn: isOpen ? '1 / -1' : undefined }}>
             <button type="button" onClick={() => setOpenSk(isOpen ? '' : g.key)} aria-expanded={isOpen} style={{ display: 'flex', gap: 10, alignItems: 'center', width: '100%', padding: '14px 16px', border: 0, background: isOpen ? 'var(--muted-background)' : 'none', color: 'inherit', cursor: 'pointer', textAlign: 'left', font: 'inherit' }}>
-              <b style={{ flex: 1, fontSize: 15 }}>{g.title}</b>
-              <span style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>{g.list.length === 0 ? '시나리오 없음' : `시나리오 ${g.list.length}개 · 공개 ${pub}`}</span>
+              <span style={{ flex: 1, minWidth: 0 }}>
+                <b style={{ display: 'block', fontSize: 14 }}>{g.title}</b>
+                <span style={{ fontSize: 12, color: g.list.length ? '#2563eb' : 'var(--muted-foreground)' }}>{g.list.length === 0 ? '시나리오 없음' : `시나리오 ${g.list.length}개 · 공개 ${pub}`}</span>
+              </span>
               <span style={{ color: 'var(--muted-foreground)' }}>{isOpen ? '▲' : '▼'}</span>
             </button>
             {isOpen && (
@@ -190,7 +192,7 @@ export default function SkillsAdmin({ rows: init, classes }: { rows: Row[]; clas
             )}
           </div>
         );
-      });
+      })}</div>;
       })()}
     </div>
   );
