@@ -5,24 +5,24 @@ import { buildHistory } from './history';
 // 새 기능(상병코드, 식이처방, 중증도, 서식지, 퇴원예고 등)에 맞춰 예시 환자 자료를 채운다.
 // 이미 값이 있는 항목은 건드리지 않는다.
 const DXC: Record<string, [string, string, string][]> = {
-  adult: [['주상병', 'I50.0', '울혈심부전'], ['부상병', 'I10', '본태성 고혈압'], ['부상병', 'I20.9', '협심증']],
-  child: [['주상병', 'J21.9', '급성 세기관지염']],
-  er1: [['주상병', 'I21.1', '급성 하벽 심근경색증'], ['부상병', 'I49.0', '심실세동']],
-  er2: [['주상병', 'S93.4', '발목 염좌']],
-  gi: [['주상병', 'K26.4', '출혈을 동반한 십이지장 궤양'], ['부상병', 'B98.0', '헬리코박터 파일로리 감염'], ['부상병', 'D64.9', '빈혈']],
-  gs: [['주상병', 'K35.8', '급성 충수염']],
-  op1: [['주상병', 'E11.4', '당뇨병성 신경병증을 동반한 제2형 당뇨병']],
-  op2: [['주상병', 'K81.0', '급성 담낭염']],
-  os: [['주상병', 'M17.9', '무릎 관절증']],
-  psych: [['주상병', 'F20.9', '조현병']],
-  pul: [['주상병', 'J18.9', '상세불명의 폐렴'], ['부상병', 'J10.1', '인플루엔자 (A형)']],
-  women: [['주상병', 'O82', '제왕절개 분만']],
+  adult: [['주상병', 'I50.0', 'Congestive heart failure'], ['부상병', 'I10', 'Essential (primary) hypertension'], ['부상병', 'I20.9', 'Angina pectoris, unspecified']],
+  child: [['주상병', 'J21.9', 'Acute bronchiolitis, unspecified']],
+  er1: [['주상병', 'I21.1', 'ST elevation (STEMI) myocardial infarction of inferior wall'], ['부상병', 'I49.0', 'Ventricular fibrillation and flutter']],
+  er2: [['주상병', 'S93.4', 'Sprain and strain of ankle']],
+  gi: [['주상병', 'K26.4', 'Duodenal ulcer with hemorrhage'], ['부상병', 'B98.0', 'Helicobacter pylori infection'], ['부상병', 'D64.9', 'Anemia, unspecified']],
+  gs: [['주상병', 'K35.8', 'Acute appendicitis']],
+  op1: [['주상병', 'E11.4', 'Type 2 diabetes mellitus with diabetic neuropathy']],
+  op2: [['주상병', 'K81.0', 'Acute cholecystitis']],
+  os: [['주상병', 'M17.9', 'Osteoarthritis of knee, unspecified']],
+  psych: [['주상병', 'F20.9', 'Schizophrenia, unspecified']],
+  pul: [['주상병', 'J18.9', 'Pneumonia, unspecified organism'], ['부상병', 'J10.1', 'Influenza A']],
+  women: [['주상병', 'O82', 'Delivery by cesarean section']],
 };
 
 const ymd = (v?: string) => (v || '').slice(0, 10);
 
 // 샘플 데이터 버전: 올리면 이전 버전으로 저장된 미제출 샘플 차트는 정리되고 새 데이터로 다시 열린다.
-export const SAMPLE_VER = '16';
+export const SAMPLE_VER = '17';
 
 const CONSULT: Record<string, [string, string, string, string][]> = {
   adult: [['RM', '심장재활 교육 및 운동처방 의뢰', '퇴원 후 외래 재활 프로그램 등록 권고', '회신완료']],
