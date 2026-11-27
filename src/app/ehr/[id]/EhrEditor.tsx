@@ -1256,17 +1256,17 @@ export default function EhrEditor({
     <>
           <VClock base={info.vbase} onSet={setClock} />
           <span className={`st ${status}`}>{status === 'saved' ? '저장됨' : status === 'saving' ? '저장 중…' : '저장 실패'}</span>
-          {ai && !locked && aiOn && <button type="button" className="aib" onClick={askFb} disabled={fbBusy || fbLeft <= 0}><AiMark size={14} />{fbBusy ? '살펴보는 중' : `AI 피드백 ${fbLeft}회`}</button>}
-          {locked
+          {ai && !locked && aiOn && info.mode !== 'skill' && <button type="button" className="aib" onClick={askFb} disabled={fbBusy || fbLeft <= 0}><AiMark size={14} />{fbBusy ? '살펴보는 중' : `AI 피드백 ${fbLeft}회`}</button>}
+          {info.mode !== 'skill' && (locked
             ? (!info.reviewed && <button type="button" className="subm out" onClick={unsubmit}>제출 취소</button>)
-            : <button type="button" className="subm" onClick={submit}>제출</button>}
+            : <button type="button" className="subm" onClick={submit}>제출</button>)}
           <div className="more">
             <button type="button" className="mbtn" aria-label="더보기" onClick={() => setMoreOpen(o => !o)}>&middot;&middot;&middot;</button>
             {moreOpen && (
               <>
                 <button type="button" className="mbk" aria-label="닫기" onClick={() => setMoreOpen(false)} />
                 <div className="mm">
-                  {ai && !locked && <button type="button" onClick={() => { toggleAi(); setMoreOpen(false); }}>AI 피드백 {aiOn ? '끄기' : '켜기'}</button>}
+                  {ai && !locked && info.mode !== 'skill' && <button type="button" onClick={() => { toggleAi(); setMoreOpen(false); }}>AI 피드백 {aiOn ? '끄기' : '켜기'}</button>}
                   <button
                     type="button"
                     className="del"
