@@ -24,6 +24,7 @@ export default async function AdminEhrPage() {
           <Link href="/ehr" style={{ border: '1px solid var(--primary)', color: 'var(--primary)', borderRadius: 999, padding: '7px 16px', fontSize: 14, fontWeight: 700 }}>학생 화면 보기</Link>
           <Link href="/admin/ehr/classes" style={{ border: '1px solid var(--border)', borderRadius: 999, padding: '7px 16px', fontSize: 14, fontWeight: 700 }}>분반 관리</Link>
           <Link href="/admin/ehr/patients" style={{ border: '1px solid var(--border)', borderRadius: 999, padding: '7px 16px', fontSize: 14, fontWeight: 700 }}>가상환자 관리</Link>
+          <Link href="/admin/ehr/skills" style={{ border: '1px solid var(--border)', borderRadius: 999, padding: '7px 16px', fontSize: 14, fontWeight: 700 }}>핵심술기 출제</Link>
         </div>
         <div className="card" style={{ padding: 0 }}>
           {rows.length === 0 && <p style={{ padding: 24, textAlign: 'center', color: 'var(--sub-text)' }}>제출된 차트가 없어요.</p>}

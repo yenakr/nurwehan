@@ -3,6 +3,8 @@ import { getCurrentUser } from '@/lib/auth';
 import { hasEhrAccess } from '@/lib/ehr-access';
 import { notFound, redirect } from 'next/navigation';
 import { SCENARIOS } from './data';
+import { studentSkillScns } from '@/lib/ehr-class';
+import { SKILLS } from './scn';
 
 export const dynamic = 'force-dynamic';
 export const metadata = { title: '핵심술기별 EHR' };
@@ -11,6 +13,7 @@ export default async function SkillsPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login?redirect=/ehr/skills');
   if (!(await hasEhrAccess(user))) notFound();
+  const custom = await studentSkillScns(user.id);
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '28px 0' }}>
       <div className="container" style={{ maxWidth: 860 }}>
@@ -26,6 +29,19 @@ export default async function SkillsPage() {
             </Link>
           ))}
         </div>
+        {custom.length > 0 && (
+          <>
+            <h2 style={{ margin: '22px 0 8px', fontSize: 16 }}>교수님 출제</h2>
+            <div style={{ display: 'grid', gap: 12 }}>
+              {custom.map(c => (
+                <Link key={c.id} href={`/ehr/skills/${c.id}`} style={{ display: 'block', padding: 16, borderRadius: 10, background: 'var(--background)', border: '1px solid var(--border)', textDecoration: 'none', color: 'inherit' }}>
+                  <div style={{ fontWeight: 700, fontSize: 16 }}>{c.data.title}{c.data.exam && <span style={{ marginLeft: 8, fontSize: 11, background: '#dc2626', color: '#fff', borderRadius: 999, padding: '1px 8px' }}>시험</span>}</div>
+                  <div style={{ fontSize: 13, color: 'var(--muted-foreground)' }}>{SKILLS.find(s => s.key === c.data.skill)?.title}</div>
+                </Link>
+              ))}
+            </div>
+          </>
+        )}
       </div>
     </main>
   );

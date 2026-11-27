@@ -71,7 +71,7 @@ export async function setMember(classId: string, userId: string, on: boolean): P
 // ---- 가상환자 ----
 export async function listVirtuals(): Promise<EhrVirtualRow[]> {
   try {
-    return await prisma.$queryRaw<EhrVirtualRow[]>`SELECT "id", "classId", "published", "data" FROM "EhrVirtual" ORDER BY "createdAt" DESC LIMIT 300`;
+    return await prisma.$queryRaw<EhrVirtualRow[]>`SELECT "id", "classId", "published", "data" FROM "EhrVirtual" WHERE COALESCE("data"->>'kind', '') <> 'skill-scn' ORDER BY "createdAt" DESC LIMIT 300`;
   } catch {
     return [];
   }
@@ -116,9 +116,37 @@ export async function studentVirtuals(userId: string): Promise<EhrVirtualRow[]> 
   try {
     return await prisma.$queryRaw<EhrVirtualRow[]>`
       SELECT v."id", v."classId", v."published", v."data" FROM "EhrVirtual" v
-      WHERE v."published" = true AND (v."classId" IS NULL OR v."classId" IN (SELECT m."classId" FROM "EhrClassMember" m WHERE m."userId" = ${userId}))
+      WHERE v."published" = true AND COALESCE(v."data"->>'kind', '') <> 'skill-scn' AND (v."classId" IS NULL OR v."classId" IN (SELECT m."classId" FROM "EhrClassMember" m WHERE m."userId" = ${userId}))
       ORDER BY v."createdAt" DESC LIMIT 100`;
   } catch {
     return [];
+  }
+}
+
+// ---- 핵심술기 시나리오 (교수 출제). 가상환자 표를 같이 쓰되 data.kind = 'skill-scn' 으로 나눈다 ----
+export type SkillScn = { id: string; classId: string | null; published: boolean; data: { kind: 'skill-scn'; skill: string; title: string; cfg: unknown; exam: boolean; assign: 'same' | 'random' } };
+export async function listSkillScns(): Promise<SkillScn[]> {
+  try {
+    return await prisma.$queryRaw<SkillScn[]>`SELECT "id", "classId", "published", "data" FROM "EhrVirtual" WHERE "data"->>'kind' = 'skill-scn' ORDER BY "createdAt" DESC LIMIT 200`;
+  } catch {
+    return [];
+  }
+}
+export async function studentSkillScns(userId: string): Promise<SkillScn[]> {
+  try {
+    return await prisma.$queryRaw<SkillScn[]>`
+      SELECT v."id", v."classId", v."published", v."data" FROM "EhrVirtual" v
+      WHERE v."published" = true AND v."data"->>'kind' = 'skill-scn' AND (v."classId" IS NULL OR v."classId" IN (SELECT m."classId" FROM "EhrClassMember" m WHERE m."userId" = ${userId}))
+      ORDER BY v."createdAt" DESC LIMIT 100`;
+  } catch {
+    return [];
+  }
+}
+export async function saveSkillScn(id: string, data: unknown): Promise<boolean> {
+  try {
+    const n = await prisma.$executeRaw`UPDATE "EhrVirtual" SET "data" = ${JSON.stringify(data)}::jsonb, "updatedAt" = CURRENT_TIMESTAMP WHERE "id" = ${id} AND "data"->>'kind' = 'skill-scn'`;
+    return n > 0;
+  } catch {
+    return false;
   }
 }
