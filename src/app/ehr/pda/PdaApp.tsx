@@ -35,7 +35,7 @@ export default function PdaApp({ roster, userName }: { roster: R[]; userName: st
 
   const load = useCallback(async (id: string) => {
     const r = await fetch(`/api/ehr/${id}/pda`, { cache: 'no-store' });
-    if (!r.ok) { setMsg({ t: '차트를 불러오지 못했어요', ok: false }); return null; }
+    if (!r.ok) return null;
     const j = await r.json() as { data: ChartData };
     setVOffset(offsetOf(j.data.info, Date.now()));
     setChart(j.data); setPid(id);
@@ -46,9 +46,10 @@ export default function PdaApp({ roster, userName }: { roster: R[]; userName: st
     const s = parseQr(text);
     if (!s) { setMsg({ t: '이 시스템의 QR이 아니에요', ok: false }); setMode(pid ? 'patient' : 'home'); return; }
     if (s.kind === 'P') {
-      if (!roster.some(x => x.id === s.id)) { setMsg({ t: '등록되지 않은 환자 팔찌예요', ok: false }); setMode(pid ? 'patient' : 'home'); return; }
+      // 명단에 없어도 차트가 있으면 열어 본다 (외래·응급 환자, 퇴원 처리된 환자 등)
       const d = await load(s.id);
-      if (d) { setMsg({ t: `환자 확인: ${d.info.name} (${d.info.ward} ${d.info.bed})`, ok: true }); setMode('patient'); }
+      if (!d) { setMsg({ t: '이 QR의 환자 차트를 찾을 수 없어요. 샘플 데이터가 갱신되면 QR이 바뀌니, EHR에서 QR 보기를 다시 열어 새 QR로 찍어 주세요', ok: false }); setMode(pid ? 'patient' : 'home'); return; }
+      setMsg({ t: `환자 확인: ${d.info.name} (${[d.info.ward, d.info.bed].filter(Boolean).join(' ')})${d.info.discharged ? ' · 퇴원 처리된 환자예요' : ''}`, ok: !d.info.discharged }); setMode('patient');
       return;
     }
     if (!pid) { setMsg({ t: '먼저 환자 팔찌를 스캔하세요', ok: false }); setMode('home'); return; }

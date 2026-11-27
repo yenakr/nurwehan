@@ -11,7 +11,7 @@ export default async function PdaPage() {
   const user = await getCurrentUser();
   if (!user) redirect('/login?redirect=/ehr/pda');
   if (!(await hasEhrAccess(user))) notFound();
-  const cases = (await listCases(user.id)).filter(c => !c.discharged && c.ward && c.bed);
+  const cases = (await listCases(user.id)).filter(c => !c.discharged);
   const roster = cases.map(c => ({ id: c.id, ward: c.ward || '', bed: c.bed || '', name: c.name || '', ptNo: c.ptNo || '' })).sort((a, b) => `${a.ward}${a.bed}`.localeCompare(`${b.ward}${b.bed}`));
   return <PdaApp roster={roster} userName={user.name} />;
 }
