@@ -1262,7 +1262,7 @@ export default function EhrEditor({
                       setMoreOpen(false);
                       if (!(await confirmDialog('이 차트를 삭제할까요? 모든 기록이 사라지고 되돌릴 수 없어요.'))) return;
                       const res = await fetch(`/api/ehr/${id}`, { method: 'DELETE' });
-                      if (res.ok) router.push('/ehr');
+                      if (res.ok) router.push('/ehr?view=list');
                     }}
                   >
                     삭제

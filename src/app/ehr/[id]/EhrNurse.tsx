@@ -239,6 +239,7 @@ export default function EhrNurse({
   const [date, setDate] = useState(() => { const t = vnow(); return `${t.getFullYear()}-${pad(t.getMonth() + 1)}-${pad(t.getDate())}`; });
   const [ward, setWard] = useState(i.ward || '');
   const [maxed, setMaxed] = useState(false);
+  useEffect(() => { try { if (caseId) localStorage.setItem('ehr.lastPt', String(caseId)); } catch { /* 저장 불가 */ } }, [caseId]);
   const [team, setTeam] = useState(() => teamOf(i.bed || ''));
   const [dmsg, setDmsg] = useState('');
   const [duty, setDuty] = useState(dutyNow());
@@ -765,11 +766,6 @@ export default function EhrNurse({
               {[['CPR', data.cpr.length ? `CPR 기록 ${data.cpr.length}건` : 'CPR 기록 없음'], ['약물이상반응', i.allergy ? `알러지: ${i.allergy}` : '등록된 약물이상반응 없음'], ['건강보험', '건강보험 자격 확인됨 (모의 · 심평원 조회)']].map(([k, v]) => <button key={k} type="button" className={chip === k ? 'ns-on' : ''} onClick={() => setChip(chip === k ? '' : k)}>{k}</button>)}
               {chip && <p>{[['CPR', data.cpr.length ? `CPR 기록 ${data.cpr.length}건` : 'CPR 기록 없음'], ['약물이상반응', i.allergy ? `알러지: ${i.allergy}` : '등록된 약물이상반응 없음'], ['건강보험', '건강보험 자격 확인됨 (모의 · 심평원 조회)']].find(x => x[0] === chip)?.[1]}</p>}
             </div>}</div>
-            <div className="ns-ngrp"><button type="button" className="ns-gh" onClick={() => tg('g3')}>출력<em>{fold.g3 ? '▸' : '▾'}</em></button>{!fold.g3 && <div className="ns-nlinks ns-nprt">
-              <button type="button" onClick={printOrders}>처방출력</button>
-              <button type="button" onClick={printBed}>침상카드</button>
-              <button type="button" onClick={printWarn}>주의라벨</button>
-            </div>}</div>
             {abn.length > 0 && (
               <div className="ns-abn">
                 <b>⚠ 활력징후 이상 ({lastV?.time})</b>
@@ -783,6 +779,11 @@ export default function EhrNurse({
               {i.iso && i.iso !== '해당 없음' && i.iso !== '없음' && <em>{i.iso}</em>}
               {i.npo === '1' && <em>금식</em>}
             </div>
+            <div className="ns-ngrp"><button type="button" className="ns-gh" onClick={() => tg('g3')}>출력<em>{fold.g3 ? '▸' : '▾'}</em></button>{!fold.g3 && <div className="ns-nlinks ns-nprt">
+              <button type="button" onClick={printOrders}>처방출력</button>
+              <button type="button" onClick={printBed}>침상카드</button>
+              <button type="button" onClick={printWarn}>주의라벨</button>
+            </div>}</div>
           </div>
           <div className="ns-nbox ns-mbox ns-mdoc">
             <button type="button" className="ns-gh" onClick={() => tg('m1')}>진료메모<small>{memoOf('진료메모').length}</small><em>{fold.m1 ? '▸' : '▾'}</em></button>

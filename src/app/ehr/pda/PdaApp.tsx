@@ -111,7 +111,7 @@ export default function PdaApp({ roster, userName }: { roster: R[]; userName: st
     <div className="pd">
       <style>{CSS}</style>
       <div className="pd-bar">
-        <Link href="/ehr" className="pd-back">← EHR</Link>
+        <Link href="/ehr?view=list" className="pd-back">← EHR</Link>
         <div className="pd-ttl"><b>PDA</b><span>투약 · 바코드 확인</span></div>
         <span className="pd-clk" title="EHR 가상 시각">{vParse(now)}</span>
       </div>
