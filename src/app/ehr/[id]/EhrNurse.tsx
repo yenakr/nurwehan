@@ -955,8 +955,7 @@ export default function EhrNurse({
         </main>
 
         <aside className={`ns-nr ${rOpen ? '' : 'ns-nrc'}`}>
-          <div className="ns-fighd" style={{ justifyContent: rOpen ? 'space-between' : 'center' }}>
-            {rOpen && <b>체크리스트·메모</b>}
+          <div className="ns-fighd" style={{ justifyContent: rOpen ? 'flex-end' : 'center' }}>
             <button type="button" className="ns-figb" aria-expanded={rOpen} title={rOpen ? '접기' : '체크리스트·메모 펼치기'} onClick={() => setROpen(v => !v)}>{rOpen ? '▶' : '◀'}</button>
           </div>
           {rOpen && <>
@@ -1275,11 +1274,9 @@ export default function EhrNurse({
                         {c.items.map(it => <label key={it}><input type="checkbox" checked={itemOn(it)} disabled={c.fixed} onChange={() => setCfg(cfgOn.includes(it) ? cfgOn.filter(x => x !== it) : [...cfgOn, it])} />{it}</label>)}
                       </div>
                     ))}
-                    <p style={{ margin: '8px 0 0', color: 'var(--sub-text)' }}>활력징후는 항상 표시돼요. 환자 상태(욕창 위험 등)에 맞게 항목을 넣고 빼세요.</p>
                     <button type="button" style={{ marginTop: 6 }} onClick={() => setFCfg(false)}>닫기</button>
                   </div>
                 )}
-                <p className="ns-fl-h" hidden={fTab === 'io' || fTab === 'lab'}>표를 꾹 누른 채 좌우로 끌면 다른 시간대·날짜로 이동 · 칸 더블클릭=입력, 우클릭=메뉴(메모 / 간호기록 / 그룹기록) · 파란 글씨는 임상관찰 연동값</p>
                 {fScale && SCALE_ITEMS[fScale.it] && <ScalePick kind={SCALE_ITEMS[fScale.it]} prev={scalePrev(fScale.it, fScale.d, fScale.h)} onClose={() => setFScale(null)} onPick={(t, ans, why) => {
                   const f = fScale;
                   const reasonIt = SCALE_ITEMS[f.it] === 'morse' ? '낙상 평가 사유' : '욕창 평가 사유';
@@ -1433,7 +1430,6 @@ export default function EhrNurse({
               <DocReqWin data={data} setData={setData} userName={userName} duty={duty} />
             ) : w === 'unauth' ? (
               <div className="rw-un">
-                <p className="ns-fl-h">기록종류: 병동 처방액팅(모바일) · PDA로 액팅한 투약 서명은 미인증 상태로 남아요. 확인 후 인증하세요.</p>
                 <table className="ns-nlist">
                   <thead><tr><th>일시</th><th>기록종류</th><th>처방명</th><th>용량</th><th>수행자</th><th /></tr></thead>
                   <tbody>
