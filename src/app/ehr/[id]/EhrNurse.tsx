@@ -21,6 +21,7 @@ import { useRouter } from 'next/navigation';
 import { isMed, slotsOf, timesFor, group, viewOrders, rollover, type Item, type Groups } from '../ordday';
 import { migrate, shiftChart, withBp, type ChartData, type Row } from '../types';
 import WardBulk, { type BulkPt } from '../WardBulk';
+import GroupRec from './GroupRec';
 
 export type Roster = { id: string; ward: string | null; bed: string | null; name: string | null; ageSex: string | null; ptNo: string | null; doctor: string | null; admit?: string | null; disDate?: string | null; orders?: Row[] };
 
@@ -333,6 +334,8 @@ export default function EhrNurse({
   const [rOpen, setROpen] = useState(true);
   const [win2, setWin2] = useState<string | null>(null);
   const OWN = ['todo', 'notes', 'patinfo', 'dxhist', 'surghist', 'vacc', 'labres', 'medrec', 'flowsheet', 'overview', 'adm', 'dir', 'bulk', 'staff', 'docreq', 'vitals', 'bst', 'mat', 'nact', 'qr', 'rxcmp', 'futsch', 'sticker', 'cmnreq', 'dcplan', 'usage', 'unauth'];
+  const isOwn = (x: string) => OWN.includes(x) || x.startsWith('grp:');
+  const winLabel = (x: string) => (x === 'staff' ? '의료진 · Notify' : x.startsWith('grp:') ? `그룹기록 · ${x.slice(4)}` : MENUS.find(m => m.id === x)?.label);
   const [ddPos, setDdPos] = useState<{ left: number; top: number } | null>(null);
   const place = (el: HTMLElement) => { const r = el.getBoundingClientRect(); setDdPos({ left: Math.max(4, Math.min(r.left, window.innerWidth - 190)), top: r.bottom + 2 }); };
   const [tabs, setTabs] = useState<string[]>([]);
@@ -736,8 +739,8 @@ export default function EhrNurse({
         <div className="ns-ntabs">
           {tabs.map(id => (
             <span key={id} className={win === id || win2 === id ? 'ns-on' : ''}>
-              <button type="button" title={win === id ? '누르면 최소화' : '누르면 열기'} onClick={() => { if (win === id) onClose(); else openMenu(id); }}>{id === 'staff' ? '의료진 · Notify' : MENUS.find(m => m.id === id)?.label}</button>
-              {win && win !== id && win2 !== id && OWN.includes(id) && OWN.includes(win) && <button type="button" aria-label="나란히 보기" title="현재 창 옆에 나란히 열기" onClick={() => setWin2(id)}>▯▯</button>}
+              <button type="button" title={win === id ? '누르면 최소화' : '누르면 열기'} onClick={() => { if (win === id) onClose(); else openMenu(id); }}>{winLabel(id)}</button>
+              {win && win !== id && win2 !== id && isOwn(id) && isOwn(win) && <button type="button" aria-label="나란히 보기" title="현재 창 옆에 나란히 열기" onClick={() => setWin2(id)}>▯▯</button>}
               {win2 === id && <button type="button" aria-label="분할 해제" title="분할 해제" onClick={() => setWin2(null)}>▢</button>}
               {win === id && <button type="button" aria-label="최소화" title="최소화" onClick={() => onClose()}>&minus;</button>}
               <button type="button" aria-label="탭 닫기" title="닫기" onClick={() => closeTab(id)}>&times;</button>
@@ -1045,7 +1048,7 @@ export default function EhrNurse({
               window.addEventListener('pointerup', up);
             }}
           >
-            <b>{w === 'staff' ? '의료진 · Notify' : MENUS.find(m => m.id === w)?.label}</b>
+            <b>{winLabel(w)}</b>
             <span className="ns-wbtn">
               <button type="button" aria-label="최소화" title="최소화 (아래 탭으로)" onClick={() => (w === win ? onClose() : setWin2(null))}>&minus;</button>
               <button type="button" aria-label="최대화" title={maxed ? '이전 크기' : '최대화'} onClick={() => { setMaxed(m => !m); setPos(null); }}>{maxed ? '❐' : '□'}</button>
@@ -1053,7 +1056,10 @@ export default function EhrNurse({
             </span>
           </header>
           <div className="ns-nwb">
-            {w === 'todo' ? (
+            {w.startsWith('grp:') ? (() => {
+              const cat = NFG.find(c => c.g === w.slice(4));
+              return cat ? <Fragment key={cat.g}><GroupRec cat={cat} hours={ALLH} defHour={hm().slice(0, 2)} get={(it, h) => fGet(it, todayS, h)?.text || ''} onSave={(vals, h) => Object.entries(vals).forEach(([it, v]) => fSet(it, todayS, h, v))} /></Fragment> : null;
+            })() : w === 'todo' ? (
               <>
                 <div className="ns-nhd">
                   <button type="button" className={`ns-arw ${scope === 'me' ? 'ns-sel' : ''}`} onClick={() => setScope('me')}>이 환자</button>
@@ -1182,6 +1188,7 @@ export default function EhrNurse({
                                       <button type="button" className="ns-fl-tg" onClick={() => setFColl(c => (c.includes(cat.g) ? c.filter(x => x !== cat.g) : [...c, cat.g]))}>{closed ? '⊕' : '⊖'} {cat.g}</button>
                                       <button type="button" className="ns-fl-bb" onClick={() => setFHidOpen(fHidOpen === cat.g ? null : cat.g)}>숨김항목{hiddenHere.length ? ` (${hiddenHere.length})` : ''}</button>
                                       <button type="button" className="ns-fl-bb" onClick={() => setFGuide(fGuide === cat.g ? null : cat.g)}>기록지침</button>
+                                      <button type="button" className="ns-fl-bb" onClick={() => openMenu(`grp:${cat.g}`)}>그룹기록</button>
                                     </span>
                                     {fHidOpen === cat.g && <span className="ns-fl-pop">{hiddenHere.length ? hiddenHere.map(x => <button key={x} type="button" onClick={() => setHid(hid.filter(y => y !== x))}>↩ {x}</button>) : '숨긴 항목이 없습니다. 항목을 우클릭해 "항목숨기기"를 고르세요.'}</span>}
                                     {fGuide === cat.g && <span className="ns-fl-pop">{cat.guide}</span>}
