@@ -24,7 +24,7 @@ export default async function EhrCasePage({ params, searchParams }: { params: Pr
   const roster = (await listCases(user.id, mode)).filter(c => !c.discharged).map(c => ({ id: c.id, ward: c.ward, bed: c.bed, name: c.name, ageSex: c.ageSex, ptNo: c.ptNo, doctor: c.doctor, admit: c.admit, disDate: c.disDate, orders: (ordMap[c.id] || []) as Record<string, string>[] }));
   const ai = aiConfigured();
   const aiLeft = ai ? await aiQuotaLeft(user.id, '#ehrfb', EHR_FEEDBACK_LIMIT) : 0;
-  const skillLeft = ai && mode === 'skill' ? await aiQuotaLeft(user.id, '#ehrskill', EHR_FEEDBACK_LIMIT) : 0;
+  const skillLeft = ai && mode === 'skill' ? await aiQuotaLeft(user.id, '#ehrhelp', 30) : 0;
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '20px 0' }}>
       <div className="container" style={{ maxWidth: 'none' }}>
