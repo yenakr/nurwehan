@@ -124,7 +124,6 @@ export default function NursingRecord({ data, setData, userName, duty, today }: 
         <input type="date" value={pf} onChange={e => setPf(e.target.value)} aria-label="조회 시작일" style={{ flex: '0 0 auto', width: 140 }} />~
         <input type="date" value={pt} onChange={e => setPt(e.target.value)} aria-label="조회 종료일" style={{ flex: '0 0 auto', width: 140 }} />
         <span className="sp" />
-        <span style={{ color: 'var(--sub-text)' }}>{rows.length}건 · 빨간 글씨 = 야간/특이</span>
       </div>
       <div className="nr-tb">
         <table>
