@@ -281,72 +281,51 @@ export default function UserList({ initialUsers, superAdmin = false }: { initial
                     {user.ehr && <span className="bd">EHR</span>}
                     {user.tier === 1 && <span className="bd">일부공개</span>}
                   </div>
-                  <button type="button" className="rst" onClick={() => setOpenId(openId === user.id ? null : user.id)}>{openId === user.id ? '닫기' : '설정'}</button>
-                  {openId === user.id && <div className="ctl">
-                  {superAdmin && (
-                    <select
-                      value={user.role === 'STUDENT' || !user.role ? 'STUDENT' : 'ADMIN'}
-                      onChange={e => handleRoleUpdate(user.id, e.target.value)}
-                      disabled={loading === user.id}
-                      aria-label="권한"
-                    >
-                      <option value="STUDENT">학생</option>
-                      <option value="ADMIN">교수·관리자</option>
-                    </select>
+                  <button type="button" className="rst" aria-expanded={openId === user.id} onClick={() => setOpenId(openId === user.id ? null : user.id)}>{openId === user.id ? '접기 ▲' : '설정 ▼'}</button>
+                  {openId === user.id && (
+                    <div className="panel">
+                      {superAdmin && (
+                        <div className="fld"><span className="lb">권한</span>
+                          <div className="seg">
+                            {([['STUDENT', '학생'], ['ADMIN', '교수·관리자']] as const).map(([v, l]) => (
+                              <button key={v} type="button" className={(user.role === 'STUDENT' || !user.role ? 'STUDENT' : 'ADMIN') === v ? 'on' : ''} disabled={loading === user.id} onClick={() => handleRoleUpdate(user.id, v)}>{l}</button>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                      <div className="fld"><span className="lb">학년</span>
+                        <div className="seg">
+                          {[1, 2, 3, 4].map(g => <button key={g} type="button" className={user.grade === g ? 'on' : ''} disabled={loading === user.id} onClick={() => handleGradeUpdate(user.id, g)}>{g}학년</button>)}
+                        </div>
+                      </div>
+                      {superAdmin && user.approvalStatus === 'APPROVED' && (
+                        <>
+                          <div className="fld"><span className="lb">EHR 사용</span>
+                            <button type="button" role="switch" aria-checked={!!user.ehr} className={`sw ${user.ehr ? 'on' : ''}`} disabled={loading === user.id} onClick={() => handleEhrUpdate(user.id, !user.ehr)}><i /></button>
+                          </div>
+                          <div className="fld"><span className="lb">체크리스트 사용</span>
+                            <button type="button" role="switch" aria-checked={!!user.checklist} className={`sw ${user.checklist ? 'on' : ''}`} disabled={loading === user.id} onClick={() => handleChecklistUpdate(user.id, !user.checklist)}><i /></button>
+                          </div>
+                          <div className="fld"><span className="lb">열람 범위</span>
+                            <div className="seg">
+                              {([[0, '일반'], [1, '일부공개']] as const).map(([v, l]) => (
+                                <button key={v} type="button" className={(user.tier ?? 0) === v ? 'on' : ''} disabled={loading === user.id} onClick={() => handleTierUpdate(user.id, v)}>{l}</button>
+                              ))}
+                            </div>
+                          </div>
+                        </>
+                      )}
+                      {(superAdmin || user.role === 'STUDENT' || !user.role) && (
+                        <div className="fld"><span className="lb">비밀번호</span>
+                          {resetId === user.id ? (
+                            <span className="seg"><button type="button" className="danger" onClick={() => handleResetPw(user.id)} disabled={loading === user.id}>초기화 확인</button><button type="button" onClick={() => setResetId(null)}>취소</button></span>
+                          ) : (
+                            <button type="button" className="rst" onClick={() => setResetId(user.id)} disabled={loading === user.id}>임시 비밀번호 발급</button>
+                          )}
+                        </div>
+                      )}
+                    </div>
                   )}
-                  {superAdmin && user.approvalStatus === 'APPROVED' && (
-                    <select
-                      value={user.tier ?? 0}
-                      onChange={e => handleTierUpdate(user.id, Number(e.target.value))}
-                      disabled={loading === user.id}
-                      aria-label="열람 범위"
-                    >
-                      <option value={0}>일반</option>
-                      <option value={1}>일부공개</option>
-                    </select>
-                  )}
-                  {superAdmin && user.approvalStatus === 'APPROVED' && (
-                    <select
-                      value={user.checklist ? 1 : 0}
-                      onChange={e => handleChecklistUpdate(user.id, e.target.value === '1')}
-                      disabled={loading === user.id}
-                      aria-label="체크리스트"
-                    >
-                      <option value={0}>체크 끔</option>
-                      <option value={1}>체크 사용</option>
-                    </select>
-                  )}
-                  {superAdmin && user.approvalStatus === 'APPROVED' && (
-                    <select
-                      value={user.ehr ? 1 : 0}
-                      onChange={e => handleEhrUpdate(user.id, e.target.value === '1')}
-                      disabled={loading === user.id}
-                      aria-label="EHR"
-                    >
-                      <option value={0}>EHR 끔</option>
-                      <option value={1}>EHR 사용</option>
-                    </select>
-                  )}
-                  <select
-                    value={user.grade || ''}
-                    onChange={e => handleGradeUpdate(user.id, Number(e.target.value))}
-                    disabled={loading === user.id}
-                    aria-label="학년"
-                  >
-                    <option value="">학년</option>
-                    <option value="1">1학년</option>
-                    <option value="2">2학년</option>
-                    <option value="3">3학년</option>
-                    <option value="4">4학년</option>
-                  </select>
-                  {(superAdmin || user.role === 'STUDENT' || !user.role) && (
-                    resetId === user.id ? (
-                      <button type="button" className="rst on" onClick={() => handleResetPw(user.id)} disabled={loading === user.id}>초기화 확인</button>
-                    ) : (
-                      <button type="button" className="rst" onClick={() => setResetId(user.id)} disabled={loading === user.id}>비번</button>
-                    )
-                  )}
-                  </div>}
                   {tmpPw && tmpPw.id === user.id && (
                     <div className="tmp">
                       <span>임시 비밀번호</span>
@@ -378,6 +357,20 @@ export default function UserList({ initialUsers, superAdmin = false }: { initial
         .top .name { white-space: nowrap; }
         .top .sid { font-size: 0.8125rem; color: #94a3b8; flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
         .top .st { align-self: center; flex: 0 0 auto; }
+        .panel { flex: 1 1 100%; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px 20px; padding: 14px; margin: 4px 0 2px; background: #f8fafc; border: 1px solid #e2e8f0; border-radius: 10px; }
+        .fld { display: flex; align-items: center; justify-content: space-between; gap: 10px; }
+        .lb { font-size: 0.8125rem; font-weight: 700; color: #475569; white-space: nowrap; }
+        .seg { display: inline-flex; border: 1px solid #cbd5e1; border-radius: 9px; overflow: hidden; background: #fff; }
+        .seg button { padding: 6px 11px; border: 0; background: #fff; font-size: 0.8125rem; font-weight: 700; color: #64748b; cursor: pointer; white-space: nowrap; }
+        .seg button + button { border-left: 1px solid #e2e8f0; }
+        .seg button.on { background: var(--primary); color: #fff; }
+        .seg button.danger { background: #fee2e2; color: #b91c1c; }
+        .seg button:disabled { opacity: .5; }
+        .sw { position: relative; width: 44px; height: 26px; border-radius: 999px; border: 0; background: #cbd5e1; cursor: pointer; padding: 0; transition: background .15s; }
+        .sw i { position: absolute; top: 3px; left: 3px; width: 20px; height: 20px; border-radius: 50%; background: #fff; box-shadow: 0 1px 2px rgba(0,0,0,.3); transition: transform .15s; }
+        .sw.on { background: #16a34a; }
+        .sw.on i { transform: translateX(18px); }
+        .sw:disabled { opacity: .5; }
         .ctl { display: flex; flex-wrap: wrap; gap: 6px; flex: 0 0 auto; }
         .ctl { flex: 1 1 100%; padding-top: 4px; }
         .ctl select { min-width: 0; }
