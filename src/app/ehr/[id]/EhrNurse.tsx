@@ -924,9 +924,9 @@ export default function EhrNurse({
         </main>
 
         <aside className={`ns-nr ${rOpen ? '' : 'ns-nrc'}`}>
-          <div className="ns-fighd" style={{ justifyContent: rOpen ? 'flex-end' : 'center' }}>
-            <button type="button" className="ns-figb" aria-expanded={rOpen} title={rOpen ? '접기' : '펼치기'} onClick={() => setROpen(v => !v)}>{rOpen ? '▶' : '◀'}</button>
-          </div>
+          {rOpen
+            ? <div className="ns-fighd" style={{ justifyContent: 'flex-end' }}><button type="button" className="ns-figb" aria-expanded title="접기" onClick={() => setROpen(false)}>▶ 접기</button></div>
+            : <button type="button" className="ns-rexp" aria-expanded={false} title="체크리스트·메모 펼치기" onClick={() => setROpen(true)}>◀ 체크리스트·메모 펼치기</button>}
           {rOpen && <>
           {cl.length === 0 && <div className="ns-nbox"><h4>체크리스트</h4><p className="ns-nnone">No data to display</p></div>}
           {cl.map(g => (
@@ -1674,7 +1674,8 @@ export default function EhrNurse({
         .ns-nrow.ns-x .ns-nm b { text-decoration: line-through; opacity: .6; }
         .ns-nm { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding-top: 12px; }
         .ns-nr { padding-top: 12px; width: 240px; box-sizing: border-box; }
-        .ns-nr.ns-nrc { width: 40px; padding: 12px 4px; }
+        .ns-nr.ns-nrc { width: 40px; padding: 8px 4px; }
+        .ns-rexp { writing-mode: vertical-rl; border: 1px solid var(--border); background: #fff; border-radius: 6px; font: inherit; font-size: 12px; padding: 10px 6px; cursor: pointer; color: var(--primary); min-height: 150px; }
         .ns-nm span { color: var(--sub-text); font-size: 12px; }
         .ns-nm em { font-style: normal; font-size: 12px; color: #b9770e; }
         .ns-nd { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 4px; max-width: 55%; }
