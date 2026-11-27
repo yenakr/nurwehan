@@ -51,7 +51,7 @@ export default function MemoPanel({ rows, author, onChange }: { rows: Row[]; aut
           <button type="button" className="go" onClick={add}>기록</button>
         </div>
       </div>
-      {rows.map((r, i) => (/^(flow|flowcfg|labhist|ordhist|ordack|vacc|bdone)$/.test(r.type || '') ? null : (
+      {rows.map((r, i) => (/^(flow|flowcfg|flowhide|cmnreq|labhist|ordhist|ordack|vacc|bdone)$/.test(r.type || '') ? null : (
         <div key={i} className={`it t${MEMO_TYPES.indexOf(r.type as (typeof MEMO_TYPES)[number]) + 1} ${r.imp ? 'im' : ''}`}>
           <div className="h"><b>{r.type}</b><span>{r.time}{r.shift ? ` ${r.shift}` : ''}</span><span>{r.author}</span>{r.imp ? <b style={{ color: '#dc2626' }}>중요</b> : null}
             <button type="button" className="x" aria-label="삭제" onClick={() => onChange(rows.filter((_, j) => j !== i))}>×</button></div>

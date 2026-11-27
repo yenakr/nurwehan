@@ -1618,6 +1618,8 @@ export default function EhrEditor({
         .ehr .cw { background: #7f1d1d; color: #fee2e2; font-weight: 700; font-size: 13px; padding: 8px 12px; border-radius: 8px; margin-bottom: 8px; }
         .ehr .chk { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; font-size: 14px; }
         .ehr .chk label { display: flex; gap: 8px; align-items: center; }
+        .ehr .ds .chk input[type='checkbox'] { width: auto; flex: none; border: 0; padding: 0; margin: 0; }
+        .ehr .chk label { justify-content: flex-start; text-align: left; white-space: nowrap; }
         .ehr .ord tr.sec td { background: var(--tl); }
         .ehr .ord tr.sec td.x { background: #fff; }
         .ehr .ord tr.sec input { font-weight: 800; color: #12303a; }

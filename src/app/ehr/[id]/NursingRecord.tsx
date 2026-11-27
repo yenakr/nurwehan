@@ -46,6 +46,8 @@ export default function NursingRecord({ data, setData, userName, duty, today }: 
 }) {
   const [sh, setSh] = useState<'all' | 'D' | 'E' | 'N'>('all');
   const [q, setQ] = useState('');
+  const [pf, setPf] = useState('');
+  const [pt, setPt] = useState('');
   const [time, setTime] = useState(stamp);
   const [focus, setFocus] = useState('');
   const [text, setText] = useState('');
@@ -55,7 +57,8 @@ export default function NursingRecord({ data, setData, userName, duty, today }: 
   const rows = useMemo(() => data.notes
     .map((r, i) => ({ r, i, t: full(r.time || '') }))
     .filter(x => (sh === 'all' || (sh === 'D' ? hourOf(x.t) >= 6 && hourOf(x.t) < 14 : sh === 'E' ? hourOf(x.t) >= 14 && hourOf(x.t) < 22 : hourOf(x.t) >= 22 || hourOf(x.t) < 6)) && (!q.trim() || `${x.r.focus} ${x.r.text} ${x.r.author}`.includes(q.trim())))
-    .sort((a, b) => b.t.localeCompare(a.t)), [data.notes, sh, q]);
+    .filter(x => (!pf || x.t.slice(0, 10) >= pf) && (!pt || x.t.slice(0, 10) <= pt))
+    .sort((a, b) => b.t.localeCompare(a.t)), [data.notes, sh, q, pf, pt]);
 
   const put = (s: string, k: 'D' | 'A' | 'R') => setText(t => {
     const head = `${k})\n`;
@@ -95,6 +98,9 @@ export default function NursingRecord({ data, setData, userName, duty, today }: 
       <div className="nr-bar">
         {(['all', 'D', 'E', 'N'] as const).map(k => <button key={k} type="button" className={sh === k ? 'on' : ''} onClick={() => setSh(k)}>{k === 'all' ? '전체' : k}</button>)}
         <input placeholder="구분·내용·작성자 검색" value={q} onChange={e => setQ(e.target.value)} />
+        <b>조회기간</b>
+        <input type="date" value={pf} onChange={e => setPf(e.target.value)} aria-label="조회 시작일" style={{ flex: '0 0 auto', width: 140 }} />~
+        <input type="date" value={pt} onChange={e => setPt(e.target.value)} aria-label="조회 종료일" style={{ flex: '0 0 auto', width: 140 }} />
         <span className="sp" />
         <span style={{ color: 'var(--sub-text)' }}>{rows.length}건 · 빨간 글씨 = 야간/특이</span>
       </div>
