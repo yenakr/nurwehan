@@ -58,6 +58,7 @@ const MENUS: { id: string; label: string }[] = [
   { id: 'cmnreq', label: '공통업무지원 의뢰' },
   { id: 'dcplan', label: '퇴원후 건강계획' },
   { id: 'usage', label: '용법코드 조회' },
+  { id: 'unauth', label: '미인증기록' },
 ];
 
 const CATS: { name: string; items: string[] }[] = [
@@ -66,7 +67,7 @@ const CATS: { name: string; items: string[] }[] = [
   { name: '정보조회', items: ['overview', 'patinfo', 'dxhist', 'surghist', 'vacc', 'labres', 'futsch', 'dir'] },
   { name: '의사소통', items: ['consult', 'docreq', 'cmnreq', 'staff'] },
   { name: '출력·퇴원', items: ['qr', 'sticker'] },
-  { name: '기록', items: ['notes', 'flowsheet', 'vitals', 'bst', 'nurseinfo', 'care', 'nact', 'dcplan'] },
+  { name: '기록', items: ['notes', 'flowsheet', 'vitals', 'bst', 'nurseinfo', 'care', 'nact', 'unauth', 'dcplan'] },
   { name: '처방', items: ['mat', 'rxcmp', 'usage', 'medrec', 'ret'] },
   { name: '예약', items: ['adm', 'discharge'] },
   { name: '병동', items: ['todo', 'memos', 'handover', 'bulk'] },
@@ -99,7 +100,7 @@ const NFG: { g: string; guide: string; subs: { s: string; items: string[] }[] }[
     { s: '통증완화중재', items: ['비약물요법', '약물요법'] },
   ] },
 ];
-const SCR: Record<string, string> = { todo: 'MNR101F1', notes: 'MNR210F1', patinfo: 'MNR120F1', dxhist: 'MNR130F1', surghist: 'MNR131F1', vacc: 'MNR132F1', labres: 'MNR310F1', medrec: 'MNR410F1', flowsheet: 'MNR281F1', overview: 'MNR110F1', vitals: 'MNR281F2', bst: 'MNR281F3', mat: 'MNR520F1', nact: 'MNR510F1', qr: 'MNR900F1', staff: 'MNR700F1', rxcmp: 'MDI604F1', futsch: 'SWF380F1', sticker: 'MNZ939F1', cmnreq: 'MDM610F1', dcplan: 'MNR320F1', usage: 'MDI120F1' };
+const SCR: Record<string, string> = { todo: 'MNR101F1', notes: 'MNR210F1', patinfo: 'MNR120F1', dxhist: 'MNR130F1', surghist: 'MNR131F1', vacc: 'MNR132F1', labres: 'MNR310F1', medrec: 'MNR410F1', flowsheet: 'MNR281F1', overview: 'MNR110F1', vitals: 'MNR281F2', bst: 'MNR281F3', mat: 'MNR520F1', nact: 'MNR510F1', qr: 'MNR900F1', staff: 'MNR700F1', rxcmp: 'MDI604F1', futsch: 'SWF380F1', sticker: 'MNZ939F1', cmnreq: 'MDM610F1', dcplan: 'MNR320F1', usage: 'MDI120F1', unauth: 'MNR260F1' };
 const hm = () => { const d = vnow(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 const dutyNow = () => { const h = vnow().getHours(); return h >= 6 && h < 14 ? 'D' : h >= 14 && h < 22 ? 'E' : 'N'; };
 const HIGH = /(insulin|인슐린|heparin|헤파린|potassium|kcl|칼륨|morphine|모르핀|fentanyl|펜타닐|midazolam|미다졸람|항암|digoxin|디곡신|warfarin|와파린|propofol|ketamine|마약)/i;
@@ -328,7 +329,7 @@ export default function EhrNurse({
   const [mq, setMq] = useState('');
   const [figOpen, setFigOpen] = useState(true);
   const [win2, setWin2] = useState<string | null>(null);
-  const OWN = ['todo', 'notes', 'patinfo', 'dxhist', 'surghist', 'vacc', 'labres', 'medrec', 'flowsheet', 'overview', 'adm', 'dir', 'bulk', 'staff', 'docreq', 'vitals', 'bst', 'mat', 'nact', 'qr', 'rxcmp', 'futsch', 'sticker', 'cmnreq', 'dcplan', 'usage'];
+  const OWN = ['todo', 'notes', 'patinfo', 'dxhist', 'surghist', 'vacc', 'labres', 'medrec', 'flowsheet', 'overview', 'adm', 'dir', 'bulk', 'staff', 'docreq', 'vitals', 'bst', 'mat', 'nact', 'qr', 'rxcmp', 'futsch', 'sticker', 'cmnreq', 'dcplan', 'usage', 'unauth'];
   const [ddPos, setDdPos] = useState<{ left: number; top: number } | null>(null);
   const place = (el: HTMLElement) => { const r = el.getBoundingClientRect(); setDdPos({ left: Math.max(4, Math.min(r.left, window.innerWidth - 190)), top: r.bottom + 2 }); };
   const [tabs, setTabs] = useState<string[]>([]);
@@ -537,7 +538,7 @@ export default function EhrNurse({
     // 채혈을 취소하면 아직 결과 전인 검사는 대기 목록에서 뺀다
     if (!isMed(it.r)) setData(d => ({ ...d, labs: d.labs.filter(l => !(l.ord === it.r.name && !l.value)) }));
     if (!used.length) return patch(it.i, { ck: '', st: it.r.st === '완료' ? '' : it.r.st });
-    patch(it.i, { [used[used.length - 1]]: '', ck: used.length > 1 ? '1' : '' });
+    patch(it.i, { [used[used.length - 1]]: '', ck: used.length > 1 ? '1' : '', ua: (it.r.ua || '').split(',').filter(x => x && x !== used[used.length - 1]).join(',') });
   };
 
   // 시간 경과 시뮬레이션: 검사 결과 자동 반영, 협진 접수 → 진행중 → 회신완료
@@ -606,6 +607,11 @@ export default function EhrNurse({
   })().sort((a, b) => a.time.localeCompare(b.time) || a.p.bed.localeCompare(b.p.bed, 'ko', { numeric: true }));
 
   const nowMin = Number(hm().slice(0, 2)) * 60 + Number(hm().slice(3));
+  // 미인증 서명 인증: 처방 칸(ua)과 지난날 기록(mar.ua) 모두
+  const certify = (idx: number, key: string) => setData(d => ({ ...d, orders: d.orders.map((o, j) => (j === idx ? { ...o, ua: (o.ua || '').split(',').filter(x => x && x !== key).join(',') } : o)) }));
+  const certifyMar = (row: Row) => setData(d => ({ ...d, mar: d.mar.map(m => (m === row ? { ...m, ua: '' } : m)) }));
+  const unauthOrders = data.orders.flatMap((o, i) => (o.ua || '').split(',').filter(Boolean).map(k => ({ i, k, o })));
+  const unauthMar = data.mar.filter(m => m.ua === '1');
   const unSlot = async (it: Item) => { if (await confirmDialog('마지막 수행 기록을 취소할까요?')) undo(it); };
   // 처방 조회: 실제 OCS처럼 한 장의 표에 구분 띠(기본처방/투약/PRN/검사)와 1~N회 칸을 둔다
   const slotN = (it: Item, kind: 'med' | 'base' | 'prn' | 'lab') => (kind === 'prn' || kind === 'lab' ? slots(it.r).length + (kind === 'prn' ? 1 : 0) : Math.max(timesFor(it.r, kind).length, slots(it.r).length));
@@ -647,6 +653,7 @@ export default function EhrNurse({
                     }
                     if (k < done.length) {
                       const last = k === done.length - 1;
+                      if ((r.ua || '').split(',').includes(done[k])) return <button type="button" className="ns-sl ns-sl-done ns-sl-un" title="미인증 서명(PDA 액팅) — 누르면 인증" disabled={stop} onClick={() => certify(it.i, done[k])}>{r[done[k]]}</button>;
                       return <button type="button" className="ns-sl ns-sl-done" title={last ? '누르면 취소' : ''} disabled={stop || !last} onClick={() => unSlot(it)}>{r[done[k]]}{r[`v${done[k].slice(1)}`] ? ` (확인 ${r[`v${done[k].slice(1)}`]})` : ''}</button>;
                     }
                     if (kind === 'prn') return k === done.length && !stop ? <button type="button" className="ns-sl ns-sl-next" onClick={() => ask(it)}>+ 투약</button> : null;
@@ -1361,6 +1368,19 @@ export default function EhrNurse({
               <Fragment key={notifyDraft}><StaffWin data={data} setData={setData} userName={userName} duty={duty} draft={notifyDraft} /></Fragment>
             ) : w === 'docreq' ? (
               <DocReqWin data={data} setData={setData} userName={userName} duty={duty} />
+            ) : w === 'unauth' ? (
+              <div className="rw-un">
+                <p className="ns-fl-h">기록종류: 병동 처방액팅(모바일) · PDA로 액팅한 투약 서명은 미인증 상태로 남아요. 확인 후 인증하세요.</p>
+                <table className="ns-nlist">
+                  <thead><tr><th>일시</th><th>기록종류</th><th>처방명</th><th>용량</th><th>수행자</th><th /></tr></thead>
+                  <tbody>
+                    {unauthOrders.map(({ i: oi, k, o }) => <tr key={`${oi}${k}`}><td>{todayStr} {(o[k] || '').slice(0, 5)}</td><td>병동 처방액팅(모바일)</td><td>{o.name}</td><td>{o.dose}{o.unit}</td><td>{(o[k] || '').split('/')[1] || ''}</td><td><button type="button" onClick={() => certify(oi, k)}>인증</button></td></tr>)}
+                    {unauthMar.map((m, k) => <tr key={`m${k}`}><td>{m.time}</td><td>병동 처방액팅(모바일)</td><td>{m.name}</td><td>{m.dose}</td><td>{m.by}</td><td><button type="button" onClick={() => certifyMar(m)}>인증</button></td></tr>)}
+                    {unauthOrders.length + unauthMar.length === 0 && <tr><td colSpan={6} className="ns-nnone">No data to display</td></tr>}
+                  </tbody>
+                </table>
+                {unauthOrders.length + unauthMar.length > 0 && <button type="button" className="ns-fl-pb" style={{ marginTop: 8 }} onClick={() => { unauthOrders.forEach(u => certify(u.i, u.k)); unauthMar.forEach(certifyMar); }}>전체 인증</button>}
+              </div>
             ) : w === 'usage' ? (
               <UsageWin onClose={onClose} />
             ) : w === 'rxcmp' ? (
@@ -1623,6 +1643,7 @@ export default function EhrNurse({
         .ns-ot tr.ns-x b { text-decoration: line-through; opacity: .6; }
         .ns-sl { display: inline-block; margin: 0 4px 4px 0; padding: 3px 9px; border-radius: 4px; border: 1px solid var(--border); background: transparent; color: var(--text); font: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
         .ns-sl:disabled { cursor: default; }
+        .ns-sl-un { outline: 2px solid #dc2626; outline-offset: -1px; background: #fff0f0 !important; color: #b91c1c !important; }
         .ns-sl-done { background: rgba(16,185,129,.14); border-color: rgba(16,185,129,.4); color: #047857; }
         .ns-sl-next { border-color: var(--primary); color: var(--primary); }
         .ns-sl-late { border-color: #dc2626; color: #dc2626; background: rgba(239,68,68,.1); }

@@ -128,12 +128,13 @@ export function rollover(d: ChartData, today: string): ChartData {
       const m = /^(\d{2}:\d{2})\s*(?:[A-Z]\/)?(.*)$/.exec(o[k] || '');
       if (!m) return;
       const by = (m[2] || '').replace(/^\//, '');
-      if (med) mar.push({ time: `${sdy} ${m[1]}`, name: o.name || '', dose: `${o.dose || ''}${o.unit || ''}`, route: o.route || '', slot: times[idx] || '', by, wb: '확인' });
+      if (med) mar.push({ time: `${sdy} ${m[1]}`, name: o.name || '', dose: `${o.dose || ''}${o.unit || ''}`, route: o.route || '', slot: times[idx] || '', by, wb: '확인', ...((o.ua || '').split(',').includes(k) ? { ua: '1' } : {}) });
       else memos.push({ type: 'bdone', date: sdy, name: o.name || '', time: m[1], by });
     });
     const n: Row = { ...o, ck: '' };
     Object.keys(n).forEach(k => { if (/^[tv]\d+$/.test(k)) delete n[k]; });
     delete n.hold;
+    delete n.ua;
     if (!med && n.st === '완료') n.st = '';
     return n;
   });

@@ -68,7 +68,7 @@ export default function PdaApp({ roster, userName }: { roster: R[]; userName: st
     setRes(null); setMode('patient');
     return true;
   };
-  const give = async () => { if (res) await send({ type: 'give', idx: String(res.idx), name: res.name }, `${res.name} 투약 수행 완료`); };
+  const give = async () => { if (res) await send({ type: 'give', idx: String(res.idx), name: res.name }, `${res.name} 투약 수행 완료 (미인증 서명 — PC에서 인증 필요)`); };
   const giveSpec = async () => { if (res) await send({ type: 'spec', idx: String(res.idx), name: res.name }, `${res.name} 검체 채취 시각 기록`); };
   const giveBlood = async () => { if (res) await send({ type: 'blood', idx: String(res.idx), name: res.name, bno: bagNo(res.idx), cosign: cosign.trim() }, `${res.name} 수혈 시작 기록`); };
   const saveVit = async () => {

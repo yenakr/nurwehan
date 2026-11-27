@@ -60,7 +60,7 @@ export function applyPda(d0: ChartData, ev: Row): ChartData {
   if (!o || (o.name || '') !== ev.name) return out;
   const nums = Object.keys(o).filter(k => /^t\d+$/.test(k) && o[k]).map(k => Number(k.slice(1)));
   const next = `t${(nums.length ? Math.max(...nums) : 0) + 1}`;
-  const row: Row = { ...o, ck: '1', [next]: `${ev.time} ${ev.duty}/${ev.by}` };
+  const row: Row = { ...o, ck: '1', [next]: `${ev.time} ${ev.duty}/${ev.by}`, ua: [...(o.ua || '').split(',').filter(Boolean), next].join(',') }; // ua: 미인증 서명(PDA 액팅) — PC에서 인증해야 확정
   if (!isMedRow(o)) row.st = '완료';
   out.orders = d.orders.map((r, i) => (i === idx ? row : r));
   const ml = ivMlOf(o);
