@@ -71,7 +71,7 @@ export const gs: Sample = {
       { name: 'Na', value: '139', unit: 'mmol/L', min: '135', max: '145', sample: 'Blood', time: md(0, '05:30') },
     ],
     notes: [
-      { time: md(0, '10:00'), focus: '급성 통증', text: 'S)\n"배에 구멍 뚫은 곳이 움직일 때 아파요. 가만히 있으면 괜찮아요."\n\nO)\nNRS 4 (움직일 때), 안정 시 2. BP 118/72, HR 78. 배꼽 및 좌하복부 port 부위 dressing clean & dry.\n\nA)\n수술 후 1일, 통증 조절 양호함.\n\nI)\n처방에 따라 acetaminophen 투여, 기침·체위 변경 시 베개로 복부 지지하는 방법 교육함.\n\nE)\n투약 1시간 후 NRS 2로 감소, 보행 시 복부 지지 방법을 시범 보임.', author: '박간호', shift: 'D' },
+      { time: md(0, '10:00'), focus: '급성 통증', text: 'D)\n"배에 구멍 뚫은 곳이 움직일 때 아파요. 가만히 있으면 괜찮아요" 함. NRS 4 (움직일 때), 안정 시 2. BP 118/72, HR 78. Umbilicus 및 LLQ port 부위 dressing clean & dry.\n\nA)\n처방에 따라 acetaminophen 투여함. 기침·체위 변경 시 베개로 복부를 지지하는 방법 교육함.\n\nR)\n투약 1시간 후 NRS 2로 감소함. 보행 시 복부 지지 방법을 시범 보임.', author: '박간호', shift: 'D' },
       { time: md(0, '07:40'), focus: '조기 이상', text: 'D)\n수술 후 첫 보행 시도. 침상 끝에서 5분 앉았다가 일어났을 때 어지럼 없음, BP 120/74.\n\nA)\n간호사가 보조하여 병실 복도 20m 보행함. IV 폴대 정리해 줌.\n\nR)\n보행 후 통증 NRS 4, 활력징후 안정, 가스 배출 확인함.', author: '최간호', shift: 'N' },
       { time: md(-1, '19:30'), focus: '수술 후 간호', text: 'OP 후 눕는 차 타고 올라옴. imp) Acute appendicitis, op name) Laparoscopic appendectomy, anesthesia) General. mental) alert, V/S) BP 126/78mmHg, HR 92회/분, RR 18회/분, BT 36.8℃, SpO2 98% checked. Umbilicus (12mm port), LLQ (5mm port) x2 site dressing 유지중이며 oozing 없음. Foley catheter 없음. nasal O2 2L/min apply함. PCA keep중이며 nausea, vomiting 없음. PCA 사용법 교육하고 부작용 있을 시 알리도록 함. NPO, ABR 설명함. EDBC함.', author: '김간호', shift: 'E' },
       { time: md(-1, '19:40'), focus: '드레싱', text: 'Umbilicus (12mm port) site dressing 유지중이며 oozing 없음. LLQ (5mm port) x2 site dressing 유지중이며 소량 멍 있음.', author: '김간호', shift: 'E' },
