@@ -80,9 +80,9 @@ export default function SkillPanel({ id, data, ai, aiLeft, onSubmit }: { id: str
       {intro && (
         <div className="skp-ov">
           <div className="skp-modal">
-            <h3>🎯 {sc.title} {exam ? '시험' : '연습'} · 상황</h3>
+            <h3>🎯 {sc.title}{exam ? ' 시험' : ''}</h3>
             <Situation />
-            <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--muted-foreground)' }}>오른쪽 아래 🎯 버튼에서 상황을 다시 보고 제출할 수 있어요.</p>
+            <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--muted-foreground)' }}>오른쪽 아래 🎯 버튼에서 상황을 다시 볼 수 있어요.</p>
             <div style={{ textAlign: 'right', marginTop: 12 }}><button type="button" className="skp-btn" onClick={closeIntro}>EHR 열기</button></div>
           </div>
         </div>
@@ -121,9 +121,9 @@ export default function SkillPanel({ id, data, ai, aiLeft, onSubmit }: { id: str
               </>
             )}
           </div>
-          <div className="skp-foot">
-            {locked ? <span>제출했어요. 교수님이 확인해요.</span> : <button type="button" className="skp-btn" onClick={submit}>제출</button>}
-          </div>
+          {exam && <div className="skp-foot">
+              {locked ? <span>제출했어요.</span> : <button type="button" className="skp-btn" onClick={submit}>제출</button>}
+            </div>}
         </div>
       )}
     </div>

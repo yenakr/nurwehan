@@ -29,7 +29,7 @@ export default async function SkillsPage() {
         </div>
         {custom.length > 0 && (
           <>
-            <h2 style={{ margin: '22px 0 8px', fontSize: 16 }}>교수님 출제</h2>
+            <h2 style={{ margin: '22px 0 8px', fontSize: 16 }}>추가 시나리오</h2>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: 10 }}>
               {custom.map(c => (
                 <Link key={c.id} href={`/ehr/skills/${c.id}`} style={{ display: 'block', padding: '14px 16px', borderRadius: 10, background: 'var(--background)', border: '1px solid var(--border)', textDecoration: 'none', color: 'inherit' }}>
