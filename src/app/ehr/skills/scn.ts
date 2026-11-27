@@ -147,6 +147,7 @@ const DEFS: Def[] = [
 export const SKILLS: { key: string; title: string; goal: string }[] = DEFS.map(d => ({ key: d.key, title: d.title, goal: d.goal }));
 const defOf = (skill: string) => DEFS.find(d => d.key === skill);
 export const guideOf = (skill: string) => defOf(skill)?.guide || [];
+export const recordsOf = (skill: string) => (defOf(skill)?.ev || []).map(k => EVL[k][0].replace(/ \(.*\)$/, ''));
 export const hasGive = (skill: string) => !!defOf(skill)?.ev.includes('give');
 
 export const defaultCfg = (skill: string): Cfg => {
