@@ -101,13 +101,15 @@ export async function isLocked(userId: string, id: string): Promise<boolean> {
   }
 }
 
+export type SubmittedRow = { id: string; userId: string; title: string; submitted: string; reviewed: string | null; mode: string | null; exam: string | null; examNo: string | null; examName: string | null; score: string | null };
 export async function listSubmittedCases() {
   try {
-    return await prisma.$queryRaw<Array<{ id: string; userId: string; title: string; submitted: string; reviewed: string | null }>>`
-      SELECT "id", "userId", "title", "data"->'info'->>'submitted' AS "submitted", "data"->'info'->>'reviewed' AS "reviewed"
+    return await prisma.$queryRaw<SubmittedRow[]>`
+      SELECT "id", "userId", "title", "data"->'info'->>'submitted' AS "submitted", "data"->'info'->>'reviewed' AS "reviewed",
+        "data"->'info'->>'mode' AS "mode", "data"->'info'->>'skExam' AS "exam", "data"->'info'->>'examNo' AS "examNo", "data"->'info'->>'examName' AS "examName", "data"->'info'->>'profScore' AS "score"
       FROM "EhrCase" WHERE "data"->'info'->>'submitted' IS NOT NULL ORDER BY "data"->'info'->>'submitted' DESC LIMIT 300`;
   } catch {
-    return [];
+    return [] as SubmittedRow[];
   }
 }
 
