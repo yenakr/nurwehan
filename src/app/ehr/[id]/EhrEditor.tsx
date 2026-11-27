@@ -1201,7 +1201,10 @@ export default function EhrEditor({
 
             {isForm(tab) && (() => {
               const f = FORMS.find(x => x.tab === tab)!;
-              return <FormPanel kind={f.key as FormKey} rows={data.forms?.[f.key] || []} onChange={rows => setData(d => ({ ...d, forms: { ...(d.forms || {}), [f.key]: rows } }))} />;
+              const nowYmd = () => { const t = vnow(); const p2 = (x: number) => String(x).padStart(2, '0'); return `${t.getFullYear()}-${p2(t.getMonth() + 1)}-${p2(t.getDate())}`; };
+              return <FormPanel kind={f.key as FormKey} rows={data.forms?.[f.key] || []} onChange={rows => setData(d => ({ ...d, forms: { ...(d.forms || {}), [f.key]: rows } }))}
+                onPos={(pos, tm) => setData(d => ({ ...d, notes: [...d.notes, { time: `${nowYmd()} ${tm}`, focus: '욕창', text: `D)\n${tm} 체위변경 시행함 (${pos}). 압박 부위 피부 발적·손상 여부 확인함.`, author: userName || '', shift: shiftOf() }] }))}
+                onWound={() => setTab('wounds')} />;
             })()}
 
             {tab === 'consent' && <ConsentPanel rows={data.consent} dept={info.dept} onChange={rs => setData(d => ({ ...d, consent: rs }))} />}
