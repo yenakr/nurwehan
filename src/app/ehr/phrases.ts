@@ -1,7 +1,31 @@
 // 간호기록 상용구 (Focus별 D 자료 / A 중재 / R 반응). 클릭하면 입력창에 들어가고 직접 고칠 수 있다.
-export type Phrase = { focus: string; d: string[]; a: string[]; r: string[] };
+export type Phrase = { focus: string; d: string[]; a: string[]; r: string[]; n?: string[] }; // n: 병원식 서술형 문구(그대로 이어 붙임)
 
 export const PHRASES: Phrase[] = [
+  { focus: '수술 전 간호', d: [], a: [], r: [], n: ['익일 수술 예정임. Dr.__ 수술 설명 후 보호자에게 동의서를 받음. 환자 팔찌 확인함. MN NPO 설명함.', '수술 후 폐 합병증을 예방하기 위해서 EDBC 교육함.', '속옷, 양말 탈의하고 보조기구 제거와 귀중품 보관 설명함.', 'G-enema 시행함. (R: )', 'Hair shampoo 시행함.'] },
+  { focus: '수술 직전 간호', d: [], a: [], r: [], n: ['Full voiding 후 prep 물품 챙겨 눕는 차 타고 기능원과 OR방으로 감.', 'Full voiding 후 prep 물품 챙겨 침대채 기능원과 20번 촬영실로 감.'] },
+  { focus: '수술 후 간호', d: [], a: [], r: [], n: ['OP 후 눕는 차 타고 올라옴. imp) , op name) , anesthesia) General. mental___, motor___, dorsiflexion___함.', 'op site dressing 유지중이며 oozing 없음.', 'Hemovac/Barovac negative pressure로 유지중이며, bloody color로 drainage중임.', 'Foley catheter 16Fr로 유지중이며, yellowish하게 urination중임.', 'PCA keep중이며 nausea, vomiting 없음. PCA 사용법 교육함.', 'nasal O2 2L/min apply함.', 'NPO, ABR 설명함. EDBC함.', '추가약 __ 추가됨. 복약 안내문 제공하고 약효와 부작용 설명함.'] },
+  { focus: '드레싱', d: [], a: [], r: [], n: ['op site dressing 유지중이며 oozing 없음.', 'Coccyx sore site 폼 dressing 유지중임. Both heel redness 알레빈 힐 apply함.', 'T-tube site foam/gauze dressing 시행함. by Dr.', 'Head OP site dressing 시행함. by Dr.', 'Back OP site dressing 시행함. by PA.', 'Cervical OP site dressing 시행함. by Dr.', 'head op site oozing없으며 dressing유지중임', 'op site clear함. oozing, bleeding sign 없음'] },
+  { focus: '배액관', d: [], a: [], r: [], n: ['Hemovac/Barovac negative pressure로 유지중이며, bloody color로 drainage중임.', 'Hemovac/Barovac positive pressure되거나, 양이 갑자기 많아질 시 알리도록 함. 배액관 꼬이지 않도록 교육함.'] },
+  { focus: 'Foley', d: [], a: [], r: [], n: ['Foley catheter 16Fr로 유지중이며, yellowish하게 urination중임.', '소변 비우는 방법과 소변주머니 관리방법 설명함. (소변백 요도구 아래로 위치하도록 설명함)', 'foley 제거한 상태로 왔으며, S.V 시 알리도록 설명함. I/O 작성법에 대해 설명함.'] },
+  { focus: 'foley remove', d: [], a: [], r: [], n: ['Dr.__ foley remove 하자 함.', 'foley remove 함. 6시간 이내에 소변 볼 것과 볼 시에 바로 알리도록 설명함. 복부불편감 있거나 소변 보기 어려울 시 알리도록 설명함.', 'Self voiding ___cc 봄. Probe 측정함 (R=___cc checked).', 'Self voiding 못 봄. Probe 측정함 (R=___cc).', 'Dr.__ Nelathon 하자 함.', '인턴 __ (여자 환자의 경우는 간호사가 시행)가 CIC 시행함. ___cc 나옴.'] },
+  { focus: 'PCA', d: [], a: [], r: [], n: ['PCA keep중이며 nausea, vomiting 없음. PCA 사용법 교육함.', 'PCA 부작용 설명하고 부작용 있을 시 알리도록 함.'] },
+  { focus: '산소', d: [], a: [], r: [], n: ['nasal O2 2L/min apply함.', 'O2 nasal 2L/min inhalation 중임. SpO2 94% 확인됨.'] },
+  { focus: 'T-tube', d: [], a: [], r: [], n: ['T-tube 개통상태 양호함. suction 시 가래양 많지 않으나 blood clot 관찰됨. 보호자와 간병인에게 suction 깊게 하지 않도록 교육함.'] },
+  { focus: '억제대', d: [], a: [], r: [], n: ['both arm restraint 유지중이며, 피부 상태 및 순환상태 사정하고 보호자에게 주의사항 설명함.', 'Rt.arm restraint site circulation 양호함.', 'Lt.arm restraint site circulation 양호함.', 'restraint apply중임. restraint site circulation과 피부상태 양호함.'] },
+  { focus: 'IV site', d: [], a: [], r: [], n: ['Rt. arm IV site 부종, 발적, 통증 없음. 부작용 시 알리도록 함.', 'Lt. arm IV site 부종, 발적, 통증 없음. 부작용 시 알리도록 함.', 'Rt. hand IV site 부종, 발적, 통증 없음. 부작용 시 알리도록 함.', 'Lt. hand IV site 부종, 발적, 통증 없음. 부작용 시 알리도록 함.', 'Rt. leg IV site 부종, 발적, 통증 없음. 부작용 시 알리도록 함.', 'Lt. leg IV site 부종, 발적, 통증 없음. 부작용 시 알리도록 함.', 'Rt. foot IV site 부종, 발적, 통증 없음. 부작용 시 알리도록 함.', 'Lt. foot IV site 부종, 발적, 통증 없음. 부작용 시 알리도록 함.', 'Rt. Jugular Catheter site oozing, 발적 없이 소독 유지중임.', 'Rt.arm PICC site oozing, 발적 없이 소독 유지중임.'] },
+  { focus: 'PICC', d: [], a: [], r: [], n: ['PICC insertion하고 옴.', 'Lt arm PICC site film dressing 유지중이며 oozing 없음.'] },
+  { focus: 'I/O', d: [], a: [], r: [], n: ['Day+Evening I/O ___/___cc checked. Dr.__ observation하자 함.', 'Day I/O ___/___cc checked. Dr.__ notify함.', 'Lasix 0.5 ample(1 ample) IV 하자 함.', '그냥 observation 하자 함.'] },
+  { focus: 'Nimodipine', d: [], a: [], r: [], n: ['Nimodipine __cc/hr로 syringe pump 이용하여 IV중임.', 'Nimodipine __cc/hr로 infusion pump 이용하여 IV중임.', 'perdipine __cc/hr로 infusion pump 이용하여 IV중임.'] },
+  { focus: '수면', d: [], a: [], r: [], n: ['수면중임. side rail kept.', '수면중임. 보호자 상주중임. side rail kept.', '수면중임. 간병인 상주중임. side rail kept.'] },
+  { focus: 'seizure', d: [], a: [], r: [], n: ['seizure like motion 보이지 않으며, headache mild하게 있으나 추가 진통제 요구 없음.', 'general condition 변화없으며 seizure like motion 관찰되지 않음.'] },
+  { focus: '코로나', d: [], a: [], r: [], n: ['발열, 미각/후각 저하, 호흡기 증상 등 코로나 증상 보이지 않음.', '보호자 이름(__)(관계: )가 __월 __일 선별진료소에서 실시한 코로나19 음성결과 문자를 확인함.', '마스크 착용 교육하고 병실 창문 환기함. 손씻기 및 개인위생 교육 실시함. 면회 제한 및 코로나 19 감염 예방에 관해 설명함. 2시간마다 병실 창문 열어 병실환기시킴.'] },
+  { focus: '전입 간호', d: [], a: [], r: [], n: ['SICU에서 침대채로 전동옴. Dr.__에게 환자옴을 알림. 환자 상태 사정하고 활력징후 측정함. V/S)', '집중치료실에서 close observation중임.', 'Mental) , all motor) , both foot drop 관찰됨. Seizure like motion 관찰되지 않음.', 'Air mattress kept. / Both leg DVT apply 함.', '16Fr foley catheter 유지하고 옴. Urine bag 비우는 법 설명함. 소변백 요도구 아래로 위치하도록 설명함.', 'Levin tube 18Fr 유지중임.'] },
+  { focus: 'DSA 검사 전 간호', d: [], a: [], r: [], n: ['환자팔찌, permission 확인함. both inguinal shaving 시행했으며, MN NPO와 보조기, 속옷 제거 설명함. 매니큐어 확인함.', 'Full voiding 후 속옷, 보조기 제거 후 Prep 물품 챙겨 기능원과 인터벤션실로 bed채 내려감.'] },
+  { focus: 'DSA 검사 후 간호', d: [], a: [], r: [], n: ['침대채로 DSA 후 20번 촬영실에서 15W 옴. Rt.femoral (DSA site sheath / sand bag) 유지중임. bleeding sign 없으며, headache 없음. Dr.__ notify함.', 'NPO해제하고 sheath remove 하자 함. Rt.femoral DSA site bleeding sign 있거나 headache 증가시 알리도록 함.', 'Rt. leg elevation과 flexion 금지임을 설명함. 6시간 동안 ABR해야 함을 설명함. oral hydration 격려하고, self voiding 시 알리도록 함.', 'Dr.__ femoral DSA site sheath remove한 후 manual compression __분간 시행함. gauze dressing 시행한 후 지혈대와 sand bag apply함.', 'Dr.__ sand bag remove한 후 medix dressing 시행함.'] },
+  { focus: 'Spinal tapping 전 간호', d: [], a: [], r: [], n: ['Spinal tapping 시행 예정임. 환자와 보호자에게 검사 설명함. 검사 후 6시간동안 Flat position 유지해야 함을 설명함. Dr.__ 동의서 받음.'] },
+  { focus: 'Spinal tapping 후 간호', d: [], a: [], r: [], n: ['Dr.__ spinal tapping 시행함. Spinal tapping 후 medix dressing 유지중임. Dressing site oozing이나 bleeding sign 없음. 검사 후 headache, nausea 호소없음. CSF 무색, 무취이며 pressure __mmH2O checked. gluco) checked. V/S) checked.', '6시간 ABR과 Flat position해야 함을 설명함. headache, nausea, vomiting 있을 시 알리도록 함.'] },
+  { focus: 'L-tube insertion', d: [], a: [], r: [], n: ['통합PA 통해 L-tube insertion 진행함. 고정위치 Rt/Lt (고정길이)cm 확인함.'] },
   {
     focus: '통증',
     d: ['통증 호소함. (NRS: 점)', '통증 부위: ', '찌르는 듯한 양상의 통증 호소함', '수술 부위 통증 호소함', '통증으로 수면 방해받았다고 함'],

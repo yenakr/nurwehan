@@ -130,7 +130,8 @@ export default function NursingRecord({ data, setData, userName, duty, today }: 
         </div>
         {ph && (
           <div className="chips">
-            {(['d', 'a', 'r'] as const).flatMap(k => [<button key={`h${k}`} type="button" className="k" disabled>{k.toUpperCase()}</button>, ...ph[k].map(s => <button key={`${k}${s}`} type="button" onClick={() => put(s, k.toUpperCase() as 'D' | 'A' | 'R')}>{s}</button>)])}
+            {(ph.n || []).map(s => <button key={`n${s}`} type="button" onClick={() => setText(t => `${t}${t && !/\s$/.test(t) ? ' ' : ''}${s}`)}>{s}</button>)}
+            {(['d', 'a', 'r'] as const).filter(k => ph[k].length > 0).flatMap(k => [<button key={`h${k}`} type="button" className="k" disabled>{k.toUpperCase()}</button>, ...ph[k].map(s => <button key={`${k}${s}`} type="button" onClick={() => put(s, k.toUpperCase() as 'D' | 'A' | 'R')}>{s}</button>)])}
           </div>
         )}
         <textarea placeholder={'D)\nA)\nR)'} value={text} onChange={e => setText(e.target.value)} />

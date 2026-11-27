@@ -73,7 +73,12 @@ export const gs: Sample = {
     notes: [
       { time: md(0, '10:00'), focus: '급성 통증', text: 'S)\n"배에 구멍 뚫은 곳이 움직일 때 아파요. 가만히 있으면 괜찮아요."\n\nO)\nNRS 4 (움직일 때), 안정 시 2. BP 118/72, HR 78. 배꼽 및 좌하복부 port 부위 dressing clean & dry.\n\nA)\n수술 후 1일, 통증 조절 양호함.\n\nI)\n처방에 따라 acetaminophen 투여, 기침·체위 변경 시 베개로 복부 지지하는 방법 교육함.\n\nE)\n투약 1시간 후 NRS 2로 감소, 보행 시 복부 지지 방법을 시범 보임.', author: '박간호', shift: 'D' },
       { time: md(0, '07:40'), focus: '조기 이상', text: 'D)\n수술 후 첫 보행 시도. 침상 끝에서 5분 앉았다가 일어났을 때 어지럼 없음, BP 120/74.\n\nA)\n간호사가 보조하여 병실 복도 20m 보행함. IV 폴대 정리해 줌.\n\nR)\n보행 후 통증 NRS 4, 활력징후 안정, 가스 배출 확인함.', author: '최간호', shift: 'N' },
-      { time: md(-1, '19:30'), focus: '수술 후 회복', text: 'S)\n"입이 마르고 배가 아파요."\n\nO)\n회복실에서 병동으로 이동. 의식 명료, BP 126/78, HR 92, SpO2 98%. 복강경 port 3곳 dressing 청결, 출혈 없음. Foley 없음.\n\nA)\n전신마취 후 회복 양호, 금식 유지.\n\nI)\n침상 난간 올리고 호출벨 위치 안내, 입술 적셔줌, 처방 진통제 투여함.\n\nE)\n환자가 통증 시 호출하겠다고 말함.', author: '김간호', shift: 'E' },
+      { time: md(-1, '19:30'), focus: '수술 후 간호', text: 'OP 후 눕는 차 타고 올라옴. imp) Acute appendicitis, op name) Laparoscopic appendectomy, anesthesia) General. mental) alert, V/S) BP 126/78mmHg, HR 92회/분, RR 18회/분, BT 36.8℃, SpO2 98% checked. Umbilicus (12mm port), LLQ (5mm port) x2 site dressing 유지중이며 oozing 없음. Foley catheter 없음. nasal O2 2L/min apply함. PCA keep중이며 nausea, vomiting 없음. PCA 사용법 교육하고 부작용 있을 시 알리도록 함. NPO, ABR 설명함. EDBC함.', author: '김간호', shift: 'E' },
+      { time: md(-1, '19:40'), focus: '드레싱', text: 'Umbilicus (12mm port) site dressing 유지중이며 oozing 없음. LLQ (5mm port) x2 site dressing 유지중이며 소량 멍 있음.', author: '김간호', shift: 'E' },
+      { time: md(-1, '19:45'), focus: 'IV site', text: 'Rt. 전완 IV site 부종, 발적, 통증 없음. 부작용 시 알리도록 함.', author: '김간호', shift: 'E' },
+      { time: md(-1, '13:20'), focus: '수술 직전 간호', text: 'Full voiding 후 prep 물품 챙겨 눕는 차 타고 기능원과 OR방으로 감.', author: '박간호', shift: 'E' },
+      { time: md(-1, '09:30'), focus: '수술 전 간호', text: '금일 수술 예정임. Dr. 수술 설명 후 보호자에게 동의서를 받음. 환자 팔찌 확인함. NPO 설명함. 수술 후 폐 합병증을 예방하기 위해서 EDBC 교육함. 속옷, 양말 탈의하고 보조기구 제거와 귀중품 보관 설명함.', author: '박간호', shift: 'D' },
+      { time: md(0, '02:10'), focus: '수면', text: '수면중임. side rail kept. 보호자 상주중임.', author: '최간호', shift: 'N' },
     ],
     care: [
       { dx: '급성 통증', data: '수술 부위 NRS 4~6, 움직일 때 악화, 표정 찡그림', goal: 'NRS 3 이하 유지, 보행 가능', plan: '통증 사정, 처방 진통제 투여, 복부 지지 교육, 조기 보행 격려, 비약물 요법', eval: '달성. NRS 2~4, 복도 보행 가능.' },
