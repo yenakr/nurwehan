@@ -150,7 +150,7 @@ export default function SkillRunner({ skillKey, ai, aiLeft }: { skillKey: string
         .sk .big{font-size:26px;font-weight:700}
         @media (prefers-color-scheme: dark){.sk .o.sel{background:#1e293b}.sk .o.good{background:#052e16}.sk .o.bad{background:#450a0a}.sk .res.ok{background:#052e16;color:#86efac}.sk .res.no{background:#450a0a;color:#fca5a5}.sk .fb{background:#1e1b4b;border-color:#4338ca}.sk .al{background:#450a0a;color:#fca5a5}}
       `}</style>
-      <p style={{ margin: '0 0 8px' }}><Link href="/ehr/skills">← 핵심술기 목록</Link></p>
+      <p style={{ margin: '0 0 8px' }}><Link href={`/ehr/skills/${skillKey}`}>← 뒤로</Link></p>
       <div className="hd">
         <b>{sc.title}</b>
         <span className="pt">{sc.patient.name} · {sc.patient.line} · {sc.patient.dx}</span>

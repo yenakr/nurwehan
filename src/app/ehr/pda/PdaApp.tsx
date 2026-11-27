@@ -19,7 +19,7 @@ const HIGH = /(insulin|인슐린|heparin|헤파린|potassium|kcl|칼륨|morphine
 const dueOf = (it: Item) => timesFor(it.r, 'med')[slotsOf(it.r).length] || '';
 const minOf = (t: string) => Number(t.slice(0, 2)) * 60 + Number(t.slice(3, 5));
 
-export default function PdaApp({ roster, userName }: { roster: R[]; userName: string }) {
+export default function PdaApp({ roster, userName, skill = false }: { roster: R[]; userName: string; skill?: boolean }) {
   const [pid, setPid] = useState('');
   const [chart, setChart] = useState<ChartData | null>(null);
   const [mode, setMode] = useState<'home' | 'scanP' | 'patient' | 'scanM' | 'result' | 'sheet'>('home');
@@ -37,6 +37,7 @@ export default function PdaApp({ roster, userName }: { roster: R[]; userName: st
     const r = await fetch(`/api/ehr/${id}/pda`, { cache: 'no-store' });
     if (!r.ok) return null;
     const j = await r.json() as { data: ChartData };
+    if ((j.data.info.mode === 'skill') !== skill) return null; // 자율 EHR과 핵심술기 EHR은 서로 환자가 안 섞인다
     setVOffset(offsetOf(j.data.info, Date.now()));
     setChart(j.data); setPid(id);
     return j.data;
@@ -126,7 +127,7 @@ export default function PdaApp({ roster, userName }: { roster: R[]; userName: st
     <div className="pd">
       <style>{CSS}</style>
       <div className="pd-bar">
-        <Link href="/ehr?view=list" className="pd-back">← EHR</Link>
+        <Link href={skill ? '/ehr/skills' : '/ehr?view=list'} className="pd-back">← EHR</Link>
         <div className="pd-ttl"><b>PDA</b><span>투약 · 바코드 확인</span></div>
         <span className="pd-clk" title="EHR 가상 시각">{vParse(now)}</span>
       </div>
