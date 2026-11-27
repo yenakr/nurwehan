@@ -330,6 +330,7 @@ export default function EhrNurse({
   const [mOpen, setMOpen] = useState(0); // 0 닫힘, 1 메뉴, 2 메뉴 > 업무
   const [mq, setMq] = useState('');
   const [figOpen, setFigOpen] = useState(true);
+  const [rOpen, setROpen] = useState(true);
   const [win2, setWin2] = useState<string | null>(null);
   const OWN = ['todo', 'notes', 'patinfo', 'dxhist', 'surghist', 'vacc', 'labres', 'medrec', 'flowsheet', 'overview', 'adm', 'dir', 'bulk', 'staff', 'docreq', 'vitals', 'bst', 'mat', 'nact', 'qr', 'rxcmp', 'futsch', 'sticker', 'cmnreq', 'dcplan', 'usage', 'unauth'];
   const [ddPos, setDdPos] = useState<{ left: number; top: number } | null>(null);
@@ -922,7 +923,11 @@ export default function EhrNurse({
           {ocs()}
         </main>
 
-        <aside className="ns-nr">
+        <aside className={`ns-nr ${rOpen ? '' : 'ns-nrc'}`}>
+          <div className="ns-fighd" style={{ justifyContent: rOpen ? 'flex-end' : 'center' }}>
+            <button type="button" className="ns-figb" aria-expanded={rOpen} title={rOpen ? '접기' : '펼치기'} onClick={() => setROpen(v => !v)}>{rOpen ? '▶' : '◀'}</button>
+          </div>
+          {rOpen && <>
           {cl.length === 0 && <div className="ns-nbox"><h4>체크리스트</h4><p className="ns-nnone">No data to display</p></div>}
           {cl.map(g => (
             <div key={g.title} className="ns-nbox">
@@ -948,6 +953,7 @@ export default function EhrNurse({
             <h4>간호메모</h4>
             <div key={i.ptNo || 'x'}><RichMemo value={sticky >= 0 ? data.memos[sticky].text || '' : ''} onChange={setSticky} /></div>
           </div>
+          </>}
         </aside>
       </div>
 
@@ -1454,7 +1460,7 @@ export default function EhrNurse({
         .ns-dd button:disabled { opacity: .4; cursor: default; }
         .ns-ntabs button { border: 0; background: none; font: inherit; font-size: 12.5px; padding: 5px 8px; cursor: pointer; color: inherit; }
         .ns-nmenu .ns-ch { margin-left: auto; color: #e8c97a; }
-        .ns-ngrid { display: grid; grid-template-columns: 240px auto minmax(0, 1fr) 240px; min-height: 70vh; }
+        .ns-ngrid { display: grid; grid-template-columns: 240px auto minmax(0, 1fr) auto; min-height: 70vh; }
         .ns-nf { border-right: 1px solid var(--border); padding: 10px; width: 226px; box-sizing: border-box; }
         .ns-nf.ns-nfc { width: 40px; padding: 10px 4px; }
         .ns-fighd { display: flex; justify-content: space-between; align-items: center; gap: 4px; margin-bottom: 6px; font-size: 13px; color: var(--primary); }
@@ -1667,7 +1673,8 @@ export default function EhrNurse({
         .ns-nrow { display: flex; gap: 10px; justify-content: space-between; align-items: flex-start; padding: 8px 6px; border-bottom: 1px solid var(--border); }
         .ns-nrow.ns-x .ns-nm b { text-decoration: line-through; opacity: .6; }
         .ns-nm { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding-top: 12px; }
-        .ns-nr { padding-top: 12px; }
+        .ns-nr { padding-top: 12px; width: 240px; box-sizing: border-box; }
+        .ns-nr.ns-nrc { width: 40px; padding: 12px 4px; }
         .ns-nm span { color: var(--sub-text); font-size: 12px; }
         .ns-nm em { font-style: normal; font-size: 12px; color: #b9770e; }
         .ns-nd { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 4px; max-width: 55%; }
@@ -1716,7 +1723,7 @@ export default function EhrNurse({
           .ns-ntabs { margin-left: 0; margin-bottom: 0; position: static; }
           .ns-ngrid > *:not(.ns-nl) { padding-top: 0; }
           .ns-nf, .ns-nf.ns-nfc { width: auto; border: 0; border-bottom: 1px solid var(--border); }
-          .ns-nl, .ns-nr { border: 0; border-bottom: 1px solid var(--border); }
+          .ns-nl, .ns-nr, .ns-nr.ns-nrc { border: 0; border-bottom: 1px solid var(--border); width: auto; }
         }
       `}</style>
     </div>
