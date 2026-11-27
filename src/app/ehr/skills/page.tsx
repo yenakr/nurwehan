@@ -3,7 +3,6 @@ import { getCurrentUser } from '@/lib/auth';
 import { hasEhrAccess } from '@/lib/ehr-access';
 import { notFound, redirect } from 'next/navigation';
 import { isExamUser } from '@/lib/ehr-skill';
-import { SCENARIOS } from './data';
 import { studentSkillScns } from '@/lib/ehr-class';
 import { SKILLS } from './scn';
 
@@ -21,13 +20,12 @@ export default async function SkillsPage() {
       <div className="container" style={{ maxWidth: 860 }}>
         <p style={{ margin: '0 0 6px' }}><Link href="/ehr">← EHR 선택</Link></p>
         <h1 style={{ margin: '0 0 6px', fontSize: 22 }}>핵심술기별 EHR</h1>
-        <p style={{ margin: '0 0 18px', color: 'var(--muted-foreground)', fontSize: 14 }}>술기 하나를 순서대로 연습하고 체크리스트로 채점받아요. 모두 가상 환자입니다.</p>
+        <p style={{ margin: '0 0 18px', color: 'var(--muted-foreground)', fontSize: 14 }}>술기는 실제로 연습하고, 수행 내용을 EHR에 기록해요. 모두 가상 환자입니다.</p>
         <div style={{ display: 'grid', gap: 12 }}>
-          {SCENARIOS.map(s => (
+          {SKILLS.map(s => (
             <Link key={s.key} href={`/ehr/skills/${s.key}`} style={{ display: 'block', padding: 16, borderRadius: 10, background: 'var(--background)', border: '1px solid var(--border)', textDecoration: 'none', color: 'inherit' }}>
               <div style={{ fontWeight: 700, fontSize: 16 }}>{s.title}</div>
-              <div style={{ fontSize: 13, color: 'var(--muted-foreground)', margin: '2px 0 6px' }}>{s.sub}</div>
-              <div style={{ fontSize: 13 }}>{s.goal}</div>
+                            <div style={{ fontSize: 13 }}>{s.goal}</div>
             </Link>
           ))}
         </div>

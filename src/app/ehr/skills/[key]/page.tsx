@@ -5,7 +5,7 @@ import { hasEhrAccess } from '@/lib/ehr-access';
 import { listCases } from '@/lib/ehr';
 import { resolveScn, isExamUser } from '@/lib/ehr-skill';
 import { notFound, redirect } from 'next/navigation';
-import { scenarioOf } from '../data';
+import { SKILLS } from '../scn';
 import SkillStart from '../SkillStart';
 
 export const dynamic = 'force-dynamic';
@@ -21,7 +21,7 @@ export default async function SkillPage({ params }: { params: Promise<{ key: str
   if (!sc) return notFound();
   const sk = `sk:${sc.skill}:${sc.scnId || 'def'}`;
   const tries = (await listCases(user.id, 'skill')).filter(c => c.sampleKey === sk).map(c => ({ id: c.id, at: new Date(c.updatedAt).toISOString(), done: !!c.submitted }));
-  const base = scenarioOf(sc.skill)!;
+  const base = SKILLS.find(s => s.key === sc.skill)!;
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '28px 0' }}>
       <div className="container" style={{ maxWidth: 760 }}>

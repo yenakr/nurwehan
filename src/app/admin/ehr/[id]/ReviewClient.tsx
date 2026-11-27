@@ -103,8 +103,8 @@ export default function ReviewClient({ id, data }: { id: string; data: ChartData
       </div>
       {auto.length > 0 && (
         <details className="card" style={{ padding: 16, fontSize: 13 }}>
-          <summary style={{ cursor: 'pointer', fontWeight: 800, fontSize: 14 }}>참고 체크리스트 (자동 확인 · 채점은 직접)</summary>
-          <ul style={{ listStyle: 'none', padding: 0, margin: '8px 0 0', lineHeight: 1.8 }}>{auto.map(i => <li key={i.id}>{i.avoid ? (i.ok ? '🛡️' : '❌') : i.ok ? '✅' : '⬜'} {i.label}</li>)}</ul>
+          <summary style={{ cursor: 'pointer', fontWeight: 800, fontSize: 14 }}>평가 항목·EHR 기록 확인 (채점은 직접)</summary>
+          <ul style={{ listStyle: 'none', padding: 0, margin: '8px 0 0', lineHeight: 1.8 }}>{auto.map(i => <li key={i.id}>{i.manual ? '▫️' : i.ok ? '✅' : '⬜'} {i.label}</li>)}</ul>
         </details>
       )}
       <div className="card" style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
