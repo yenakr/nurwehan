@@ -27,6 +27,7 @@ import SearchPick, { type PickItem } from './SearchPick';
 import EhrNurse, { type Roster } from './EhrNurse';
 import { printNameTag, printTickets, type TicketKind } from '../print';
 import { DX, ACTS, MATS, DIETS, FORMS2, RET_KINDS, dxName, dxCode } from '../codes';
+import SkillPanel from '../skills/SkillPanel';
 import FormPanel, { FORMS, FORM_CSS, type FormKey } from './EhrForms';
 
 type ListKey =
@@ -673,6 +674,7 @@ export default function EhrEditor({
   initial,
   ai,
   aiLeft,
+  skillLeft,
   userName,
   printKind,
   roster,
@@ -681,6 +683,7 @@ export default function EhrEditor({
   roster?: Roster[];
   ai: boolean;
   aiLeft?: number;
+  skillLeft?: number;
   userName?: string;
   id: string;
   initialTitle: string;
@@ -1235,8 +1238,8 @@ export default function EhrEditor({
 
   const navBtns = (
     <>
-        <button type="button" className="back" onClick={() => router.push(`/ehr?view=${encodeURIComponent(info.ward === '응급실' ? '응급' : info.ward || '')}`)}>&larr; {info.ward === '응급실' ? '응급' : info.ward || '목록'}</button>
-        <button type="button" className="back" onClick={() => router.push('/ehr/pda')} title="바코드·QR로 투약 확인하는 PDA 화면">PDA</button>
+        <button type="button" className="back" onClick={() => router.push(info.mode === 'skill' ? '/ehr/skills' : `/ehr?view=${encodeURIComponent(info.ward === '응급실' ? '응급' : info.ward || '')}`)}>&larr; {info.mode === 'skill' ? '핵심술기' : info.ward === '응급실' ? '응급' : info.ward || '목록'}</button>
+        <button type="button" className="back" onClick={() => router.push(info.mode === 'skill' ? '/ehr/pda?mode=skill' : '/ehr/pda')} title="바코드·QR로 투약 확인하는 PDA 화면">PDA</button>
           <button type="button" className="back" onClick={() => { setWin(null); setScreen(screen === 'main' ? 'chart' : 'main'); }}>{screen === 'main' ? '전체 차트' : '간호 화면'}</button>
     </>
   );
@@ -1289,6 +1292,7 @@ export default function EhrEditor({
         <span className="who">{userName}</span>
         <LogoutButton />
       </div>
+      {info.mode === 'skill' && info.skill && <SkillPanel id={id} data={data} ai={ai} aiLeft={skillLeft ?? 0} />}
 
       {locked && <div className="lkb">{info.reviewed ? '교수님이 확인했어요' : '제출했어요. 교수님 확인 전에는 제출 취소로 고칠 수 있어요'}</div>}
       {info.comment && <div className="cmt"><b>교수님 의견</b><p>{info.comment}</p></div>}

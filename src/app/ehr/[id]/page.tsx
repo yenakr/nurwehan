@@ -19,14 +19,16 @@ export default async function EhrCasePage({ params, searchParams }: { params: Pr
   const row = await getCase(user.id, id);
   if (!row) notFound();
   const data = migrate(row.data);
-  const ordMap = await ordersByCase(user.id);
-  const roster = (await listCases(user.id)).filter(c => !c.discharged).map(c => ({ id: c.id, ward: c.ward, bed: c.bed, name: c.name, ageSex: c.ageSex, ptNo: c.ptNo, doctor: c.doctor, admit: c.admit, disDate: c.disDate, orders: (ordMap[c.id] || []) as Record<string, string>[] }));
+  const mode = data.info.mode === 'skill' ? 'skill' : 'free';
+  const ordMap = await ordersByCase(user.id, mode);
+  const roster = (await listCases(user.id, mode)).filter(c => !c.discharged).map(c => ({ id: c.id, ward: c.ward, bed: c.bed, name: c.name, ageSex: c.ageSex, ptNo: c.ptNo, doctor: c.doctor, admit: c.admit, disDate: c.disDate, orders: (ordMap[c.id] || []) as Record<string, string>[] }));
   const ai = aiConfigured();
   const aiLeft = ai ? await aiQuotaLeft(user.id, '#ehrfb', EHR_FEEDBACK_LIMIT) : 0;
+  const skillLeft = ai && mode === 'skill' ? await aiQuotaLeft(user.id, '#ehrskill', EHR_FEEDBACK_LIMIT) : 0;
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '20px 0' }}>
       <div className="container" style={{ maxWidth: 'none' }}>
-        <EhrEditor id={row.id} initialTitle={row.title} subject={row.subject} initial={data} ai={ai} aiLeft={aiLeft} userName={user.name} printKind={print} roster={roster} />
+        <EhrEditor id={row.id} initialTitle={row.title} subject={row.subject} initial={data} ai={ai} aiLeft={aiLeft} skillLeft={skillLeft} userName={user.name} printKind={print} roster={roster} />
       </div>
     </main>
   );
