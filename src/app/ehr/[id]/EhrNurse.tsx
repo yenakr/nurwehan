@@ -722,7 +722,7 @@ export default function EhrNurse({
           </>
         );
       })()}
-      {tabs.length > 0 && (
+      {(
         <div className="ns-ntabs">
           {tabs.map(id => (
             <span key={id} className={win === id || win2 === id ? 'ns-on' : ''}>
@@ -733,6 +733,7 @@ export default function EhrNurse({
               <button type="button" aria-label="탭 닫기" title="닫기" onClick={() => closeTab(id)}>&times;</button>
             </span>
           ))}
+          {tabs.length === 0 && <em className="ns-ntabs-e">열린 창이 없어요 · 메뉴에서 업무를 열면 여기에 탭으로 쌓여요</em>}
         </div>
       )}
 
@@ -1430,7 +1431,9 @@ export default function EhrNurse({
         .ns-nmenu button.ns-on { color: #38d6ff; box-shadow: inset 0 -3px 0 #38d6ff; }
         .ns-nsub { display: flex; flex-wrap: wrap; gap: 4px; padding: 6px 10px; background: #eaf0f7; border-bottom: 1px solid var(--border); }
         .ns-nsub button { border: 1px solid var(--border); background: #fff; border-radius: 4px; padding: 5px 12px; font: inherit; font-size: 13px; font-weight: 600; cursor: pointer; }
-        .ns-ntabs { display: flex; gap: 2px; padding: 4px 8px 0; background: #dfe6ee; border-bottom: 1px solid var(--border); }
+        .ns-ntabs { display: flex; align-items: flex-end; gap: 2px; padding: 4px 8px 0; background: #dfe6ee; border-bottom: 1px solid var(--border); position: relative; z-index: 41; height: 34px; box-sizing: border-box; margin-left: 240px; margin-bottom: -34px; overflow-x: auto; }
+        .ns-ntabs-e { align-self: center; font-style: normal; font-size: 12px; color: var(--sub-text); }
+        .ns-ngrid > *:not(.ns-nl) { padding-top: 34px; box-sizing: border-box; }
         .ns-ntabs span { display: inline-flex; align-items: center; background: #f6f8fb; border: 1px solid var(--border); border-bottom: 0; border-radius: 6px 6px 0 0; }
         .ns-ntabs span.ns-on { background: #fff; font-weight: 700; }
         .ns-ntabs span:not(.ns-on) { opacity: .75; }
@@ -1697,6 +1700,8 @@ export default function EhrNurse({
         @media (max-width: 980px) {
           .ns-ngrid { grid-template-columns: 1fr; }
           .ns-bbar { margin-left: 0; }
+          .ns-ntabs { margin-left: 0; margin-bottom: 0; position: static; }
+          .ns-ngrid > *:not(.ns-nl) { padding-top: 0; }
           .ns-nf, .ns-nf.ns-nfc { width: auto; border: 0; border-bottom: 1px solid var(--border); }
           .ns-nl, .ns-nr { border: 0; border-bottom: 1px solid var(--border); }
         }
