@@ -3,8 +3,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import AiMark from '@/components/AiMark';
 import type { ChartData } from '../types';
-import { SKILLS, briefOf, cfgOf, gradeChart } from './scn';
-import { GUIDE } from './guide';
+import { SKILLS, briefOf, cfgOf, gradeChart, guideOf, hasGive } from './scn';
 
 // 핵심술기 EHR: 처음 열 때 상황 안내 창 + 오른쪽 아래 동그라미 버튼(상황·체크리스트·사용법 질문·제출)
 export default function SkillPanel({ id, data, ai, aiLeft, onSubmit }: { id: string; data: ChartData; ai: boolean; aiLeft: number; onSubmit: () => void }) {
@@ -24,8 +23,7 @@ export default function SkillPanel({ id, data, ai, aiLeft, onSubmit }: { id: str
   useEffect(() => { try { if (!localStorage.getItem(seenKey) && !data.info.submitted) setIntro(true); } catch { /* 저장 불가 */ } }, [seenKey, data.info.submitted]);
   const items = useMemo(() => (cfg ? gradeChart(key, cfg, data) : []), [key, cfg, data]);
   if (!sc || !cfg) return null;
-  const real = items.filter(i => !i.avoid);
-  const bad = items.filter(i => i.avoid && !i.ok);
+  const real = items.filter(i => !i.manual);
   const okN = real.filter(i => i.ok).length;
   const groups = Array.from(new Set(items.map(i => i.group)));
   const brief = briefOf(key, cfg);
@@ -50,7 +48,7 @@ export default function SkillPanel({ id, data, ai, aiLeft, onSubmit }: { id: str
         </div>
       ))}
       <h4>순서</h4>
-      <ol>{GUIDE[key].map((g, i) => <li key={i}>{g}</li>)}</ol>
+      <ol>{guideOf(key).map((g, i) => <li key={i}>{g}</li>)}</ol>
     </>
   );
   return (
@@ -99,18 +97,17 @@ export default function SkillPanel({ id, data, ai, aiLeft, onSubmit }: { id: str
         <div className="sheet">
           <div className="tabs">
             <button type="button" className={tab === 'info' ? 'on' : ''} onClick={() => setTab('info')}>상황</button>
-            {!exam && <button type="button" className={tab === 'check' ? 'on' : ''} onClick={() => setTab('check')}>체크 {okN}/{real.length}</button>}
+            {!exam && <button type="button" className={tab === 'check' ? 'on' : ''} onClick={() => setTab('check')}>기록 확인 {okN}/{real.length}</button>}
             {ai && <button type="button" className={tab === 'ask' ? 'on' : ''} onClick={() => setTab('ask')}>사용법 질문</button>}
           </div>
           <div className="body">
             {tab === 'info' && <Situation />}
             {tab === 'check' && !exam && (
               <>
-                {key === 'med' && <p style={{ margin: '0 0 6px' }}><a href={`/ehr/pda?mode=skill&only=${id}`} target="_blank" rel="noreferrer">PDA 열기 ↗</a></p>}
-                {bad.map(i => <div className="warn" key={i.id}>⚠ {i.label.replace('투약하지 않기', '투약했어요')} — {i.tip}</div>)}
+                {hasGive(key) && <p style={{ margin: '0 0 6px' }}><a href={`/ehr/pda?mode=skill&only=${id}`} target="_blank" rel="noreferrer">PDA 열기 ↗</a></p>}
                 {groups.map(g => (
                   <div key={g}><h4>{g}</h4>
-                    <ul>{items.filter(i => i.group === g).map(i => <li key={i.id}>{i.avoid ? (i.ok ? '🛡️' : '❌') : i.ok ? '✅' : '⬜'} {i.label}{!i.ok && !i.avoid && <small>{i.tip}</small>}</li>)}</ul>
+                    <ul>{items.filter(i => i.group === g).map(i => <li key={i.id}>{i.manual ? '▫️' : i.ok ? '✅' : '⬜'} {i.label}{!i.ok && !i.manual && <small>{i.tip}</small>}</li>)}</ul>
                   </div>
                 ))}
               </>
@@ -118,7 +115,7 @@ export default function SkillPanel({ id, data, ai, aiLeft, onSubmit }: { id: str
             {tab === 'ask' && ai && (
               <>
                 <p style={{ margin: '0 0 6px', color: 'var(--muted-foreground)' }}>EHR 사용법만 물어볼 수 있어요. 정답은 알려주지 않아요.</p>
-                <input className="q" value={q} maxLength={300} placeholder="예: 욕창위험 평가는 어디서 입력해요?" onChange={e => setQ(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !busy) ask(); }} />
+                <input className="q" value={q} maxLength={300} placeholder="예: 활력징후는 어디서 입력해요?" onChange={e => setQ(e.target.value)} onKeyDown={e => { if (e.key === 'Enter' && !busy) ask(); }} />
                 <div style={{ marginTop: 6, display: 'flex', gap: 8, alignItems: 'center' }}>
                   <button type="button" className="btn" disabled={busy || left <= 0 || !q.trim()} onClick={ask}><AiMark size={12} /> {busy ? '찾는 중…' : '물어보기'}</button>
                   <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>오늘 {left}회</span>

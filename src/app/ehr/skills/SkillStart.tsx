@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { GUIDE } from './guide';
+import { guideOf } from './scn';
 
 export default function SkillStart({ startKey, skill, title, goal, exam, custom, patient, tries }: { startKey: string; skill: string; title: string; goal: string; exam: boolean; custom: boolean; patient: string; tries: { id: string; at: string; done: boolean }[] }) {
   const router = useRouter();
@@ -32,11 +32,10 @@ export default function SkillStart({ startKey, skill, title, goal, exam, custom,
         <b>환자</b>
         <p style={{ margin: '4px 0 0' }}>{patient}</p>
         <p style={{ margin: '10px 0 4px' }}><b>이렇게 진행해요</b></p>
-        <ol style={{ margin: 0, paddingLeft: 20, lineHeight: 1.7 }}>{GUIDE[skill].map((g, i) => <li key={i}>{g}</li>)}</ol>
+        <ol style={{ margin: 0, paddingLeft: 20, lineHeight: 1.7 }}>{guideOf(skill).map((g, i) => <li key={i}>{g}</li>)}</ol>
         <p style={{ margin: '10px 0 0', fontSize: 12, color: 'var(--muted-foreground)' }}>{exam ? '시험 모드예요. 체크리스트와 AI 피드백 없이 실제 EHR 화면에서 수행하고, 다 끝나면 가이드 패널의 [제출]을 눌러요.' : '실제 EHR 화면에서 입력하고, 화면 오른쪽 가이드 패널의 체크리스트가 실시간으로 채워져요.'} 이 차트는 자율 EHR과 완전히 분리돼 있어요.</p>
         <div style={{ display: 'flex', gap: 8, marginTop: 12, flexWrap: 'wrap' }}>
           <button type="button" onClick={start} disabled={busy} style={{ padding: '9px 18px', borderRadius: 8, border: 0, background: '#2563eb', color: '#fff', cursor: 'pointer', fontSize: 14 }}>{busy ? '여는 중…' : exam ? '시험 시작' : '새로 연습 시작'}</button>
-          {!exam && !custom && <Link href={`/ehr/skills/${skill}/quiz`} style={{ padding: '9px 18px', borderRadius: 8, border: '1px solid var(--border)', textDecoration: 'none', color: 'inherit' }}>먼저 개념 퀴즈</Link>}
         </div>
         {err && <p style={{ color: '#dc2626', margin: '8px 0 0' }}>{err}</p>}
       </div>
