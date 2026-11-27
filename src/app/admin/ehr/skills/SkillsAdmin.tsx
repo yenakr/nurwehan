@@ -36,8 +36,7 @@ export default function SkillsAdmin({ rows: init, classes }: { rows: Row[]; clas
   };
   return (
     <div style={{ display: 'grid', gap: 14, fontSize: 14 }}>
-      <p style={{ margin: 0, color: 'var(--muted-foreground)', fontSize: 13 }}>술기를 눌러 펼치면 그 술기의 시나리오를 만들고 고칠 수 있어요. 새 시나리오는 기본 내용을 복제해서 시작해요.</p>
-      {(() => {
+            {(() => {
       const renderRow = (r: Row) => {
         const c = r.cfg;
         const setC = (p: Partial<Cfg>) => upd(r.id, x => ({ ...x, cfg: { ...x.cfg, ...p } }));
@@ -68,18 +67,18 @@ export default function SkillsAdmin({ rows: init, classes }: { rows: Row[]; clas
                     </F>
                     <F l="환자 배정">
                       <select style={inp} value={r.assign} onChange={e => upd(r.id, x => ({ ...x, assign: e.target.value as Row['assign'] }))}>
-                        <option value="same">전원 동일 (이 설정 그대로)</option>
-                        <option value="random">학생마다 랜덤 변형 (이름·나이·병상)</option>
+                        <option value="same">전원 동일</option>
+                        <option value="random">학생마다 랜덤</option>
                       </select>
                     </F>
                     <F l="모드">
                       <select style={inp} value={r.exam ? '1' : ''} onChange={e => upd(r.id, x => ({ ...x, exam: e.target.value === '1' }))}>
-                        <option value="">연습 (기록 확인 · 사용법 질문 가능)</option>
-                        <option value="1">시험 (제출 후 교수 채점 · 사용법 질문 없음)</option>
+                        <option value="">연습</option>
+                        <option value="1">시험</option>
                       </select>
                     </F>
                   </div>
-                  <label style={{ display: 'flex', gap: 6, alignItems: 'center' }}><input type="checkbox" style={{ width: 'auto' }} checked={r.published} onChange={e => upd(r.id, x => ({ ...x, published: e.target.checked }))} />공개 (체크해야 학생에게 보여요)</label>
+                  <label style={{ display: 'flex', gap: 6, alignItems: 'center' }}><input type="checkbox" style={{ width: 'auto' }} checked={r.published} onChange={e => upd(r.id, x => ({ ...x, published: e.target.checked }))} />공개</label>
                 </div>
                 <div style={sec}>
                   <p style={h}>환자</p>
@@ -94,19 +93,19 @@ export default function SkillsAdmin({ rows: init, classes }: { rows: Row[]; clas
                     <F l="알레르기"><input style={inp} value={c.allergy} onChange={e => setC({ allergy: e.target.value })} /></F>
                   </div>
                   <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 8 }}>
-                    <F l="진단 (영문)"><input style={inp} value={c.dx} onChange={e => setC({ dx: e.target.value })} /></F>
+                    <F l="진단"><input style={inp} value={c.dx} onChange={e => setC({ dx: e.target.value })} /></F>
                     <F l="주호소"><input style={inp} value={c.cc} onChange={e => setC({ cc: e.target.value })} /></F>
-                    <F l="시작 시각 (HH:MM)"><input style={inp} value={c.clock} onChange={e => setC({ clock: e.target.value })} /></F>
-                    <F l="직전 활력징후 (혈압,맥박,호흡,체온,SpO2 · 비우면 없음)"><input style={inp} placeholder="118/72,84,18,37.2,97" value={c.vit} onChange={e => setC({ vit: e.target.value })} /></F>
+                    <F l="시작 시각"><input style={inp} value={c.clock} onChange={e => setC({ clock: e.target.value })} /></F>
+                    <F l="직전 활력징후"><input style={inp} placeholder="혈압,맥박,호흡,체온,SpO2  예) 118/72,84,18,37.2,97" value={c.vit} onChange={e => setC({ vit: e.target.value })} /></F>
                   </div>
                 </div>
                 <div style={sec}>
-                  <p style={h}>상황 안내 <span style={{ fontWeight: 400, color: 'var(--muted-foreground)', fontSize: 12 }}>학생에게 그대로 보여요</span></p>
+                  <p style={h}>상황 안내</p>
                   <textarea style={{ ...inp, minHeight: 90, fontFamily: 'inherit' }} value={c.situation} onChange={e => setC({ situation: e.target.value })} />
                 </div>
                 <div style={sec}>
                   <p style={h}>처방</p>
-                  {c.orders.length === 0 && <p style={{ margin: 0, fontSize: 12, color: 'var(--muted-foreground)' }}>처방이 없어요. 기본처방(V/S, I/O)만 나와요.</p>}
+                  {c.orders.length === 0 && <p style={{ margin: 0, fontSize: 12, color: 'var(--muted-foreground)' }}>처방 없음</p>}
                   {c.orders.map((x, k) => {
                     const setO = (p: Partial<Ord>) => setC({ orders: c.orders.map((y, j) => (j === k ? { ...y, ...p } : y)) });
                     return (
@@ -120,10 +119,10 @@ export default function SkillsAdmin({ rows: init, classes }: { rows: Row[]; clas
                           <F l="단위"><input style={inp} value={x.unit} onChange={e => setO({ unit: e.target.value })} /></F>
                           <F l="경로"><input style={inp} value={x.route} onChange={e => setO({ route: e.target.value })} /></F>
                           <F l="횟수"><input style={inp} value={x.cnt} onChange={e => setO({ cnt: e.target.value })} /></F>
-                          <F l="투약 시간 (09:00/)"><input style={inp} value={x.slots} onChange={e => setO({ slots: e.target.value })} /></F>
+                          <F l="투약 시간"><input style={inp} value={x.slots} onChange={e => setO({ slots: e.target.value })} /></F>
                         </div>
                         <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 8, alignItems: 'end' }}>
-                          <F l="메모 (조건·주의)"><input style={inp} value={x.memo} onChange={e => setO({ memo: e.target.value })} /></F>
+                          <F l="메모"><input style={inp} value={x.memo} onChange={e => setO({ memo: e.target.value })} /></F>
                           <label style={{ display: 'flex', gap: 4, alignItems: 'center', paddingBottom: 7 }}><input type="checkbox" style={{ width: 'auto' }} checked={x.prn} onChange={e => setO({ prn: e.target.checked })} />PRN</label>
                         </div>
                       </div>
@@ -132,12 +131,12 @@ export default function SkillsAdmin({ rows: init, classes }: { rows: Row[]; clas
                   <div><button type="button" onClick={() => setC({ orders: [...c.orders, { name: '', dose: '', unit: '', route: '', cnt: '', slots: '', prn: false, memo: '' }] })} style={{ padding: '6px 14px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--background)', color: 'inherit', cursor: 'pointer' }}>+ 처방 추가</button></div>
                 </div>
                 <div style={sec}>
-                  <p style={h}>평가 항목 <span style={{ fontWeight: 400, color: 'var(--muted-foreground)', fontSize: 12 }}>한 줄에 하나 · 교수 채점 참고용 (학생 연습 화면에도 보여요)</span></p>
+                  <p style={h}>평가 항목</p>
                   <textarea style={{ ...inp, minHeight: 110, fontFamily: 'inherit' }} value={c.checks.join('\n')} onChange={e => setC({ checks: e.target.value.split('\n') })} />
                 </div>
                 {prev === r.id && (
                   <div style={{ ...sec, border: '2px dashed #2563eb' }}>
-                    <p style={h}>미리보기 <span style={{ fontWeight: 400, color: 'var(--muted-foreground)', fontSize: 12 }}>학생이 처음 보는 안내 · 아직 저장하지 않은 수정도 반영돼요</span></p>
+                    <p style={h}>미리보기</p>
                     <div style={{ background: 'var(--background)', borderRadius: 8, padding: 12, lineHeight: 1.65 }}>
                       <div><b>{c.name}</b> {c.age}/{c.sex} · {c.ward} {c.bed}<br />{c.dx}<br />알레르기 {c.allergy} · 시작 {c.clock}</div>
                       <p style={{ margin: '8px 0' }}>{c.situation}</p>
@@ -160,7 +159,7 @@ export default function SkillsAdmin({ rows: init, classes }: { rows: Row[]; clas
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', position: 'sticky', bottom: 0, background: 'var(--background)', padding: '8px 0' }}>
                   <button type="button" onClick={() => save(r)} style={{ padding: '8px 18px', borderRadius: 8, border: 0, background: '#2563eb', color: '#fff', cursor: 'pointer', fontWeight: 700 }}>저장</button>
                   <button type="button" onClick={() => setPrev(prev === r.id ? '' : r.id)} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid #2563eb', background: 'var(--background)', color: '#2563eb', cursor: 'pointer' }}>{prev === r.id ? '미리보기 닫기' : '미리보기'}</button>
-                  <a href={`/ehr/skills/${r.id}`} target="_blank" rel="noreferrer" style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border)', color: 'inherit', textDecoration: 'none' }}>실제 EHR로 열어보기 ↗ <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>(저장한 내용 기준)</span></a>
+                  <a href={`/ehr/skills/${r.id}`} target="_blank" rel="noreferrer" style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border)', color: 'inherit', textDecoration: 'none' }}>실제 EHR로 열어보기 ↗</a>
                   <button type="button" onClick={() => del(r.id)} style={{ marginLeft: 'auto', padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--background)', color: '#dc2626', cursor: 'pointer' }}>삭제</button>
                 </div>
                 {msg && <p style={{ margin: 0, color: 'var(--primary)' }}>{msg}</p>}
