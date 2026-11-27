@@ -35,6 +35,7 @@ export default function AdminDashboardClient({
       items: [
         { label: '실습 배정표', desc: '학기별 배정 올리기', href: '/admin/clinical-assignments', badge: assignmentNeedsUpdate ? 1 : 0 },
         { label: 'EHR', desc: '학생 제출 차트 보기', href: '/admin/ehr' },
+        { label: '핵심술기 출제', desc: '시나리오·시험 현황·채점', href: '/admin/ehr/skills' },
       ],
     },
     {
