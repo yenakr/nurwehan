@@ -56,7 +56,7 @@ export default async function HandoverPage({ searchParams }: { searchParams: Pro
           @media print { .noprint { display: none !important; } .hp { border: 0; padding: 0; margin: 0; page-break-after: always; } main { padding: 0 !important; } @page { size: A4 landscape; margin: 8mm; } .hc { min-height: 85mm; } }
         `}</style>
         <div className="noprint" style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-          <Link href="/ehr" style={{ color: 'inherit' }}>← 목록</Link>
+          <Link href="/ehr?view=list" style={{ color: 'inherit' }}>← 목록</Link>
           <b style={{ marginLeft: 8 }}>{w} {tm === '전체' ? '' : tm} 간호업무일지 ({duty} 근무 · ★낙상위험 ♡욕창위험 Ⓒ CP적용, {rows.length}명)</b>
           <PrintBtn />
         </div>

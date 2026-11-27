@@ -70,6 +70,16 @@ export default function EhrHome({ cases, initialView, ai, aiLeft, extra }: { cas
   const [err, setErr] = useState('');
   const [ctx, setCtx] = useState<{ x: number; y: number; saved?: Item; p: P } | null>(null);
   const view = VIEWS[vi];
+  // 처음 들어오면 병동 목록이 아니라 마지막으로 보던 환자(없으면 첫 환자) 화면으로 간다. ?view= 가 있으면 목록 유지
+  useEffect(() => {
+    if (initialView) return;
+    let last = '';
+    try { last = localStorage.getItem('ehr.lastPt') || ''; } catch { /* 무시 */ }
+    const live = cases.filter(c => !c.discharged);
+    const hit = cases.find(c => c.id === last && !c.discharged) || live[0];
+    if (hit) router.replace(`/ehr/${hit.id}`);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   useEffect(() => { if (view.kind === 'ward') { try { localStorage.setItem('ehr.lastWard', view.name); } catch { /* 저장 불가 */ } } }, [view]);
   const wardName = view.kind === 'op' ? '외래' : view.kind === 'er' ? '응급실' : view.name;
   const active = cases.filter(c => !c.discharged);
