@@ -742,7 +742,6 @@ export default function EhrNurse({
               <button type="button" aria-label="탭 닫기" title="닫기" onClick={() => closeTab(id)}>&times;</button>
             </span>
           ))}
-          {tabs.length === 0 && <em className="ns-ntabs-e">열린 창이 없어요 · 메뉴에서 업무를 열면 여기에 탭으로 쌓여요</em>}
         </div>
       )}
 
@@ -1667,7 +1666,8 @@ export default function EhrNurse({
         .ns-nsec h3 { margin: 0; padding: 6px 10px; background: #ececec; color: #111; text-align: center; font-size: 14px; border: 1px solid #aaa; }
         .ns-nrow { display: flex; gap: 10px; justify-content: space-between; align-items: flex-start; padding: 8px 6px; border-bottom: 1px solid var(--border); }
         .ns-nrow.ns-x .ns-nm b { text-decoration: line-through; opacity: .6; }
-        .ns-nm { display: flex; flex-direction: column; gap: 2px; min-width: 0; }
+        .ns-nm { display: flex; flex-direction: column; gap: 2px; min-width: 0; padding-top: 12px; }
+        .ns-nr { padding-top: 12px; }
         .ns-nm span { color: var(--sub-text); font-size: 12px; }
         .ns-nm em { font-style: normal; font-size: 12px; color: #b9770e; }
         .ns-nd { display: flex; flex-wrap: wrap; justify-content: flex-end; align-items: center; gap: 4px; max-width: 55%; }
