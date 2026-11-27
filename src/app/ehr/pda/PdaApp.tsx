@@ -4,13 +4,13 @@ import { useCallback, useEffect, useState } from 'react';
 import Link from 'next/link';
 import type { ChartData, Row } from '../types';
 import { group, slotsOf, timesFor, viewOrders, rollover, type Item } from '../ordday';
-import { medQr, parseQr, patientQr } from '../pda';
+import { medQr, specQr, bloodQr, bagNo, isBloodName, parseQr, patientQr } from '../pda';
 import { qrSvg } from '../qr';
 import { offsetOf, setVOffset, vnow } from '../vclock';
 import Scanner from './Scanner';
 
 type R = { id: string; ward: string; bed: string; name: string; ptNo: string };
-type Res = { idx: number; name: string; patientId: string };
+type Res = { idx: number; name: string; patientId: string; k: 'M' | 'S' | 'B' };
 const p2 = (n: number) => String(n).padStart(2, '0');
 const ymd = (d: Date) => `${d.getFullYear()}-${p2(d.getMonth() + 1)}-${p2(d.getDate())}`;
 const hm = (d: Date) => `${p2(d.getHours())}:${p2(d.getMinutes())}`;
@@ -26,6 +26,10 @@ export default function PdaApp({ roster, userName }: { roster: R[]; userName: st
   const [res, setRes] = useState<Res | null>(null);
   const [msg, setMsg] = useState<{ t: string; ok: boolean } | null>(null);
   const [busy, setBusy] = useState(false);
+  const [kind, setKind] = useState<'med' | 'spec' | 'blood' | 'vit'>('med');
+  const [confirmed, setConfirmed] = useState(false); // 검체: '환자확인' 버튼을 눌렀는지
+  const [cosign, setCosign] = useState('');
+  const [vf, setVf] = useState({ sbp: '', dbp: '', hr: '', rr: '', bt: '', spo2: '' });
   const [, tick] = useState(0);
   useEffect(() => { const id = setInterval(() => tick(n => n + 1), 15000); return () => clearInterval(id); }, []);
 
@@ -48,20 +52,28 @@ export default function PdaApp({ roster, userName }: { roster: R[]; userName: st
       return;
     }
     if (!pid) { setMsg({ t: '먼저 환자 팔찌를 스캔하세요', ok: false }); setMode('home'); return; }
-    setRes({ idx: s.idx, name: s.name, patientId: s.id }); setMode('result');
+    setConfirmed(false); setCosign('');
+    setRes({ idx: s.idx, name: s.name, patientId: s.id, k: s.kind }); setMode('result');
   };
 
-  const give = async () => {
-    if (!res || !chart) return;
+  const send = async (extra: Record<string, string>, done: string) => {
     setBusy(true);
     const now = vnow();
-    const ev = { id: crypto.randomUUID(), type: 'give', idx: String(res.idx), name: res.name, date: ymd(now), time: hm(now), duty: dutyOf(now), by: userName };
+    const ev = { id: crypto.randomUUID(), date: ymd(now), time: hm(now), duty: dutyOf(now), by: userName, ...extra };
     const r = await fetch(`/api/ehr/${pid}/pda`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ event: ev }) });
     setBusy(false);
-    if (!r.ok) { setMsg({ t: '저장에 실패했어요. 다시 시도해 주세요', ok: false }); return; }
+    if (!r.ok) { setMsg({ t: '저장에 실패했어요. 다시 시도해 주세요', ok: false }); return false; }
     await load(pid);
-    setMsg({ t: `${res.name} 투약 수행 완료 · PC의 EHR에도 반영돼요`, ok: true });
+    setMsg({ t: `${done} · PC의 EHR에도 반영돼요`, ok: true });
     setRes(null); setMode('patient');
+    return true;
+  };
+  const give = async () => { if (res) await send({ type: 'give', idx: String(res.idx), name: res.name }, `${res.name} 투약 수행 완료`); };
+  const giveSpec = async () => { if (res) await send({ type: 'spec', idx: String(res.idx), name: res.name }, `${res.name} 검체 채취 시각 기록`); };
+  const giveBlood = async () => { if (res) await send({ type: 'blood', idx: String(res.idx), name: res.name, bno: bagNo(res.idx), cosign: cosign.trim() }, `${res.name} 수혈 시작 기록`); };
+  const saveVit = async () => {
+    if (!(Object.values(vf) as string[]).some(x => x.trim())) { setMsg({ t: '입력된 수치가 없어요', ok: false }); return; }
+    if (await send({ type: 'vit', ...vf }, '임상관찰 저장 (미인증 기록)')) setVf({ sbp: '', dbp: '', hr: '', rr: '', bt: '', spo2: '' });
   };
 
   const now = vnow();
@@ -73,6 +85,8 @@ export default function PdaApp({ roster, userName }: { roster: R[]; userName: st
   const meds = items ? items.med.filter(it => ok(it.r)) : [];
   const prns = items ? items.prn.filter(it => ok(it.r)) : [];
   const other = roster.find(x => x.id !== pid);
+  const specs = items ? items.lab.filter(it => ok(it.r) && it.r.name) : [];
+  const bloods = items ? [...items.med, ...items.base, ...items.prn].filter(it => ok(it.r) && isBloodName(it.r.name || '')) : [];
 
   // 5 Right 확인
   const check = (() => {
@@ -151,23 +165,69 @@ export default function PdaApp({ roster, userName }: { roster: R[]; userName: st
 
       {chart && mode === 'patient' && (
         <section className="pd-sec">
-          <button type="button" className="pd-scanbtn" onClick={() => { setMsg(null); setMode('scanM'); }}><CamIcon />약포지 QR 스캔</button>
+          <div className="pd-tabs" role="tablist" aria-label="처방 종류">
+            {([['med', '투약'], ['spec', '검체'], ['blood', '수혈'], ['vit', '임상관찰']] as const).map(([k, l]) => <button key={k} type="button" role="tab" aria-selected={kind === k} className={kind === k ? 'on' : ''} onClick={() => setKind(k)}>{l}</button>)}
+          </div>
+          {kind !== 'vit' && <button type="button" className="pd-scanbtn" onClick={() => { setMsg(null); setMode('scanM'); }}><CamIcon />{kind === 'med' ? '약포지 QR 스캔' : kind === 'spec' ? '검체 라벨 QR 스캔' : '혈액 바코드 스캔'}</button>}
           <div className="pd-row">
             <button type="button" className="pd-ghost" onClick={() => { setPid(''); setChart(null); setMode('home'); }}>다른 환자</button>
             <button type="button" className="pd-ghost" onClick={() => setMode('sheet')}>QR 시험지</button>
           </div>
-          <h2 className="pd-h">투약 <small>{meds.length}건</small></h2>
-          {meds.map(it => medCard(it))}
-          {meds.length === 0 && <p className="pd-sub">No data to display</p>}
-          {prns.length > 0 && <h2 className="pd-h">PRN <small>{prns.length}건</small></h2>}
-          {prns.map(it => medCard(it, true))}
-          {other && meds[0] && (
+          {kind === 'med' && (
             <>
-              <h2 className="pd-h sm">오류 시험</h2>
-              <div className="pd-row">
-                <button type="button" className="pd-err" onClick={() => scan(medQr(other.id, meds[0].i, meds[0].r.name || ''))}>다른 환자의 약포지</button>
-                <button type="button" className="pd-err" onClick={() => scan(medQr(pid, meds[0].i, `${meds[0].r.name}-X`))}>다른 약</button>
+              <h2 className="pd-h">투약 <small>{meds.length}건</small></h2>
+              {meds.map(it => medCard(it))}
+              {meds.length === 0 && <p className="pd-sub">No data to display</p>}
+              {prns.length > 0 && <h2 className="pd-h">PRN <small>{prns.length}건</small></h2>}
+              {prns.map(it => medCard(it, true))}
+              {other && meds[0] && (
+                <>
+                  <h2 className="pd-h sm">오류 시험</h2>
+                  <div className="pd-row">
+                    <button type="button" className="pd-err" onClick={() => scan(medQr(other.id, meds[0].i, meds[0].r.name || ''))}>다른 환자의 약포지</button>
+                    <button type="button" className="pd-err" onClick={() => scan(medQr(pid, meds[0].i, `${meds[0].r.name}-X`))}>다른 약</button>
+                  </div>
+                </>
+              )}
+            </>
+          )}
+          {kind === 'spec' && (
+            <>
+              <h2 className="pd-h">검체 <small>{specs.length}건</small></h2>
+              <p className="pd-sub">검체 라벨을 찍은 시각이 바코드출력(채취)의 SIGN 일시로 기록돼요. TO-DO List에는 서명되지 않아요.</p>
+              {specs.map(it => (
+                <div key={it.i} className="pd-med">
+                  <div className="pd-mt"><b>{it.r.name}</b>{it.r.spc ? <span className="pd-chip done">채취 {it.r.spc.split(' ')[0]}</span> : <span className="pd-chip">미채취</span>}</div>
+                  <button type="button" className="pd-link" onClick={() => scan(specQr(pid, it.i, it.r.name || ''))}>샘플 스캔 (카메라 없이 연습)</button>
+                </div>
+              ))}
+              {specs.length === 0 && <p className="pd-sub">No data to display</p>}
+              {other && specs[0] && <div className="pd-row"><button type="button" className="pd-err" onClick={() => scan(specQr(other.id, specs[0].i, specs[0].r.name || ''))}>다른 환자의 검체</button></div>}
+            </>
+          )}
+          {kind === 'blood' && (
+            <>
+              <h2 className="pd-h">수혈 <small>{bloods.length}건</small></h2>
+              <p className="pd-sub">혈액 바코드를 찍은 뒤 실시하기 → Co-Sign 확인자(2인 확인)를 입력해야 시작할 수 있어요.</p>
+              {bloods.map(it => (
+                <div key={it.i} className="pd-med">
+                  <div className="pd-mt"><b>{it.r.name}</b><span className="pd-chip">{bagNo(it.i)}</span></div>
+                  <button type="button" className="pd-link" onClick={() => scan(bloodQr(pid, it.i, it.r.name || ''))}>샘플 스캔 (카메라 없이 연습)</button>
+                </div>
+              ))}
+              {bloods.length === 0 && <p className="pd-sub">수혈 처방이 없어요.</p>}
+            </>
+          )}
+          {kind === 'vit' && (
+            <>
+              <h2 className="pd-h">임상관찰 <small>{hm(now)} 입력</small></h2>
+              <p className="pd-sub">저장하면 미인증(이탤릭) 기록으로 Flowsheet에 올라가요. 현재 시각 전후 99분 이내의 정시 칸에 반영되고, PC에서 인증저장을 눌러야 확정돼요.</p>
+              <div className="pd-vf">
+                {([['sbp', '수축기'], ['dbp', '이완기'], ['hr', '맥박'], ['rr', '호흡'], ['bt', '체온'], ['spo2', 'SpO₂']] as const).map(([k, l], n, arr) => (
+                  <label key={k}><span>{l}</span><input inputMode="decimal" value={vf[k]} onChange={e => setVf(v => ({ ...v, [k]: e.target.value.replace(/[^0-9.]/g, '') }))} onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); const nx = e.currentTarget.parentElement?.parentElement?.querySelectorAll('input')[n + 1] as HTMLInputElement | undefined; (nx || e.currentTarget).focus(); } }} aria-label={l} enterKeyHint={n === arr.length - 1 ? 'done' : 'next'} /></label>
+                ))}
               </div>
+              <button type="button" className="pd-go" disabled={busy} onClick={saveVit}>{busy ? '저장 중…' : '저장하기'}</button>
             </>
           )}
         </section>
@@ -181,7 +241,50 @@ export default function PdaApp({ roster, userName }: { roster: R[]; userName: st
         </section>
       )}
 
-      {chart && mode === 'result' && check && res && (
+      {chart && mode === 'result' && res && res.k === 'S' && (
+        <section className="pd-sec">
+          <h2 className="pd-h">검체 확인</h2>
+          <ul className="pd-chk">
+            <li className="ok"><i>✓</i><span className="k">검체</span><span className="t">{res.name}</span></li>
+            {confirmed && (res.patientId === pid
+              ? <li className="ok"><i>✓</i><span className="k">환자</span><span className="t">{info?.name} · 일치</span></li>
+              : <li className="bad"><i>✕</i><span className="k">환자</span><span className="t">불일치 — 다른 환자의 검체예요</span></li>)}
+          </ul>
+          {!confirmed && <p className="pd-warn">환자와 검체가 맞는지 반드시 &lsquo;환자확인&rsquo;을 눌러 확인하세요. (불일치여도 목록에는 올라와요)</p>}
+          <div className="pd-sticky">
+            <button type="button" className="pd-ghost" onClick={() => { setRes(null); setMode('patient'); }}>취소</button>
+            {!confirmed
+              ? <button type="button" className="pd-go" onClick={() => setConfirmed(true)}>환자확인</button>
+              : <button type="button" className="pd-go" disabled={busy || res.patientId !== pid} onClick={giveSpec}>{busy ? '저장 중…' : res.patientId !== pid ? '수행할 수 없어요' : '채취 시각 기록'}</button>}
+          </div>
+        </section>
+      )}
+
+      {chart && mode === 'result' && res && res.k === 'B' && (() => {
+        const bo = view?.orders[res.idx];
+        const pOk = res.patientId === pid;
+        const dOk = !!bo && (bo.name || '') === res.name;
+        const cs = cosign.trim();
+        const csOk = cs.length >= 2 && cs !== userName;
+        return (
+          <section className="pd-sec">
+            <h2 className="pd-h">수혈 확인 <small>2인 확인</small></h2>
+            <ul className="pd-chk">
+              <li className={pOk ? 'ok' : 'bad'}><i>{pOk ? '✓' : '✕'}</i><span className="k">환자</span><span className="t">{pOk ? `${info?.name} · 일치` : '불일치 — 다른 환자의 혈액이에요'}</span></li>
+              <li className={dOk ? 'ok' : 'bad'}><i>{dOk ? '✓' : '✕'}</i><span className="k">혈액</span><span className="t">{dOk ? `${res.name} · ${bagNo(res.idx)}` : '처방과 일치하지 않아요'}</span></li>
+              <li className="ok"><i>✓</i><span className="k">실시자</span><span className="t">{userName} (로그인 사용자)</span></li>
+            </ul>
+            <label className="pd-vf1"><span>Co-Sign 확인자 (사번 입력 또는 스캔)</span><input value={cosign} onChange={e => setCosign(e.target.value)} placeholder="확인자 이름/사번" aria-label="Co-Sign 확인자" /></label>
+            {cs && !csOk && <p className="pd-warn">확인자는 실시자와 다른 사람이어야 해요.</p>}
+            <div className="pd-sticky">
+              <button type="button" className="pd-ghost" onClick={() => { setRes(null); setMode('patient'); }}>취소</button>
+              <button type="button" className="pd-go" disabled={busy || !pOk || !dOk || !csOk} onClick={giveBlood}>{busy ? '저장 중…' : !pOk || !dOk ? '수행할 수 없어요' : '실시 시작'}</button>
+            </div>
+          </section>
+        );
+      })()}
+
+      {chart && mode === 'result' && check && res && res.k === 'M' && (
         <section className="pd-sec">
           <h2 className="pd-h">투약 확인 <small>5 Right</small></h2>
           <ul className="pd-chk">
@@ -209,6 +312,8 @@ export default function PdaApp({ roster, userName }: { roster: R[]; userName: st
           <p className="pd-sub">이 화면을 PC에 띄우고 폰의 PDA로 찍어 보세요.</p>
           <div className="pd-qrs">
             <div className="pd-qr wide"><div dangerouslySetInnerHTML={{ __html: qrSvg(patientQr(pid), 150) }} /><b>환자 팔찌</b><span>{info?.name}</span></div>
+            {specs.map(it => <div key={`s${it.i}`} className="pd-qr"><div dangerouslySetInnerHTML={{ __html: qrSvg(specQr(pid, it.i, it.r.name || ''), 130) }} /><b>{it.r.name}</b><span>검체 라벨</span></div>)}
+            {bloods.map(it => <div key={`b${it.i}`} className="pd-qr"><div dangerouslySetInnerHTML={{ __html: qrSvg(bloodQr(pid, it.i, it.r.name || ''), 130) }} /><b>{it.r.name}</b><span>혈액 {bagNo(it.i)}</span></div>)}
             {[...meds, ...prns].map(it => <div key={it.i} className="pd-qr"><div dangerouslySetInnerHTML={{ __html: qrSvg(medQr(pid, it.i, it.r.name || ''), 130) }} /><b>{it.r.name}</b><span>{[it.r.dose && `${it.r.dose}${it.r.unit || ''}`, it.r.route].filter(Boolean).join(' · ')}</span></div>)}
           </div>
           <button type="button" className="pd-ghost" onClick={() => setMode('patient')}>돌아가기</button>
@@ -226,6 +331,12 @@ const CamIcon = () => (
 );
 
 const CSS = `
+.pd-tabs { display: flex; gap: 0; border: 1px solid var(--border); border-radius: 6px; overflow: hidden; background: #fff; }
+.pd-tabs button { flex: 1; padding: 10px 4px; border: 0; border-right: 1px solid var(--border); background: #fff; font: inherit; font-weight: 700; color: var(--sub-text); cursor: pointer; }
+.pd-tabs button:last-child { border-right: 0; } .pd-tabs button.on { background: var(--primary); color: #fff; }
+.pd-vf { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.pd-vf label, .pd-vf1 { display: flex; flex-direction: column; gap: 4px; font-size: 12.5px; font-weight: 700; color: var(--sub-text); }
+.pd-vf input, .pd-vf1 input { padding: 10px; border: 1px solid var(--border); border-radius: 6px; font: inherit; font-size: 16px; color: var(--text); background: #fff; }
 .pd { max-width: 560px; margin: 0 auto; min-height: 100vh; background: var(--muted-background); color: var(--text); font-size: 15px; padding-bottom: 96px; }
 .pd-bar { display: flex; align-items: center; gap: 12px; padding: 12px 16px; background: var(--primary); color: #fff; }
 .pd-back { color: #fff; font-size: 13.5px; font-weight: 600; padding: 5px 10px; border: 1px solid rgba(255,255,255,.4); border-radius: 4px; white-space: nowrap; }

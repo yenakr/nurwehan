@@ -1140,7 +1140,7 @@ export default function EhrNurse({
                           }
                           const auto = !c ? vitAt(it, d, h) : '';
                           return (
-                            <td key={key} className={c ? 'ns-fl-v' : auto ? 'ns-fl-a' : ''} onDoubleClick={() => { setFEdit({ it, d, h }); setFVal(c?.text || auto); }} onContextMenu={e => { e.preventDefault(); e.stopPropagation(); setFCtx({ x: e.clientX, y: e.clientY, it, d, h }); }}>
+                            <td key={key} className={`${c ? 'ns-fl-v' : auto ? 'ns-fl-a' : ''} ${!c && auto && vitRow(d, h)?.auth === '미인증' ? 'ns-fl-un' : ''}`} title={!c && auto && vitRow(d, h)?.auth === '미인증' ? '미인증 기록 (PDA) — 우클릭 → 인증저장' : undefined} onDoubleClick={() => { setFEdit({ it, d, h }); setFVal(c?.text || auto); }} onContextMenu={e => { e.preventDefault(); e.stopPropagation(); setFCtx({ x: e.clientX, y: e.clientY, it, d, h }); }}>
                               {on ? <input autoFocus value={fVal} onChange={e => setFVal(e.target.value)} onBlur={() => { fSet(it, d, h, fVal); setFEdit(null); }} onKeyDown={e => { if (e.key === 'Enter') { fSet(it, d, h, fVal); setFEdit(null); } if (e.key === 'Escape') setFEdit(null); }} /> : <>{c?.text || auto}{c?.memo && <sup title={c.memo}>●</sup>}</>}
                             </td>
                           );
@@ -1223,6 +1223,7 @@ export default function EhrNurse({
                   <div className="ns-fl-m" style={{ left: fCtx.x, top: fCtx.y }} onClick={e => e.stopPropagation()}>
                     <button type="button" onClick={() => { const c = fGet(fCtx.it, fCtx.d, fCtx.h); if (!c) { setFCtx(null); return; } const m = window.prompt('메모', c.memo || ''); if (m !== null) setData(d => ({ ...d, memos: d.memos.map(x => (x === c ? { ...x, memo: m } : x)) })); setFCtx(null); }}>메모</button>
                     <button type="button" onClick={() => { const c = fGet(fCtx.it, fCtx.d, fCtx.h); if (c) setData(d => ({ ...d, notes: [...d.notes, { time: `${fCtx.d} ${fCtx.h}:00`, focus: fCtx.it.split(' (')[0], text: `D)\n${fCtx.h}시 ${fCtx.it} ${c.text}${c.memo ? ` (${c.memo})` : ''}`, author: userName, shift: duty }] })); setFCtx(null); }}>간호기록</button>
+                    {vitRow(fCtx.d, fCtx.h)?.auth === '미인증' && <button type="button" onClick={() => { const vr = vitRow(fCtx.d, fCtx.h); setData(dd => ({ ...dd, vitals: dd.vitals.map(x => (x === vr ? { ...x, auth: '' } : x)) })); setFCtx(null); }}>인증저장 (PDA 입력값)</button>}
                     <button type="button" onClick={() => { fSet(fCtx.it, fCtx.d, fCtx.h, ''); setFCtx(null); }}>입력값 삭제</button>
                     <button type="button" onClick={() => { setFHist(fCtx.it); setFCtx(null); }}>이력조회</button>
                     {NFG.some(c => c.subs.some(x => x.items.includes(fCtx.it))) && <button type="button" onClick={() => { setHid([...hid, fCtx.it]); setFCtx(null); }}>항목숨기기</button>}
@@ -1545,6 +1546,7 @@ export default function EhrNurse({
         .ns-fl .ns-fl-c2 { left: 96px; }
         .ns-mc { color: #1d4ed8; font-weight: 700; }
         .ns-mcs { font: inherit; font-size: 11.5px; max-width: 86px; padding: 2px 2px; }
+        .ns-fl-un { font-style: italic; text-decoration: underline dotted; }
         .ns-fl-bb { margin-left: 8px; border: 1px solid #5b6f8a; background: #fff; border-radius: 3px; font: inherit; font-size: 11.5px; padding: 1px 8px; cursor: pointer; }
         .ns-fl-pop { display: inline-block; margin-left: 12px; font-weight: 500; font-size: 12px; position: sticky; left: 260px; }
         .ns-fl-pop button { margin-right: 6px; border: 1px solid var(--border); background: #fff; border-radius: 3px; font: inherit; font-size: 11.5px; cursor: pointer; }
