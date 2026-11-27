@@ -362,6 +362,7 @@ export default function EhrNurse({
   const [fHist, setFHist] = useState<string | null>(null);
   const [fEdit, setFEdit] = useState<{ it: string; d: string; h: string } | null>(null);
   const [fVal, setFVal] = useState('');
+  const [grpH, setGrpH] = useState('');
   const [fCtx, setFCtx] = useState<{ x: number; y: number; it: string; d: string; h: string } | null>(null);
   const ALLH = Array.from({ length: 24 }, (_, k) => String(k).padStart(2, '0'));
   const [fShift, setFShift] = useState<'all' | 'D' | 'E' | 'N'>('all');
@@ -1058,7 +1059,7 @@ export default function EhrNurse({
           <div className="ns-nwb">
             {w.startsWith('grp:') ? (() => {
               const cat = NFG.find(c => c.g === w.slice(4));
-              return cat ? <Fragment key={cat.g}><GroupRec cat={cat} hours={ALLH} defHour={hm().slice(0, 2)} get={(it, h) => fGet(it, todayS, h)?.text || ''} onSave={(vals, h) => Object.entries(vals).forEach(([it, v]) => fSet(it, todayS, h, v))} /></Fragment> : null;
+              return cat ? <Fragment key={cat.g + grpH}><GroupRec cat={cat} hours={ALLH} defHour={grpH || hm().slice(0, 2)} get={(it, h) => fGet(it, todayS, h)?.text || ''} onSave={(vals, h) => Object.entries(vals).forEach(([it, v]) => fSet(it, todayS, h, v))} /></Fragment> : null;
             })() : w === 'todo' ? (
               <>
                 <div className="ns-nhd">
@@ -1188,7 +1189,7 @@ export default function EhrNurse({
                                       <button type="button" className="ns-fl-tg" onClick={() => setFColl(c => (c.includes(cat.g) ? c.filter(x => x !== cat.g) : [...c, cat.g]))}>{closed ? '⊕' : '⊖'} {cat.g}</button>
                                       <button type="button" className="ns-fl-bb" onClick={() => setFHidOpen(fHidOpen === cat.g ? null : cat.g)}>숨김항목{hiddenHere.length ? ` (${hiddenHere.length})` : ''}</button>
                                       <button type="button" className="ns-fl-bb" onClick={() => setFGuide(fGuide === cat.g ? null : cat.g)}>기록지침</button>
-                                      <button type="button" className="ns-fl-bb" onClick={() => openMenu(`grp:${cat.g}`)}>그룹기록</button>
+                                      <button type="button" className="ns-fl-bb" onClick={() => { setGrpH(''); openMenu(`grp:${cat.g}`); }}>그룹기록</button>
                                     </span>
                                     {fHidOpen === cat.g && <span className="ns-fl-pop">{hiddenHere.length ? hiddenHere.map(x => <button key={x} type="button" onClick={() => setHid(hid.filter(y => y !== x))}>↩ {x}</button>) : '숨긴 항목이 없습니다. 항목을 우클릭해 "항목숨기기"를 고르세요.'}</span>}
                                     {fGuide === cat.g && <span className="ns-fl-pop">{cat.guide}</span>}
@@ -1250,7 +1251,7 @@ export default function EhrNurse({
                     <button type="button" style={{ marginTop: 6 }} onClick={() => setFCfg(false)}>닫기</button>
                   </div>
                 )}
-                <p className="ns-fl-h" hidden={fTab === 'io' || fTab === 'lab'}>표를 꾹 누른 채 좌우로 끌면 다른 시간대·날짜로 이동 · 칸 더블클릭=입력, 우클릭=메뉴(메모 / 간호기록 / 그룹입력) · 파란 글씨는 임상관찰 연동값</p>
+                <p className="ns-fl-h" hidden={fTab === 'io' || fTab === 'lab'}>표를 꾹 누른 채 좌우로 끌면 다른 시간대·날짜로 이동 · 칸 더블클릭=입력, 우클릭=메뉴(메모 / 간호기록 / 그룹기록) · 파란 글씨는 임상관찰 연동값</p>
                 {fCtx && (
                   <div className="ns-fl-m" style={{ left: fCtx.x, top: fCtx.y }} onClick={e => e.stopPropagation()}>
                     <button type="button" onClick={() => { const c = fGet(fCtx.it, fCtx.d, fCtx.h); if (!c) { setFCtx(null); return; } const m = window.prompt('메모', c.memo || ''); if (m !== null) setData(d => ({ ...d, memos: d.memos.map(x => (x === c ? { ...x, memo: m } : x)) })); setFCtx(null); }}>메모</button>
@@ -1259,7 +1260,8 @@ export default function EhrNurse({
                     <button type="button" onClick={() => { fSet(fCtx.it, fCtx.d, fCtx.h, ''); setFCtx(null); }}>입력값 삭제</button>
                     <button type="button" onClick={() => { setFHist(fCtx.it); setFCtx(null); }}>이력조회</button>
                     {NFG.some(c => c.subs.some(x => x.items.includes(fCtx.it))) && <button type="button" onClick={() => { setHid([...hid, fCtx.it]); setFCtx(null); }}>항목숨기기</button>}
-                    <button type="button" onClick={() => { const c = fGet(fCtx.it, fCtx.d, fCtx.h); if (c) { const i0 = FCOLS.findIndex(x => x.d === fCtx.d && x.h === fCtx.h); FCOLS.slice(i0 + 1, i0 + 4).forEach(x => { if (!fGet(fCtx.it, x.d, x.h)) fSet(fCtx.it, x.d, x.h, c.text); }); } setFCtx(null); }}>그룹입력 (이후 3칸 동일값)</button>
+                    {NFG.find(c => c.subs.some(x => x.items.includes(fCtx.it))) && <button type="button" onClick={() => { const cg = NFG.find(c => c.subs.some(x => x.items.includes(fCtx.it)))!; setGrpH(fCtx.h); openMenu(`grp:${cg.g}`); setFCtx(null); }}>그룹기록 ({NFG.find(c => c.subs.some(x => x.items.includes(fCtx.it)))!.g})</button>}
+                    <button type="button" onClick={() => { const c = fGet(fCtx.it, fCtx.d, fCtx.h); if (c) { const i0 = FCOLS.findIndex(x => x.d === fCtx.d && x.h === fCtx.h); FCOLS.slice(i0 + 1, i0 + 4).forEach(x => { if (!fGet(fCtx.it, x.d, x.h)) fSet(fCtx.it, x.d, x.h, c.text); }); } setFCtx(null); }}>이후 3칸 같은 값 복사</button>
                   </div>
                 )}
                 {fHist && (
