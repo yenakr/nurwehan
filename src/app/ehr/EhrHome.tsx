@@ -178,6 +178,7 @@ export default function EhrHome({ cases, initialView, ai, aiLeft, extra }: { cas
       <div className="shell">
         <div className="top">
           <span className="logo">병동뷰</span>
+          <a href="/ehr/skills" style={{ marginLeft: 8, fontSize: 12, padding: '3px 10px', borderRadius: 999, background: '#2563eb', color: '#fff', textDecoration: 'none', whiteSpace: 'nowrap' }}>핵심술기별 EHR →</a>
           <nav role="tablist">
             {TOP.map(t => {
               const active = t.idx.includes(vi);
