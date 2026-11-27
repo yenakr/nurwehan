@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { vnow } from '../vclock';
 import type { Row } from '../types';
 
@@ -74,7 +75,11 @@ export function formLine(kind: FormKey, r: Row): string {
   return `확인 ${yes}/${PREOP.length}${r.memo ? ` · ${r.memo}` : ''}`;
 }
 
-export default function FormPanel({ kind, rows, onChange }: { kind: FormKey; rows: Row[]; onChange: (rows: Row[]) => void }) {
+export default function FormPanel({ kind, rows, onChange, onPos, onWound }: { kind: FormKey; rows: Row[]; onChange: (rows: Row[]) => void; onPos?: (pos: string, time: string) => void; onWound?: () => void }) {
+  const [pop, setPop] = useState<'' | 'how' | 'rep' | 'pos'>('');
+  const [pos, setPos] = useState('좌측위');
+  const [ptime, setPtime] = useState(() => stamp().slice(-5));
+  const [pmsg, setPmsg] = useState('');
   const meta = FORMS.find(f => f.key === kind)!;
   const items = kind === 'morse' ? MORSE : kind === 'braden' ? BRADEN : [];
   const set = (i: number, k: string, v: string) => onChange(rows.map((r, j) => (j === i ? { ...r, [k]: v } : r)));
@@ -85,8 +90,53 @@ export default function FormPanel({ kind, rows, onChange }: { kind: FormKey; row
     <div className="fm">
       <div className="fmh">
         <h4 className="ph">{meta.title}</h4>
-        <button type="button" className="add" onClick={add}>+ 평가 추가</button>
+        <span style={{ display: 'inline-flex', gap: 6, flexWrap: 'wrap' }}>
+          {kind === 'braden' && (<>
+            <button type="button" className="add" onClick={() => setPop(pop === 'how' ? '' : 'how')}>사정방법</button>
+            <button type="button" className="add" onClick={() => setPop(pop === 'rep' ? '' : 'rep')}>보고체계</button>
+            <button type="button" className="add" onClick={() => setPop(pop === 'pos' ? '' : 'pos')}>자세변경</button>
+            <button type="button" className="add" onClick={() => onWound?.()}>상처부위관찰</button>
+          </>)}
+          <button type="button" className="add" onClick={add}>+ 평가 추가</button>
+        </span>
       </div>
+      {kind === 'braden' && pop === 'how' && (
+        <div className="fc" style={{ lineHeight: 1.6 }}>
+          <b>Braden Scale 사정방법</b>
+          <p style={{ margin: '4px 0' }}>6개 영역(감각 인지·습기·활동·기동성·영양·마찰과 전단력)을 각각 점수화해 합산합니다. 점수가 낮을수록 위험이 높습니다.</p>
+          <ul style={{ margin: 0, paddingLeft: 18 }}>
+            <li>감각 인지: 통증·불편감에 반응하고 표현하는 정도</li>
+            <li>습기: 땀·소변·배액 등으로 피부가 젖는 정도</li>
+            <li>활동: 침상 안정 / 의자 생활 / 보행 정도</li>
+            <li>기동성: 스스로 체위를 바꿀 수 있는 정도</li>
+            <li>영양: 평소 식사 섭취량 (1/3 이하·1/2 이하·절반 이상·대부분)</li>
+            <li>마찰과 전단력: 이동 시 필요한 도움과 침대에서 미끄러지는 정도</li>
+          </ul>
+          <p style={{ margin: '4px 0 0' }}>초고위험 9점 이하 · 고위험 10~12 · 중등도 13~14 · 경미 15~18. 입원 시, 상태 변화 시, 수술·시술 후에 평가합니다.</p>
+        </div>
+      )}
+      {kind === 'braden' && pop === 'rep' && (
+        <div className="fc" style={{ lineHeight: 1.6 }}>
+          <b>보고체계</b>
+          <ol style={{ margin: '4px 0 0', paddingLeft: 18 }}>
+            <li>고위험(12점 이하) 환자 또는 새 욕창 발견: 담당 간호사가 확인 후 책임간호사에게 보고</li>
+            <li>책임간호사가 수간호사와 담당의에게 보고하고 지시를 확인</li>
+            <li>필요 시 욕창(상처)간호 전문팀 협진 의뢰, 영양팀 협진</li>
+            <li>간호기록에 발견 시각, 부위, 크기, 단계, 보고 대상과 시각, 시행한 중재를 남김</li>
+          </ol>
+        </div>
+      )}
+      {kind === 'braden' && pop === 'pos' && (
+        <div className="fc">
+          <b>체위변경 기록</b>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center', marginTop: 6, flexWrap: 'wrap' }}>
+            <select value={pos} onChange={e => setPos(e.target.value)}>{['좌측위', '우측위', '앙와위', '반좌위', '복위', '30° 측위'].map(x => <option key={x}>{x}</option>)}</select>
+            <input value={ptime} onChange={e => setPtime(e.target.value)} style={{ width: 70 }} aria-label="시간" />
+            <button type="button" className="add" onClick={() => { onPos?.(pos, ptime); setPmsg(`${ptime} ${pos} 체위변경을 간호기록에 남겼어요.`); }}>기록</button>
+            {pmsg && <span>{pmsg}</span>}
+          </div>
+        </div>
+      )}
       {rows.length === 0 && <p className="none">No data to display</p>}
       {rows.map((r, i) => {
         const head = (
