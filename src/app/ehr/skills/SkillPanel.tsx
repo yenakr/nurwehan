@@ -106,7 +106,7 @@ export default function SkillPanel({ id, data, ai, aiLeft, onSubmit }: { id: str
             {tab === 'info' && <Situation />}
             {tab === 'check' && !exam && (
               <>
-                {key === 'med' && <p style={{ margin: '0 0 6px' }}><a href="/ehr/pda?mode=skill" target="_blank" rel="noreferrer">PDA 열기 ↗</a></p>}
+                {key === 'med' && <p style={{ margin: '0 0 6px' }}><a href={`/ehr/pda?mode=skill&only=${id}`} target="_blank" rel="noreferrer">PDA 열기 ↗</a></p>}
                 {bad.map(i => <div className="warn" key={i.id}>⚠ {i.label.replace('투약하지 않기', '투약했어요')} — {i.tip}</div>)}
                 {groups.map(g => (
                   <div key={g}><h4>{g}</h4>

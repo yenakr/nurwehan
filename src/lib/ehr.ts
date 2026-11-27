@@ -220,3 +220,28 @@ export async function cleanupCases(userId: string, ver: string): Promise<number>
     return 0;
   }
 }
+
+// ---- 핵심술기 수행평가(시험용 공용 계정) ----
+export async function findExamAttempt(userId: string, scnId: string, no: string): Promise<{ id: string; name: string } | null> {
+  try {
+    const rows = await prisma.$queryRaw<Array<{ id: string; name: string | null }>>`
+      SELECT "id", "data"->'info'->>'examName' AS "name" FROM "EhrCase"
+      WHERE "userId" = ${userId} AND "data"->'info'->>'examNo' = ${no} AND COALESCE("data"->'info'->>'skScn', '') = ${scnId}
+      ORDER BY "updatedAt" DESC LIMIT 1`;
+    return rows[0] ? { id: rows[0].id, name: rows[0].name || '' } : null;
+  } catch {
+    return null;
+  }
+}
+
+export type ExamRow = { id: string; title: string; examNo: string | null; examName: string | null; scn: string | null; score: string | null; submitted: string | null; updatedAt: Date };
+export async function listExamCases(): Promise<ExamRow[]> {
+  try {
+    return await prisma.$queryRaw<ExamRow[]>`
+      SELECT "id", "title", "data"->'info'->>'examNo' AS "examNo", "data"->'info'->>'examName' AS "examName", "data"->'info'->>'skScn' AS "scn",
+        "data"->'info'->>'skScore' AS "score", "data"->'info'->>'submitted' AS "submitted", "updatedAt"
+      FROM "EhrCase" WHERE "data"->'info'->>'examNo' IS NOT NULL ORDER BY "updatedAt" DESC LIMIT 500`;
+  } catch {
+    return [];
+  }
+}
