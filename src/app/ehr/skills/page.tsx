@@ -20,23 +20,20 @@ export default async function SkillsPage() {
       <div className="container" style={{ maxWidth: 860 }}>
         <p style={{ margin: '0 0 6px' }}><Link href="/ehr">← EHR 선택</Link></p>
         <h1 style={{ margin: '0 0 6px', fontSize: 22 }}>핵심술기별 EHR</h1>
-        <p style={{ margin: '0 0 18px', color: 'var(--muted-foreground)', fontSize: 14 }}>술기는 실제로 연습하고, 수행 내용을 EHR에 기록해요. 모두 가상 환자입니다.</p>
-        <div style={{ display: 'grid', gap: 12 }}>
-          {SKILLS.map(s => (
-            <Link key={s.key} href={`/ehr/skills/${s.key}`} style={{ display: 'block', padding: 16, borderRadius: 10, background: 'var(--background)', border: '1px solid var(--border)', textDecoration: 'none', color: 'inherit' }}>
-              <div style={{ fontWeight: 700, fontSize: 16 }}>{s.title}</div>
-                            <div style={{ fontSize: 13 }}>{s.goal}</div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: 10, marginTop: 16 }}>
+          {SKILLS.map((s, i) => (
+            <Link key={s.key} href={`/ehr/skills/${s.key}`} style={{ display: 'flex', gap: 10, alignItems: 'center', padding: '14px 16px', borderRadius: 10, background: 'var(--background)', border: '1px solid var(--border)', textDecoration: 'none', color: 'inherit', fontWeight: 700 }}>
+              <span style={{ color: 'var(--muted-foreground)', fontWeight: 600, fontSize: 13, minWidth: 18 }}>{i + 1}</span>{s.title}
             </Link>
           ))}
         </div>
         {custom.length > 0 && (
           <>
             <h2 style={{ margin: '22px 0 8px', fontSize: 16 }}>교수님 출제</h2>
-            <div style={{ display: 'grid', gap: 12 }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(230px, 1fr))', gap: 10 }}>
               {custom.map(c => (
-                <Link key={c.id} href={`/ehr/skills/${c.id}`} style={{ display: 'block', padding: 16, borderRadius: 10, background: 'var(--background)', border: '1px solid var(--border)', textDecoration: 'none', color: 'inherit' }}>
-                  <div style={{ fontWeight: 700, fontSize: 16 }}>{c.data.title}{c.data.exam && <span style={{ marginLeft: 8, fontSize: 11, background: '#dc2626', color: '#fff', borderRadius: 999, padding: '1px 8px' }}>시험</span>}</div>
-                  <div style={{ fontSize: 13, color: 'var(--muted-foreground)' }}>{SKILLS.find(s => s.key === c.data.skill)?.title}</div>
+                <Link key={c.id} href={`/ehr/skills/${c.id}`} style={{ display: 'block', padding: '14px 16px', borderRadius: 10, background: 'var(--background)', border: '1px solid var(--border)', textDecoration: 'none', color: 'inherit' }}>
+                  <div style={{ fontWeight: 700 }}>{c.data.title}{c.data.exam && <span style={{ marginLeft: 8, fontSize: 11, background: '#dc2626', color: '#fff', borderRadius: 999, padding: '1px 8px' }}>시험</span>}</div>
                 </Link>
               ))}
             </div>
