@@ -274,6 +274,46 @@ export const FORM_CSS = `
   .ehr .pt th { background: #e9edf1; font-size: 12px; } .ehr .pt td + td, .ehr .pt th + th { text-align: center; width: 70px; }
 `;
 
+// Flowsheet 칸에서 바로 점수를 계산해 입력하는 작은 창
+export const SCALE_ITEMS: Record<string, 'morse' | 'braden'> = { '낙상위험 평가도구(Morse)': 'morse', '욕창위험 평가도구(Braden)': 'braden' };
+export function ScalePick({ kind, onPick, onClose }: { kind: 'morse' | 'braden'; onPick: (text: string) => void; onClose: () => void }) {
+  const items = kind === 'morse' ? MORSE : BRADEN;
+  const [sel, setSel] = useState<Record<number, number>>({});
+  const total = items.reduce((a, it, i) => a + (sel[i] === undefined ? 0 : it.opts[sel[i]].s), 0);
+  const ok = items.every((_, i) => sel[i] !== undefined);
+  const lv = kind === 'morse' ? morseLevel(total) : bradenLevel(total);
+  return (
+    <div role="dialog" aria-label={kind === 'morse' ? 'Morse Fall Scale' : 'Braden Scale'} onClick={e => e.stopPropagation()}
+      style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,.35)', zIndex: 60, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: '#fff', color: '#111', borderRadius: 8, width: 'min(560px, 94vw)', maxHeight: '88vh', overflow: 'auto', padding: 16, fontSize: 13 }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+          <b style={{ fontSize: 14 }}>{kind === 'morse' ? '낙상위험 평가도구 (Morse Fall Scale)' : '욕창위험 평가도구 (Braden Scale)'}</b>
+          <button type="button" onClick={onClose} aria-label="닫기" style={{ border: 0, background: 'none', fontSize: 18, cursor: 'pointer' }}>×</button>
+        </div>
+        {items.map((it, qi) => (
+          <div key={qi} style={{ margin: '8px 0' }}>
+            <b>{it.q}</b>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6, marginTop: 4 }}>
+              {it.opts.map((o, oi) => (
+                <label key={oi} style={{ display: 'flex', gap: 4, alignItems: 'center', border: '1px solid #cbd5e1', borderRadius: 6, padding: '3px 8px', cursor: 'pointer', background: sel[qi] === oi ? '#dbeafe' : '#fff' }}>
+                  <input type="radio" name={`sp-${qi}`} checked={sel[qi] === oi} onChange={() => setSel(p => ({ ...p, [qi]: oi }))} style={{ width: 'auto', margin: 0 }} />
+                  {o.t} <i style={{ color: '#64748b' }}>{o.s}점</i>
+                </label>
+              ))}
+            </div>
+          </div>
+        ))}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginTop: 12, borderTop: '1px solid #e2e8f0', paddingTop: 10 }}>
+          <span>합계 <b style={{ fontSize: 16 }}>{total}</b>점</span>
+          {ok ? <em style={{ fontStyle: 'normal', fontWeight: 700, color: lv.c === 'hi' ? '#dc2626' : lv.c === 'md' ? '#ca8a04' : '#16a34a' }}>{lv.t}</em> : <em style={{ fontStyle: 'normal', color: '#94a3b8' }}>모든 항목을 선택하세요</em>}
+          <button type="button" disabled={!ok} onClick={() => onPick(`${total}점 (${lv.t})`)} style={{ marginLeft: 'auto', padding: '6px 16px', borderRadius: 6, border: 0, background: ok ? '#0f4c81' : '#cbd5e1', color: '#fff', fontWeight: 700, cursor: ok ? 'pointer' : 'not-allowed' }}>입력</button>
+        </div>
+        <p style={{ margin: '8px 0 0', color: '#64748b', fontSize: 12 }}>{kind === 'morse' ? '고위험 45점 이상 · 중위험 25~44점 · 저위험 0~24점' : '초고위험 9점 이하 · 고위험 10~12점 · 중등도 13~14점 · 경미 15~18점'}</p>
+      </div>
+    </div>
+  );
+}
+
 // 병상 배지용: 평가 점수 (미완료면 null)
 export function formScore(kind: 'morse' | 'braden', r: Row): number | null {
   const items = kind === 'morse' ? MORSE : BRADEN;

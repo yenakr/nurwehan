@@ -12,6 +12,7 @@ const KIND: Record<string, Kind> = {
   '욕창 평가 사유': { t: 'sel', o: REASON.slice(0, 4) },
   '통증 평가 사유': { t: 'sel', o: REASON.slice(0, 4) },
   '욕창위험 평가도구(Braden)': { t: 'num', u: '점 (6~23)' },
+  '낙상위험 평가도구(Morse)': { t: 'num', u: '점 (0~125)' },
   '통증유무': { t: 'sel', o: ['있음', '없음'] },
   '통증 시작시기': { t: 'sel', o: ['급성', '만성', '수술 후', '1시간 이내', '어제부터'] },
   '통증강도(척도)': { t: 'sel', o: ['NRS', 'FACES', 'FLACC'] },
