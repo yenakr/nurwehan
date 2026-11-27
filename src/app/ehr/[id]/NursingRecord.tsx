@@ -31,6 +31,20 @@ const CSS = `
   .nr-w .btns { display: flex; gap: 6px; justify-content: flex-end; margin-top: 6px; }
   .nr-w .btns button { padding: 5px 14px; border-radius: 4px; border: 1px solid var(--border); background: #fff; cursor: pointer; }
   .nr-w .btns button.p { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .nr-pop { border: 1px solid var(--border); border-radius: 6px; background: #fff; margin: 4px 0 6px; box-shadow: 0 4px 14px rgba(0,0,0,.12); }
+  .nr-pop-h { display: flex; align-items: center; gap: 10px; padding: 6px 10px; background: #eaf0f7; border-bottom: 1px solid var(--border); }
+  .nr-pop-h span { color: var(--sub-text); font-size: 12px; flex: 1; }
+  .nr-pop button { font: inherit; font-size: 12.5px; padding: 3px 10px; border: 1px solid var(--border); border-radius: 4px; background: #fff; cursor: pointer; }
+  .nr-pop button.p { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .nr-pop button:disabled { opacity: .45; cursor: default; }
+  .nr-pop-g { display: grid; grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); gap: 4px; padding: 8px 10px; max-height: 210px; overflow: auto; }
+  .nr-pop-g button.on { background: var(--primary); color: #fff; border-color: var(--primary); }
+  .nr-pop-g button { text-align: left; }
+  .nr-pop-l { display: flex; flex-direction: column; gap: 2px; padding: 6px 10px; max-height: 210px; overflow: auto; }
+  .nr-pop-l label { display: flex; gap: 8px; align-items: flex-start; padding: 3px 0; border-bottom: 1px dashed #e3e8ef; cursor: pointer; }
+  .nr-pop-l input { width: auto !important; flex: none; margin-top: 3px; }
+  .nr-pop-f { display: flex; gap: 6px; justify-content: flex-end; padding: 6px 10px; border-top: 1px solid var(--border); }
+  .nr-pop-n { color: var(--sub-text); padding: 6px; }
   .nr-err { color: #c0152a; font-size: 12px; }
 `;
 const p2 = (n: number) => String(n).padStart(2, '0');
@@ -68,17 +82,25 @@ export default function NursingRecord({ data, setData, userName, duty, today }: 
     return m < 0 ? `${pre}${post}\n${s}` : `${pre}${post.slice(0, m)}\n${s}${post.slice(m)}`;
   });
 
-  // 오늘 수행한 처방/활력징후로 D) 초안 자동 작성
-  const draft = () => {
-    const lines: string[] = [];
-    data.orders.forEach(o => {
+  // 오늘 수행한 처방/활력징후 중 골라서 D)에 넣는다
+  const cands = (() => {
+    const out: { key: string; text: string }[] = [];
+    data.orders.forEach((o, i) => {
       const ts = Object.keys(o).filter(k => /^t\d+$/.test(k) && o[k]).map(k => o[k].split(' ')[0]);
-      if (ts.length && o.name) lines.push(`${ts.join(', ')} ${o.name}${o.dose ? ` ${o.dose}${o.unit || ''}` : ''}${o.route ? ` ${o.route}` : ''} ${o.dose ? '투약함' : '수행함'}`);
+      if (ts.length && o.name) out.push({ key: `o${i}`, text: `${ts.join(', ')} ${o.name}${o.dose ? ` ${o.dose}${o.unit || ''}` : ''}${o.route ? ` ${o.route}` : ''} ${o.dose ? '투약함' : '수행함'}` });
     });
     const v = [...data.vitals].filter(x => x.time).pop();
-    if (v) lines.push(`V/S ${v.time} BP ${v.sbp || '-'}/${v.dbp || '-'}mmHg, HR ${v.hr || '-'}, RR ${v.rr || '-'}, BT ${v.bt || '-'}℃, SpO2 ${v.spo2 || '-'}%${v.pain ? `, 통증 NRS ${v.pain}` : ''}`);
-    if (!lines.length) { setErr('오늘 수행 내역이 없어요'); return; }
-    setErr(''); setFocus(f => f || '수행 내역'); setText(t => `${t ? `${t}\n\n` : ''}D)\n${lines.join('\n')}`);
+    if (v) out.push({ key: 'v', text: `V/S ${v.time} BP ${v.sbp || '-'}/${v.dbp || '-'}mmHg, HR ${v.hr || '-'}, RR ${v.rr || '-'}, BT ${v.bt || '-'}℃, SpO2 ${v.spo2 || '-'}%${v.pain ? `, 통증 NRS ${v.pain}` : ''}` });
+    return out;
+  })();
+  const [dp, setDp] = useState(false);
+  const [pick, setPick] = useState<string[]>([]);
+  const [fp, setFp] = useState(false);
+  const draft = () => { setErr(''); setFp(false); setPick([]); setDp(v => !v); };
+  const applyDraft = () => {
+    const lines = cands.filter(c => pick.includes(c.key)).map(c => c.text);
+    if (!lines.length) { setErr('불러올 수행내용을 선택하세요'); return; }
+    setErr(''); setFocus(f => f || '수행 내역'); setText(t => `${t ? `${t}\n\n` : ''}D)\n${lines.join('\n')}`); setDp(false);
   };
 
   const save = () => {
@@ -123,11 +145,30 @@ export default function NursingRecord({ data, setData, userName, duty, today }: 
         <div className="r1">
           <b>기록 작성</b>
           <input style={{ width: 150 }} value={time} onChange={e => setTime(e.target.value)} aria-label="일시" />
-          <input style={{ width: 150 }} list="nr-focus" placeholder="구분(Focus)" value={focus} onChange={e => setFocus(e.target.value)} />
-          <datalist id="nr-focus">{PHRASES.map(p => <option key={p.focus} value={p.focus} />)}</datalist>
+          <input style={{ width: 170 }} placeholder="구분(Focus) 검색·입력" value={focus} onFocus={() => { setFp(true); setDp(false); }} onChange={e => { setFocus(e.target.value); setFp(true); }} />
+          <button type="button" onClick={() => { setFp(v => !v); setDp(false); }} style={{ padding: '3px 10px', border: '1px solid var(--border)', borderRadius: 4, background: '#fff', cursor: 'pointer' }}>구분 목록 ▾</button>
           <button type="button" onClick={draft} style={{ padding: '3px 10px', border: '1px solid var(--border)', borderRadius: 4, background: '#fff', cursor: 'pointer' }}>수행내용 불러오기</button>
           {err && <span className="nr-err">{err}</span>}
         </div>
+        {fp && (
+          <div className="nr-pop">
+            <div className="nr-pop-h"><b>구분(Focus) 선택</b><span>{PHRASES.filter(p => !focus.trim() || p.focus.toLowerCase().includes(focus.trim().toLowerCase())).length}개</span><button type="button" onClick={() => setFp(false)}>닫기</button></div>
+            <div className="nr-pop-g">
+              {PHRASES.filter(p => !focus.trim() || p.focus.toLowerCase().includes(focus.trim().toLowerCase())).map(p => <button key={p.focus} type="button" className={p.focus === focus ? 'on' : ''} onClick={() => { setFocus(p.focus); setFp(false); }}>{p.focus}</button>)}
+              {PHRASES.every(p => !p.focus.toLowerCase().includes(focus.trim().toLowerCase())) && <span className="nr-pop-n">일치하는 구분이 없어요. 입력한 이름 그대로 사용돼요.</span>}
+            </div>
+          </div>
+        )}
+        {dp && (
+          <div className="nr-pop">
+            <div className="nr-pop-h"><b>수행내용 선택</b><span>오늘 수행·측정한 내역</span><button type="button" onClick={() => setDp(false)}>닫기</button></div>
+            <div className="nr-pop-l">
+              {cands.map(c => <label key={c.key}><input type="checkbox" checked={pick.includes(c.key)} onChange={e => setPick(pk => (e.target.checked ? [...pk, c.key] : pk.filter(x => x !== c.key)))} />{c.text}</label>)}
+              {cands.length === 0 && <span className="nr-pop-n">오늘 수행한 내역이 없어요.</span>}
+            </div>
+            <div className="nr-pop-f"><button type="button" onClick={() => setPick(pick.length === cands.length ? [] : cands.map(c => c.key))}>{pick.length === cands.length && cands.length > 0 ? '선택 해제' : '전체 선택'}</button><button type="button" className="p" onClick={applyDraft} disabled={pick.length === 0}>선택한 {pick.length}건 넣기</button></div>
+          </div>
+        )}
         {ph && (
           <div className="chips">
             {(ph.n || []).map(s => <button key={`n${s}`} type="button" onClick={() => setText(t => `${t}${t && !/\s$/.test(t) ? ' ' : ''}${s}`)}>{s}</button>)}
