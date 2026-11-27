@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { SKILLS, recordsOf, type Cfg, type Ord } from '@/app/ehr/skills/scn';
+import { SKILLS, defaultCfg, recordsOf, type Cfg, type Ord } from '@/app/ehr/skills/scn';
 
 type Row = { id: string; published: boolean; classId: string | null; skill: string; title: string; exam: boolean; assign: 'same' | 'random'; cfg: Cfg };
 const inp = { padding: '6px 8px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--background)', color: 'inherit', width: '100%' } as const;
@@ -14,12 +14,16 @@ export default function SkillsAdmin({ rows: init, classes }: { rows: Row[]; clas
   const [rows, setRows] = useState(init);
   const [msg, setMsg] = useState('');
   const [open, setOpen] = useState('');
+  const [openSk, setOpenSk] = useState('');
   const [prev, setPrev] = useState('');
-  const [pick, setPick] = useState(SKILLS[0].key);
   const upd = (id: string, f: (r: Row) => Row) => setRows(rs => rs.map(r => (r.id === id ? f(r) : r)));
   const create = async (skill: string) => {
     const r = await fetch('/api/admin/ehr/skills', { method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify({ skill }) });
-    if (r.ok) location.reload(); else setMsg('만들지 못했어요');
+    const j = await r.json().catch(() => ({}));
+    if (!r.ok || !j.id) { setMsg('만들지 못했어요'); return; }
+    const t = SKILLS.find(x => x.key === skill)?.title || skill;
+    setRows(rs => [...rs, { id: j.id, published: false, classId: null, skill, title: `${t} 시험`, exam: false, assign: 'same', cfg: defaultCfg(skill) }]);
+    setOpenSk(skill); setOpen(j.id); setMsg('');
   };
   const save = async (r: Row) => {
     const res = await fetch(`/api/admin/ehr/skills/${r.id}`, { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify(r) });
@@ -32,16 +36,9 @@ export default function SkillsAdmin({ rows: init, classes }: { rows: Row[]; clas
   };
   return (
     <div style={{ display: 'grid', gap: 14, fontSize: 14 }}>
-      <div style={{ background: 'var(--background)', border: '1px solid var(--border)', borderRadius: 10, padding: 14 }}>
-        <b>새 시나리오</b> <span style={{ color: 'var(--muted-foreground)', fontSize: 12 }}>(기본 시나리오를 복제해서 시작해요)</span>
-        <div style={{ display: 'flex', gap: 8, marginTop: 8, flexWrap: 'wrap' }}>
-          <select style={{ ...inp, width: 'auto', minWidth: 260 }} value={pick} onChange={e => setPick(e.target.value)}>{SKILLS.map((s, i) => <option key={s.key} value={s.key}>{i + 1}. {s.title}</option>)}</select>
-          <button type="button" onClick={() => create(pick)} style={{ padding: '7px 14px', borderRadius: 8, border: 0, background: '#2563eb', color: '#fff', cursor: 'pointer' }}>+ 시나리오 만들기</button>
-        </div>
-        {msg && <p style={{ margin: '8px 0 0', color: 'var(--primary)' }}>{msg}</p>}
-      </div>
-      {rows.length === 0 && <p style={{ color: 'var(--muted-foreground)' }}>만든 시나리오가 없어요.</p>}
-      {rows.map(r => {
+      <p style={{ margin: 0, color: 'var(--muted-foreground)', fontSize: 13 }}>술기를 눌러 펼치면 그 술기의 시나리오를 만들고 고칠 수 있어요. 새 시나리오는 기본 내용을 복제해서 시작해요.</p>
+      {(() => {
+      const renderRow = (r: Row) => {
         const c = r.cfg;
         const setC = (p: Partial<Cfg>) => upd(r.id, x => ({ ...x, cfg: { ...x.cfg, ...p } }));
         const skTitle = SKILLS.find(s => s.key === r.skill)?.title;
@@ -171,7 +168,30 @@ export default function SkillsAdmin({ rows: init, classes }: { rows: Row[]; clas
             )}
           </div>
         );
-      })}
+      };
+      const known = new Set(SKILLS.map(x => x.key));
+      const groups = [...SKILLS.map((sk, i) => ({ key: sk.key, title: `${i + 1}. ${sk.title}`, list: rows.filter(r => r.skill === sk.key), add: true })), { key: '_old', title: '이전 술기 (더 이상 열리지 않음)', list: rows.filter(r => !known.has(r.skill)), add: false }].filter(g => g.add || g.list.length > 0);
+      return groups.map(g => {
+        const isOpen = openSk === g.key;
+        const pub = g.list.filter(r => r.published).length;
+        return (
+          <div key={g.key} style={{ background: 'var(--background)', border: '1px solid var(--border)', borderRadius: 12, overflow: 'hidden' }}>
+            <button type="button" onClick={() => setOpenSk(isOpen ? '' : g.key)} aria-expanded={isOpen} style={{ display: 'flex', gap: 10, alignItems: 'center', width: '100%', padding: '14px 16px', border: 0, background: isOpen ? 'var(--muted-background)' : 'none', color: 'inherit', cursor: 'pointer', textAlign: 'left', font: 'inherit' }}>
+              <b style={{ flex: 1, fontSize: 15 }}>{g.title}</b>
+              <span style={{ fontSize: 12, color: 'var(--muted-foreground)' }}>{g.list.length === 0 ? '시나리오 없음' : `시나리오 ${g.list.length}개 · 공개 ${pub}`}</span>
+              <span style={{ color: 'var(--muted-foreground)' }}>{isOpen ? '▲' : '▼'}</span>
+            </button>
+            {isOpen && (
+              <div style={{ padding: 12, display: 'grid', gap: 10, borderTop: '1px solid var(--border)' }}>
+                {g.list.length === 0 && <p style={{ margin: 0, color: 'var(--muted-foreground)', fontSize: 13 }}>아직 만든 시나리오가 없어요.</p>}
+                {g.list.map(r => renderRow(r))}
+                {g.add && <div><button type="button" onClick={() => create(g.key)} style={{ padding: '8px 16px', borderRadius: 8, border: 0, background: '#2563eb', color: '#fff', cursor: 'pointer' }}>+ 이 술기 시나리오 추가</button></div>}
+              </div>
+            )}
+          </div>
+        );
+      });
+      })()}
     </div>
   );
 }
