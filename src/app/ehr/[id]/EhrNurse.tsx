@@ -921,7 +921,6 @@ export default function EhrNurse({
           {ordMsg && <p className="ns-nerr">{ordMsg}</p>}
           {chgCnt > 0 && <p className="ns-nerr">변경된 처방 {chgCnt}건이 있어요. 내용을 확인하고 &apos;변경됨 · 확인&apos;을 눌러 주세요.</p>}
           {ocs()}
-          <div className="ns-nft"><button type="button" onClick={onLabel}>투약라벨 출력</button></div>
         </main>
 
         <aside className="ns-nr">
@@ -959,6 +958,7 @@ export default function EhrNurse({
         </div>
         <div className="ns-bbr">
           <button type="button" className="ns-bp" onClick={() => openMenu('notes')}>간호활동</button>
+          <button type="button" onClick={onLabel}>투약라벨 출력</button>
           <button type="button" onClick={printOrders}>처방출력</button>
           <button type="button" onClick={printBed}>침상카드</button>
           <button type="button" onClick={printWarn}>주의라벨</button>
