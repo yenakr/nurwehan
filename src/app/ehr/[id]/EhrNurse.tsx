@@ -793,7 +793,7 @@ export default function EhrNurse({
               {data.surgery[0] && dd(data.surgery[0].date) && <><dt>수술일</dt><dd>{dd(data.surgery[0].date)}{podN(data.surgery[0].date) && <em>{podN(data.surgery[0].date)}</em>}</dd></>}
               {(dxMain || i.dx) && <><dt>진단명</dt><dd>{dxMain ? dxMain.name : i.dx}</dd></>}
             </dl>
-            <div className="ns-ngrp"><button type="button" className="ns-gh" onClick={() => tg('g0')}>구분<em>{fold.g0 ? '▸' : '▾'}</em></button>{!fold.g0 && <div className="ns-nlinks">
+            <div className="ns-ngrp"><button type="button" className="ns-gh" onClick={() => tg('g0')}>구분<em>{fold.g0 ? '▸' : '▾'}</em></button>{!fold.g0 && <div className="ns-nlinks ns-one">
               {(() => {
                 const cur = i.ward === '외래' ? '외래' : i.ward === '응급실' ? '응급' : '병동';
                 const lastW = (() => { try { return localStorage.getItem('ehr.lastWard') || ''; } catch { return ''; } })();
@@ -958,7 +958,7 @@ export default function EhrNurse({
             </div>
           ))}
           <div className="ns-nbox">
-            <div className="ns-fl-b">
+            <div className="ns-fl-b ns-one">
               {([['meal', '식사'], ['sched', '치료일정'], ['cons', '협진'], ['appt', '타과예약']] as const).map(([k, l]) => <button key={k} type="button" className={rt === k ? 'ns-on' : ''} onClick={() => setRt(k)}>{l}</button>)}
             </div>
             <table className="ns-rt">
@@ -1166,10 +1166,11 @@ export default function EhrNurse({
                   <table>
                     <thead>
                       <tr><th rowSpan={2} colSpan={2} className="ns-fl-c"><div className="ns-fl-s">{([['all', '24시간'], ['D', 'Day'], ['E', 'Evening'], ['N', 'Night']] as const).map(([k, l]) => <button key={k} type="button" className={fShift === k ? 'ns-on' : ''} onClick={() => setFShift(k)}>{l}</button>)}<button type="button" className={fCfg ? 'ns-on' : ''} onClick={e => { e.stopPropagation(); setFCfg(v => !v); }}>항목 설정</button></div></th>{FDAYS.map(d => <th key={d} colSpan={FR.filter(c => c.d === d).length} className={d === todayS ? 'ns-fl-today' : 'ns-fl-day'}>{d.slice(5).replace('-', '/')} ({'일월화수목금토'[new Date(`${d}T00:00:00`).getDay()]}){d === todayS ? ' · 오늘' : ''}{hdOf(d) > 0 && <span className="ns-hd">HD#{hdOf(d)}</span>}</th>)}</tr>
-                      <tr>{FR.map(c => c.sum ? <th key={c.d + c.h + 's'} className="ns-fl-sum">{{ D: 'Day', E: 'Eve', N: 'Night' }[c.sum]}<br />합계</th> : <th key={c.d + c.h}>{c.h}시</th>)}</tr>
+                      <tr>{FR.map(c => c.sum ? <th key={c.d + c.h + 's'} className="ns-fl-sum">{{ D: 'Day', E: 'Eve', N: 'Night' }[c.sum]}<br />합계</th> : <th key={c.d + c.h} className={c.d === todayS && Number(c.h) === vnow().getHours() ? 'ns-fl-nowh' : ''}>{c.h}시</th>)}</tr>
                     </thead>
                     <tbody>
                       {(() => {
+                        const isNow = (d: string, h: string) => d === todayS && Number(h) === vnow().getHours();
                         const cellOf = (it: string, c0: FRc, isIO: boolean) => {
                           const { d, h, sum } = c0;
                           const key = d + h + (sum || '');
@@ -1187,7 +1188,7 @@ export default function EhrNurse({
                           }
                           const auto = !c ? vitAt(it, d, h) : '';
                           return (
-                            <td key={key} className={`${c ? 'ns-fl-v' : auto ? 'ns-fl-a' : ''} ${!c && auto && vitRow(d, h)?.auth === '미인증' ? 'ns-fl-un' : ''}`} title={!c && auto && vitRow(d, h)?.auth === '미인증' ? '미인증 기록 (PDA) — 우클릭 → 인증저장' : undefined} onDoubleClick={() => { setFEdit({ it, d, h }); setFVal(c?.text || auto); }} onContextMenu={e => { e.preventDefault(); e.stopPropagation(); setFCtx({ x: e.clientX, y: e.clientY, it, d, h }); }}>
+                            <td key={key} className={`${c ? 'ns-fl-v' : auto ? 'ns-fl-a' : ''} ${isNow(d, h) ? 'ns-fl-now' : ''} ${!c && auto && vitRow(d, h)?.auth === '미인증' ? 'ns-fl-un' : ''}`} title={!c && auto && vitRow(d, h)?.auth === '미인증' ? '미인증 기록 (PDA) — 우클릭 → 인증저장' : undefined} onDoubleClick={() => { setFEdit({ it, d, h }); setFVal(c?.text || auto); }} onContextMenu={e => { e.preventDefault(); e.stopPropagation(); setFCtx({ x: e.clientX, y: e.clientY, it, d, h }); }}>
                               {on ? <input autoFocus value={fVal} onChange={e => setFVal(e.target.value)} onBlur={() => { fSet(it, d, h, fVal); setFEdit(null); }} onKeyDown={e => { if (e.key === 'Enter') { fSet(it, d, h, fVal); setFEdit(null); } if (e.key === 'Escape') setFEdit(null); }} /> : <>{c?.text || auto}{c?.memo && <sup title={c.memo}>●</sup>}</>}
                             </td>
                           );
@@ -1548,6 +1549,12 @@ export default function EhrNurse({
         .ns-fl thead th.ns-fl-c { z-index: 3; }
         .ns-fl thead tr:nth-child(2) th { top: 29px; }
         .ns-fl-day { background: #dfe6ee !important; border-left: 2px solid #94a3b8 !important; }
+        .ns-one { flex-wrap: nowrap !important; gap: 4px; }
+        .ns-one button { flex: 1 1 0 !important; min-width: 0; padding-left: 4px !important; padding-right: 4px !important; font-size: 12px !important; }
+        .ns-fl thead th.ns-fl-nowh { background: #f59e0b !important; color: #fff; }
+        .ns-fl td.ns-fl-now { background-color: #fff6dc; box-shadow: inset 2px 0 0 #f59e0b, inset -2px 0 0 #f59e0b; }
+        .ns-fl { display: flex; flex-direction: column; }
+        .ns-fl > .ns-fl-b { order: -1; margin: 0 0 8px; }
         .ns-fl-today { background: var(--primary) !important; color: #fff; border-left: 2px solid #94a3b8 !important; }
         .ns-ngrp { display: block; border-top: 1px solid var(--border); padding: 9px 12px 10px; }
         .ns-ngrp > span { display: block; padding: 0 0 5px; font-size: 11.5px; font-weight: 800; color: var(--sub-text); letter-spacing: .02em; }
