@@ -17,7 +17,7 @@ export default async function SkillsPage() {
   return (
     <main style={{ flex: 1, backgroundColor: 'var(--muted-background)', padding: '28px 0' }}>
       <div className="container" style={{ maxWidth: 860 }}>
-        <p style={{ margin: '0 0 6px' }}><Link href="/ehr">← EHR(프로그램 연습)</Link></p>
+        <p style={{ margin: '0 0 6px' }}><Link href="/ehr">← EHR 선택</Link></p>
         <h1 style={{ margin: '0 0 6px', fontSize: 22 }}>핵심술기별 EHR</h1>
         <p style={{ margin: '0 0 18px', color: 'var(--muted-foreground)', fontSize: 14 }}>술기 하나를 순서대로 연습하고 체크리스트로 채점받아요. 모두 가상 환자입니다.</p>
         <div style={{ display: 'grid', gap: 12 }}>
