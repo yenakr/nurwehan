@@ -6,7 +6,8 @@ import { MATS, matsFor } from '../codes';
 import NurseForm from './NurseForms';
 import ProcInput from './ProcInput';
 import DxReg from './DxReg';
-import { RxCompare, FutureSched, Sticker, CommonReq, DcPlan } from './RefWins';
+import { USAGE_MAP, usageOf } from '../usage';
+import { RxCompare, FutureSched, Sticker, CommonReq, DcPlan, UsageWin } from './RefWins';
 import LabResults from './LabResults';
 import OrderCompare from './OrderCompare';
 import NursingRecord from './NursingRecord';
@@ -56,6 +57,7 @@ const MENUS: { id: string; label: string }[] = [
   { id: 'sticker', label: '스티커 출력' },
   { id: 'cmnreq', label: '공통업무지원 의뢰' },
   { id: 'dcplan', label: '퇴원후 건강계획' },
+  { id: 'usage', label: '용법코드 조회' },
 ];
 
 const CATS: { name: string; items: string[] }[] = [
@@ -65,7 +67,7 @@ const CATS: { name: string; items: string[] }[] = [
   { name: '의사소통', items: ['consult', 'docreq', 'cmnreq', 'staff'] },
   { name: '출력·퇴원', items: ['qr', 'sticker'] },
   { name: '기록', items: ['notes', 'flowsheet', 'vitals', 'bst', 'nurseinfo', 'care', 'nact', 'dcplan'] },
-  { name: '처방', items: ['mat', 'rxcmp', 'medrec', 'ret'] },
+  { name: '처방', items: ['mat', 'rxcmp', 'usage', 'medrec', 'ret'] },
   { name: '예약', items: ['adm', 'discharge'] },
   { name: '병동', items: ['todo', 'memos', 'handover', 'bulk'] },
   { name: '회송', items: [] },
@@ -81,6 +83,9 @@ const CATS: { name: string; items: string[] }[] = [
 const ORG = buildDirectory();
 
 const pad = (n: number) => String(n).padStart(2, '0');
+// 간호메모·간호의사소통 기록 지침(2025.2) 분류
+const DOC_CATS = ['진료', '식이', '상처관리/적용기구', '환자정보', '검사', '기타'];
+const NUR_CATS = ['주요정보', '진료', '검사', '투약', '특수치료', '항암치료', '수혈', '기타'];
 const NFG: { g: string; guide: string; subs: { s: string; items: string[] }[] }[] = [
   { g: '낙상예방 및 관리', guide: '입원 시 및 상태 변화 시 낙상위험도를 평가하고, 고위험군은 낙상 예방 중재를 시행한 뒤 해당 시간 칸에 기록합니다.', subs: [
     { s: '낙상위험평가', items: ['제외대상(고위험중재 대상)', '낙상 평가 사유'] },
@@ -94,7 +99,7 @@ const NFG: { g: string; guide: string; subs: { s: string; items: string[] }[] }[
     { s: '통증완화중재', items: ['비약물요법', '약물요법'] },
   ] },
 ];
-const SCR: Record<string, string> = { todo: 'MNR101F1', notes: 'MNR210F1', patinfo: 'MNR120F1', dxhist: 'MNR130F1', surghist: 'MNR131F1', vacc: 'MNR132F1', labres: 'MNR310F1', medrec: 'MNR410F1', flowsheet: 'MNR281F1', overview: 'MNR110F1', vitals: 'MNR281F2', bst: 'MNR281F3', mat: 'MNR520F1', nact: 'MNR510F1', qr: 'MNR900F1', staff: 'MNR700F1', rxcmp: 'MDI604F1', futsch: 'SWF380F1', sticker: 'MNZ939F1', cmnreq: 'MDM610F1', dcplan: 'MNR320F1' };
+const SCR: Record<string, string> = { todo: 'MNR101F1', notes: 'MNR210F1', patinfo: 'MNR120F1', dxhist: 'MNR130F1', surghist: 'MNR131F1', vacc: 'MNR132F1', labres: 'MNR310F1', medrec: 'MNR410F1', flowsheet: 'MNR281F1', overview: 'MNR110F1', vitals: 'MNR281F2', bst: 'MNR281F3', mat: 'MNR520F1', nact: 'MNR510F1', qr: 'MNR900F1', staff: 'MNR700F1', rxcmp: 'MDI604F1', futsch: 'SWF380F1', sticker: 'MNZ939F1', cmnreq: 'MDM610F1', dcplan: 'MNR320F1', usage: 'MDI120F1' };
 const hm = () => { const d = vnow(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 const dutyNow = () => { const h = vnow().getHours(); return h >= 6 && h < 14 ? 'D' : h >= 14 && h < 22 ? 'E' : 'N'; };
 const HIGH = /(insulin|인슐린|heparin|헤파린|potassium|kcl|칼륨|morphine|모르핀|fentanyl|펜타닐|midazolam|미다졸람|항암|digoxin|디곡신|warfarin|와파린|propofol|ketamine|마약)/i;
@@ -323,7 +328,7 @@ export default function EhrNurse({
   const [mq, setMq] = useState('');
   const [figOpen, setFigOpen] = useState(true);
   const [win2, setWin2] = useState<string | null>(null);
-  const OWN = ['todo', 'notes', 'patinfo', 'dxhist', 'surghist', 'vacc', 'labres', 'medrec', 'flowsheet', 'overview', 'adm', 'dir', 'bulk', 'staff', 'docreq', 'vitals', 'bst', 'mat', 'nact', 'qr', 'rxcmp', 'futsch', 'sticker', 'cmnreq', 'dcplan'];
+  const OWN = ['todo', 'notes', 'patinfo', 'dxhist', 'surghist', 'vacc', 'labres', 'medrec', 'flowsheet', 'overview', 'adm', 'dir', 'bulk', 'staff', 'docreq', 'vitals', 'bst', 'mat', 'nact', 'qr', 'rxcmp', 'futsch', 'sticker', 'cmnreq', 'dcplan', 'usage'];
   const [ddPos, setDdPos] = useState<{ left: number; top: number } | null>(null);
   const place = (el: HTMLElement) => { const r = el.getBoundingClientRect(); setDdPos({ left: Math.max(4, Math.min(r.left, window.innerWidth - 190)), top: r.bottom + 2 }); };
   const [tabs, setTabs] = useState<string[]>([]);
@@ -566,14 +571,16 @@ export default function EhrNurse({
     const row: Row = { type: '간호메모', text, time: `${date} ${hm()}`, author: userName, shift: duty };
     return { ...d, memos: k >= 0 ? d.memos.map((m, j) => (j === k ? { ...m, ...row } : m)) : [...d.memos, row] };
   });
-  const addMemo = (type: string, t: string, done: () => void) => {
+  const [dcat, setDcat] = useState(DOC_CATS[0]);
+  const [mcat, setMcat] = useState(NUR_CATS[0]);
+  const addMemo = (type: string, t: string, done: () => void, cat = '') => {
     const text = t.trim();
     if (!text) return;
-    setData(d => ({ ...d, memos: [...d.memos, { type, text, time: `${date} ${hm()}`, author: userName, shift: duty }] }));
+    setData(d => ({ ...d, memos: [...d.memos, { type, text, cat, time: `${date} ${hm()}`, author: userName, shift: duty }] }));
     done();
   };
-  const sendMsg = () => addMemo('간호의사소통', msg, () => setMsg(''));
-  const sendDoc = () => addMemo('진료메모', dmsg, () => setDmsg(''));
+  const sendMsg = () => addMemo('간호의사소통', msg, () => setMsg(''), mcat);
+  const sendDoc = () => addMemo('진료메모', dmsg, () => setDmsg(''), dcat);
   const ck = (label: string) => (i[`ck:${label}`] === '1') || (label.endsWith('/금식') && i.npo === '1' && i[`ck:${label}`] !== '0');
   const toggle = (label: string) => setData(d => ({ ...d, info: { ...d.info, [`ck:${label}`]: ck(label) ? '0' : '1' } }));
   const find = () => {
@@ -660,7 +667,7 @@ export default function EhrNurse({
                       <tr className={stop ? 'ns-x' : ''}>
                         <td className="ns-ocq">{seq}</td>
                         <td className="ns-otn"><b>{r.name}</b>{it.notes.map((m, k) => <span key={k} className="ns-onote">※ {m.replace(/^※\s*/, '')}</span>)}</td>
-                        <td>{r.dose ? `${r.dose}${r.unit || ''}` : ''}</td><td>{r.route}</td><td>{r.cnt}</td>
+                        <td>{r.dose ? `${r.dose}${r.unit || ''}` : ''}</td><td title={USAGE_MAP.get(usageOf(r))?.text}>{usageOf(r)}</td><td>{r.cnt}</td>
                         <td className="ns-ocg">{r.pri && r.pri !== 'D/C' ? <i>{r.pri}</i> : null}{(r.opt || '').split(' ').filter(Boolean).map(o => <i key={o} className={o === '비급여' ? 'ns-nhi' : 'ns-alone'}>[{o}]</i>)}{r.hold && <span className="ns-sl ns-hold" title={r.hold}>보류</span>}</td>
                         <td className="ns-otst">{status}{isChanged(r) && <button type="button" className="ns-sl ns-sl-late" title={`이전 ${ackOf(r.name || '')?.text || ''} → 현재 ${ordTxt(r)}`} onClick={() => ordAck(r)}>변경됨 · 확인</button>}</td>
                         {Array.from({ length: N }, (_, k) => <td key={k} className="ns-ocs-c">{cellFor(k)}</td>)}
@@ -788,9 +795,10 @@ export default function EhrNurse({
           <div className="ns-nbox ns-mbox ns-mdoc">
             <button type="button" className="ns-gh" onClick={() => tg('m1')}>진료메모<small>{memoOf('진료메모').length}</small><em>{fold.m1 ? '▸' : '▾'}</em></button>
             {!fold.m1 && <>
-              {memoOf('진료메모').slice(-3).reverse().map((m, k) => <p key={k}>{m.text}<i>{(m.time || '').slice(-5)} {m.author}</i></p>)}
+              {memoOf('진료메모').slice(-3).reverse().map((m, k) => <p key={k}>{m.cat && <b className="ns-mc">[{m.cat}] </b>}{m.text}<i>{(m.time || '').slice(-5)} {m.author}</i></p>)}
               {memoOf('진료메모').length === 0 && <p className="ns-nnone">No data to display</p>}
               <div className="ns-nsr">
+                <select value={dcat} onChange={e => setDcat(e.target.value)} aria-label="진료메모 분류" className="ns-mcs">{DOC_CATS.map(c => <option key={c}>{c}</option>)}</select>
                 <input value={dmsg} onChange={e => setDmsg(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendDoc()} aria-label="진료메모" />
                 <button type="button" onClick={sendDoc} disabled={!dmsg.trim()}>등록</button>
               </div>
@@ -799,9 +807,10 @@ export default function EhrNurse({
           <div className="ns-nbox ns-mbox ns-mnur">
             <button type="button" className="ns-gh" onClick={() => tg('m2')}>간호의사소통<small>{memoOf('간호의사소통').length}</small><em>{fold.m2 ? '▸' : '▾'}</em></button>
             {!fold.m2 && <>
-              {memoOf('간호의사소통').slice(-3).reverse().map((m, k) => <p key={k}>{m.text}<i>{(m.time || '').slice(-5)} {m.author}</i></p>)}
+              {memoOf('간호의사소통').slice(-3).reverse().map((m, k) => <p key={k}>{m.cat && <b className="ns-mc">[{m.cat}] </b>}{m.text}<i>{(m.time || '').slice(-5)} {m.author}</i></p>)}
               {memoOf('간호의사소통').length === 0 && <p className="ns-nnone">No data to display</p>}
               <div className="ns-nsr">
+                <select value={mcat} onChange={e => setMcat(e.target.value)} aria-label="간호의사소통 분류" className="ns-mcs">{NUR_CATS.map(c => <option key={c}>{c}</option>)}</select>
                 <input value={msg} onChange={e => setMsg(e.target.value)} onKeyDown={e => e.key === 'Enter' && sendMsg()} aria-label="간호의사소통" />
                 <button type="button" onClick={sendMsg} disabled={!msg.trim()}>등록</button>
               </div>
@@ -1350,6 +1359,8 @@ export default function EhrNurse({
               <Fragment key={notifyDraft}><StaffWin data={data} setData={setData} userName={userName} duty={duty} draft={notifyDraft} /></Fragment>
             ) : w === 'docreq' ? (
               <DocReqWin data={data} setData={setData} userName={userName} duty={duty} />
+            ) : w === 'usage' ? (
+              <UsageWin onClose={onClose} />
             ) : w === 'rxcmp' ? (
               <RxCompare data={data} onClose={onClose} />
             ) : w === 'futsch' ? (
@@ -1532,6 +1543,8 @@ export default function EhrNurse({
         .ns-fl-g1 { position: sticky; left: 0; z-index: 2; background: #c9d9ee !important; min-width: 96px; vertical-align: top; text-align: left !important; }
         .ns-fl-tg { border: 0; background: transparent; font: inherit; font-weight: 800; color: #17324f; cursor: pointer; padding: 0; }
         .ns-fl .ns-fl-c2 { left: 96px; }
+        .ns-mc { color: #1d4ed8; font-weight: 700; }
+        .ns-mcs { font: inherit; font-size: 11.5px; max-width: 86px; padding: 2px 2px; }
         .ns-fl-bb { margin-left: 8px; border: 1px solid #5b6f8a; background: #fff; border-radius: 3px; font: inherit; font-size: 11.5px; padding: 1px 8px; cursor: pointer; }
         .ns-fl-pop { display: inline-block; margin-left: 12px; font-weight: 500; font-size: 12px; position: sticky; left: 260px; }
         .ns-fl-pop button { margin-right: 6px; border: 1px solid var(--border); background: #fff; border-radius: 3px; font: inherit; font-size: 11.5px; cursor: pointer; }

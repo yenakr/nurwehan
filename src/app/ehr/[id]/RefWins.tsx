@@ -4,6 +4,7 @@ import { Fragment, useMemo, useState, type Dispatch, type SetStateAction } from 
 import { vnow } from '../vclock';
 import type { ChartData, Row } from '../types';
 import { group, viewOrders, type Item } from '../ordday';
+import { USAGE, KIND_LABEL } from '../usage';
 
 const p2 = (n: number) => String(n).padStart(2, '0');
 const ymd = (t: Date) => `${t.getFullYear()}-${p2(t.getMonth() + 1)}-${p2(t.getDate())}`;
@@ -423,6 +424,34 @@ export function DcPlan({ data, setData, userName, onClose }: { data: ChartData; 
         <button type="button" onClick={del}>삭제</button>
         <button type="button" onClick={onClose}>종료</button>
       </div>
+    </div>
+  );
+}
+
+// ─── 용법코드 조회 ───
+export function UsageWin({ onClose }: { onClose: () => void }) {
+  const [q, setQ] = useState('');
+  const [kind, setKind] = useState(0);
+  const rows = USAGE.filter(u => (!kind || u.kind === kind) && (!q.trim() || u.code.toLowerCase().includes(q.trim().toLowerCase()) || u.text.includes(q.trim())));
+  return (
+    <div className="rw">
+      <style>{CSS}</style>
+      <div className="rw-q">
+        <b>적용구분</b>
+        {[[0, '전체'], [1, '내복약'], [2, '주사약'], [3, '외용제']].map(([k, l]) => <label key={k}><input type="radio" name="us-k" checked={kind === k} onChange={() => setKind(k as number)} />{l}</label>)}
+        <input type="text" value={q} onChange={e => setQ(e.target.value)} placeholder="코드 또는 용법 검색 (예: 3P, 식후)" aria-label="용법코드 검색" style={{ width: 260 }} />
+        <span style={{ marginLeft: 'auto', color: 'var(--sub-text)' }}>{rows.length} / {USAGE.length}건 · 2026.03.10 기준</span>
+      </div>
+      <div className="sc">
+        <table>
+          <thead><tr><th>번호</th><th>코드</th><th>적용구분</th><th>횟수</th><th>용법</th></tr></thead>
+          <tbody>
+            {rows.map((u, k) => <tr key={u.code}><td className="c">{k + 1}</td><td className="c"><b>{u.code}</b></td><td className="c">{KIND_LABEL[u.kind]}</td><td className="c">{u.times || '-'}</td><td>{u.text}</td></tr>)}
+            {rows.length === 0 && <tr><td colSpan={5} className="none">No data to display</td></tr>}
+          </tbody>
+        </table>
+      </div>
+      <div className="bar"><button type="button" onClick={onClose}>종료</button></div>
     </div>
   );
 }
