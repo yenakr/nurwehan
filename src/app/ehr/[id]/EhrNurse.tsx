@@ -6,6 +6,7 @@ import { MATS, matsFor } from '../codes';
 import NurseForm from './NurseForms';
 import ProcInput from './ProcInput';
 import DxReg from './DxReg';
+import { RxCompare, FutureSched, Sticker, CommonReq, DcPlan } from './RefWins';
 import LabResults from './LabResults';
 import OrderCompare from './OrderCompare';
 import NursingRecord from './NursingRecord';
@@ -50,18 +51,23 @@ const MENUS: { id: string; label: string }[] = [
   { id: 'dxhist', label: '상병등록' },
   { id: 'surghist', label: '수술이력' },
   { id: 'vacc', label: '방종이력' },
+  { id: 'rxcmp', label: '전처방 비교' },
+  { id: 'futsch', label: '환자향후일정조회' },
+  { id: 'sticker', label: '스티커 출력' },
+  { id: 'cmnreq', label: '공통업무지원 의뢰' },
+  { id: 'dcplan', label: '퇴원후 건강계획' },
 ];
 
 const CATS: { name: string; items: string[] }[] = [
   { name: '최근사용', items: [] },
   { name: '환자선택', items: [] },
-  { name: '정보조회', items: ['todo', 'overview', 'labres', 'patinfo', 'dxhist', 'surghist', 'vacc', 'dir'] },
-  { name: '의사소통', items: ['consult', 'docreq', 'staff'] },
-  { name: '출력·퇴원', items: ['qr'] },
-  { name: '기록', items: ['notes', 'labres', 'flowsheet', 'vitals', 'bst', 'nurseinfo', 'care', 'nact', 'mat', 'memos'] },
-  { name: '처방', items: ['medrec', 'ret'] },
+  { name: '정보조회', items: ['overview', 'patinfo', 'dxhist', 'surghist', 'vacc', 'labres', 'futsch', 'dir'] },
+  { name: '의사소통', items: ['consult', 'docreq', 'cmnreq', 'staff'] },
+  { name: '출력·퇴원', items: ['qr', 'sticker'] },
+  { name: '기록', items: ['notes', 'flowsheet', 'vitals', 'bst', 'nurseinfo', 'care', 'nact', 'dcplan'] },
+  { name: '처방', items: ['mat', 'rxcmp', 'medrec', 'ret'] },
   { name: '예약', items: ['adm', 'discharge'] },
-  { name: '병동', items: ['bulk', 'handover'] },
+  { name: '병동', items: ['todo', 'memos', 'handover', 'bulk'] },
   { name: '회송', items: [] },
   { name: '의무기록', items: [] },
   { name: '인력', items: [] },
@@ -75,7 +81,20 @@ const CATS: { name: string; items: string[] }[] = [
 const ORG = buildDirectory();
 
 const pad = (n: number) => String(n).padStart(2, '0');
-const SCR: Record<string, string> = { todo: 'MNR101F1', notes: 'MNR210F1', patinfo: 'MNR120F1', dxhist: 'MNR130F1', surghist: 'MNR131F1', vacc: 'MNR132F1', labres: 'MNR310F1', medrec: 'MNR410F1', flowsheet: 'MNR281F1', overview: 'MNR110F1', vitals: 'MNR281F2', bst: 'MNR281F3', mat: 'MNR520F1', nact: 'MNR510F1', qr: 'MNR900F1', staff: 'MNR700F1' };
+const NFG: { g: string; guide: string; subs: { s: string; items: string[] }[] }[] = [
+  { g: '낙상예방 및 관리', guide: '입원 시 및 상태 변화 시 낙상위험도를 평가하고, 고위험군은 낙상 예방 중재를 시행한 뒤 해당 시간 칸에 기록합니다.', subs: [
+    { s: '낙상위험평가', items: ['제외대상(고위험중재 대상)', '낙상 평가 사유'] },
+    { s: '낙상예방교육 위험간호중재(성인)', items: ['환경 및 시설 관리', '낙상에 대한 직원들의 정보 공유', '환자·보호자에게 낙상 예방교육', '수면 전 배뇨 확인 및 화장실 다녀오기', '의식이 불안정한 환자는 보호자 상주', '신체보호대 적용(의사 order 시)', '환자 이송 시 기능원에게 낙상 주의사항 설명'] },
+  ] },
+  { g: '욕창예방 및 관리', guide: 'Braden Scale로 욕창 위험을 평가하고 고위험군은 2시간마다 체위변경 후 피부 상태를 확인해 기록합니다.', subs: [
+    { s: '욕창위험평가도구(성인)', items: ['욕창 평가 사유', '욕창위험 평가도구(Braden)'] },
+  ] },
+  { g: '통증관리', guide: 'NRS(0~10)로 통증을 평가하고 중재 후 재평가 결과를 기록합니다.', subs: [
+    { s: '통증평가', items: ['통증 평가 사유', '통증유무', '통증 시작시기', '통증강도(척도)', '통증위치', '통증강도(점수)', '통증양상'] },
+    { s: '통증완화중재', items: ['비약물요법', '약물요법'] },
+  ] },
+];
+const SCR: Record<string, string> = { todo: 'MNR101F1', notes: 'MNR210F1', patinfo: 'MNR120F1', dxhist: 'MNR130F1', surghist: 'MNR131F1', vacc: 'MNR132F1', labres: 'MNR310F1', medrec: 'MNR410F1', flowsheet: 'MNR281F1', overview: 'MNR110F1', vitals: 'MNR281F2', bst: 'MNR281F3', mat: 'MNR520F1', nact: 'MNR510F1', qr: 'MNR900F1', staff: 'MNR700F1', rxcmp: 'MDI604F1', futsch: 'SWF380F1', sticker: 'MNZ939F1', cmnreq: 'MDM610F1', dcplan: 'MNR320F1' };
 const hm = () => { const d = vnow(); return `${pad(d.getHours())}:${pad(d.getMinutes())}`; };
 const dutyNow = () => { const h = vnow().getHours(); return h >= 6 && h < 14 ? 'D' : h >= 14 && h < 22 ? 'E' : 'N'; };
 const HIGH = /(insulin|인슐린|heparin|헤파린|potassium|kcl|칼륨|morphine|모르핀|fentanyl|펜타닐|midazolam|미다졸람|항암|digoxin|디곡신|warfarin|와파린|propofol|ketamine|마약)/i;
@@ -303,7 +322,7 @@ export default function EhrNurse({
   const [mq, setMq] = useState('');
   const [figOpen, setFigOpen] = useState(true);
   const [win2, setWin2] = useState<string | null>(null);
-  const OWN = ['todo', 'notes', 'patinfo', 'dxhist', 'surghist', 'vacc', 'labres', 'medrec', 'flowsheet', 'overview', 'adm', 'dir', 'bulk', 'staff', 'docreq', 'vitals', 'bst', 'mat', 'nact', 'qr'];
+  const OWN = ['todo', 'notes', 'patinfo', 'dxhist', 'surghist', 'vacc', 'labres', 'medrec', 'flowsheet', 'overview', 'adm', 'dir', 'bulk', 'staff', 'docreq', 'vitals', 'bst', 'mat', 'nact', 'qr', 'rxcmp', 'futsch', 'sticker', 'cmnreq', 'dcplan'];
   const [ddPos, setDdPos] = useState<{ left: number; top: number } | null>(null);
   const place = (el: HTMLElement) => { const r = el.getBoundingClientRect(); setDdPos({ left: Math.max(4, Math.min(r.left, window.innerWidth - 190)), top: r.bottom + 2 }); };
   const [tabs, setTabs] = useState<string[]>([]);
@@ -325,6 +344,9 @@ export default function EhrNurse({
   const [rt, setRt] = useState<'meal' | 'sched' | 'cons' | 'appt'>('meal');
   const [fTab, setFTab] = useState<'obs' | 'state' | 'lab' | 'io'>('obs');
   const [fColl, setFColl] = useState<string[]>([]);
+  const [fHidOpen, setFHidOpen] = useState<string | null>(null);
+  const [fGuide, setFGuide] = useState<string | null>(null);
+  const [fHist, setFHist] = useState<string | null>(null);
   const [fEdit, setFEdit] = useState<{ it: string; d: string; h: string } | null>(null);
   const [fVal, setFVal] = useState('');
   const [fCtx, setFCtx] = useState<{ x: number; y: number; it: string; d: string; h: string } | null>(null);
@@ -371,6 +393,8 @@ export default function EhrNurse({
   ];
   const IN = ['IV (mL)', 'Diet (mL)', '기타 섭취 (mL)'];
   const OUT = ['소변 (mL)', '배액 (mL)', '기타 배출 (mL)'];
+  const hid = (data.memos.find(m => m.type === 'flowhide')?.text || '').split('|').filter(Boolean);
+  const setHid = (list: string[]) => setData(d => ({ ...d, memos: [...d.memos.filter(m => m.type !== 'flowhide'), { type: 'flowhide', text: list.join('|'), author: userName }] }));
   const VMAP: Record<string, string> = { '체온 (℃)': 'bt', '맥박 (회/분)': 'hr', '호흡 (회/분)': 'rr', 'SpO2 (%)': 'spo2' };
   const lastV = [...data.vitals].filter(r => r.time).sort((a, b) => (a.time || '').localeCompare(b.time || '')).slice(-1)[0];
   const abn: string[] = (() => {
@@ -1088,51 +1112,86 @@ export default function EhrNurse({
                       <tr>{FR.map(c => c.sum ? <th key={c.d + c.h + 's'} className="ns-fl-sum">{{ D: 'Day', E: 'Eve', N: 'Night' }[c.sum]}<br />합계</th> : <th key={c.d + c.h}>{c.h}시</th>)}</tr>
                     </thead>
                     <tbody>
-                      {FG.map(g => {
-                        const closed = fColl.includes(g.g);
-                        const isIO = g.g === 'I/O Total' || g.items.some(x => IN.includes(x) || OUT.includes(x));
-                        const tog = <button type="button" className="ns-fl-tg" onClick={() => setFColl(c => (c.includes(g.g) ? c.filter(x => x !== g.g) : [...c, g.g]))}>{closed ? '⊕' : '⊖'} {g.g}</button>;
-                        if (closed) {
+                      {(() => {
+                        const cellOf = (it: string, c0: FRc, isIO: boolean) => {
+                          const { d, h, sum } = c0;
+                          const key = d + h + (sum || '');
+                          if (sum) {
+                            let v = '';
+                            if (it === 'I/O Total (mL)') v = [...IN, ...OUT].some(x => sumAny(x, d, sum)) ? String(IN.reduce((a, x) => a + sumItem(x, d, sum), 0) - OUT.reduce((a, x) => a + sumItem(x, d, sum), 0)) : '';
+                            else if (IN.includes(it) || OUT.includes(it)) v = sumAny(it, d, sum) ? String(sumItem(it, d, sum)) : '';
+                            return <td key={key} className={isIO ? 'ns-fl-sumc' : 'ns-fl-sumg'} style={{ cursor: 'default' }}>{v}</td>;
+                          }
+                          const c = fGet(it, d, h);
+                          const on = fEdit?.it === it && fEdit.h === h && fEdit.d === d;
+                          if (it === 'I/O Total (mL)') {
+                            const anyIO = [...IN, ...OUT].some(x => fGet(x, d, h));
+                            return <td key={key} style={{ cursor: 'default', background: '#f6f8fb', fontWeight: 700 }}>{anyIO ? ioTotal(d, h) : ''}</td>;
+                          }
+                          const auto = !c ? vitAt(it, d, h) : '';
                           return (
-                            <tr key={g.g}>
-                              <th className="ns-fl-g1">{tog}</th>
-                              <th className="ns-fl-c ns-fl-c2">{g.items.length}개 항목 (접힘)</th>
-                              <td colSpan={FR.length} style={{ cursor: 'default' }} />
-                            </tr>
+                            <td key={key} className={c ? 'ns-fl-v' : auto ? 'ns-fl-a' : ''} onDoubleClick={() => { setFEdit({ it, d, h }); setFVal(c?.text || auto); }} onContextMenu={e => { e.preventDefault(); e.stopPropagation(); setFCtx({ x: e.clientX, y: e.clientY, it, d, h }); }}>
+                              {on ? <input autoFocus value={fVal} onChange={e => setFVal(e.target.value)} onBlur={() => { fSet(it, d, h, fVal); setFEdit(null); }} onKeyDown={e => { if (e.key === 'Enter') { fSet(it, d, h, fVal); setFEdit(null); } if (e.key === 'Escape') setFEdit(null); }} /> : <>{c?.text || auto}{c?.memo && <sup title={c.memo}>●</sup>}</>}
+                            </td>
                           );
-                        }
-                        return (
-                          <Fragment key={g.g}>
-                            {g.items.map((it, ix) => (
-                              <tr key={it}>
-                                {ix === 0 && <th className="ns-fl-g1" rowSpan={g.items.length}>{tog}</th>}
-                                <th className="ns-fl-c ns-fl-c2">{it}</th>
-                                {FR.map(({ d, h, sum }) => {
-                                  const key = d + h + (sum || '');
-                                  if (sum) {
-                                    let v = '';
-                                    if (it === 'I/O Total (mL)') v = [...IN, ...OUT].some(x => sumAny(x, d, sum)) ? String(IN.reduce((a, x) => a + sumItem(x, d, sum), 0) - OUT.reduce((a, x) => a + sumItem(x, d, sum), 0)) : '';
-                                    else if (IN.includes(it) || OUT.includes(it)) v = sumAny(it, d, sum) ? String(sumItem(it, d, sum)) : '';
-                                    return <td key={key} className={isIO ? 'ns-fl-sumc' : 'ns-fl-sumg'} style={{ cursor: 'default' }}>{v}</td>;
-                                  }
-                                  const c = fGet(it, d, h);
-                                  const on = fEdit?.it === it && fEdit.h === h && fEdit.d === d;
-                                  if (it === 'I/O Total (mL)') {
-                                    const anyIO = [...IN, ...OUT].some(x => fGet(x, d, h));
-                                    return <td key={key} style={{ cursor: 'default', background: '#f6f8fb', fontWeight: 700 }}>{anyIO ? ioTotal(d, h) : ''}</td>;
-                                  }
-                                  const auto = !c ? vitAt(it, d, h) : '';
-                                  return (
-                                    <td key={key} className={c ? 'ns-fl-v' : auto ? 'ns-fl-a' : ''} onDoubleClick={() => { setFEdit({ it, d, h }); setFVal(c?.text || auto); }} onContextMenu={e => { e.preventDefault(); e.stopPropagation(); setFCtx({ x: e.clientX, y: e.clientY, it, d, h }); }}>
-                                      {on ? <input autoFocus value={fVal} onChange={e => setFVal(e.target.value)} onBlur={() => { fSet(it, d, h, fVal); setFEdit(null); }} onKeyDown={e => { if (e.key === 'Enter') { fSet(it, d, h, fVal); setFEdit(null); } if (e.key === 'Escape') setFEdit(null); }} /> : <>{c?.text || auto}{c?.memo && <sup title={c.memo}>●</sup>}</>}
-                                    </td>
-                                  );
+                        };
+                        if (fTab === 'state') {
+                          return NFG.map(cat => {
+                            const closed = fColl.includes(cat.g);
+                            const hiddenHere = cat.subs.flatMap(x => x.items).filter(x => hid.includes(x));
+                            return (
+                              <Fragment key={cat.g}>
+                                <tr className="ns-fl-g">
+                                  <td colSpan={FR.length + 2}>
+                                    <span className="ns-fl-gl">
+                                      <button type="button" className="ns-fl-tg" onClick={() => setFColl(c => (c.includes(cat.g) ? c.filter(x => x !== cat.g) : [...c, cat.g]))}>{closed ? '⊕' : '⊖'} {cat.g}</button>
+                                      <button type="button" className="ns-fl-bb" onClick={() => setFHidOpen(fHidOpen === cat.g ? null : cat.g)}>숨김항목{hiddenHere.length ? ` (${hiddenHere.length})` : ''}</button>
+                                      <button type="button" className="ns-fl-bb" onClick={() => setFGuide(fGuide === cat.g ? null : cat.g)}>기록지침</button>
+                                    </span>
+                                    {fHidOpen === cat.g && <span className="ns-fl-pop">{hiddenHere.length ? hiddenHere.map(x => <button key={x} type="button" onClick={() => setHid(hid.filter(y => y !== x))}>↩ {x}</button>) : '숨긴 항목이 없습니다. 항목을 우클릭해 "항목숨기기"를 고르세요.'}</span>}
+                                    {fGuide === cat.g && <span className="ns-fl-pop">{cat.guide}</span>}
+                                  </td>
+                                </tr>
+                                {!closed && cat.subs.map(sb => {
+                                  const its = sb.items.filter(x => !hid.includes(x));
+                                  return its.map((it, ix) => (
+                                    <tr key={it}>
+                                      {ix === 0 && <th className="ns-fl-g1 ns-fl-sub" rowSpan={its.length}>{sb.s}</th>}
+                                      <th className="ns-fl-c ns-fl-c2">{it}</th>
+                                      {FR.map(c0 => cellOf(it, c0, false))}
+                                    </tr>
+                                  ));
                                 })}
+                              </Fragment>
+                            );
+                          });
+                        }
+                        return FG.map(g => {
+                          const closed = fColl.includes(g.g);
+                          const isIO = g.g === 'I/O Total' || g.items.some(x => IN.includes(x) || OUT.includes(x));
+                          const tog = <button type="button" className="ns-fl-tg" onClick={() => setFColl(c => (c.includes(g.g) ? c.filter(x => x !== g.g) : [...c, g.g]))}>{closed ? '⊕' : '⊖'} {g.g}</button>;
+                          if (closed) {
+                            return (
+                              <tr key={g.g}>
+                                <th className="ns-fl-g1">{tog}</th>
+                                <th className="ns-fl-c ns-fl-c2">{g.items.length}개 항목 (접힘)</th>
+                                <td colSpan={FR.length} style={{ cursor: 'default' }} />
                               </tr>
-                            ))}
-                          </Fragment>
-                        );
-                      })}
+                            );
+                          }
+                          return (
+                            <Fragment key={g.g}>
+                              {g.items.map((it, ix) => (
+                                <tr key={it}>
+                                  {ix === 0 && <th className="ns-fl-g1" rowSpan={g.items.length}>{tog}</th>}
+                                  <th className="ns-fl-c ns-fl-c2">{it}</th>
+                                  {FR.map(c0 => cellOf(it, c0, isIO))}
+                                </tr>
+                              ))}
+                            </Fragment>
+                          );
+                        });
+                      })()}
                     </tbody>
                   </table>
                 </div>
@@ -1154,18 +1213,30 @@ export default function EhrNurse({
                   <div className="ns-fl-m" style={{ left: fCtx.x, top: fCtx.y }} onClick={e => e.stopPropagation()}>
                     <button type="button" onClick={() => { const c = fGet(fCtx.it, fCtx.d, fCtx.h); if (!c) { setFCtx(null); return; } const m = window.prompt('메모', c.memo || ''); if (m !== null) setData(d => ({ ...d, memos: d.memos.map(x => (x === c ? { ...x, memo: m } : x)) })); setFCtx(null); }}>메모</button>
                     <button type="button" onClick={() => { const c = fGet(fCtx.it, fCtx.d, fCtx.h); if (c) setData(d => ({ ...d, notes: [...d.notes, { time: `${fCtx.d} ${fCtx.h}:00`, focus: fCtx.it.split(' (')[0], text: `D)\n${fCtx.h}시 ${fCtx.it} ${c.text}${c.memo ? ` (${c.memo})` : ''}`, author: userName, shift: duty }] })); setFCtx(null); }}>간호기록</button>
+                    <button type="button" onClick={() => { fSet(fCtx.it, fCtx.d, fCtx.h, ''); setFCtx(null); }}>입력값 삭제</button>
+                    <button type="button" onClick={() => { setFHist(fCtx.it); setFCtx(null); }}>이력조회</button>
+                    {NFG.some(c => c.subs.some(x => x.items.includes(fCtx.it))) && <button type="button" onClick={() => { setHid([...hid, fCtx.it]); setFCtx(null); }}>항목숨기기</button>}
                     <button type="button" onClick={() => { const c = fGet(fCtx.it, fCtx.d, fCtx.h); if (c) { const i0 = FCOLS.findIndex(x => x.d === fCtx.d && x.h === fCtx.h); FCOLS.slice(i0 + 1, i0 + 4).forEach(x => { if (!fGet(fCtx.it, x.d, x.h)) fSet(fCtx.it, x.d, x.h, c.text); }); } setFCtx(null); }}>그룹입력 (이후 3칸 동일값)</button>
                   </div>
                 )}
+                {fHist && (
+                  <div className="ns-fl-cfg" style={{ left: 40, top: 80 }} onClick={e => e.stopPropagation()}>
+                    <b>이력조회 · {fHist}</b>
+                    {(() => {
+                      const rows = data.memos.filter(m => m.type === 'flow' && m.item === fHist).sort((a, b) => `${b.date} ${b.hour}`.localeCompare(`${a.date} ${a.hour}`)).slice(0, 14);
+                      return rows.length ? <table style={{ minWidth: 0, marginTop: 6 }}><tbody>{rows.map((r, k) => <tr key={k}><td>{(r.date || '').slice(5)} {r.hour}시</td><td>{r.text}</td><td>{r.author}</td></tr>)}</tbody></table> : <p>No data to display</p>;
+                    })()}
+                    <button type="button" style={{ marginTop: 6 }} onClick={() => setFHist(null)}>닫기</button>
+                  </div>
+                )}
                 <div className="ns-fl-b">
-                  {([['obs', '임상관찰'], ['io', 'I/O'], ['state', '간호상태'], ['lab', 'LAB']] as const).map(([k, l]) => <button key={k} type="button" className={fTab === k ? 'ns-on' : ''} onClick={() => setFTab(k)}>{l}</button>)}
+                  {([['obs', '임상관찰'], ['io', 'I/O'], ['state', '간호사정'], ['lab', 'LAB']] as const).map(([k, l]) => <button key={k} type="button" className={fTab === k ? 'ns-on' : ''} onClick={() => setFTab(k)}>{l}</button>)}
                 </div>
                 {fTab === 'io' && <div className="ns-fl-x">{(() => {
                   const tr = FDAYS.slice(-3).map(d => ({ d, rows: (['D', 'E', 'N'] as const).map(sh => { const i1 = IN.reduce((a, x) => a + sumItem(x, d, sh), 0); const o1 = OUT.reduce((a, x) => a + sumItem(x, d, sh), 0); return { sh, i1, o1 }; }) }));
                   return <table style={{ minWidth: 0 }}><thead><tr><th>일자</th><th>근무</th><th>Intake</th><th>Output</th><th>I/O Total</th></tr></thead><tbody>{tr.flatMap(t => t.rows.map(r => <tr key={t.d + r.sh}><td>{t.d.slice(5)}</td><td>{r.sh}</td><td>{r.i1}</td><td>{r.o1}</td><td style={{ background: '#fff7c2', fontWeight: 700 }}>{r.i1 - r.o1}</td></tr>))}</tbody></table>;
                 })()}</div>}
                 <div className="ns-fl-sc">{([['vitals', '환자 V/S'], ['bst', '혈당'], ['labres', '검사결과'], ['notes', '간호기록']] as const).map(([k, l]) => <button key={k} type="button" onClick={() => openMenu(k)}>{l}</button>)}<button type="button" onClick={() => setFCfg(v => !v)}>항목 설정</button></div>
-                {fTab === 'state' && <div className="ns-fl-x">{data.care.length ? data.care.map((c, k) => <p key={k}>{c.dx}</p>) : <p className="ns-nnone">No data to display</p>}</div>}
                 {fTab === 'lab' && <div className="ns-fl-x">{data.labs.length ? data.labs.slice(0, 12).map((l, k) => <p key={k}>{l.name} {l.value} {l.unit}</p>) : <p className="ns-nnone">No data to display</p>}</div>}
               </div>
             ) : w === 'overview' ? (
@@ -1271,6 +1342,16 @@ export default function EhrNurse({
               <Fragment key={notifyDraft}><StaffWin data={data} setData={setData} userName={userName} duty={duty} draft={notifyDraft} /></Fragment>
             ) : w === 'docreq' ? (
               <DocReqWin data={data} setData={setData} userName={userName} duty={duty} />
+            ) : w === 'rxcmp' ? (
+              <RxCompare data={data} onClose={onClose} />
+            ) : w === 'futsch' ? (
+              <FutureSched data={data} onClose={onClose} />
+            ) : w === 'sticker' ? (
+              <Sticker data={data} onClose={onClose} />
+            ) : w === 'cmnreq' ? (
+              <CommonReq data={data} setData={setData} userName={userName} onMat={() => openMenu('mat')} onClose={onClose} />
+            ) : w === 'dcplan' ? (
+              <DcPlan data={data} setData={setData} userName={userName} onClose={onClose} />
             ) : w === 'mat' ? (
               <ProcInput data={data} setData={setData} userName={userName} onClose={onClose} />
             ) : (w === 'vitals' || w === 'bst' || w === 'nact') ? (
@@ -1443,6 +1524,10 @@ export default function EhrNurse({
         .ns-fl-g1 { position: sticky; left: 0; z-index: 2; background: #c9d9ee !important; min-width: 96px; vertical-align: top; text-align: left !important; }
         .ns-fl-tg { border: 0; background: transparent; font: inherit; font-weight: 800; color: #17324f; cursor: pointer; padding: 0; }
         .ns-fl .ns-fl-c2 { left: 96px; }
+        .ns-fl-bb { margin-left: 8px; border: 1px solid #5b6f8a; background: #fff; border-radius: 3px; font: inherit; font-size: 11.5px; padding: 1px 8px; cursor: pointer; }
+        .ns-fl-pop { display: inline-block; margin-left: 12px; font-weight: 500; font-size: 12px; position: sticky; left: 260px; }
+        .ns-fl-pop button { margin-right: 6px; border: 1px solid var(--border); background: #fff; border-radius: 3px; font: inherit; font-size: 11.5px; cursor: pointer; }
+        .ns-fl-sub { font-weight: 600; font-size: 12px; white-space: normal !important; max-width: 110px; }
         .ns-fl-sc { display: flex; gap: 6px; margin-top: 8px; }
         .ns-fl-sc button { font: inherit; font-size: 12px; padding: 3px 10px; border: 1px solid var(--border); border-radius: 4px; background: #f6f8fb; cursor: pointer; }
         .ns-fl-x table { border-collapse: collapse; } .ns-fl-x th, .ns-fl-x td { border: 1px solid var(--border); padding: 3px 10px; }
