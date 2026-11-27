@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { SKILLS, type Cfg, type Ord } from '@/app/ehr/skills/scn';
+import { SKILLS, recordsOf, type Cfg, type Ord } from '@/app/ehr/skills/scn';
 
 type Row = { id: string; published: boolean; classId: string | null; skill: string; title: string; exam: boolean; assign: 'same' | 'random'; cfg: Cfg };
 const inp = { padding: '6px 8px', border: '1px solid var(--border)', borderRadius: 6, background: 'var(--background)', color: 'inherit', width: '100%' } as const;
@@ -13,6 +13,8 @@ function F({ l, children }: { l: string; children: React.ReactNode }) {
 export default function SkillsAdmin({ rows: init, classes }: { rows: Row[]; classes: { id: string; label: string }[] }) {
   const [rows, setRows] = useState(init);
   const [msg, setMsg] = useState('');
+  const [open, setOpen] = useState('');
+  const [prev, setPrev] = useState('');
   const [pick, setPick] = useState(SKILLS[0].key);
   const upd = (id: string, f: (r: Row) => Row) => setRows(rs => rs.map(r => (r.id === id ? f(r) : r)));
   const create = async (skill: string) => {
@@ -43,74 +45,130 @@ export default function SkillsAdmin({ rows: init, classes }: { rows: Row[]; clas
         const c = r.cfg;
         const setC = (p: Partial<Cfg>) => upd(r.id, x => ({ ...x, cfg: { ...x.cfg, ...p } }));
         const skTitle = SKILLS.find(s => s.key === r.skill)?.title;
+        const isOpen = open === r.id;
+        const pill = (t: string, bg: string) => <span style={{ background: bg, color: '#fff', borderRadius: 999, padding: '1px 9px', fontSize: 11, whiteSpace: 'nowrap' }}>{t}</span>;
+        const sec = { background: 'var(--muted-background)', borderRadius: 8, padding: 12, display: 'grid', gap: 8 } as const;
+        const h = { margin: 0, fontSize: 13, fontWeight: 800 } as const;
         return (
-          <div key={r.id} style={{ background: 'var(--background)', border: '1px solid var(--border)', borderRadius: 10, padding: 14, display: 'grid', gap: 10 }}>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center', flexWrap: 'wrap' }}>
-              <span style={{ background: '#2563eb', color: '#fff', borderRadius: 999, padding: '2px 10px', fontSize: 12 }}>{skTitle}</span>
-              <input style={{ ...inp, flex: 1, minWidth: 160, fontWeight: 700 }} value={r.title} onChange={e => upd(r.id, x => ({ ...x, title: e.target.value }))} />
-              <label style={{ display: 'flex', gap: 5, alignItems: 'center' }}><input type="checkbox" style={{ width: 'auto' }} checked={r.published} onChange={e => upd(r.id, x => ({ ...x, published: e.target.checked }))} />공개</label>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 8 }}>
-              <F l="대상 분반">
-                <select style={inp} value={r.classId || ''} onChange={e => upd(r.id, x => ({ ...x, classId: e.target.value || null }))}>
-                  <option value="">전체 학생</option>{classes.map(k => <option key={k.id} value={k.id}>{k.label}</option>)}
-                </select>
-              </F>
-              <F l="환자 배정">
-                <select style={inp} value={r.assign} onChange={e => upd(r.id, x => ({ ...x, assign: e.target.value as Row['assign'] }))}>
-                  <option value="same">전원 동일 (이 설정 그대로)</option>
-                  <option value="random">학생마다 랜덤 변형 (이름·나이·병상)</option>
-                </select>
-              </F>
-              <F l="모드">
-                <select style={inp} value={r.exam ? '1' : ''} onChange={e => upd(r.id, x => ({ ...x, exam: e.target.value === '1' }))}>
-                  <option value="">연습 (체크리스트·AI 피드백 보임)</option>
-                  <option value="1">시험 (체크리스트 숨김, 제출 시 채점)</option>
-                </select>
-              </F>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(120px,1fr))', gap: 8 }}>
-              <F l="환자 이름"><input style={inp} value={c.name} onChange={e => setC({ name: e.target.value })} /></F>
-              <F l="나이"><input style={inp} value={c.age} onChange={e => setC({ age: e.target.value })} /></F>
-              <F l="성별"><select style={inp} value={c.sex} onChange={e => setC({ sex: e.target.value as 'M' | 'F' })}><option value="F">여</option><option value="M">남</option></select></F>
-              <F l="병동"><input style={inp} value={c.ward} onChange={e => setC({ ward: e.target.value })} /></F>
-              <F l="병상"><input style={inp} value={c.bed} onChange={e => setC({ bed: e.target.value })} /></F>
-              <F l="진단"><input style={inp} value={c.dx} onChange={e => setC({ dx: e.target.value })} /></F>
-              <F l="알레르기"><input style={inp} value={c.allergy} onChange={e => setC({ allergy: e.target.value })} /></F>
-            </div>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(120px,1fr))', gap: 8 }}>
-              <F l="진료과"><input style={inp} value={c.dept} onChange={e => setC({ dept: e.target.value })} /></F>
-              <F l="담당의"><input style={inp} value={c.doctor} onChange={e => setC({ doctor: e.target.value })} /></F>
-              <F l="주호소"><input style={inp} value={c.cc} onChange={e => setC({ cc: e.target.value })} /></F>
-              <F l="시작 시각 (HH:MM)"><input style={inp} value={c.clock} onChange={e => setC({ clock: e.target.value })} /></F>
-              <F l="직전 활력징후 (혈압,맥박,호흡,체온,SpO2)"><input style={inp} placeholder="118/72,84,18,37.2,97" value={c.vit} onChange={e => setC({ vit: e.target.value })} /></F>
-            </div>
-            <F l="상황 (학생에게 보이는 안내)"><textarea style={{ ...inp, minHeight: 90, fontFamily: 'inherit' }} value={c.situation} onChange={e => setC({ situation: e.target.value })} /></F>
-            <div style={{ display: 'grid', gap: 6 }}>
-              <b style={{ fontSize: 13 }}>처방</b>
-              {c.orders.map((x, k) => {
-                const setO = (p: Partial<Ord>) => setC({ orders: c.orders.map((y, j) => (j === k ? { ...y, ...p } : y)) });
-                return (
-                  <div key={k} style={{ display: 'grid', gridTemplateColumns: '3fr 0.8fr 0.8fr 0.8fr 1fr 1.4fr 2fr auto auto', gap: 4, alignItems: 'end' }}>
-                    <F l="처방명"><input style={inp} value={x.name} onChange={e => setO({ name: e.target.value })} /></F>
-                    <F l="용량"><input style={inp} value={x.dose} onChange={e => setO({ dose: e.target.value })} /></F>
-                    <F l="단위"><input style={inp} value={x.unit} onChange={e => setO({ unit: e.target.value })} /></F>
-                    <F l="경로"><input style={inp} value={x.route} onChange={e => setO({ route: e.target.value })} /></F>
-                    <F l="횟수"><input style={inp} value={x.cnt} onChange={e => setO({ cnt: e.target.value })} /></F>
-                    <F l="시간 (09:00/,17:00/)"><input style={inp} value={x.slots} onChange={e => setO({ slots: e.target.value })} /></F>
-                    <F l="메모(조건)"><input style={inp} value={x.memo} onChange={e => setO({ memo: e.target.value })} /></F>
-                    <label style={{ fontSize: 12, display: 'flex', gap: 3, alignItems: 'center', paddingBottom: 8 }}><input type="checkbox" style={{ width: 'auto' }} checked={x.prn} onChange={e => setO({ prn: e.target.checked })} />PRN</label>
-                    <button type="button" aria-label="처방 삭제" onClick={() => setC({ orders: c.orders.filter((_, j) => j !== k) })} style={{ border: 0, background: 'none', color: '#dc2626', cursor: 'pointer', paddingBottom: 6 }}>×</button>
+          <div key={r.id} style={{ background: 'var(--background)', border: '1px solid var(--border)', borderRadius: 10, overflow: 'hidden' }}>
+            <button type="button" onClick={() => setOpen(isOpen ? '' : r.id)} aria-expanded={isOpen} style={{ display: 'flex', gap: 8, alignItems: 'center', width: '100%', padding: '12px 14px', border: 0, background: 'none', color: 'inherit', cursor: 'pointer', textAlign: 'left', font: 'inherit' }}>
+              <b style={{ flex: 1 }}>{r.title}</b>
+              {pill(skTitle || r.skill, '#2563eb')}
+              {r.exam ? pill('시험', '#dc2626') : pill('연습', '#64748b')}
+              {r.published ? pill('공개', '#16a34a') : pill('비공개', '#94a3b8')}
+              <span style={{ color: 'var(--muted-foreground)' }}>{isOpen ? '▲' : '▼'}</span>
+            </button>
+            {isOpen && (
+              <div style={{ padding: '0 14px 14px', display: 'grid', gap: 12 }}>
+                <div style={sec}>
+                  <p style={h}>기본 설정</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(200px,1fr))', gap: 8 }}>
+                    <F l="시나리오 이름"><input style={{ ...inp, fontWeight: 700 }} value={r.title} onChange={e => upd(r.id, x => ({ ...x, title: e.target.value }))} /></F>
+                    <F l="대상 분반">
+                      <select style={inp} value={r.classId || ''} onChange={e => upd(r.id, x => ({ ...x, classId: e.target.value || null }))}>
+                        <option value="">전체 학생</option>{classes.map(k => <option key={k.id} value={k.id}>{k.label}</option>)}
+                      </select>
+                    </F>
+                    <F l="환자 배정">
+                      <select style={inp} value={r.assign} onChange={e => upd(r.id, x => ({ ...x, assign: e.target.value as Row['assign'] }))}>
+                        <option value="same">전원 동일 (이 설정 그대로)</option>
+                        <option value="random">학생마다 랜덤 변형 (이름·나이·병상)</option>
+                      </select>
+                    </F>
+                    <F l="모드">
+                      <select style={inp} value={r.exam ? '1' : ''} onChange={e => upd(r.id, x => ({ ...x, exam: e.target.value === '1' }))}>
+                        <option value="">연습 (기록 확인 · 사용법 질문 가능)</option>
+                        <option value="1">시험 (제출 후 교수 채점 · 사용법 질문 없음)</option>
+                      </select>
+                    </F>
                   </div>
-                );
-              })}
-              <div><button type="button" onClick={() => setC({ orders: [...c.orders, { name: '', dose: '', unit: '', route: '', cnt: '', slots: '', prn: false, memo: '' }] })} style={{ padding: '5px 12px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--background)', color: 'inherit', cursor: 'pointer' }}>+ 처방 추가</button></div>
-            </div>
-            <F l="평가 항목 (한 줄에 하나 · 교수 채점 참고용)"><textarea style={{ ...inp, minHeight: 90, fontFamily: 'inherit' }} value={c.checks.join('\n')} onChange={e => setC({ checks: e.target.value.split('\n') })} /></F>
-            <div style={{ display: 'flex', gap: 8 }}>
-              <button type="button" onClick={() => save(r)} style={{ padding: '8px 16px', borderRadius: 8, border: 0, background: '#2563eb', color: '#fff', cursor: 'pointer' }}>저장</button>
-              <button type="button" onClick={() => del(r.id)} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--background)', color: '#dc2626', cursor: 'pointer' }}>삭제</button>
-            </div>
+                  <label style={{ display: 'flex', gap: 6, alignItems: 'center' }}><input type="checkbox" style={{ width: 'auto' }} checked={r.published} onChange={e => upd(r.id, x => ({ ...x, published: e.target.checked }))} />공개 (체크해야 학생에게 보여요)</label>
+                </div>
+                <div style={sec}>
+                  <p style={h}>환자</p>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(130px,1fr))', gap: 8 }}>
+                    <F l="이름"><input style={inp} value={c.name} onChange={e => setC({ name: e.target.value })} /></F>
+                    <F l="나이"><input style={inp} value={c.age} onChange={e => setC({ age: e.target.value })} /></F>
+                    <F l="성별"><select style={inp} value={c.sex} onChange={e => setC({ sex: e.target.value as 'M' | 'F' })}><option value="F">여</option><option value="M">남</option></select></F>
+                    <F l="병동"><input style={inp} value={c.ward} onChange={e => setC({ ward: e.target.value })} /></F>
+                    <F l="병상"><input style={inp} value={c.bed} onChange={e => setC({ bed: e.target.value })} /></F>
+                    <F l="진료과"><input style={inp} value={c.dept} onChange={e => setC({ dept: e.target.value })} /></F>
+                    <F l="담당의"><input style={inp} value={c.doctor} onChange={e => setC({ doctor: e.target.value })} /></F>
+                    <F l="알레르기"><input style={inp} value={c.allergy} onChange={e => setC({ allergy: e.target.value })} /></F>
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(220px,1fr))', gap: 8 }}>
+                    <F l="진단 (영문)"><input style={inp} value={c.dx} onChange={e => setC({ dx: e.target.value })} /></F>
+                    <F l="주호소"><input style={inp} value={c.cc} onChange={e => setC({ cc: e.target.value })} /></F>
+                    <F l="시작 시각 (HH:MM)"><input style={inp} value={c.clock} onChange={e => setC({ clock: e.target.value })} /></F>
+                    <F l="직전 활력징후 (혈압,맥박,호흡,체온,SpO2 · 비우면 없음)"><input style={inp} placeholder="118/72,84,18,37.2,97" value={c.vit} onChange={e => setC({ vit: e.target.value })} /></F>
+                  </div>
+                </div>
+                <div style={sec}>
+                  <p style={h}>상황 안내 <span style={{ fontWeight: 400, color: 'var(--muted-foreground)', fontSize: 12 }}>학생에게 그대로 보여요</span></p>
+                  <textarea style={{ ...inp, minHeight: 90, fontFamily: 'inherit' }} value={c.situation} onChange={e => setC({ situation: e.target.value })} />
+                </div>
+                <div style={sec}>
+                  <p style={h}>처방</p>
+                  {c.orders.length === 0 && <p style={{ margin: 0, fontSize: 12, color: 'var(--muted-foreground)' }}>처방이 없어요. 기본처방(V/S, I/O)만 나와요.</p>}
+                  {c.orders.map((x, k) => {
+                    const setO = (p: Partial<Ord>) => setC({ orders: c.orders.map((y, j) => (j === k ? { ...y, ...p } : y)) });
+                    return (
+                      <div key={k} style={{ background: 'var(--background)', border: '1px solid var(--border)', borderRadius: 8, padding: 8, display: 'grid', gap: 6 }}>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 8, alignItems: 'end' }}>
+                          <F l="처방명"><input style={inp} value={x.name} onChange={e => setO({ name: e.target.value })} /></F>
+                          <button type="button" aria-label="처방 삭제" onClick={() => setC({ orders: c.orders.filter((_, j) => j !== k) })} style={{ border: '1px solid var(--border)', borderRadius: 6, background: 'none', color: '#dc2626', cursor: 'pointer', padding: '6px 10px' }}>삭제</button>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit,minmax(90px,1fr))', gap: 6 }}>
+                          <F l="용량"><input style={inp} value={x.dose} onChange={e => setO({ dose: e.target.value })} /></F>
+                          <F l="단위"><input style={inp} value={x.unit} onChange={e => setO({ unit: e.target.value })} /></F>
+                          <F l="경로"><input style={inp} value={x.route} onChange={e => setO({ route: e.target.value })} /></F>
+                          <F l="횟수"><input style={inp} value={x.cnt} onChange={e => setO({ cnt: e.target.value })} /></F>
+                          <F l="투약 시간 (09:00/)"><input style={inp} value={x.slots} onChange={e => setO({ slots: e.target.value })} /></F>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr auto', gap: 8, alignItems: 'end' }}>
+                          <F l="메모 (조건·주의)"><input style={inp} value={x.memo} onChange={e => setO({ memo: e.target.value })} /></F>
+                          <label style={{ display: 'flex', gap: 4, alignItems: 'center', paddingBottom: 7 }}><input type="checkbox" style={{ width: 'auto' }} checked={x.prn} onChange={e => setO({ prn: e.target.checked })} />PRN</label>
+                        </div>
+                      </div>
+                    );
+                  })}
+                  <div><button type="button" onClick={() => setC({ orders: [...c.orders, { name: '', dose: '', unit: '', route: '', cnt: '', slots: '', prn: false, memo: '' }] })} style={{ padding: '6px 14px', borderRadius: 6, border: '1px solid var(--border)', background: 'var(--background)', color: 'inherit', cursor: 'pointer' }}>+ 처방 추가</button></div>
+                </div>
+                <div style={sec}>
+                  <p style={h}>평가 항목 <span style={{ fontWeight: 400, color: 'var(--muted-foreground)', fontSize: 12 }}>한 줄에 하나 · 교수 채점 참고용 (학생 연습 화면에도 보여요)</span></p>
+                  <textarea style={{ ...inp, minHeight: 110, fontFamily: 'inherit' }} value={c.checks.join('\n')} onChange={e => setC({ checks: e.target.value.split('\n') })} />
+                </div>
+                {prev === r.id && (
+                  <div style={{ ...sec, border: '2px dashed #2563eb' }}>
+                    <p style={h}>미리보기 <span style={{ fontWeight: 400, color: 'var(--muted-foreground)', fontSize: 12 }}>학생이 처음 보는 안내 · 아직 저장하지 않은 수정도 반영돼요</span></p>
+                    <div style={{ background: 'var(--background)', borderRadius: 8, padding: 12, lineHeight: 1.65 }}>
+                      <div><b>{c.name}</b> {c.age}/{c.sex} · {c.ward} {c.bed}<br />{c.dx}<br />알레르기 {c.allergy} · 시작 {c.clock}</div>
+                      <p style={{ margin: '8px 0' }}>{c.situation}</p>
+                      <p style={{ margin: 0, fontSize: 12, color: 'var(--muted-foreground)' }}>EHR 기록: {recordsOf(r.skill).join(' · ')}</p>
+                    </div>
+                    <div style={{ background: 'var(--background)', borderRadius: 8, padding: 12, fontSize: 13 }}>
+                      <b>처방 화면</b>
+                      <ol style={{ margin: '6px 0 0', paddingLeft: 20, lineHeight: 1.7 }}>
+                        <li>Check V/S q [4] hrs</li><li>Check I/O q [8] hrs</li>
+                        {c.orders.filter(x => x.name.trim()).map((x, k) => <li key={k}>{x.name} {x.dose}{x.unit} {x.route} {x.cnt} {x.slots && `(${x.slots})`} {x.prn && <i>PRN</i>}{x.memo && <span style={{ color: '#be185d' }}> ※ {x.memo}</span>}</li>)}
+                      </ol>
+                      <p style={{ margin: '8px 0 0' }}>{c.vit ? `직전 활력징후 (${c.clock} 4시간 전): ${c.vit}` : '직전 활력징후 없음'}</p>
+                    </div>
+                    <div style={{ background: 'var(--background)', borderRadius: 8, padding: 12, fontSize: 13 }}>
+                      <b>평가 항목</b>
+                      <ul style={{ margin: '6px 0 0', paddingLeft: 18 }}>{c.checks.filter(x => x.trim()).map((x, k) => <li key={k}>{x}</li>)}</ul>
+                    </div>
+                  </div>
+                )}
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', position: 'sticky', bottom: 0, background: 'var(--background)', padding: '8px 0' }}>
+                  <button type="button" onClick={() => save(r)} style={{ padding: '8px 18px', borderRadius: 8, border: 0, background: '#2563eb', color: '#fff', cursor: 'pointer', fontWeight: 700 }}>저장</button>
+                  <button type="button" onClick={() => setPrev(prev === r.id ? '' : r.id)} style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid #2563eb', background: 'var(--background)', color: '#2563eb', cursor: 'pointer' }}>{prev === r.id ? '미리보기 닫기' : '미리보기'}</button>
+                  <a href={`/ehr/skills/${r.id}`} target="_blank" rel="noreferrer" style={{ padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border)', color: 'inherit', textDecoration: 'none' }}>실제 EHR로 열어보기 ↗ <span style={{ fontSize: 11, color: 'var(--muted-foreground)' }}>(저장한 내용 기준)</span></a>
+                  <button type="button" onClick={() => del(r.id)} style={{ marginLeft: 'auto', padding: '8px 16px', borderRadius: 8, border: '1px solid var(--border)', background: 'var(--background)', color: '#dc2626', cursor: 'pointer' }}>삭제</button>
+                </div>
+                {msg && <p style={{ margin: 0, color: 'var(--primary)' }}>{msg}</p>}
+              </div>
+            )}
           </div>
         );
       })}
